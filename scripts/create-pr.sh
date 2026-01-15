@@ -559,9 +559,12 @@ if [ "$UPDATE_MODE" = true ]; then
     echo ""
 
     # Get PR number for current branch
+    set +e
     PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null)
+    PR_VIEW_EXIT_CODE=$?
+    set -e
 
-    if [ -z "$PR_NUMBER" ]; then
+    if [ $PR_VIEW_EXIT_CODE -ne 0 ] || [ -z "$PR_NUMBER" ]; then
         echo "Error: No pull request found for branch '$CURRENT_BRANCH'"
         echo "Use without --update flag to create a new PR."
         exit 1

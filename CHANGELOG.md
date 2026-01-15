@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.6] - 2026-01-15
+
+### Fixed
+
+- **PR Update Handling** - Improved [scripts/create-pr.sh](scripts/create-pr.sh) to detect `gh pr view` failures before checking PR number, preventing false "no PR found" states when the GitHub CLI call fails
+
 ## [2.3.5] - 2026-01-10
 
 ### Added
