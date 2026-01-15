@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Command Helpers and Doc Conventions</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 2</span>
+    
+    
+  </div>
+
+  <h1>Command Helpers and Doc Conventions</h1>
+
+  
+
+  <h1 id="claudemd">CLAUDE.md</h1>
+
+<p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
+
+<h2 id="project-overview">Project Overview</h2>
+
+<p>This is a collection of tools, scripts, and documentation for WordPress operations, server management, and <a href="https://roots.io/trellis/">Roots Trellis</a> workflows. The repository contains Ansible playbooks, shell scripts, Nginx configurations, WP-CLI utilities, and comprehensive documentation.</p>
+
+<h2 id="repository-structure">Repository Structure</h2>
+
+<ul>
+  <li><strong>trellis/</strong> - Trellis-specific tools and workflows
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">trellis/backup/</code> - Ansible playbooks for database/files backup, pull, and push operations</li>
+      <li><code class="language-plaintext highlighter-rouge">trellis/monitoring/</code> - Nginx log monitoring and traffic analysis</li>
+      <li><code class="language-plaintext highlighter-rouge">trellis/provision/</code> - Provisioning guides and command reference</li>
+      <li><code class="language-plaintext highlighter-rouge">trellis/updater/</code> - Safe Trellis update scripts</li>
+    </ul>
+  </li>
+  <li><strong>wp-cli/</strong> - WordPress command-line operations
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">wp-cli/content-creation/</code> - WP-CLI content creation and block patterns</li>
+      <li><code class="language-plaintext highlighter-rouge">wp-cli/diagnostics/</code> - WordPress diagnostic tools</li>
+      <li><code class="language-plaintext highlighter-rouge">wp-cli/migration/</code> - WordPress migration documentation and URL update methods</li>
+      <li><code class="language-plaintext highlighter-rouge">wp-cli/security/</code> - Malware detection and security scanning</li>
+    </ul>
+  </li>
+  <li><strong>nginx/</strong> - Web server configurations
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">nginx/browser-caching/</code> - Browser caching configuration</li>
+      <li><code class="language-plaintext highlighter-rouge">nginx/image-optimization/</code> - WebP/AVIF configuration and guides</li>
+      <li><code class="language-plaintext highlighter-rouge">nginx/redirects/</code> - SEO and URL redirect management</li>
+    </ul>
+  </li>
+  <li><strong>scripts/</strong> - General utility scripts
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">scripts/backup/</code> - Standalone backup shell scripts</li>
+      <li><code class="language-plaintext highlighter-rouge">scripts/monitoring/</code> - Monitoring helper scripts</li>
+      <li><code class="language-plaintext highlighter-rouge">scripts/create-pr.sh</code> - AI-powered GitHub PR creation</li>
+      <li><code class="language-plaintext highlighter-rouge">scripts/release-theme.sh</code> - WordPress theme release automation</li>
+      <li><code class="language-plaintext highlighter-rouge">scripts/rsync-theme.sh</code> - Theme synchronization</li>
+    </ul>
+  </li>
+  <li><strong>wordpress-utilities/</strong> - Reusable WordPress components and utilities
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">wordpress-utilities/age-verification/</code> - Cookie-based age verification system with modal and ACF integration</li>
+      <li><code class="language-plaintext highlighter-rouge">wordpress-utilities/analytics/</code> - Analytics implementation and detection (Google Analytics, Matomo)</li>
+      <li><code class="language-plaintext highlighter-rouge">wordpress-utilities/speed-optimization/</code> - Performance testing and TTFB analysis tools (curl, wget)</li>
+    </ul>
+  </li>
+  <li><strong>troubleshooting/</strong> - Server and WordPress troubleshooting guides</li>
+</ul>
+
+<h2 id="key-technologies">Key Technologies</h2>
+
+<ul>
+  <li><strong>Trellis</strong>: WordPress server provisioning and deployment framework (Ansible-based)</li>
+  <li><strong>Bedrock</strong>: Modern WordPress boilerplate with Composer dependency management</li>
+  <li><strong>Ansible</strong>: Automation tool used by Trellis</li>
+  <li><strong>WP-CLI</strong>: WordPress command-line interface</li>
+  <li><strong>Nginx</strong>: Web server with custom configuration includes</li>
+  <li><strong>Shell scripting</strong>: Bash scripts for automation</li>
+</ul>
+
+<h2 id="common-commands">Common Commands</h2>
+
+<h3 id="trellis-provisioning">Trellis Provisioning</h3>
+
+<p>Commands assume you’re in a Trellis directory when working with Ansible playbooks:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Provision with specific tags</span>
+trellis provision <span class="nt">--tags</span> php,nginx,composer production
+
+<span class="c"># Deploy to environment</span>
+ansible-playbook deploy.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+ansible-playbook deploy.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># PHP version upgrade (requires specific tags)</span>
+trellis provision <span class="nt">--tags</span> php,nginx,wordpress-setup,users,memcached production
+</code></pre></div></div>
+
+<h3 id="backup-operations">Backup Operations</h3>
+
+<p>Ansible playbooks require <code class="language-plaintext highlighter-rouge">-e site=example.com -e env=&lt;environment&gt;</code> parameters:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Database backup</span>
+ansible-playbook trellis/backup/database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Database pull (from remote to development)</span>
+ansible-playbook trellis/backup/database-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Database push (from development to remote)</span>
+ansible-playbook trellis/backup/database-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+
+<span class="c"># Files (uploads) operations</span>
+ansible-playbook trellis/backup/files-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+ansible-playbook trellis/backup/files-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+ansible-playbook trellis/backup/files-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+</code></pre></div></div>
+
+<h3 id="wp-cli-operations">WP-CLI Operations</h3>
+
+<p>Common WordPress operations via command line:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Local development (from Bedrock site directory)</span>
+wp post list <span class="nt">--post_type</span><span class="o">=</span>page <span class="nt">--path</span><span class="o">=</span>web/wp
+wp post update 100 <span class="nt">--post_content</span><span class="o">=</span><span class="s2">"</span><span class="nv">$CONTENT</span><span class="s2">"</span> <span class="nt">--path</span><span class="o">=</span>web/wp
+
+<span class="c"># Remote via Trellis</span>
+trellis vm shell <span class="nt">--workdir</span> /srv/www/example.com/current <span class="nt">--</span> wp post list <span class="nt">--path</span><span class="o">=</span>web/wp
+</code></pre></div></div>
+
+<h3 id="security-scanning">Security Scanning</h3>
+
+<p>WordPress malware detection and security auditing:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run both scanners (recommended first scan)</span>
+wp eval-file wp-cli/security/scanner-wrapper.php
+
+<span class="c"># Quick weekly check (1-2 seconds)</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Deep monthly scan (2-3 seconds)</span>
+wp eval-file wp-cli/security/scanner-general.php
+
+<span class="c"># Scan specific directory</span>
+php wp-cli/security/scanner-targeted.php /path/to/wordpress
+
+<span class="c"># Remote scan via Trellis</span>
+trellis ssh production <span class="nt">--</span> <span class="s2">"cd /srv/www/example.com/current &amp;&amp; </span><span class="se">\</span><span class="s2">
+  wp eval-file /path/to/scanner-targeted.php"</span>
+</code></pre></div></div>
+
+<p><strong>Execution methods</strong> (when WP-CLI unavailable):</p>
+<ul>
+  <li>Direct PHP: <code class="language-plaintext highlighter-rouge">php scanner-targeted.php /path/to/wordpress</code></li>
+  <li>cPanel/Plesk terminal: Use version-specific PHP binaries (e.g., <code class="language-plaintext highlighter-rouge">/opt/plesk/php/8.2/bin/php</code>)</li>
+  <li>Browser access: Requires IP whitelist, delete files immediately after use (security risk)</li>
+  <li>Local scan: Download WordPress via FTP and scan locally (safest for restricted hosting)</li>
+  <li>See <code class="language-plaintext highlighter-rouge">wp-cli/security/README.md</code> for complete installation and troubleshooting guide</li>
+</ul>
+
+<h3 id="image-optimization">Image Optimization</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert to WebP</span>
+cwebp <span class="nt">-q</span> 80 image.jpg <span class="nt">-o</span> image.jpg.webp
+
+<span class="c"># Convert to AVIF</span>
+cavif <span class="nt">--quality</span> 80 image.jpg
+
+<span class="c"># Batch conversion</span>
+find <span class="nb">.</span> <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.jpg"</span> <span class="nt">-exec</span> cwebp <span class="nt">-q</span> 80 <span class="o">{}</span> <span class="nt">-o</span> <span class="o">{}</span>.webp <span class="se">\;</span>
+</code></pre></div></div>
+
+<h3 id="github-pr-creation">GitHub PR Creation</h3>
+
+<p>The create-pr.sh script uses Claude CLI to generate AI-powered PR descriptions:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Interactive mode with AI description</span>
+./scripts/create-pr.sh
+
+<span class="c"># Non-interactive with arguments</span>
+./scripts/create-pr.sh main <span class="s2">"Add feature name"</span>
+
+<span class="c"># Skip AI generation (0 tokens)</span>
+./scripts/create-pr.sh <span class="nt">--no-ai</span>
+
+<span class="c"># Update existing PR</span>
+./scripts/create-pr.sh <span class="nt">--update</span>
+</code></pre></div></div>
+
+<h2 id="architecture-and-patterns">Architecture and Patterns</h2>
+
+<h3 id="ansible-playbook-structure">Ansible Playbook Structure</h3>
+
+<p>All Trellis integration playbooks follow this pattern:</p>
+
+<ol>
+  <li><strong>Variable validation</strong> - Import <code class="language-plaintext highlighter-rouge">variable-check.yml</code> to validate required <code class="language-plaintext highlighter-rouge">site</code> and <code class="language-plaintext highlighter-rouge">env</code> parameters</li>
+  <li><strong>Host targeting</strong> - Target specific environment: <code class="language-plaintext highlighter-rouge">hosts: web:&amp;</code></li>
+  <li><strong>Remote user</strong> - Use web_user defined in Trellis: <code class="language-plaintext highlighter-rouge">remote_user: ""</code></li>
+  <li><strong>Local delegation</strong> - Tasks for development environment use <code class="language-plaintext highlighter-rouge">delegate_to: localhost</code> and <code class="language-plaintext highlighter-rouge">become: no</code></li>
+  <li><strong>Backup before destructive operations</strong> - Pull/push playbooks create backups automatically</li>
+  <li><strong>Cleanup</strong> - Temporary files removed after operations</li>
+</ol>
+
+<h3 id="file-naming-conventions">File Naming Conventions</h3>
+
+<p>Backup files use timestamped naming:</p>
+
+<ul>
+  <li><strong>Database backups</strong>: <code class="language-plaintext highlighter-rouge">{site}_{env}_{YYYY_MM_DD}_{HH_MM_SS}.sql.gz</code></li>
+  <li><strong>Files backups</strong>: <code class="language-plaintext highlighter-rouge">{site}_{env}_uploads_{YYYY_MM_DD}_{HH_MM_SS}.tar.gz</code></li>
+</ul>
+
+<h3 id="compression-strategy">Compression Strategy</h3>
+
+<ul>
+  <li><strong>Database backups</strong>: Use <code class="language-plaintext highlighter-rouge">.sql.gz</code> (gzip) for single SQL files with direct piping for performance</li>
+  <li><strong>Files backups</strong>: Use <code class="language-plaintext highlighter-rouge">.tar.gz</code> for directory archives to preserve structure</li>
+</ul>
+
+<h3 id="url-management-in-database-operations">URL Management in Database Operations</h3>
+
+<p>Pull/push playbooks automatically handle URL replacement using WP-CLI search-replace:</p>
+
+<ul>
+  <li>Development URLs determined from <code class="language-plaintext highlighter-rouge">local_path</code> configuration</li>
+  <li>Remote URLs extracted from <code class="language-plaintext highlighter-rouge">canonical</code> hostname in site configuration</li>
+  <li>Replacement happens during database import with <code class="language-plaintext highlighter-rouge">wp search-replace</code></li>
+</ul>
+
+<p><strong>CRITICAL: Pattern URLs Get Hardcoded</strong></p>
+
+<p>WordPress pattern files that use <code class="language-plaintext highlighter-rouge">get_template_directory_uri()</code> create <strong>environment-specific URLs that get hardcoded into the database</strong>:</p>
+
+<ul>
+  <li>Pattern created locally: <code class="language-plaintext highlighter-rouge">http://example.test/app/themes/theme-name/patterns/images/image.webp</code></li>
+  <li>Saved to database: URL is hardcoded in <code class="language-plaintext highlighter-rouge">wp_posts.post_content</code></li>
+  <li>Problem: Moving database to production without search-replace causes mixed content warnings</li>
+</ul>
+
+<p><strong>Always verify URLs after database operations:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Audit for dev URLs in production</span>
+ssh web@example.com <span class="s2">"cd /srv/www/example.com/current &amp;&amp; </span><span class="se">\</span><span class="s2">
+  wp db query </span><span class="se">\"</span><span class="s2">SELECT COUNT(*) FROM wp_posts WHERE post_content LIKE '%.test%';</span><span class="se">\"</span><span class="s2"> --path=web/wp"</span>
+
+<span class="c"># If found, run search-replace</span>
+ssh web@example.com <span class="s2">"cd /srv/www/example.com/current &amp;&amp; </span><span class="se">\</span><span class="s2">
+  wp search-replace 'http://example.test' 'https://example.com' --all-tables --precise --path=web/wp"</span>
+</code></pre></div></div>
+
+<p><strong>See also:</strong> <code class="language-plaintext highlighter-rouge">wp-cli/content-creation/PAGE-CREATION.md</code> section “CRITICAL: URL Sanitization Before Production” for detailed workflows.</p>
+
+<h2 id="important-considerations">Important Considerations</h2>
+
+<h3 id="trellis-configuration">Trellis Configuration</h3>
+
+<ul>
+  <li>Site names in Ansible commands must match keys in <code class="language-plaintext highlighter-rouge">group_vars/*/wordpress_sites.yml</code></li>
+  <li>The <code class="language-plaintext highlighter-rouge">local_path</code> variable defines where the Bedrock site is located</li>
+  <li>Environment-specific vault files contain sensitive credentials</li>
+</ul>
+
+<h3 id="php-version-upgrades">PHP Version Upgrades</h3>
+
+<p>When upgrading PHP in Trellis, <strong>must</strong> include these tags:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">php</code> - Installs new version</li>
+  <li><code class="language-plaintext highlighter-rouge">nginx</code> - Updates PHP-FPM socket configuration</li>
+  <li><code class="language-plaintext highlighter-rouge">wordpress-setup</code> - Creates PHP version-specific pool configuration</li>
+  <li><code class="language-plaintext highlighter-rouge">users</code> - <strong>Critical</strong>: Updates sudoers for PHP-FPM reload (deployments fail without this)</li>
+  <li><code class="language-plaintext highlighter-rouge">memcached</code> - Installs version-specific memcached extension</li>
+</ul>
+
+<h3 id="wordpress-block-patterns">WordPress Block Patterns</h3>
+
+<p>Content created with WP-CLI uses WordPress block markup format:</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">&lt;!-- wp:pattern {"slug":"theme-name/pattern-slug"} /--&gt;</span>
+</code></pre></div></div>
+
+<p>When updating post content via WP-CLI:</p>
+<ul>
+  <li>Use heredocs with quoted delimiters: <code class="language-plaintext highlighter-rouge">&lt;&lt; 'EOF'</code></li>
+  <li>For complex content, use Python escaping method</li>
+  <li>Always test locally before updating production</li>
+</ul>
+
+<h3 id="nginx-configuration">Nginx Configuration</h3>
+
+<p>Custom Nginx includes (browser caching, image optimization) must be:</p>
+<ol>
+  <li>Copied to Trellis <code class="language-plaintext highlighter-rouge">nginx-includes/</code> directory</li>
+  <li>Referenced in <code class="language-plaintext highlighter-rouge">wordpress_sites.*.nginx_includes</code> configuration</li>
+  <li>Applied via <code class="language-plaintext highlighter-rouge">trellis provision &lt;environment&gt;</code></li>
+</ol>
+
+<h2 id="development-workflow">Development Workflow</h2>
+
+<h3 id="creating-a-pr-with-ai-description">Creating a PR with AI Description</h3>
+
+<p>The create-pr.sh script is optimized for Claude CLI integration:</p>
+
+<ol>
+  <li>Runs locally, analyzes git history</li>
+  <li>Sends structured prompt to Claude (500-1,500 tokens vs 2,000-10,000 for manual)</li>
+  <li>Generates professional description with grouped sections</li>
+  <li>Creates clickable file links to GitHub</li>
+  <li>Automatically detects change categories</li>
+</ol>
+
+<p>Use <code class="language-plaintext highlighter-rouge">--no-ai</code> flag for simple PRs to avoid token usage.</p>
+
+<h3 id="testing-backup-operations">Testing Backup Operations</h3>
+
+<p>Before running backup operations on production:</p>
+
+<ol>
+  <li>Test on development environment first</li>
+  <li>Verify backup file creation and location</li>
+  <li>For pull/push operations, verify URL replacement is correct</li>
+  <li>Always check disk space before creating backups</li>
+</ol>
+
+<h3 id="image-optimization-workflow">Image Optimization Workflow</h3>
+
+<ol>
+  <li>Resize/crop images with ImageMagick if needed</li>
+  <li>Convert to WebP/AVIF formats</li>
+  <li>Deploy Nginx configuration to serve optimized formats automatically</li>
+  <li>Original images serve as fallback for unsupported browsers</li>
+</ol>
+
+<h2 id="notes-for-ai-assistants">Notes for AI Assistants</h2>
+
+<ul>
+  <li>When suggesting Ansible playbook modifications, maintain the existing error handling and backup patterns</li>
+  <li>Database operations should always use WP-CLI through <code class="language-plaintext highlighter-rouge">wp</code> commands, not direct MySQL</li>
+  <li>Shell scripts should follow the existing pattern of configuration variables at the top</li>
+  <li>Nginx configuration files use Jinja2 templating (<code class="language-plaintext highlighter-rouge">.conf.j2</code> extension)</li>
+  <li>All backup/pull/push operations require both <code class="language-plaintext highlighter-rouge">site</code> and <code class="language-plaintext highlighter-rouge">env</code> parameters</li>
+  <li>The repository contains documentation-only tools; they’re copied into Trellis projects for actual use</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

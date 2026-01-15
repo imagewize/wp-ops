@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speed Optimization</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 17</span>
+    
+    
+  </div>
+
+  <h1>Speed Optimization</h1>
+
+  
+
+  <h1 id="wordpress-speed-optimization-tools">WordPress Speed Optimization Tools</h1>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter focuses on measuring TTFB and using command-line checks to spot performance regressions.</p>
+
+<h2 id="understanding-ttfb-performance">Understanding TTFB Performance</h2>
+
+<p>According to Google’s web.dev documentation at https://web.dev/articles/ttfb:</p>
+
+<blockquote>
+  <p>Because TTFB precedes user-centric metrics such as First Contentful Paint (FCP) and Largest Contentful Paint (LCP), it’s recommended that your server responds to navigation requests quickly enough so that the 75th percentile of users experience an FCP within the “good” threshold. As a rough guide, most sites should strive to have a TTFB of 0.8 seconds or less.</p>
+</blockquote>
+
+<p><strong>Performance Guidelines:</strong></p>
+<ul>
+  <li><strong>Good</strong>: TTFB ≤ 0.8 seconds</li>
+  <li><strong>Needs Improvement</strong>: 0.8 - 1.8 seconds</li>
+  <li><strong>Poor</strong>: &gt; 1.8 seconds</li>
+</ul>
+
+<h2 id="checking-site-speed-with-command-line-tools">Checking Site Speed with Command Line Tools</h2>
+
+<h3 id="using-curl">Using curl</h3>
+
+<p>Check TTFB (Time To First Byte) and response headers:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-w</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">TTFB: %{time_starttransfer}s</span><span class="se">\n</span><span class="s2">"</span> <span class="nt">-o</span> /dev/null <span class="nt">-s</span> <span class="nt">-D</span> - https://domain.nl
+</code></pre></div></div>
+
+<p>Example output:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>HTTP/2 200 
+x-powered-by: PHP/8.0.30
+content-type: text/html; charset=UTF-8
+link: &lt;https://domain.nl/wp-json/&gt;; rel="https://api.w.org/"
+link: &lt;https://domain.nl/wp-json/wp/v2/pages/5292&gt;; rel="alternate"; title="JSON"; type="application/json"
+link: &lt;https://domain.nl/&gt;; rel=shortlink
+etag: "130-1748673482;;;"
+x-litespeed-cache: hit
+content-length: 189768
+date: Sat, 31 May 2025 06:40:05 GMT
+server: LiteSpeed
+x-powered-by: PleskLin
+alt-svc: h3=":443"; ma=2592000, h3-29=":443"; ma=2592000, h3-Q050=":443"; ma=2592000, h3-Q046=":443"; ma=2592000, h3-Q043=":443"; ma=2592000, quic=":443"; ma=2592000; v="43,46"
+
+TTFB: 0.762227s
+</code></pre></div></div>
+
+<h3 id="using-wget">Using wget</h3>
+
+<p>Check response time and save timing information:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget <span class="nt">--server-response</span> <span class="nt">--spider</span> <span class="nt">--timeout</span><span class="o">=</span>30 https://domain.nl 2&gt;&amp;1 | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s2">"(HTTP|Length|time)"</span>
+</code></pre></div></div>
+
+<p>For more detailed timing:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">time </span>wget <span class="nt">--spider</span> <span class="nt">--quiet</span> https://domain.nl
+</code></pre></div></div>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

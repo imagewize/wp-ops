@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Diagnostics"
+chapter_number: 9
+permalink: /chapters/diagnostics/
+---
+
 # Diagnostics
 
 WordPress diagnostic tools for troubleshooting common issues in Trellis/Bedrock environments. These tools help identify and resolve problems with caching, performance, database operations, and WordPress core functionality.

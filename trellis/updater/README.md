@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Updating Trellis"
+chapter_number: 7
+permalink: /chapters/updating-trellis/
+---
+
 # Trellis Updater
 
 A Bash script to safely update your [Roots Trellis](https://roots.io/trellis/) installation while preserving your custom configurations.

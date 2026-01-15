@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Diagnostics</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 9</span>
+    
+    
+  </div>
+
+  <h1>Diagnostics</h1>
+
+  
+
+  <h1 id="diagnostics">Diagnostics</h1>
+
+<p>WordPress diagnostic tools for troubleshooting common issues in Trellis/Bedrock environments. These tools help identify and resolve problems with caching, performance, database operations, and WordPress core functionality.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter explains which diagnostics to run first and how to interpret the results without changing production data.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#installation">Installation</a></li>
+  <li><a href="#available-tools">Available Tools</a>
+    <ul>
+      <li><a href="#transient-diagnostics">Transient Diagnostics</a></li>
+    </ul>
+  </li>
+  <li><a href="#best-practices">Best Practices</a></li>
+  <li><a href="#contributing">Contributing</a></li>
+</ul>
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains diagnostic scripts and tools designed to help debug WordPress issues in both development and production environments. Each tool is standalone and can be deployed independently.</p>
+
+<p><strong>Key Features:</strong></p>
+<ul>
+  <li>Production-safe diagnostic scripts</li>
+  <li>Comprehensive reporting capabilities</li>
+  <li>No database modifications during diagnostics</li>
+  <li>Security-conscious design with access controls</li>
+  <li>Compatible with Trellis/Bedrock WordPress architecture</li>
+</ul>
+
+<h2 id="installation">Installation</h2>
+
+<p>Diagnostic tools are designed to be copied into your WordPress project as needed:</p>
+
+<h3 id="for-wp-cli-scripts">For WP-CLI Scripts</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Copy to your theme or plugin directory</span>
+<span class="nb">cp </span>diagnostic-transients.php /path/to/site/web/app/themes/your-theme/
+
+<span class="c"># Or copy to wp-content root</span>
+<span class="nb">cp </span>diagnostic-transients.php /path/to/site/web/wp-content/
+</code></pre></div></div>
+
+<h3 id="for-browser-based-tools">For Browser-Based Tools</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Upload to wp-content directory (most common)</span>
+scp transient-debug-browser.php user@server:/path/to/site/web/wp-content/
+
+<span class="c"># Or use Trellis deployment</span>
+<span class="c"># Add file to your repository and deploy normally</span>
+</code></pre></div></div>
+
+<h2 id="available-tools">Available Tools</h2>
+
+<h3 id="transient-diagnostics">Transient Diagnostics</h3>
+
+<p>WordPress transients are a way to temporarily store cached data in the database. These tools help diagnose issues when transients aren’t being stored, retrieved, or expired correctly.</p>
+
+<h4 id="1-cli-transient-diagnostic-diagnostic-transientsphp">1. CLI Transient Diagnostic (<code class="language-plaintext highlighter-rouge">diagnostic-transients.php</code>)</h4>
+
+<p><strong>Purpose:</strong> Run comprehensive transient diagnostics via WP-CLI on development or production servers.</p>
+
+<p><strong>Usage:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># From Bedrock site root (development)</span>
+wp eval-file web/app/themes/your-theme/diagnostic-transients.php <span class="nt">--path</span><span class="o">=</span>web/wp
+
+<span class="c"># Via Trellis SSH</span>
+trellis ssh production
+<span class="nb">cd</span> /srv/www/example.com/current
+wp eval-file web/app/themes/your-theme/diagnostic-transients.php <span class="nt">--path</span><span class="o">=</span>web/wp
+</code></pre></div></div>
+
+<p><strong>What It Tests:</strong></p>
+<ol>
+  <li><strong>Transient Storage</strong> - Verifies set/get operations work correctly</li>
+  <li><strong>API Cache Status</strong> - Checks specific cache (api_properties_list) existence and expiration</li>
+  <li><strong>Object Cache Configuration</strong> - Detects external cache systems (Redis, Memcached, LiteSpeed)</li>
+  <li><strong>Database Transient Check</strong> - Verifies transients exist in wp_options table</li>
+  <li><strong>Transient Cleanup Cron</strong> - Lists scheduled cleanup jobs</li>
+  <li><strong>Business Hours Logic</strong> - Tests time-based cache lifetime calculations</li>
+  <li><strong>Recent Activity</strong> - Shows transients created in the last hour</li>
+</ol>
+
+<p><strong>Output:</strong> Terminal-formatted diagnostic report with recommendations</p>
+
+<p><strong>When to Use:</strong></p>
+<ul>
+  <li>Transients not persisting between requests</li>
+  <li>Cache appears to be cleared unexpectedly</li>
+  <li>API data not being cached properly</li>
+  <li>After enabling/disabling object cache plugins</li>
+</ul>
+
+<h4 id="2-browser-transient-debugger-transient-debug-browserphp">2. Browser Transient Debugger (<code class="language-plaintext highlighter-rouge">transient-debug-browser.php</code>)</h4>
+
+<p><strong>Purpose:</strong> Web-based diagnostic tool for production servers where WP-CLI access may be limited or when you need to share results with non-technical stakeholders.</p>
+
+<p><strong>Setup:</strong></p>
+<ol>
+  <li>Upload file to <code class="language-plaintext highlighter-rouge">wp-content/</code> directory</li>
+  <li>Edit the file and change the <code class="language-plaintext highlighter-rouge">DEBUG_SECRET</code> constant to a unique value</li>
+  <li>Access via browser: <code class="language-plaintext highlighter-rouge">https://example.com/wp-content/transient-debug-browser.php?secret=your_secret</code></li>
+</ol>
+
+<p><strong>Security:</strong></p>
+<ul>
+  <li>Requires secret token in URL query parameter</li>
+  <li>Change <code class="language-plaintext highlighter-rouge">DEBUG_SECRET</code> constant before deployment</li>
+  <li>Delete file after diagnostics are complete</li>
+  <li>Returns HTML output (not visible in page source to casual observers)</li>
+</ul>
+
+<p><strong>What It Tests:</strong></p>
+<ol>
+  <li><strong>Basic Transient Functionality</strong> - Real-time set/get/delete operations</li>
+  <li><strong>Database Configuration</strong> - MySQL settings that affect performance</li>
+  <li><strong>wp_options Table Analysis</strong> - Table size, transient count, autoload size</li>
+  <li><strong>Large Transient Test</strong> - Tests 1KB, 10KB, 100KB, and 1MB transients</li>
+  <li><strong>API Properties Cache</strong> - Checks your specific cache implementation</li>
+  <li><strong>Object Cache &amp; Plugins</strong> - Detects cache plugins and configurations</li>
+  <li><strong>Server Environment</strong> - PHP, MySQL, WordPress versions</li>
+  <li><strong>Recent Transients</strong> - Last 20 transients in database</li>
+</ol>
+
+<p><strong>Output:</strong> Styled HTML report with color-coded results, tables, and actionable recommendations</p>
+
+<p><strong>When to Use:</strong></p>
+<ul>
+  <li>Production environment without easy WP-CLI access</li>
+  <li>Need to share diagnostic results with clients or team members</li>
+  <li>Want detailed database performance metrics</li>
+  <li>Testing after server configuration changes</li>
+</ul>
+
+<h3 id="common-issues-diagnosed">Common Issues Diagnosed</h3>
+
+<p>Both tools help identify:</p>
+
+<ul>
+  <li><strong>External object cache conflicts</strong> - LiteSpeed, Redis, Memcached interfering with transients</li>
+  <li><strong>Database storage failures</strong> - Transients not being written to wp_options table</li>
+  <li><strong>Expired cache issues</strong> - Transients expiring too quickly or not at all</li>
+  <li><strong>Plugin conflicts</strong> - Cache management plugins clearing transients unexpectedly</li>
+  <li><strong>Large data storage problems</strong> - MySQL packet size limits preventing large transient storage</li>
+  <li><strong>Autoload bloat</strong> - Too many autoloaded options slowing down WordPress</li>
+</ul>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<h3 id="security">Security</h3>
+<ul>
+  <li><strong>Always</strong> change default secret tokens in browser-based tools</li>
+  <li><strong>Delete</strong> diagnostic files from production after use</li>
+  <li><strong>Never</strong> commit files with real secrets to version control</li>
+  <li><strong>Restrict</strong> access to diagnostic URLs (use .htaccess or Nginx rules if leaving in place)</li>
+</ul>
+
+<h3 id="performance">Performance</h3>
+<ul>
+  <li>Run diagnostics during low-traffic periods when possible</li>
+  <li>Browser diagnostic creates temporary test transients but cleans them up</li>
+  <li>CLI diagnostic is lightweight and safe for production use</li>
+</ul>
+
+<h3 id="workflow">Workflow</h3>
+<ol>
+  <li><strong>Start with CLI diagnostic</strong> - Faster, more detailed for developers</li>
+  <li><strong>Use browser diagnostic</strong> - When you need shareable results or detailed DB analysis</li>
+  <li><strong>Document findings</strong> - Copy output to your issue tracker or documentation</li>
+  <li><strong>Test fixes</strong> - Re-run diagnostic after implementing solutions</li>
+</ol>
+
+<h3 id="interpreting-results">Interpreting Results</h3>
+
+<p><strong>Green (✅)</strong> - Test passed, working as expected
+<strong>Yellow (⚠️)</strong> - Warning, may indicate potential issues
+<strong>Red (❌)</strong> - Critical failure, requires immediate attention</p>
+
+<h2 id="contributing">Contributing</h2>
+
+<p>When adding new diagnostic tools to this directory:</p>
+
+<ol>
+  <li><strong>Follow naming convention:</strong> <code class="language-plaintext highlighter-rouge">diagnostic-{feature}.php</code> for CLI tools, <code class="language-plaintext highlighter-rouge">{feature}-debug-browser.php</code> for web tools</li>
+  <li><strong>Include security:</strong> Add access controls for browser-based tools</li>
+  <li><strong>Document thoroughly:</strong> Add inline comments explaining each test</li>
+  <li><strong>Update this README:</strong> Add tool description under “Available Tools”</li>
+  <li><strong>Test on production:</strong> Verify tool is safe and doesn’t modify data</li>
+  <li><strong>Provide examples:</strong> Show expected output in documentation</li>
+</ol>
+
+<h3 id="planned-additions">Planned Additions</h3>
+
+<p>Future diagnostic tools may include:</p>
+<ul>
+  <li>Database performance diagnostics</li>
+  <li>Image optimization verification</li>
+  <li>Nginx configuration testing</li>
+  <li>SSL/TLS certificate validation</li>
+  <li>WordPress security audit tools</li>
+  <li>Cron job monitoring</li>
+  <li>Plugin conflict detection</li>
+  <li>Memory usage analysis</li>
+</ul>
+
+<hr />
+
+<p><strong>Need Help?</strong></p>
+
+<p>These tools are designed to help identify problems, not fix them automatically. If diagnostic reports show issues:</p>
+
+<ol>
+  <li>Review the recommendations in the tool output</li>
+  <li>Check WordPress debug logs: <code class="language-plaintext highlighter-rouge">web/app/debug.log</code></li>
+  <li>Review server error logs: <code class="language-plaintext highlighter-rouge">/var/log/nginx/error.log</code></li>
+  <li>Consult Trellis documentation: https://roots.io/trellis/docs/</li>
+  <li>Search WordPress support forums for specific error messages</li>
+</ol>
+
+<p>For issues with these diagnostic tools themselves, open an issue in this repository.</p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

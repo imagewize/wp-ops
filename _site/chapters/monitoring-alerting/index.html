@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Monitoring and Alerting</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 5</span>
+    
+    
+  </div>
+
+  <h1>Monitoring and Alerting</h1>
+
+  
+
+  <h1 id="nginx-log-monitoring">Nginx Log Monitoring</h1>
+
+<p>Tools and documentation for monitoring WordPress/Trellis sites via Nginx access and error logs. Includes traffic analysis, security monitoring, and detection of malicious actors.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter shows how to observe live traffic and detect threats using Nginx logs and supporting scripts.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains scripts and Ansible playbooks for:</p>
+
+<ul>
+  <li><strong>Traffic Analysis</strong> - Monitor legitimate traffic patterns, popular content, user agents</li>
+  <li><strong>Security Monitoring</strong> - Detect bad actors, attack patterns, suspicious requests</li>
+  <li><strong>Automated Alerts</strong> - Configure monitoring tasks that run via cron</li>
+  <li><strong>Log Analysis</strong> - Parse and analyze Nginx logs for insights</li>
+</ul>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+  <li>Trellis-managed WordPress site with Nginx</li>
+  <li>SSH access to server (root user recommended for log access)</li>
+  <li>SSH key-based authentication configured (password authentication should be disabled)</li>
+  <li>For Ansible playbooks: Trellis environment configured</li>
+</ul>
+
+<h3 id="log-file-locations">Log File Locations</h3>
+
+<p>Trellis can be configured to store Nginx logs in two ways:</p>
+
+<p><strong>Per-site logs (Trellis default):</strong></p>
+<ul>
+  <li>Access log: <code class="language-plaintext highlighter-rouge">/srv/www/example.com/logs/access.log</code></li>
+  <li>Error log: <code class="language-plaintext highlighter-rouge">/srv/www/example.com/logs/error.log</code></li>
+</ul>
+
+<p><strong>Global logs (alternative configuration):</strong></p>
+<ul>
+  <li>Access log: <code class="language-plaintext highlighter-rouge">/var/log/nginx/access.log</code></li>
+  <li>Error log: <code class="language-plaintext highlighter-rouge">/var/log/nginx/error.log</code></li>
+</ul>
+
+<p>The Ansible playbooks in this repository <strong>default to per-site logs</strong> but can be overridden with <code class="language-plaintext highlighter-rouge">-e log_file=/path/to/log</code>. The shell scripts accept the log path as the first argument.</p>
+
+<h2 id="quick-start">Quick Start</h2>
+
+<h3 id="manual-log-analysis">Manual Log Analysis</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># SSH to server as root</span>
+ssh root@example.com
+
+<span class="c"># For per-site logs (Trellis default):</span>
+<span class="nv">LOG</span><span class="o">=</span><span class="s2">"/srv/www/example.com/logs/access.log"</span>
+
+<span class="c"># OR for global logs:</span>
+<span class="c"># LOG="/var/log/nginx/access.log"</span>
+
+<span class="c"># View recent successful requests (excluding known bots)</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 200'</span> <span class="s2">"</span><span class="nv">$LOG</span><span class="s2">"</span> | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'updown.io|bot|spider|crawl|Geedo|Semrush|DuckDuckBot'</span>
+
+<span class="c"># View recent 404 errors</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 404'</span> <span class="s2">"</span><span class="nv">$LOG</span><span class="s2">"</span>
+
+<span class="c"># View recent 50x server errors</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 5[0-9][0-9]'</span> <span class="s2">"</span><span class="nv">$LOG</span><span class="s2">"</span>
+</code></pre></div></div>
+
+<p><strong>Note on Root Access:</strong> These commands require root privileges to read log files. Using the root user with SSH key authentication is the recommended approach. <strong>Root password authentication should always be disabled</strong> for security. If you prefer not to use root SSH access, see the “Alternative Access Methods” section below.</p>
+
+<h3 id="using-monitoring-scripts">Using Monitoring Scripts</h3>
+
+<p>Copy scripts to your server and run them:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Copy scripts to server</span>
+scp monitoring/scripts/<span class="k">*</span>.sh root@example.com:/root/
+
+<span class="c"># SSH and run</span>
+ssh root@example.com
+<span class="nb">cd</span> /root
+<span class="nb">chmod</span> +x <span class="k">*</span>.sh
+
+<span class="c"># For per-site logs (default):</span>
+./traffic-monitor.sh /srv/www/example.com/logs/access.log
+./security-monitor.sh /srv/www/example.com/logs/access.log
+
+<span class="c"># OR for global logs:</span>
+<span class="c"># ./traffic-monitor.sh /var/log/nginx/access.log</span>
+<span class="c"># ./security-monitor.sh /var/log/nginx/access.log</span>
+</code></pre></div></div>
+
+<h3 id="using-ansible-playbooks">Using Ansible Playbooks</h3>
+
+<p>Run from your Trellis directory:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run traffic analysis report (uses per-site logs by default)</span>
+ansible-playbook monitoring/trellis/traffic-report.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Run security scan</span>
+ansible-playbook monitoring/trellis/security-scan.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Setup automated monitoring (cron jobs)</span>
+ansible-playbook monitoring/trellis/setup-monitoring.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Override to use global logs:</span>
+<span class="c"># ansible-playbook monitoring/trellis/traffic-report.yml -e site=example.com -e env=production -e log_file=/var/log/nginx/access.log</span>
+</code></pre></div></div>
+
+<p><strong>Note:</strong> The playbooks default to per-site logs at <code class="language-plaintext highlighter-rouge">/srv/www/Jekyll::Drops::SiteDrop/logs/access.log</code>. Override with <code class="language-plaintext highlighter-rouge">-e log_file=/path/to/log</code> if your Trellis uses global logs.</p>
+
+<h2 id="alternative-access-methods">Alternative Access Methods</h2>
+
+<p>While we recommend using root SSH access with key-based authentication, you can use alternative approaches if you prefer:</p>
+
+<h3 id="option-1-use-sudo-with-existing-user">Option 1: Use sudo with existing user</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># SSH as web user and use sudo</span>
+ssh web@example.com
+<span class="nb">sudo</span> ./traffic-monitor.sh
+<span class="nb">sudo</span> ./security-monitor.sh
+</code></pre></div></div>
+
+<p>This requires entering the password each time unless you configure passwordless sudo (see below).</p>
+
+<h3 id="option-2-add-web-user-to-adm-group">Option 2: Add web user to adm group</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">adm</code> group has read access to log files. This is the cleanest non-root solution:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># As root, add web user to adm group</span>
+<span class="nb">sudo </span>usermod <span class="nt">-aG</span> adm web
+
+<span class="c"># Log out and back in for group membership to take effect</span>
+<span class="nb">exit
+</span>ssh web@example.com
+
+<span class="c"># Now scripts can read logs without sudo</span>
+./traffic-monitor.sh
+./security-monitor.sh
+</code></pre></div></div>
+
+<h3 id="option-3-configure-passwordless-sudo-not-recommended">Option 3: Configure passwordless sudo (not recommended)</h3>
+
+<p>You can grant specific sudo permissions without requiring a password. This requires server configuration changes:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create sudoers file for web user</span>
+<span class="nb">sudo </span>visudo <span class="nt">-f</span> /etc/sudoers.d/web-monitoring
+
+<span class="c"># Add these lines:</span>
+<span class="c"># web ALL=(ALL) NOPASSWD: /usr/bin/awk * /var/log/nginx/access.log*</span>
+<span class="c"># web ALL=(ALL) NOPASSWD: /usr/bin/grep * /var/log/nginx/access.log*</span>
+<span class="c"># web ALL=(ALL) NOPASSWD: /bin/cat /var/log/nginx/access.log*</span>
+</code></pre></div></div>
+
+<p><strong>Note:</strong> This approach is complex and error-prone. The <code class="language-plaintext highlighter-rouge">adm</code> group method (Option 2) is cleaner.</p>
+
+<h3 id="security-considerations">Security Considerations</h3>
+
+<ul>
+  <li><strong>Root password authentication:</strong> Must always be disabled (<code class="language-plaintext highlighter-rouge">PermitRootLogin without-password</code> or <code class="language-plaintext highlighter-rouge">PermitRootLogin prohibit-password</code> in <code class="language-plaintext highlighter-rouge">/etc/ssh/sshd_config</code>)</li>
+  <li><strong>SSH key-based authentication:</strong> Required for all users with SSH access</li>
+  <li><strong>Root SSH access:</strong> Safe when using SSH keys; common practice for system administration</li>
+  <li><strong>Regular user with sudo:</strong> More granular but requires additional configuration</li>
+</ul>
+
+<p>For production servers using SSH key authentication, root access is the most straightforward approach for system monitoring tasks.</p>
+
+<h2 id="traffic-analysis">Traffic Analysis</h2>
+
+<h3 id="monitoring-legitimate-traffic">Monitoring Legitimate Traffic</h3>
+
+<p><strong>What to Monitor:</strong></p>
+<ul>
+  <li>Page views and popular content</li>
+  <li>Geographic distribution</li>
+  <li>Traffic sources (direct, referral, search)</li>
+  <li>Performance metrics (response times)</li>
+  <li>User engagement patterns</li>
+</ul>
+
+<p><strong>Commands:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Top 10 most requested pages (excluding bots, static files)</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 200'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'updown.io|bot|spider|crawl|Geedo|Semrush|DuckDuckBot'</span> <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|svg)'</span> <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{print $7}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-10</span>
+
+<span class="c"># Unique visitor count (by IP, excluding bots)</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 200'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'updown.io|bot|spider|crawl|Geedo|Semrush|DuckDuckBot'</span> <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{print $1}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-u</span> <span class="se">\</span>
+  | <span class="nb">wc</span> <span class="nt">-l</span>
+
+<span class="c"># Traffic by hour of day</span>
+<span class="nb">awk</span> <span class="s1">'{print $4}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">cut</span> <span class="nt">-c</span> 14-15 <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-n</span>
+
+<span class="c"># Response time statistics (if logging $request_time)</span>
+<span class="nb">awk</span> <span class="s1">'{print $NF}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'^[0-9]+\.[0-9]+$'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-n</span> <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{
+      count++;
+      sum+=$1;
+      values[count]=$1
+    }
+    END {
+      print "Avg:", sum/count;
+      print "Min:", values[1];
+      print "Max:", values[count];
+      print "Median:", values[int(count/2)]
+    }'</span>
+
+<span class="c"># Browser/User agent distribution (top 10)</span>
+<span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'"'</span> <span class="s1">'{print $6}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'bot|spider|crawl|Geedo|Semrush|DuckDuckBot|updown.io'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-10</span>
+</code></pre></div></div>
+
+<h3 id="integration-with-updownio">Integration with updown.io</h3>
+
+<p>Since you already use updown.io for uptime monitoring, Nginx logs can complement this with:</p>
+
+<ul>
+  <li><strong>Detailed error analysis</strong> - updown.io detects downtime; logs show the cause</li>
+  <li><strong>Performance trends</strong> - Compare updown.io response times with server-side metrics</li>
+  <li><strong>User impact</strong> - Correlate downtime windows with actual user traffic</li>
+  <li><strong>False positive verification</strong> - Confirm if updown.io alerts match real user issues</li>
+</ul>
+
+<h2 id="security-monitoring">Security Monitoring</h2>
+
+<h3 id="detecting-bad-actors">Detecting Bad Actors</h3>
+
+<p><strong>Common Attack Patterns:</strong></p>
+<ul>
+  <li>High request rates from single IP (DoS/DDoS)</li>
+  <li>Requests for common exploit paths (<code class="language-plaintext highlighter-rouge">/wp-login.php</code>, <code class="language-plaintext highlighter-rouge">/xmlrpc.php</code>, <code class="language-plaintext highlighter-rouge">/wp-admin</code>)</li>
+  <li>SQL injection attempts (query strings with <code class="language-plaintext highlighter-rouge">UNION</code>, <code class="language-plaintext highlighter-rouge">SELECT</code>, etc.)</li>
+  <li>Directory traversal attempts (<code class="language-plaintext highlighter-rouge">../</code>, <code class="language-plaintext highlighter-rouge">%2e%2e/</code>)</li>
+  <li>404 errors from scanning tools</li>
+  <li>User agent spoofing or missing user agents</li>
+</ul>
+
+<p><strong>Commands:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># IPs with most requests (potential scrapers/attackers)</span>
+<span class="nb">awk</span> <span class="s1">'{print $1}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-20</span>
+
+<span class="c"># IPs hitting wp-login.php repeatedly (brute force attempts)</span>
+<span class="nb">grep</span> <span class="s1">'wp-login.php'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{print $1}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-10</span>
+
+<span class="c"># IPs generating most 404 errors (scanners)</span>
+<span class="nb">grep</span> <span class="s1">'HTTP/1.[01]" 404'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{print $1}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-10</span>
+
+<span class="c"># SQL injection attempts</span>
+<span class="nb">grep</span> <span class="nt">-iE</span> <span class="s2">"union.*select|concat.*</span><span class="se">\(</span><span class="s2">|script&gt;|javascript:"</span> /var/log/nginx/access.log
+
+<span class="c"># Directory traversal attempts</span>
+<span class="nb">grep</span> <span class="nt">-E</span> <span class="s2">"</span><span class="se">\.\.</span><span class="s2">/|%2e%2e|%252e"</span> /var/log/nginx/access.log
+
+<span class="c"># Suspicious user agents (empty or suspicious)</span>
+<span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'"'</span> <span class="s1">'$6 == "" || $6 == "-" {print $0}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-20</span>
+
+<span class="c"># xmlrpc.php attacks (WordPress pingback/trackback abuse)</span>
+<span class="nb">grep</span> <span class="s1">'xmlrpc.php'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{print $1, $7, $9}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span>
+
+<span class="c"># Check for referrer spam</span>
+<span class="nb">awk</span> <span class="nt">-F</span><span class="s1">'"'</span> <span class="s1">'{print $4}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="nt">-vE</span> <span class="s1">'^-$|^$'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-20</span>
+</code></pre></div></div>
+
+<h3 id="response-actions">Response Actions</h3>
+
+<p><strong>When you detect a bad actor:</strong></p>
+
+<ol>
+  <li><strong>Verify</strong> - Ensure it’s actually malicious, not a legitimate crawler</li>
+  <li><strong>Block at Nginx</strong> - Add to deny list in Trellis configuration</li>
+  <li><strong>Use fail2ban</strong> - Automate blocking of repeated offenders</li>
+  <li><strong>Report</strong> - For severe attacks, report to hosting provider or abuse contacts</li>
+</ol>
+
+<p><strong>Blocking IP in Trellis:</strong></p>
+
+<p>Edit <code class="language-plaintext highlighter-rouge">group_vars/&lt;environment&gt;/wordpress_sites.yml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">wordpress_sites</span><span class="pi">:</span>
+  <span class="na">example.com</span><span class="pi">:</span>
+    <span class="na">nginx_includes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s2">"</span><span class="s">/includes.d/deny-ips.conf"</span>
+</code></pre></div></div>
+
+<p>Create <code class="language-plaintext highlighter-rouge">roles/wordpress-setup/templates/deny-ips.conf.j2</code>:</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Blocked IPs</span>
+<span class="k">deny</span> <span class="mf">192.168</span><span class="s">.1.100</span><span class="p">;</span>
+<span class="k">deny</span> <span class="mf">203.0</span><span class="s">.113.0/24</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Then provision: <code class="language-plaintext highlighter-rouge">trellis provision production</code></p>
+
+<h2 id="automated-monitoring-with-ansible">Automated Monitoring with Ansible</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">setup-monitoring.yml</code> playbook configures automated monitoring tasks:</p>
+
+<p><strong>Features:</strong></p>
+<ul>
+  <li>Daily traffic reports sent via email</li>
+  <li>Real-time security alerts for attack patterns</li>
+  <li>Weekly summaries of top IPs, pages, errors</li>
+  <li>Automatic log rotation checks</li>
+</ul>
+
+<p><strong>Setup:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Configure email in playbook vars</span>
+ansible-playbook monitoring/trellis/setup-monitoring.yml <span class="se">\</span>
+  <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="se">\</span>
+  <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production <span class="se">\</span>
+  <span class="nt">-e</span> <span class="nv">alert_email</span><span class="o">=</span>admin@example.com
+</code></pre></div></div>
+
+<p><strong>What it creates:</strong></p>
+<ul>
+  <li>Cron job for daily traffic analysis</li>
+  <li>Cron job for security scanning (every 6 hours)</li>
+  <li>Email alerts for suspicious activity</li>
+  <li>Log rotation verification</li>
+</ul>
+
+<h2 id="log-format-configuration">Log Format Configuration</h2>
+
+<p>Trellis default Nginx log format (in <code class="language-plaintext highlighter-rouge">/etc/nginx/nginx.conf</code>):</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">log_format</span> <span class="s">main</span> <span class="s">'</span><span class="nv">$remote_addr</span> <span class="s">-</span> <span class="nv">$remote_user</span> <span class="s">[</span><span class="nv">$time_local</span><span class="s">]</span> <span class="s">"</span><span class="nv">$request</span><span class="s">"</span> <span class="s">'</span>
+                <span class="s">'</span><span class="nv">$status</span> <span class="nv">$body_bytes_sent</span> <span class="s">"</span><span class="nv">$http_referer</span><span class="s">"</span> <span class="s">'</span>
+                <span class="s">'"</span><span class="nv">$http_user_agent</span><span class="s">"</span> <span class="s">"</span><span class="nv">$http_x_forwarded_for</span><span class="s">"'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p><strong>Enhanced format with response time:</strong></p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">log_format</span> <span class="s">detailed</span> <span class="s">'</span><span class="nv">$remote_addr</span> <span class="s">-</span> <span class="nv">$remote_user</span> <span class="s">[</span><span class="nv">$time_local</span><span class="s">]</span> <span class="s">"</span><span class="nv">$request</span><span class="s">"</span> <span class="s">'</span>
+                    <span class="s">'</span><span class="nv">$status</span> <span class="nv">$body_bytes_sent</span> <span class="s">"</span><span class="nv">$http_referer</span><span class="s">"</span> <span class="s">'</span>
+                    <span class="s">'"</span><span class="nv">$http_user_agent</span><span class="s">"</span> <span class="s">"</span><span class="nv">$http_x_forwarded_for</span><span class="s">"</span> <span class="s">'</span>
+                    <span class="s">'rt=</span><span class="nv">$request_time</span> <span class="s">uct="</span><span class="nv">$upstream_connect_time</span><span class="s">"</span> <span class="s">'</span>
+                    <span class="s">'uht="</span><span class="nv">$upstream_header_time</span><span class="s">"</span> <span class="s">urt="</span><span class="nv">$upstream_response_time</span><span class="s">"'</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>To use enhanced logging, modify Trellis <code class="language-plaintext highlighter-rouge">roles/nginx/templates/nginx.conf.j2</code> and provision.</p>
+
+<h2 id="log-analysis-tools">Log Analysis Tools</h2>
+
+<h3 id="goaccess-real-time-web-log-analyzer">GoAccess (Real-time Web Log Analyzer)</h3>
+
+<p>Install on server:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt-get <span class="nb">install </span>goaccess
+</code></pre></div></div>
+
+<p>Usage:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Real-time terminal dashboard</span>
+goaccess /var/log/nginx/access.log <span class="nt">-c</span>
+
+<span class="c"># Generate HTML report</span>
+goaccess /var/log/nginx/access.log <span class="nt">-o</span> /var/www/report.html <span class="nt">--log-format</span><span class="o">=</span>COMBINED
+
+<span class="c"># Real-time HTML dashboard</span>
+goaccess /var/log/nginx/access.log <span class="nt">-o</span> /var/www/report.html <span class="nt">--log-format</span><span class="o">=</span>COMBINED <span class="nt">--real-time-html</span>
+</code></pre></div></div>
+
+<h3 id="awstats">AWStats</h3>
+
+<p>More heavyweight option for detailed statistics:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install</span>
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>awstats
+
+<span class="c"># Configure for site</span>
+<span class="nb">sudo cp</span> /etc/awstats/awstats.conf /etc/awstats/awstats.example.com.conf
+
+<span class="c"># Generate stats</span>
+<span class="nb">sudo</span> /usr/lib/cgi-bin/awstats.pl <span class="nt">-config</span><span class="o">=</span>example.com <span class="nt">-update</span>
+</code></pre></div></div>
+
+<h2 id="fail2ban-integration">Fail2Ban Integration</h2>
+
+<p>Automate blocking of bad actors with fail2ban:</p>
+
+<p><strong>Install:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>apt-get <span class="nb">install </span>fail2ban
+</code></pre></div></div>
+
+<p><strong>WordPress-specific filters:</strong></p>
+
+<p>Create <code class="language-plaintext highlighter-rouge">/etc/fail2ban/filter.d/wordpress.conf</code>:</p>
+
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[Definition]</span><span class="w">
+</span><span class="py">failregex</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">^&lt;HOST&gt; .* "POST /wp-login.php</span>
+<span class="w">            </span><span class="na">^&lt;HOST&gt;</span><span class="w"> </span><span class="na">.*</span><span class="w"> </span><span class="na">"POST</span><span class="w"> </span><span class="na">/xmlrpc.php</span><span class="w">
+            </span><span class="na">^&lt;HOST&gt;</span><span class="w"> </span><span class="na">.*</span><span class="w"> </span><span class="na">"GET</span><span class="w"> </span><span class="na">/wp-admin</span><span class="w">
+</span><span class="py">ignoreregex</span><span class="w"> </span><span class="p">=</span>
+</code></pre></div></div>
+
+<p>Create <code class="language-plaintext highlighter-rouge">/etc/fail2ban/jail.d/wordpress.conf</code>:</p>
+
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nn">[wordpress]</span><span class="w">
+</span><span class="py">enabled</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">true</span>
+<span class="py">filter</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">wordpress</span>
+<span class="py">logpath</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">/var/log/nginx/access.log</span>
+<span class="py">maxretry</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">5</span>
+<span class="py">bantime</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">3600</span>
+<span class="py">findtime</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">600</span>
+<span class="py">port</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">http,https</span>
+</code></pre></div></div>
+
+<p><strong>Ansible playbook for fail2ban setup coming soon</strong></p>
+
+<h2 id="log-retention">Log Retention</h2>
+
+<p>Nginx logs rotate via logrotate (configured in Trellis):</p>
+
+<p><strong>Default retention:</strong> 14 days</p>
+
+<p><strong>Check rotation config:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat</span> /etc/logrotate.d/nginx
+</code></pre></div></div>
+
+<p><strong>Typical configuration:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/var/log/nginx/*.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 0640 www-data adm
+    sharedscripts
+    prerotate
+        if [ -d /etc/logrotate.d/httpd-prerotate ]; then \
+            run-parts /etc/logrotate.d/httpd-prerotate; \
+        fi
+    endscript
+    postrotate
+        invoke-rc.d nginx rotate &gt;/dev/null 2&gt;&amp;1
+    endscript
+}
+</code></pre></div></div>
+
+<p><strong>Long-term archival:</strong></p>
+
+<p>For compliance or historical analysis, archive compressed logs to S3/storage:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Manual backup</span>
+<span class="nb">tar</span> <span class="nt">-czf</span> nginx-logs-<span class="si">$(</span><span class="nb">date</span> +%Y%m<span class="si">)</span>.tar.gz /var/log/nginx/<span class="k">*</span>.log.<span class="k">*</span>.gz
+aws s3 <span class="nb">cp </span>nginx-logs-<span class="si">$(</span><span class="nb">date</span> +%Y%m<span class="si">)</span>.tar.gz s3://backups/logs/
+
+<span class="c"># See backup playbooks for automated archival</span>
+</code></pre></div></div>
+
+<h2 id="performance-monitoring">Performance Monitoring</h2>
+
+<h3 id="response-time-tracking">Response Time Tracking</h3>
+
+<p>If using enhanced log format with <code class="language-plaintext highlighter-rouge">$request_time</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Average response time by endpoint</span>
+<span class="nb">awk</span> <span class="s1">'{print $(NF-4), $7}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="s1">'^rt='</span> <span class="se">\</span>
+  | <span class="nb">sed</span> <span class="s1">'s/rt=//'</span> <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'{times[$2]+=$1; count[$2]++}
+         END {for (url in times) print times[url]/count[url], url}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span> <span class="se">\</span>
+  | <span class="nb">head</span> <span class="nt">-20</span>
+
+<span class="c"># Slow requests (&gt; 1 second)</span>
+<span class="nb">awk</span> <span class="s1">'{print $(NF-4), $7, $9}'</span> /var/log/nginx/access.log <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="s1">'^rt='</span> <span class="se">\</span>
+  | <span class="nb">sed</span> <span class="s1">'s/rt=//'</span> <span class="se">\</span>
+  | <span class="nb">awk</span> <span class="s1">'$1 &gt; 1.0 {print $0}'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span>
+</code></pre></div></div>
+
+<h3 id="php-fpm-slow-log">PHP-FPM Slow Log</h3>
+
+<p>Monitor slow PHP execution:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Location: /var/log/php{VERSION}-fpm-slow.log</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /var/log/php8.2-fpm-slow.log
+
+<span class="c"># Analyze slow scripts</span>
+<span class="nb">grep</span> <span class="s1">'pool www'</span> /var/log/php8.2-fpm-slow.log <span class="nt">-A</span> 10 <span class="se">\</span>
+  | <span class="nb">grep</span> <span class="s1">'script_filename'</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="se">\</span>
+  | <span class="nb">uniq</span> <span class="nt">-c</span> <span class="se">\</span>
+  | <span class="nb">sort</span> <span class="nt">-rn</span>
+</code></pre></div></div>
+
+<h2 id="complementing-updownio">Complementing updown.io</h2>
+
+<p><strong>updown.io strengths:</strong></p>
+<ul>
+  <li>External perspective (detects network issues)</li>
+  <li>Simple uptime percentage tracking</li>
+  <li>SSL certificate monitoring</li>
+  <li>Multi-location checks</li>
+</ul>
+
+<p><strong>Nginx logs complement with:</strong></p>
+<ul>
+  <li>Internal server perspective</li>
+  <li>Detailed error causes (500 errors, timeouts)</li>
+  <li>User impact beyond uptime (slow responses, 404s)</li>
+  <li>Attack/abuse detection</li>
+  <li>Traffic patterns and trends</li>
+</ul>
+
+<p><strong>Workflow:</strong></p>
+<ol>
+  <li>updown.io alerts you to downtime</li>
+  <li>Check Nginx logs for error details: <code class="language-plaintext highlighter-rouge">grep 'HTTP/1.[01]" 5[0-9][0-9]' /var/log/nginx/access.log | tail -50</code></li>
+  <li>Check error log: <code class="language-plaintext highlighter-rouge">tail -50 /var/log/nginx/error.log</code></li>
+  <li>Check PHP-FPM log if applicable: <code class="language-plaintext highlighter-rouge">tail -50 /var/log/php*-fpm.log</code></li>
+  <li>Correlate timing with deployment, traffic spike, or attack</li>
+</ol>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<ol>
+  <li><strong>Regular Review</strong> - Check logs weekly, even without alerts</li>
+  <li><strong>Baseline Understanding</strong> - Know your normal traffic patterns to spot anomalies</li>
+  <li><strong>Retention Policy</strong> - Archive important logs before rotation deletes them</li>
+  <li><strong>Alert Fatigue</strong> - Tune monitoring to avoid false positives</li>
+  <li><strong>Privacy</strong> - Be mindful of GDPR/privacy when storing/analyzing user data</li>
+  <li><strong>Automation</strong> - Use Ansible playbooks to standardize monitoring across sites</li>
+  <li><strong>Multi-layer</strong> - Combine updown.io (external) + Nginx logs (internal) + application logs</li>
+</ol>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="empty-or-missing-logs">Empty or Missing Logs</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check Nginx is logging</span>
+<span class="nb">sudo </span>nginx <span class="nt">-T</span> | <span class="nb">grep </span>access_log
+
+<span class="c"># Check file permissions</span>
+<span class="nb">ls</span> <span class="nt">-la</span> /var/log/nginx/
+
+<span class="c"># Check disk space</span>
+<span class="nb">df</span> <span class="nt">-h</span>
+
+<span class="c"># Restart Nginx if needed</span>
+<span class="nb">sudo </span>systemctl restart nginx
+</code></pre></div></div>
+
+<h3 id="log-parsing-errors">Log Parsing Errors</h3>
+
+<p>If log format doesn’t match commands:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check actual format</span>
+<span class="nb">head</span> <span class="nt">-5</span> /var/log/nginx/access.log
+
+<span class="c"># Verify format in Nginx config</span>
+<span class="nb">sudo grep </span>log_format /etc/nginx/nginx.conf
+</code></pre></div></div>
+
+<h2 id="additional-resources">Additional Resources</h2>
+
+<ul>
+  <li><a href="https://www.nginx.com/blog/using-nginx-logging-for-application-performance/">Nginx Log Analysis Guide</a></li>
+  <li><a href="https://goaccess.io/man">GoAccess Documentation</a></li>
+  <li><a href="https://www.fail2ban.org/wiki/index.php/Main_Page">Fail2Ban Wiki</a></li>
+  <li><a href="https://roots.io/trellis/docs/">Trellis Documentation</a></li>
+</ul>
+
+<h2 id="contributing">Contributing</h2>
+
+<p>Improvements to monitoring scripts and playbooks welcome. Follow existing patterns:</p>
+<ul>
+  <li>Shell scripts: Configuration variables at top</li>
+  <li>Ansible playbooks: Use variable-check.yml for validation</li>
+  <li>Documentation: Include practical examples</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

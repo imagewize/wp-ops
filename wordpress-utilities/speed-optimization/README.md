@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Speed Optimization"
+chapter_number: 17
+permalink: /chapters/speed-optimization/
+---
+
 # WordPress Speed Optimization Tools
 
 ## Chapter Purpose

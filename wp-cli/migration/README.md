@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Migration"
+chapter_number: 10
+permalink: /chapters/migration/
+---
+
 # WordPress Migration Guide
 
 This guide documents various commands and techniques for migrating WordPress sites, particularly when using Roots Trellis and Bedrock stacks. These commands are especially useful when:

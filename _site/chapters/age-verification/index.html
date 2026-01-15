@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Age Verification</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 15</span>
+    
+    
+  </div>
+
+  <h1>Age Verification</h1>
+
+  
+
+  <h1 id="age-verification-script">Age Verification Script</h1>
+
+<p>A JavaScript-based age verification system for WordPress websites that manages content visibility based on user age and preferences.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter explains how the age verification flow works and how to integrate it into a site safely.</p>
+
+<h2 id="features">Features</h2>
+
+<ul>
+  <li><strong>Age-based content filtering</strong>: Restricts access to specific content blocks based on user age</li>
+  <li><strong>Cookie-based persistence</strong>: Remembers user preferences across sessions</li>
+  <li><strong>Modal interface</strong>: Clean, overlay-based age verification form</li>
+  <li><strong>Content toggling</strong>: Dynamically shows/hides casino highlight blocks based on verification status</li>
+  <li><strong>Checkbox preference</strong>: Allows users over 24 to opt-in/out of seeing advertisements</li>
+</ul>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<h3 id="age-categories">Age Categories</h3>
+<ul>
+  <li><strong>Under 18</strong>: Users cannot see casino/advertisement content</li>
+  <li><strong>18-23</strong>: Users cannot see casino/advertisement content</li>
+  <li><strong>Over 24</strong>: Users can choose whether to see casino/advertisement content via checkbox</li>
+</ul>
+
+<h3 id="cookie-management">Cookie Management</h3>
+<ul>
+  <li>Sets <code class="language-plaintext highlighter-rouge">canSeeAds</code> cookie with appropriate value based on age selection</li>
+  <li>Cookie expires after 1 day for under-24 users, 365 days for over-24 users</li>
+  <li>Automatically checks existing cookie on page load to maintain user preferences</li>
+</ul>
+
+<h3 id="content-control">Content Control</h3>
+<p>The script targets elements with the <code class="language-plaintext highlighter-rouge">.code-block</code> class to show/hide casino-related content:</p>
+<ul>
+  <li>Adds <code class="language-plaintext highlighter-rouge">d-none</code> class to hide content</li>
+  <li>Removes <code class="language-plaintext highlighter-rouge">d-none</code> class to show content</li>
+</ul>
+
+<h3 id="modal-behavior">Modal Behavior</h3>
+<ul>
+  <li>Shows modal overlay on first visit (no existing cookie)</li>
+  <li>Hides modal after age verification</li>
+  <li>Prevents body scrolling while modal is active via <code class="language-plaintext highlighter-rouge">overflow-hidden</code> class</li>
+</ul>
+
+<h2 id="required-html-elements">Required HTML Elements</h2>
+
+<p>The script expects specific HTML elements to be present. A complete modal template is provided in <code class="language-plaintext highlighter-rouge">footer.php</code> which includes:</p>
+
+<ul>
+  <li>Modal container (<code class="language-plaintext highlighter-rouge">.modal-verification</code> with <code class="language-plaintext highlighter-rouge">#modal_verification</code> ID)</li>
+  <li>Overlay background (<code class="language-plaintext highlighter-rouge">.modal-overlayer</code>)</li>
+  <li>Age selection buttons (<code class="language-plaintext highlighter-rouge">#under-18</code>, <code class="language-plaintext highlighter-rouge">#18-23</code>, <code class="language-plaintext highlighter-rouge">#over-24</code>)</li>
+  <li>Advertisement preference checkbox (<code class="language-plaintext highlighter-rouge">#age_verify</code>)</li>
+  <li>Content blocks with <code class="language-plaintext highlighter-rouge">.code-block</code> class for controlled visibility</li>
+</ul>
+
+<p><strong>Advanced Custom Fields (ACF) Integration:</strong>
+The modal template uses ACF fields for dynamic content management:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">avs_header_logo</code> - Modal header logo</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_heading</code> - Main heading text</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_subheading</code> - Subheading text</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_description</code> - Description text</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_button_1</code>, <code class="language-plaintext highlighter-rouge">avs_button_2</code>, <code class="language-plaintext highlighter-rouge">avs_button_3</code> - Age selection button labels</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_verification_check_text</code> - Checkbox label text</li>
+  <li><code class="language-plaintext highlighter-rouge">avs_confirmation_text</code> - Bottom confirmation text</li>
+</ul>
+
+<p><strong>To use the provided template:</strong></p>
+<ol>
+  <li>Install and configure Advanced Custom Fields (ACF) plugin</li>
+  <li>Set up the required ACF option fields</li>
+  <li>Include <code class="language-plaintext highlighter-rouge">footer.php</code> in your WordPress theme</li>
+  <li>Or copy the modal HTML structure to your existing template files</li>
+</ol>
+
+<h2 id="css-classes-used">CSS Classes Used</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.modal-visible</code>: Shows the verification modal</li>
+  <li><code class="language-plaintext highlighter-rouge">.visible</code>: Shows the overlay background</li>
+  <li><code class="language-plaintext highlighter-rouge">.overflow-hidden</code>: Prevents body scrolling</li>
+  <li><code class="language-plaintext highlighter-rouge">.d-none</code>: Hides content blocks</li>
+  <li><code class="language-plaintext highlighter-rouge">.code-block</code>: Target elements for content control</li>
+</ul>
+
+<h2 id="installation">Installation</h2>
+
+<ol>
+  <li>Install and configure the Advanced Custom Fields (ACF) WordPress plugin</li>
+  <li>Set up the required ACF option fields (see ACF Integration section above)</li>
+  <li>Include jQuery (script dependency)</li>
+  <li>Add the <code class="language-plaintext highlighter-rouge">age-verification.js</code> script to your WordPress theme</li>
+  <li>Include the <code class="language-plaintext highlighter-rouge">modal.css</code> stylesheet in your theme (or copy styles to your main stylesheet)</li>
+  <li>Include the <code class="language-plaintext highlighter-rouge">footer.php</code> template in your WordPress theme or copy its HTML structure to your existing templates</li>
+  <li>Ensure content blocks use the <code class="language-plaintext highlighter-rouge">.code-block</code> class for age-based visibility control</li>
+</ol>
+
+<p><strong>To enqueue the CSS file in WordPress:</strong>
+Add this to your theme’s <code class="language-plaintext highlighter-rouge">functions.php</code>:</p>
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">wp_enqueue_style</span><span class="p">(</span><span class="s1">'age-verification-modal'</span><span class="p">,</span> <span class="nf">get_template_directory_uri</span><span class="p">()</span> <span class="mf">.</span> <span class="s1">'/age-verification/modal.css'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="files-included">Files Included</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">age-verification.js</code> - Main JavaScript functionality</li>
+  <li><code class="language-plaintext highlighter-rouge">footer.php</code> - Complete HTML template with modal structure</li>
+  <li><code class="language-plaintext highlighter-rouge">modal.css</code> - Professional styling for the modal components</li>
+  <li><code class="language-plaintext highlighter-rouge">README.md</code> - Documentation</li>
+</ul>
+
+<h2 id="dependencies">Dependencies</h2>
+
+<ul>
+  <li>jQuery library</li>
+  <li>Advanced Custom Fields (ACF) WordPress plugin</li>
+  <li>CSS classes for modal visibility and content hiding</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

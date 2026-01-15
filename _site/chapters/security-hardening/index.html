@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Security Hardening</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 6</span>
+    
+    
+  </div>
+
+  <h1>Security Hardening</h1>
+
+  
+
+  <h1 id="trellis-security">Trellis Security</h1>
+
+<p>WordPress security tools and configurations for Trellis-managed servers.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter outlines the layered security controls used in Trellis environments and how to apply them safely.</p>
+
+<p>Part of the <a href="https://github.com/imagewize/wp-ops">wp-ops</a> toolkit for WordPress operations and server management.</p>
+
+<hr />
+
+<h2 id="important-ssh-user-for-admin-commands">Important: SSH User for Admin Commands</h2>
+
+<p><strong>Note</strong>: Commands in this guide use <code class="language-plaintext highlighter-rouge">admin_user</code> as a placeholder for your Trellis admin username.</p>
+
+<ul>
+  <li>Trellis creates admin users via <code class="language-plaintext highlighter-rouge">group_vars/{env}/users.yml</code></li>
+  <li>Admin users have sudo access (require password for sudo commands)</li>
+  <li><strong>Replace <code class="language-plaintext highlighter-rouge">admin_user</code> with your configured username</strong> (e.g., <code class="language-plaintext highlighter-rouge">warden</code>, <code class="language-plaintext highlighter-rouge">deploy</code>, your name, etc.)</li>
+  <li>Example: If your admin user is <code class="language-plaintext highlighter-rouge">warden</code>, use <code class="language-plaintext highlighter-rouge">ssh warden@yoursite.com</code></li>
+</ul>
+
+<p>For read-only operations (viewing logs), use the <code class="language-plaintext highlighter-rouge">web</code> user which doesn’t require sudo:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ssh web@yoursite.com</code> - No sudo access, can read site files and logs</li>
+</ul>
+
+<hr />
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains documentation and configurations for securing WordPress sites on Trellis infrastructure.</p>
+
+<h3 id="security-layers">Security Layers</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>┌─────────────────────────────────────────┐
+│  Layer 1: Firewall (UFW)                │ ← fail2ban blocks IPs here
+├─────────────────────────────────────────┤
+│  Layer 2: Nginx (deny rules)            │ ← Manual IP blocks
+├─────────────────────────────────────────┤
+│  Layer 3: WordPress (plugins)           │ ← Wordfence, etc.
+├─────────────────────────────────────────┤
+│  Layer 4: Application (code)            │ ← Security scanners
+└─────────────────────────────────────────┘
+</code></pre></div></div>
+
+<h3 id="tools-covered">Tools Covered</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Purpose</th>
+      <th>Maintenance</th>
+      <th>Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>fail2ban</strong></td>
+      <td>Automatic IP blocking for brute force attacks</td>
+      <td>Zero (once configured)</td>
+      <td><a href="/trellis/security/FAIL2BAN.md">FAIL2BAN.md</a></td>
+    </tr>
+    <tr>
+      <td><strong>Manual IP blocks</strong></td>
+      <td>Permanent Nginx-level IP blocking</td>
+      <td>Manual updates required</td>
+      <td><a href="/trellis/security/MANUAL-IP-BLOCKING.md">MANUAL-IP-BLOCKING.md</a></td>
+    </tr>
+    <tr>
+      <td><strong>Security scanners</strong></td>
+      <td>Malware detection for WordPress</td>
+      <td>Run weekly/monthly</td>
+      <td><a href="../../wp-cli/security/">wp-cli/security</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="quick-start">Quick Start</h2>
+
+<h3 id="1-enable-fail2ban-wordpress-protection">1. Enable fail2ban WordPress Protection</h3>
+
+<p><strong>Recommended first step</strong> for all WordPress sites.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Edit trellis/group_vars/all/security.yml</span>
+<span class="c"># Set wordpress_wp_login enabled: "true"</span>
+
+<span class="c"># Apply</span>
+<span class="nb">cd </span>trellis
+trellis provision <span class="nt">--tags</span> fail2ban production
+</code></pre></div></div>
+
+<p><strong>See</strong>: <a href="/trellis/security/FAIL2BAN.md">FAIL2BAN.md</a> for complete setup guide.</p>
+
+<h3 id="2-monitor-security-activity">2. Monitor Security Activity</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check fail2ban status (admin user requires password for sudo)</span>
+ssh admin_user@yoursite.com
+<span class="nb">sudo </span>fail2ban-client status wordpress_wp_login
+
+<span class="c"># View recent bans</span>
+<span class="nb">sudo tail</span> <span class="nt">-50</span> /var/log/fail2ban.log
+
+<span class="c"># Analyze attack patterns (web user, no sudo needed)</span>
+ssh web@yoursite.com <span class="s2">"grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.log | awk '{print </span><span class="se">\$</span><span class="s2">1}' | sort | uniq -c | sort -rn | head -20"</span>
+</code></pre></div></div>
+
+<h3 id="3-run-security-scans">3. Run Security Scans</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Weekly malware scan</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Monthly deep scan</span>
+wp eval-file wp-cli/security/scanner-general.php
+</code></pre></div></div>
+
+<p><strong>See</strong>: <a href="../../wp-cli/security/">wp-cli/security</a> for scanner documentation.</p>
+
+<hr />
+
+<h2 id="documentation">Documentation</h2>
+
+<h3 id="automatic-protection">Automatic Protection</h3>
+
+<ul>
+  <li><strong><a href="/trellis/security/FAIL2BAN.md">FAIL2BAN.md</a></strong> - Automatic IP blocking for brute force attacks
+    <ul>
+      <li>Setup and configuration</li>
+      <li>Monitoring and management</li>
+      <li>Troubleshooting</li>
+      <li>Real-world statistics</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="manual-protection-advanced">Manual Protection (Advanced)</h3>
+
+<ul>
+  <li><strong><a href="/trellis/security/MANUAL-IP-BLOCKING.md">MANUAL-IP-BLOCKING.md</a></strong> - Permanent Nginx IP blocks
+    <ul>
+      <li>When to use manual blocks vs fail2ban</li>
+      <li>Creating deny-ips.conf.j2</li>
+      <li>Managing IP lists</li>
+      <li>Known attacker reference list</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="application-level-security">Application-Level Security</h3>
+
+<ul>
+  <li><strong><a href="../../wp-cli/security/">wp-cli/security</a></strong> - WordPress malware scanners
+    <ul>
+      <li>Targeted scanner (site-specific threats)</li>
+      <li>General scanner (broad malware detection)</li>
+      <li>Integration with fail2ban workflow</li>
+    </ul>
+  </li>
+</ul>
+
+<hr />
+
+<h2 id="recommended-security-strategy">Recommended Security Strategy</h2>
+
+<h3 id="for-most-wordpress-sites">For Most WordPress Sites</h3>
+
+<p><strong>Primary Defense</strong>: fail2ban (automatic)</p>
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># trellis/group_vars/all/security.yml</span>
+<span class="na">fail2ban_services_custom</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">wordpress_wp_login</span>
+    <span class="na">enabled</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>  <span class="c1"># ← Enable this</span>
+</code></pre></div></div>
+
+<p><strong>Regular Monitoring</strong>:</p>
+<ul>
+  <li>Weekly security scans with <a href="../../wp-cli/security/">scanner-targeted.php</a></li>
+  <li>Monthly fail2ban log reviews</li>
+  <li>Quarterly review of attack patterns</li>
+</ul>
+
+<p><strong>Manual IP blocks</strong>: Only for extreme cases (see criteria below)</p>
+
+<h3 id="when-to-add-manual-ip-blocks">When to Add Manual IP Blocks</h3>
+
+<p>Use manual Nginx IP blocks <strong>only</strong> when:</p>
+
+<ol>
+  <li>✅ <strong>Extreme high-volume attack</strong> - Single IP sending 1,000+ requests/minute</li>
+  <li>✅ <strong>Distributed attack</strong> - Many IPs coordinating attack (doesn’t trigger fail2ban thresholds)</li>
+  <li>✅ <strong>Known persistent attacker</strong> - IP keeps returning after fail2ban bans expire</li>
+</ol>
+
+<p><strong>Don’t use manual blocks for</strong>:</p>
+<ul>
+  <li>❌ Regular brute force attempts (fail2ban handles this)</li>
+  <li>❌ One-time attackers (fail2ban temporary ban is sufficient)</li>
+  <li>❌ IPs that might be shared (VPNs, corporate networks, etc.)</li>
+</ul>
+
+<hr />
+
+<h2 id="security-workflow">Security Workflow</h2>
+
+<h3 id="weekly-routine">Weekly Routine</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Run security scanner (1-2 seconds)</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># 2. Check fail2ban activity (optional)</span>
+ssh admin_user@yoursite.com
+<span class="nb">sudo </span>fail2ban-client status wordpress_wp_login
+</code></pre></div></div>
+
+<h3 id="monthly-deep-dive">Monthly Deep Dive</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Deep malware scan (2-3 seconds)</span>
+wp eval-file wp-cli/security/scanner-general.php
+
+<span class="c"># 2. Review fail2ban logs</span>
+ssh admin_user@yoursite.com
+<span class="nb">sudo tail</span> <span class="nt">-100</span> /var/log/fail2ban.log
+
+<span class="c"># 3. Analyze attack patterns (web user, no sudo)</span>
+ssh web@yoursite.com <span class="s2">"grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.log | awk '{print </span><span class="se">\$</span><span class="s2">1}' | sort | uniq -c | sort -rn | head -20"</span>
+
+<span class="c"># 4. Update WordPress and plugins</span>
+wp core update
+wp plugin update <span class="nt">--all</span>
+</code></pre></div></div>
+
+<h3 id="after-suspected-compromise">After Suspected Compromise</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Full security scan</span>
+wp eval-file wp-cli/security/scanner-wrapper.php
+
+<span class="c"># 2. Check for suspicious users</span>
+wp user list <span class="nt">--role</span><span class="o">=</span>administrator
+
+<span class="c"># 3. Verify core files</span>
+wp core verify-checksums
+
+<span class="c"># 4. Check plugin integrity</span>
+wp plugin verify-checksums <span class="nt">--all</span>
+
+<span class="c"># 5. Review recent file changes</span>
+ssh web@yoursite.com <span class="s2">"find /srv/www/yoursite.com/current/web/wp-content -mtime -7 -type f"</span>
+
+<span class="c"># 6. Analyze access logs for unusual patterns</span>
+ssh web@yoursite.com <span class="s2">"tail -1000 /srv/www/yoursite.com/logs/access.log | grep -v 'GET /' | grep -v '.css' | grep -v '.js'"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="real-world-examples">Real-World Examples</h2>
+
+<h3 id="case-study-imagewizecom">Case Study: imagewize.com</h3>
+
+<p><strong>Before fail2ban</strong> (November-December 2025):</p>
+<ul>
+  <li>1,420 wp-login attempts from single IP (62.60.130.228)</li>
+  <li>860 wp-login attempts from single IP (141.98.11.120)</li>
+  <li>742 wp-login attempts from single IP (91.224.92.114)</li>
+  <li>40+ unique attacker IPs identified</li>
+  <li><strong>No automatic blocking</strong> - attacks continued unabated</li>
+</ul>
+
+<p><strong>After fail2ban enabled</strong> (2026-01-01):</p>
+<ul>
+  <li>First attacker detected within 7 hours (167.99.215.209)</li>
+  <li><strong>Automatic blocking</strong> after 6 failed attempts</li>
+  <li>10-minute temporary bans deter most attackers</li>
+  <li>Zero maintenance required</li>
+</ul>
+
+<p><strong>Outcome</strong>: All previous attacks would have been stopped after 6 attempts instead of hundreds.</p>
+
+<h3 id="typical-attack-pattern">Typical Attack Pattern</h3>
+
+<p><strong>What fail2ban detects:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2026-01-01 02:26:08 [wordpress_wp_login] Found 167.99.215.209
+2026-01-01 02:26:15 [wordpress_wp_login] Found 167.99.215.209
+2026-01-01 02:26:22 [wordpress_wp_login] Found 167.99.215.209
+2026-01-01 02:26:29 [wordpress_wp_login] Found 167.99.215.209
+2026-01-01 02:26:36 [wordpress_wp_login] Found 167.99.215.209
+2026-01-01 02:26:43 [wordpress_wp_login] Found 167.99.215.209 ← 6th attempt
+2026-01-01 02:26:43 [wordpress_wp_login] Ban 167.99.215.209  ← BANNED
+</code></pre></div></div>
+
+<p><strong>Without fail2ban</strong> (before 2026-01-01):</p>
+<ul>
+  <li>Same IP would continue attempting hundreds or thousands of times</li>
+  <li>Server resources wasted processing login attempts</li>
+  <li>Increased risk of successful brute force</li>
+</ul>
+
+<hr />
+
+<h2 id="configuration-files">Configuration Files</h2>
+
+<h3 id="trellis-security-configuration">Trellis Security Configuration</h3>
+
+<p>All security settings are in <code class="language-plaintext highlighter-rouge">trellis/group_vars/all/security.yml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># fail2ban settings</span>
+<span class="na">fail2ban_bantime</span><span class="pi">:</span> <span class="m">600</span>          <span class="c1"># 10 minutes</span>
+<span class="na">fail2ban_maxretry</span><span class="pi">:</span> <span class="m">6</span>           <span class="c1"># 6 failed attempts</span>
+<span class="na">fail2ban_findtime</span><span class="pi">:</span> <span class="m">600</span>         <span class="c1"># 10 minute window</span>
+
+<span class="c1"># IP whitelist (never ban these IPs)</span>
+<span class="na">ip_whitelist</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">127.0.0.0/8</span>
+  <span class="pi">-</span> <span class="s2">"</span><span class="s">{{</span><span class="nv"> </span><span class="s">ipify_public_ip</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">default('')</span><span class="nv"> </span><span class="s">}}"</span>
+  <span class="pi">-</span> <span class="s">1.2.213.123</span>  <span class="c1"># Your static IP (example)</span>
+
+<span class="c1"># fail2ban jails</span>
+<span class="na">fail2ban_services_custom</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">wordpress_wp_login</span>
+    <span class="na">filter</span><span class="pi">:</span> <span class="s">wordpress-wp-login</span>
+    <span class="na">enabled</span><span class="pi">:</span> <span class="s2">"</span><span class="s">true"</span>              <span class="c1"># ← Set to "true" to enable</span>
+    <span class="na">port</span><span class="pi">:</span> <span class="s">http,https</span>
+    <span class="na">logpath</span><span class="pi">:</span> <span class="s2">"</span><span class="s">/**/logs/access.log"</span>
+
+  <span class="c1"># Optional: XML-RPC protection (usually not needed if blocked at Nginx level)</span>
+  <span class="c1"># - name: wordpress_xmlrpc</span>
+  <span class="c1">#   filter: wordpress-xmlrpc</span>
+  <span class="c1">#   enabled: "false"</span>
+  <span class="c1">#   port: http,https</span>
+  <span class="c1">#   logpath: "/**/logs/access.log"</span>
+</code></pre></div></div>
+
+<h3 id="manual-ip-blocks-optional">Manual IP Blocks (Optional)</h3>
+
+<p>For extreme cases only, create <code class="language-plaintext highlighter-rouge">trellis/nginx-includes/all/deny-ips.conf.j2</code>:</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Manual IP deny list</span>
+<span class="c1"># Only use for extreme high-volume attacks</span>
+
+<span class="k">deny</span> <span class="mf">1.2</span><span class="s">.3.4</span><span class="p">;</span>  <span class="c1"># Description: reason for block</span>
+</code></pre></div></div>
+
+<p><strong>See</strong>: <a href="/trellis/security/MANUAL-IP-BLOCKING.md">MANUAL-IP-BLOCKING.md</a> for details.</p>
+
+<hr />
+
+<h2 id="monitoring-commands">Monitoring Commands</h2>
+
+<h3 id="quick-status-check">Quick Status Check</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># SSH in first (admin user requires password for sudo)</span>
+ssh admin_user@yoursite.com
+
+<span class="c"># Is fail2ban running?</span>
+<span class="nb">sudo </span>systemctl status fail2ban
+
+<span class="c"># WordPress jail status</span>
+<span class="nb">sudo </span>fail2ban-client status wordpress_wp_login
+
+<span class="c"># Currently banned IPs</span>
+<span class="nb">sudo </span>fail2ban-client get wordpress_wp_login banip
+</code></pre></div></div>
+
+<h3 id="analyze-attack-activity">Analyze Attack Activity</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Top 20 IPs attempting wp-login</span>
+ssh web@yoursite.com <span class="s2">"grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.log | awk '{print </span><span class="se">\$</span><span class="s2">1}' | sort | uniq -c | sort -rn | head -20"</span>
+
+<span class="c"># Recent fail2ban bans</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo grep 'Ban ' /var/log/fail2ban.log | tail -20"</span>
+
+<span class="c"># How many requests were blocked by Nginx deny rules</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo grep 'access forbidden' /var/log/nginx/error.log | wc -l"</span>
+</code></pre></div></div>
+
+<h3 id="check-for-malware">Check for Malware</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Quick scan (1-2 seconds)</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Deep scan (2-3 seconds)</span>
+wp eval-file wp-cli/security/scanner-general.php
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="i-locked-myself-out">I Locked Myself Out</h3>
+
+<p><strong>Symptom</strong>: Can’t access your WordPress site (403 Forbidden)</p>
+
+<p><strong>If banned by fail2ban</strong>:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Unban your IP</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo fail2ban-client set wordpress_wp_login unbanip YOUR.IP.HERE"</span>
+
+<span class="c"># Prevent future bans - add to whitelist in security.yml</span>
+ip_whitelist:
+  - YOUR.IP.HERE
+</code></pre></div></div>
+
+<p><strong>If blocked by manual deny rule</strong>:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Via VPS console (not SSH)</span>
+<span class="nb">sudo </span>nano /etc/nginx/includes.d/all/deny-ips.conf
+<span class="c"># Comment out or delete your IP</span>
+<span class="nb">sudo </span>systemctl reload nginx
+</code></pre></div></div>
+
+<h3 id="attacker-not-being-blocked">Attacker Not Being Blocked</h3>
+
+<p><strong>Possible causes</strong>:</p>
+
+<ol>
+  <li><strong>fail2ban jail not enabled</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check status</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo fail2ban-client status"</span>
+<span class="c"># Should list "wordpress_wp_login" - if not, it's disabled</span>
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Attacker hasn’t reached threshold yet</strong>
+    <ul>
+      <li>Default: 6 failed attempts required for ban</li>
+      <li>Check: <code class="language-plaintext highlighter-rouge">sudo grep 'Found.*wp-login' /var/log/fail2ban.log | grep 'ATTACKER.IP.HERE'</code></li>
+    </ul>
+  </li>
+  <li><strong>Attacker rotating IPs</strong>
+    <ul>
+      <li>Each new IP needs 6 attempts before ban</li>
+      <li>Solution: Manual block for the IP range (if persistent)</li>
+    </ul>
+  </li>
+  <li><strong>Log file not being monitored</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check which logs fail2ban is watching</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo fail2ban-client get wordpress_wp_login logpath"</span>
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="fail2ban-not-starting">fail2ban Not Starting</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for errors</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo systemctl status fail2ban"</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo journalctl -u fail2ban -n 50"</span>
+
+<span class="c"># Test configuration</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo fail2ban-client -d"</span>
+
+<span class="c"># Restart</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo systemctl restart fail2ban"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="best-practices">Best Practices</h2>
+
+<h3 id="1-layer-your-security">1. Layer Your Security</h3>
+
+<p>Don’t rely on a single tool. Use multiple layers:</p>
+
+<ul>
+  <li>✅ fail2ban (firewall-level blocking)</li>
+  <li>✅ Strong passwords (WordPress user accounts)</li>
+  <li>✅ 2FA (two-factor authentication)</li>
+  <li>✅ Security plugin (Wordfence, iThemes Security)</li>
+  <li>✅ Regular updates (WordPress core, plugins, themes)</li>
+  <li>✅ Security scans (weekly/monthly)</li>
+  <li>✅ Backups (automated daily/weekly)</li>
+</ul>
+
+<h3 id="2-monitor-regularly">2. Monitor Regularly</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Weekly: Check fail2ban activity</span>
+ssh admin_user@yoursite.com <span class="s2">"sudo fail2ban-client status wordpress_wp_login"</span>
+
+<span class="c"># Monthly: Analyze attack patterns</span>
+ssh web@yoursite.com <span class="s2">"grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.log | awk '{print </span><span class="se">\$</span><span class="s2">1}' | sort | uniq -c | sort -rn | head -20"</span>
+</code></pre></div></div>
+
+<h3 id="3-keep-security-configs-in-version-control">3. Keep Security Configs in Version Control</h3>
+
+<p>All security configurations live in Git (Trellis repository):</p>
+<ul>
+  <li>✅ <code class="language-plaintext highlighter-rouge">group_vars/all/security.yml</code> (fail2ban config)</li>
+  <li>✅ <code class="language-plaintext highlighter-rouge">nginx-includes/all/deny-ips.conf.j2</code> (manual IP blocks)</li>
+  <li>✅ Changes tracked in Git history</li>
+  <li>✅ Easy rollback if needed</li>
+</ul>
+
+<h3 id="4-test-before-deploying">4. Test Before Deploying</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Always test Nginx config changes</span>
+<span class="nb">cd </span>trellis
+ansible-playbook server.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production <span class="nt">--tags</span> nginx <span class="nt">--check</span>
+
+<span class="c"># Then deploy</span>
+trellis provision <span class="nt">--tags</span> nginx production
+</code></pre></div></div>
+
+<h3 id="5-document-everything">5. Document Everything</h3>
+
+<p>When adding manual IP blocks, always include:</p>
+<ul>
+  <li>Why is this IP blocked?</li>
+  <li>When was it observed?</li>
+  <li>What was the attack pattern?</li>
+</ul>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ✅ Good</span>
+<span class="k">deny</span> <span class="mf">62.60</span><span class="s">.130.228</span><span class="p">;</span>   <span class="c1"># 1,420 wp-login attempts, Nov 2025, Kamatera NL</span>
+
+<span class="c1"># ❌ Bad</span>
+<span class="k">deny</span> <span class="mf">62.60</span><span class="s">.130.228</span><span class="p">;</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="related-documentation">Related Documentation</h2>
+
+<h3 id="security-tools">Security Tools</h3>
+<ul>
+  <li><strong><a href="../../wp-cli/security/">wp-cli/security</a></strong> - WordPress malware scanners</li>
+  <li><strong><a href="../../troubleshooting/">troubleshooting/</a></strong> - Server troubleshooting guides</li>
+</ul>
+
+<h3 id="trellis-operations">Trellis Operations</h3>
+<ul>
+  <li><strong><a href="../backup/">trellis/backup</a></strong> - Database and file backups</li>
+  <li><strong><a href="../monitoring/">trellis/monitoring</a></strong> - Server monitoring tools</li>
+  <li><strong><a href="../provision/">trellis/provision</a></strong> - Server provisioning guides</li>
+</ul>
+
+<h3 id="external-resources">External Resources</h3>
+<ul>
+  <li><a href="https://roots.io/trellis/docs/security/">Trellis Security Documentation</a></li>
+  <li><a href="https://www.fail2ban.org/wiki/index.php/Main_Page">fail2ban Official Documentation</a></li>
+  <li><a href="https://wordpress.org/support/article/hardening-wordpress/">WordPress Security Best Practices</a></li>
+  <li><a href="https://owasp.org/www-project-top-ten/">OWASP Top 10</a></li>
+</ul>
+
+<hr />
+
+<h2 id="quick-reference">Quick Reference</h2>
+
+<h3 id="enable-fail2ban">Enable fail2ban</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Edit security.yml</span>
+<span class="c"># Set wordpress_wp_login enabled: "true"</span>
+
+<span class="c"># 2. Apply</span>
+<span class="nb">cd </span>trellis <span class="o">&amp;&amp;</span> trellis provision <span class="nt">--tags</span> fail2ban production
+</code></pre></div></div>
+
+<h3 id="add-manual-ip-block">Add Manual IP Block</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Create/edit file</span>
+nano trellis/nginx-includes/all/deny-ips.conf.j2
+
+<span class="c"># 2. Add IP</span>
+<span class="c"># deny 1.2.3.4;  # Description</span>
+
+<span class="c"># 3. Deploy</span>
+<span class="nb">cd </span>trellis <span class="o">&amp;&amp;</span> trellis provision <span class="nt">--tags</span> nginx production
+</code></pre></div></div>
+
+<h3 id="run-security-scan">Run Security Scan</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Quick scan</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Deep scan</span>
+wp eval-file wp-cli/security/scanner-general.php
+</code></pre></div></div>
+
+<h3 id="check-security-status">Check Security Status</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># fail2ban status (admin user requires password for sudo)</span>
+ssh admin_user@yoursite.com
+<span class="nb">sudo </span>fail2ban-client status wordpress_wp_login
+
+<span class="c"># Recent attacks (web user, no sudo)</span>
+ssh web@yoursite.com <span class="s2">"grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.log | tail -50"</span>
+</code></pre></div></div>
+
+<hr />
+
+<p><strong>Part of the <a href="https://github.com/imagewize/wp-ops">wp-ops</a> toolkit for WordPress operations</strong></p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

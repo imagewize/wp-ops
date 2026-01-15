@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scripts and Automation</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 18</span>
+    
+    
+  </div>
+
+  <h1>Scripts and Automation</h1>
+
+  
+
+  <h1 id="automation-scripts">Automation Scripts</h1>
+
+<p>Production-ready Bash and PHP scripts for WordPress operations, GitHub integration, server monitoring, and backup automation.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter helps you pick the right operational script and understand its intent before running it.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains 9 utility scripts organized into three functional areas:</p>
+
+<ul>
+  <li><strong>GitHub Integration</strong> - AI-powered pull request creation</li>
+  <li><strong>Theme Management</strong> - WordPress theme release automation and file synchronization</li>
+  <li><strong>Operations</strong> - Server monitoring and backup infrastructure</li>
+  <li><strong>Webhook Integration</strong> - Updown.io downtime alert handling</li>
+</ul>
+
+<h2 id="directory-structure">Directory Structure</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>scripts/
+├── backup/                      # Backup automation scripts
+│   ├── db-backup.sh            # Database-only backup with URL replacement
+│   └── site-backup.sh          # Complete site backup (DB + files + config)
+├── monitoring/                  # Server monitoring and alerting
+│   ├── security-monitor.sh     # Nginx security threat detection
+│   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
+│   ├── updown-webhook-handler.sh     # Webhook event handler
+│   └── updown-webhook-receiver.php   # Webhook HTTP receiver
+├── create-pr.sh                # AI-powered GitHub PR creation
+├── release-theme.sh            # WordPress theme version release automation
+└── rsync-theme.sh             # Theme file synchronization utility
+</code></pre></div></div>
+
+<h2 id="quick-start">Quick Start</h2>
+
+<h3 id="prerequisites">Prerequisites</h3>
+
+<ul>
+  <li>Bash shell (included on all Linux/macOS systems)</li>
+  <li>Git (for GitHub integration scripts)</li>
+  <li>WP-CLI (for WordPress backup/release scripts)</li>
+  <li>Claude CLI or Codex (optional, for AI features)</li>
+  <li>PHP (for webhook receiver)</li>
+</ul>
+
+<h3 id="common-operations">Common Operations</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create GitHub PR with AI description</span>
+./scripts/create-pr.sh main <span class="s2">"Add feature name"</span>
+
+<span class="c"># Release WordPress theme version</span>
+./scripts/release-theme.sh theme-name 1.2.5
+
+<span class="c"># Backup WordPress database</span>
+./scripts/backup/db-backup.sh example.com production
+
+<span class="c"># Monitor Nginx traffic</span>
+./scripts/monitoring/traffic-monitor.sh /var/log/nginx/access.log 6
+
+<span class="c"># Scan for security threats</span>
+./scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 24
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="github-integration">GitHub Integration</h2>
+
+<h3 id="create-prsh-414-lines">create-pr.sh (414 lines)</h3>
+
+<p>Intelligent GitHub pull request creation with AI-powered descriptions using Claude CLI or Codex.</p>
+
+<h4 id="features">Features</h4>
+
+<ul>
+  <li><strong>AI-Generated Descriptions</strong>:
+    <ul>
+      <li>Analyzes git diff and commit history</li>
+      <li>Generates professional PR body with summarized intro</li>
+      <li>Groups file changes by status (Added/Modified/Deleted/Renamed)</li>
+      <li>Auto-detects change categories (dependencies, docs, config, JS, PHP, etc.)</li>
+      <li>Creates clickable GitHub file links</li>
+    </ul>
+  </li>
+  <li><strong>Interactive Mode</strong> (default):
+    <ul>
+      <li>Prompts for PR title</li>
+      <li>Asks for base branch</li>
+      <li>Requests AI description generation</li>
+      <li>Shows preview before creation</li>
+    </ul>
+  </li>
+  <li><strong>Non-Interactive Mode</strong>:
+    <ul>
+      <li>Accepts command-line arguments</li>
+      <li>Skips all prompts</li>
+      <li>Ideal for automation</li>
+    </ul>
+  </li>
+  <li><strong>Update Mode</strong>:
+    <ul>
+      <li>Regenerates description for existing PRs</li>
+      <li>Preserves PR number</li>
+      <li>Updates body only</li>
+    </ul>
+  </li>
+  <li><strong>Flags</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">--no-ai</code> - Skip AI generation (simple PR, saves tokens)</li>
+      <li><code class="language-plaintext highlighter-rouge">--no-interactive</code> - Non-interactive mode</li>
+      <li><code class="language-plaintext highlighter-rouge">--update</code> - Update existing PR description</li>
+      <li><code class="language-plaintext highlighter-rouge">--ai=claude|codex</code> - Choose AI provider</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Interactive mode with AI description</span>
+./create-pr.sh
+
+<span class="c"># Non-interactive with arguments</span>
+./create-pr.sh main <span class="s2">"Add feature name"</span>
+
+<span class="c"># Skip AI generation (saves tokens)</span>
+./create-pr.sh <span class="nt">--no-ai</span>
+
+<span class="c"># Update existing PR</span>
+./create-pr.sh <span class="nt">--update</span>
+
+<span class="c"># Specific AI provider</span>
+./create-pr.sh <span class="nt">--ai</span><span class="o">=</span>codex main <span class="s2">"Fix bug"</span>
+</code></pre></div></div>
+
+<h4 id="example-output">Example Output</h4>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">## Summary</span>
+
+This PR adds user authentication with JWT tokens, implements login/logout endpoints, and updates the frontend to handle authenticated requests.
+
+<span class="gu">## Changes</span>
+
+<span class="gu">### Added</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">src/auth/jwt.js</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/hash/src/auth/jwt.js</span><span class="p">)</span> - JWT token generation and validation
+<span class="p">-</span> <span class="p">[</span><span class="nv">src/routes/auth.js</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/hash/src/routes/auth.js</span><span class="p">)</span> - Authentication endpoints
+
+<span class="gu">### Modified</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">src/api/client.js</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/hash/src/api/client.js</span><span class="p">)</span> - Add auth header injection
+<span class="p">-</span> <span class="p">[</span><span class="nv">package.json</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/hash/package.json</span><span class="p">)</span> - Add jsonwebtoken dependency
+</code></pre></div></div>
+
+<h4 id="token-usage">Token Usage</h4>
+
+<ul>
+  <li><strong>With AI</strong>: 500-1,500 tokens (vs 2,000-10,000 manual)</li>
+  <li><strong>Without AI</strong>: 0 tokens</li>
+  <li><strong>Cost</strong>: ~$0.01-0.05 per PR (Claude Sonnet)</li>
+</ul>
+
+<h4 id="requirements">Requirements</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install gh CLI</span>
+brew <span class="nb">install </span>gh  <span class="c"># macOS</span>
+apt <span class="nb">install </span>gh   <span class="c"># Ubuntu</span>
+
+<span class="c"># Authenticate</span>
+gh auth login
+
+<span class="c"># Install Claude CLI (optional)</span>
+npm <span class="nb">install</span> <span class="nt">-g</span> @anthropics/claude-cli
+
+<span class="c"># Or use Codex (optional)</span>
+pip <span class="nb">install </span>openai-codex
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="theme-management">Theme Management</h2>
+
+<h3 id="release-themesh-346-lines">release-theme.sh (346 lines)</h3>
+
+<p>Automates WordPress theme version releases with AI-generated changelogs (Claude CLI or Codex).</p>
+
+<h4 id="features-1">Features</h4>
+
+<ul>
+  <li><strong>Supports Multiple Installations</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">demo/</code> directory (Bedrock structure)</li>
+      <li><code class="language-plaintext highlighter-rouge">site/</code> directory (Bedrock structure)</li>
+      <li>Auto-detects available installations</li>
+    </ul>
+  </li>
+  <li><strong>Semantic Versioning</strong>:
+    <ul>
+      <li>Validates X.Y.Z format</li>
+      <li>Prevents invalid version numbers</li>
+      <li>Supports pre-release suffixes (1.2.3-beta)</li>
+    </ul>
+  </li>
+  <li><strong>AI-Generated Changelogs</strong>:
+    <ul>
+      <li>Supports Claude CLI or Codex for changelog generation</li>
+      <li>Analyzes git diff since last tag</li>
+      <li>Generates two changelog formats:
+        <ul>
+          <li><strong>CHANGELOG.md</strong>: Detailed Keep a Changelog format (Changed, Added, Fixed, Technical)</li>
+          <li><strong>readme.txt</strong>: Concise WordPress.org style</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Updates Three Files</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">style.css</code> - Version header</li>
+      <li><code class="language-plaintext highlighter-rouge">readme.txt</code> - Stable tag and changelog</li>
+      <li><code class="language-plaintext highlighter-rouge">CHANGELOG.md</code> - Detailed version history</li>
+    </ul>
+  </li>
+  <li><strong>Safety Features</strong>:
+    <ul>
+      <li>Shows git diff before committing</li>
+      <li>Optional <code class="language-plaintext highlighter-rouge">--commit</code> flag for automatic commits</li>
+      <li>Preserves <code class="language-plaintext highlighter-rouge">.bak</code> backup files</li>
+      <li>Color-coded output with progress indicators</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage-1">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Release version (manual commit)</span>
+./release-theme.sh theme-name 1.2.5
+
+<span class="c"># Release with automatic commit</span>
+./release-theme.sh theme-name 1.0.0 <span class="nt">--commit</span>
+
+<span class="c"># Specify AI tool</span>
+./release-theme.sh theme-name 1.2.5 <span class="nt">--ai</span><span class="o">=</span>codex
+./release-theme.sh theme-name 1.0.0 <span class="nt">--commit</span> <span class="nt">--ai</span><span class="o">=</span>claude
+
+<span class="c"># Examples</span>
+./release-theme.sh elayne 1.2.5
+./release-theme.sh nynaeve 2.0.0 <span class="nt">--commit</span>
+</code></pre></div></div>
+
+<h4 id="configuration">Configuration</h4>
+
+<p>Edit script to set theme paths:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Bedrock installation directories</span>
+<span class="nv">DEMO_DIR</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/code/example.com/demo/web/app/themes"</span>
+<span class="nv">SITE_DIR</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/code/example.com/site/web/app/themes"</span>
+</code></pre></div></div>
+
+<h4 id="example-changelog-output">Example Changelog Output</h4>
+
+<p><strong>CHANGELOG.md format:</strong></p>
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">## [1.2.5] - 2025-01-15</span>
+
+<span class="gu">### Changed</span>
+<span class="p">-</span> Updated navigation menu styling for better mobile responsiveness
+<span class="p">-</span> Improved block pattern spacing consistency
+
+<span class="gu">### Added</span>
+<span class="p">-</span> New testimonials block pattern
+<span class="p">-</span> Support for WebP and AVIF image formats
+
+<span class="gu">### Fixed</span>
+<span class="p">-</span> Hero section alignment on tablet devices
+<span class="p">-</span> Missing alt text in gallery patterns
+
+<span class="gu">### Technical</span>
+<span class="p">-</span> Updated Tailwind CSS to 3.4.0
+<span class="p">-</span> Optimized build process with reduced bundle size
+</code></pre></div></div>
+
+<p><strong>readme.txt format:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>= 1.2.5 =
+* Updated navigation menu for mobile
+* Added testimonials block pattern
+* Fixed hero section tablet alignment
+</code></pre></div></div>
+
+<h4 id="requirements-1">Requirements</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Install Claude CLI (recommended)</span>
+npm <span class="nb">install</span> <span class="nt">-g</span> @anthropics/claude-cli
+
+<span class="c"># Configure API key</span>
+<span class="nb">export </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">"your-key-here"</span>
+
+<span class="c"># Or install Codex CLI (alternative)</span>
+npm <span class="nb">install</span> <span class="nt">-g</span> @openai/codex
+<span class="nb">export </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span><span class="s2">"your-key-here"</span>
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="rsync-themesh-28-lines">rsync-theme.sh (28 lines)</h3>
+
+<p>Simple rsync wrapper for theme synchronization between Trellis and standalone repositories.</p>
+
+<h4 id="features-2">Features</h4>
+
+<ul>
+  <li><strong>Archive Mode</strong>: Preserves timestamps, permissions, ownership</li>
+  <li><strong>Selective Deletion</strong>: Removes destination files not in source</li>
+  <li><strong>Exclude Filters</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">node_modules/</code>, <code class="language-plaintext highlighter-rouge">vendor/</code> (dependencies)</li>
+      <li><code class="language-plaintext highlighter-rouge">.git/</code>, <code class="language-plaintext highlighter-rouge">.github/</code> (version control)</li>
+      <li><code class="language-plaintext highlighter-rouge">create-pr.sh</code>, <code class="language-plaintext highlighter-rouge">.distignore</code> (repo-specific files)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="configuration-1">Configuration</h4>
+
+<p>Edit script with your paths:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">SOURCE</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/code/example.com/demo/web/app/themes/elayne/"</span>
+<span class="nv">DESTINATION</span><span class="o">=</span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/code/elayne/"</span>
+</code></pre></div></div>
+
+<h4 id="usage-2">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run synchronization</span>
+./rsync-theme.sh
+
+<span class="c"># Output shows:</span>
+<span class="c"># - Files sent/received</span>
+<span class="c"># - Total size transferred</span>
+<span class="c"># - Speedup achieved</span>
+</code></pre></div></div>
+
+<h4 id="use-cases">Use Cases</h4>
+
+<ul>
+  <li>Sync theme from Bedrock to standalone repo</li>
+  <li>Prepare theme for WordPress.org submission</li>
+  <li>Backup theme to separate repository</li>
+  <li>Development workflow: edit in Trellis, sync to standalone for distribution</li>
+</ul>
+
+<hr />
+
+<h2 id="backup-scripts">Backup Scripts</h2>
+
+<h3 id="db-backupsh-196-lines">db-backup.sh (196 lines)</h3>
+
+<p>Trellis-aware database backup with optional URL replacement for staging/development environments.</p>
+
+<h4 id="features-3">Features</h4>
+
+<ul>
+  <li><strong>WP-CLI Based Export</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">--add-drop-table</code> for clean imports</li>
+      <li><code class="language-plaintext highlighter-rouge">--single-transaction</code> for InnoDB consistency</li>
+      <li><code class="language-plaintext highlighter-rouge">--default-character-set=utf8mb4</code> for proper encoding</li>
+      <li>Automatic gzip compression</li>
+    </ul>
+  </li>
+  <li><strong>Backup Metadata</strong>:
+    <ul>
+      <li>Creates <code class="language-plaintext highlighter-rouge">.txt</code> info file with:
+        <ul>
+          <li>WordPress version</li>
+          <li>Database name, size, table count</li>
+          <li>Charset information</li>
+          <li>Backup timestamp</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><strong>URL Replacement</strong> (for non-production):
+    <ul>
+      <li><strong>Staging</strong>: Replaces <code class="language-plaintext highlighter-rouge">.com</code> with <code class="language-plaintext highlighter-rouge">.staging.com</code></li>
+      <li><strong>Development</strong>: Generates <code class="language-plaintext highlighter-rouge">.test</code> URL variants</li>
+      <li>Creates separate backup file with replaced URLs</li>
+    </ul>
+  </li>
+  <li><strong>Retention Policy</strong>:
+    <ul>
+      <li>30-day automatic cleanup</li>
+      <li>Removes old <code class="language-plaintext highlighter-rouge">.sql.gz</code> and <code class="language-plaintext highlighter-rouge">.txt</code> files</li>
+    </ul>
+  </li>
+  <li><strong>Colored Logging</strong>:
+    <ul>
+      <li>Timestamps on all messages</li>
+      <li>Color-coded output (green=success, red=error, yellow=warning)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage-3">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Production backup (no URL replacement)</span>
+./db-backup.sh example.com production
+
+<span class="c"># Staging backup (with URL replacement)</span>
+./db-backup.sh demo.example.com staging
+
+<span class="c"># Development backup (with URL replacement)</span>
+./db-backup.sh example.com development
+</code></pre></div></div>
+
+<h4 id="output-files">Output Files</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/srv/backups/example.com/database/
+├── production_db_20251231_120000.sql.gz
+├── staging_db_with_urls_20251231_120000.sql.gz
+└── backup_info_20251231_120000.txt
+</code></pre></div></div>
+
+<h4 id="directory-structure-1">Directory Structure</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/srv/backups/<span class="o">{</span>site<span class="o">}</span>/
+└── database/
+    ├── <span class="o">{</span><span class="nb">env</span><span class="o">}</span>_db_<span class="o">{</span>timestamp<span class="o">}</span>.sql.gz
+    ├── <span class="o">{</span><span class="nb">env</span><span class="o">}</span>_db_with_urls_<span class="o">{</span>timestamp<span class="o">}</span>.sql.gz  <span class="c"># staging/dev only</span>
+    └── backup_info_<span class="o">{</span>timestamp<span class="o">}</span>.txt
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="site-backupsh-193-lines">site-backup.sh (193 lines)</h3>
+
+<p>Complete site backup including database, uploads, configuration files, and WordPress content.</p>
+
+<h4 id="features-4">Features</h4>
+
+<ul>
+  <li>
+    <p><strong>Four Backup Categories</strong>:</p>
+
+    <ol>
+      <li><strong>Database</strong> (<code class="language-plaintext highlighter-rouge">db_*.sql.tar.gz</code>)
+        <ul>
+          <li>WP-CLI export with optimal settings</li>
+          <li>Compressed with tar + gzip</li>
+        </ul>
+      </li>
+      <li><strong>Uploads</strong> (<code class="language-plaintext highlighter-rouge">uploads_*.tar.gz</code>)
+        <ul>
+          <li>WordPress uploads directory</li>
+          <li>Excludes cache and tmp directories</li>
+          <li>Preserves file structure and permissions</li>
+        </ul>
+      </li>
+      <li><strong>Configuration</strong> (<code class="language-plaintext highlighter-rouge">config_*.tar.gz</code>)
+        <ul>
+          <li><code class="language-plaintext highlighter-rouge">.env</code> files (database credentials, salts)</li>
+          <li><code class="language-plaintext highlighter-rouge">.htaccess</code> rules</li>
+          <li><code class="language-plaintext highlighter-rouge">config/application.php</code> (Bedrock config)</li>
+        </ul>
+      </li>
+      <li><strong>Content</strong> (<code class="language-plaintext highlighter-rouge">content_*.tar.gz</code>)
+        <ul>
+          <li>Plugins directory</li>
+          <li>Themes directory</li>
+          <li>MU-plugins directory</li>
+          <li>Excludes: cache, node_modules, .git</li>
+        </ul>
+      </li>
+    </ol>
+  </li>
+  <li><strong>Backup Manifest</strong>:
+    <ul>
+      <li>Text file with complete backup metadata</li>
+      <li>File sizes and counts</li>
+      <li>WordPress version and environment</li>
+      <li>Backup statistics</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Retention Policy</strong>: 30-day automatic cleanup</p>
+  </li>
+  <li><strong>Size Calculation</strong>: Human-readable output with <code class="language-plaintext highlighter-rouge">numfmt</code></li>
+</ul>
+
+<h4 id="usage-4">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Backup complete site</span>
+./site-backup.sh example.com
+
+<span class="c"># Cron automation</span>
+0 2 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /srv/scripts/site-backup.sh example.com <span class="o">&gt;</span> /var/log/backup.log 2&gt;&amp;1
+</code></pre></div></div>
+
+<h4 id="output-files-1">Output Files</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/srv/backups/example.com/
+├── database/
+│   └── db_20251231_120000.sql.tar.gz
+├── files/
+│   └── uploads_20251231_120000.tar.gz
+└── config/
+    ├── config_20251231_120000.tar.gz
+    ├── content_20251231_120000.tar.gz
+    └── manifest_20251231_120000.txt
+</code></pre></div></div>
+
+<h4 id="manifest-example">Manifest Example</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>=== Site Backup Manifest ===
+Site: example.com
+Date: 2025-12-31 12:00:00
+WordPress Version: 6.4.2
+
+Database Backup:
+- File: db_20251231_120000.sql.tar.gz
+- Size: 45.2 MB
+- Tables: 23
+
+Uploads Backup:
+- File: uploads_20251231_120000.tar.gz
+- Size: 1.2 GB
+- Files: 3,421
+
+Configuration Backup:
+- File: config_20251231_120000.tar.gz
+- Size: 42 KB
+
+Content Backup:
+- File: content_20251231_120000.tar.gz
+- Size: 125 MB
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="monitoring-scripts">Monitoring Scripts</h2>
+
+<h3 id="traffic-monitorsh-249-lines">traffic-monitor.sh (249 lines)</h3>
+
+<p>Real-time Nginx traffic analysis with intelligent bot filtering and comprehensive reporting.</p>
+
+<h4 id="features-5">Features</h4>
+
+<ul>
+  <li><strong>Bot Filtering</strong>:
+    <ul>
+      <li>Excludes search engine crawlers (Googlebot, Bingbot, DuckDuckBot, etc.)</li>
+      <li>Filters social media bots (Facebook, Twitter, LinkedIn)</li>
+      <li>Removes monitoring services (UptimeRobot, Pingdom)</li>
+    </ul>
+  </li>
+  <li><strong>Static File Exclusion</strong>:
+    <ul>
+      <li>Ignores CSS, JS, images, fonts</li>
+      <li>Excludes WebP, AVIF, WOFF2, etc.</li>
+      <li>Focuses on actual page requests</li>
+    </ul>
+  </li>
+  <li><strong>Comprehensive Reports</strong>:
+    <ul>
+      <li>Non-bot vs bot traffic split</li>
+      <li>Unique visitors by IP address</li>
+      <li>HTTP status code breakdown (color-coded)</li>
+      <li>Top 10 requested pages</li>
+      <li>Top 10 IP addresses</li>
+      <li>Hourly traffic with ASCII bar chart</li>
+      <li>Top external referrers</li>
+      <li>Top user agents</li>
+      <li>HTTP methods distribution (GET, POST, etc.)</li>
+      <li>Bandwidth summary (MB/GB calculation)</li>
+    </ul>
+  </li>
+  <li><strong>Configurable Time Windows</strong>:
+    <ul>
+      <li>Hours parameter for analysis period</li>
+      <li>Automatic log filtering for performance</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage-5">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Default (analyze full log)</span>
+./traffic-monitor.sh
+
+<span class="c"># Specific log file and time window</span>
+./traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6
+
+<span class="c"># Last 24 hours</span>
+./traffic-monitor.sh /var/log/nginx/access.log 24
+
+<span class="c"># Production usage</span>
+./traffic-monitor.sh /srv/www/example.com/logs/access.log 12
+</code></pre></div></div>
+
+<h4 id="example-output-1">Example Output</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>=== Traffic Summary (Last 6 Hours) ===
+Total Requests: 15,234
+├─ Non-Bot Traffic: 12,456 (81.8%)
+└─ Bot Traffic: 2,778 (18.2%)
+
+Unique Visitors: 1,234 IPs
+
+Status Codes:
+✓ 200 OK: 14,521 (95.3%)
+⚠ 301 Redirect: 432 (2.8%)
+⚠ 404 Not Found: 189 (1.2%)
+✗ 500 Error: 12 (0.08%)
+
+Top 10 Pages:
+  2,341 /
+  1,234 /about/
+    892 /services/
+    671 /contact/
+    ...
+
+Hourly Traffic:
+12:00 ████████████████████ 2,341
+13:00 ███████████████ 1,892
+14:00 ██████████████████ 2,104
+...
+
+Bandwidth: 1.2 GB total
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="security-monitorsh-524-lines">security-monitor.sh (524 lines)</h3>
+
+<p>Advanced Nginx security threat detection with detailed attack pattern analysis and IP blocking recommendations.</p>
+
+<h4 id="features-6">Features</h4>
+
+<ul>
+  <li>
+    <p><strong>12 Threat Detection Categories</strong>:</p>
+
+    <ol>
+      <li><strong>Brute Force Attacks</strong>
+        <ul>
+          <li>wp-login.php excessive attempts</li>
+          <li>Alert threshold: 10+ attempts per IP</li>
+        </ul>
+      </li>
+      <li><strong>XML-RPC Abuse</strong>
+        <ul>
+          <li>Pingback/trackback spam</li>
+          <li>DDoS via XML-RPC</li>
+        </ul>
+      </li>
+      <li><strong>High-Request IPs</strong>
+        <ul>
+          <li>DoS attack detection</li>
+          <li>Scraper identification</li>
+          <li>Configurable threshold</li>
+        </ul>
+      </li>
+      <li><strong>404 Scanners</strong>
+        <ul>
+          <li>Directory enumeration attempts</li>
+          <li>Automated vulnerability scanning</li>
+        </ul>
+      </li>
+      <li><strong>SQL Injection</strong>
+        <ul>
+          <li>Pattern detection in URLs</li>
+          <li>POST data analysis</li>
+        </ul>
+      </li>
+      <li><strong>Directory Traversal</strong>
+        <ul>
+          <li>Path traversal attempts (../, etc.)</li>
+          <li>File inclusion attacks</li>
+        </ul>
+      </li>
+      <li><strong>Shell Injection</strong>
+        <ul>
+          <li>Command injection attempts</li>
+          <li>Shell metacharacter detection</li>
+        </ul>
+      </li>
+      <li><strong>Sensitive File Access</strong>
+        <ul>
+          <li><code class="language-plaintext highlighter-rouge">.env</code>, <code class="language-plaintext highlighter-rouge">.git</code>, <code class="language-plaintext highlighter-rouge">wp-config.php</code></li>
+          <li>Backup files, config files</li>
+        </ul>
+      </li>
+      <li><strong>Suspicious User Agents</strong>
+        <ul>
+          <li>sqlmap, nikto, nmap, masscan</li>
+          <li>Known attack tools</li>
+        </ul>
+      </li>
+      <li><strong>Empty User Agents</strong>
+        <ul>
+          <li>Automated scripts</li>
+          <li>Malicious bots</li>
+        </ul>
+      </li>
+      <li><strong>Non-Standard POST Requests</strong>
+        <ul>
+          <li>Unexpected POST to static files</li>
+          <li>Form spam detection</li>
+        </ul>
+      </li>
+      <li><strong>Server Errors (5xx)</strong>
+        <ul>
+          <li>Application crashes</li>
+          <li>Resource exhaustion</li>
+        </ul>
+      </li>
+    </ol>
+  </li>
+  <li><strong>IP Block Recommendations</strong>:
+    <ul>
+      <li>Generates nginx <code class="language-plaintext highlighter-rouge">deny</code> rules</li>
+      <li>Shows how to add to Trellis config</li>
+      <li>Prioritizes most active attackers</li>
+    </ul>
+  </li>
+  <li><strong>Configurable Thresholds</strong>:
+    <ul>
+      <li>Alert when single IP exceeds X requests</li>
+      <li>Customizable per deployment</li>
+    </ul>
+  </li>
+  <li><strong>Color-Coded Output</strong>:
+    <ul>
+      <li>RED: Critical threats</li>
+      <li>YELLOW: Warnings</li>
+      <li>CYAN: Informational</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage-6">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Default analysis</span>
+./security-monitor.sh
+
+<span class="c"># Specific log, time window, and alert threshold</span>
+./security-monitor.sh /srv/www/example.com/logs/access.log 1 50
+
+<span class="c"># Last 24 hours, alert at 100 requests</span>
+./security-monitor.sh /var/log/nginx/access.log 24 100
+
+<span class="c"># Syntax</span>
+./security-monitor.sh <span class="o">[</span>LOG_FILE] <span class="o">[</span>HOURS] <span class="o">[</span>ALERT_THRESHOLD]
+</code></pre></div></div>
+
+<h4 id="example-output-2">Example Output</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>=== Security Threat Analysis ===
+
+⚠ BRUTE FORCE ATTACKS (wp-login.php):
+192.168.1.100: 45 attempts
+203.0.113.50: 23 attempts
+
+⚠ HIGH-REQUEST IPs (Exceeding 50 requests):
+198.51.100.25: 152 requests (potential DoS)
+192.0.2.75: 89 requests (possible scraper)
+
+⚠ SQL INJECTION ATTEMPTS:
+POST /search.php?id=1' OR '1'='1 - 192.168.1.200
+GET /product.php?id=-1 UNION SELECT - 203.0.113.100
+
+⚠ SENSITIVE FILE ACCESS:
+/.env - 192.168.1.50 (3 attempts)
+/.git/config - 198.51.100.10 (5 attempts)
+
+=== RECOMMENDED IP BLOCKS ===
+# Add to Trellis nginx-includes:
+
+location / {
+    deny 192.168.1.100;  # 45 login attempts
+    deny 198.51.100.25;  # 152 requests (DoS)
+    deny 192.168.1.50;   # .env access attempts
+}
+</code></pre></div></div>
+
+<h4 id="integration-with-trellis">Integration with Trellis</h4>
+
+<p>Create <code class="language-plaintext highlighter-rouge">nginx-includes/ip-blocks.conf.j2</code>:</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Generated by security-monitor.sh</span>
+<span class="c1"># Date: 2025-12-31</span>
+
+<span class="k">location</span> <span class="n">/</span> <span class="p">{</span>
+    <span class="kn">deny</span> <span class="mf">192.168</span><span class="s">.1.100</span><span class="p">;</span>
+    <span class="kn">deny</span> <span class="mf">198.51</span><span class="s">.100.25</span><span class="p">;</span>
+    <span class="kn">deny</span> <span class="mf">192.168</span><span class="s">.1.50</span><span class="p">;</span>
+    <span class="c1"># ... more IPs</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Deploy with:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trellis provision <span class="nt">--tags</span> nginx-includes production
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="updown-webhook-handlersh-181-lines">updown-webhook-handler.sh (181 lines)</h3>
+
+<p>Event handler for updown.io webhook alerts with automated diagnostics and reporting.</p>
+
+<h4 id="features-7">Features</h4>
+
+<ul>
+  <li>
+    <p><strong>Three Event Types</strong>:</p>
+
+    <ol>
+      <li><strong>Down/Downtime</strong>
+        <ul>
+          <li>Analyzes logs for root cause</li>
+          <li>Generates comprehensive diagnostic report</li>
+          <li>Investigates recent errors and traffic</li>
+        </ul>
+      </li>
+      <li><strong>Up/Uptime</strong>
+        <ul>
+          <li>Documents recovery time</li>
+          <li>Logs recovery event</li>
+        </ul>
+      </li>
+      <li><strong>SSL Expiry</strong>
+        <ul>
+          <li>Sends email warning</li>
+          <li>Provides renewal instructions</li>
+        </ul>
+      </li>
+    </ol>
+  </li>
+  <li><strong>Downtime Analysis Report</strong>:
+    <ul>
+      <li>Recent 5xx errors from access log</li>
+      <li>Nginx error log tail (last 50 lines)</li>
+      <li>Traffic analysis (calls traffic-monitor.sh)</li>
+      <li>Security alerts (calls security-monitor.sh)</li>
+      <li>System resources (disk, memory usage)</li>
+      <li>Active connection count</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>Report Storage</strong>: <code class="language-plaintext highlighter-rouge">/home/web/monitoring/updown-alerts/</code></p>
+  </li>
+  <li><strong>Email Alerts</strong> (optional):
+    <ul>
+      <li>Set <code class="language-plaintext highlighter-rouge">ALERT_EMAIL</code> environment variable</li>
+      <li>Uses <code class="language-plaintext highlighter-rouge">mail</code> command (sendmail)</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="usage-7">Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Handle downtime event</span>
+./updown-webhook-handler.sh example.com down
+
+<span class="c"># Handle recovery event</span>
+./updown-webhook-handler.sh example.com up
+
+<span class="c"># Handle SSL expiry with email</span>
+<span class="nv">ALERT_EMAIL</span><span class="o">=</span>admin@example.com ./updown-webhook-handler.sh example.com ssl
+
+<span class="c"># Called automatically by webhook receiver</span>
+</code></pre></div></div>
+
+<h4 id="example-downtime-report">Example Downtime Report</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>=== Updown.io Alert: example.com DOWN ===
+Time: 2025-12-31 12:34:56
+
+=== Recent 5xx Errors ===
+[31/Dec/2025:12:34:45] 502 /api/users - 2.341s
+[31/Dec/2025:12:34:47] 502 /api/posts - 2.156s
+[31/Dec/2025:12:34:50] 503 / - 30.001s
+
+=== Nginx Error Log (Last 50 lines) ===
+2025/12/31 12:34:45 [error] upstream timed out (110: Connection timed out)
+2025/12/31 12:34:47 [error] no live upstreams while connecting to upstream
+...
+
+=== Traffic Analysis (Last 1 Hour) ===
+[Output from traffic-monitor.sh]
+
+=== Security Scan (Last 1 Hour) ===
+[Output from security-monitor.sh]
+
+=== System Resources ===
+Disk Usage: 78% /dev/sda1
+Memory: 3.2GB / 4.0GB (80%)
+Active Connections: 42
+
+=== Action Items ===
+1. Review PHP-FPM worker configuration
+2. Check database connection pool
+3. Investigate recent deployment
+</code></pre></div></div>
+
+<hr />
+
+<h3 id="updown-webhook-receiverphp-161-lines">updown-webhook-receiver.php (161 lines)</h3>
+
+<p>PHP webhook receiver for updown.io with HMAC signature verification and secure event processing.</p>
+
+<h4 id="features-8">Features</h4>
+
+<ul>
+  <li><strong>Security</strong>:
+    <ul>
+      <li>HMAC-SHA256 signature verification</li>
+      <li>Configurable webhook secret</li>
+      <li>Validates POST requests only</li>
+      <li>JSON payload validation</li>
+    </ul>
+  </li>
+  <li><strong>Event Mapping</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">check.down</code> → <code class="language-plaintext highlighter-rouge">down</code></li>
+      <li><code class="language-plaintext highlighter-rouge">check.up</code> → <code class="language-plaintext highlighter-rouge">up</code></li>
+      <li><code class="language-plaintext highlighter-rouge">check.ssl_expiry</code> → <code class="language-plaintext highlighter-rouge">ssl</code></li>
+    </ul>
+  </li>
+  <li><strong>Background Processing</strong>:
+    <ul>
+      <li>Executes handler script asynchronously</li>
+      <li>Returns HTTP 200 immediately</li>
+      <li>Prevents webhook timeout</li>
+    </ul>
+  </li>
+  <li><strong>Logging</strong>:
+    <ul>
+      <li>Records all webhook activity</li>
+      <li>Timestamp and event type</li>
+      <li>Payload preview</li>
+      <li>Error messages</li>
+    </ul>
+  </li>
+  <li><strong>Error Handling</strong>:
+    <ul>
+      <li>Invalid signature → HTTP 403</li>
+      <li>Invalid JSON → HTTP 400</li>
+      <li>Missing parameters → HTTP 400</li>
+      <li>Success → HTTP 200 with JSON response</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="installation">Installation</h4>
+
+<ol>
+  <li><strong>Configure constants</strong>:
+    <div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">define</span><span class="p">(</span><span class="s1">'WEBHOOK_SECRET'</span><span class="p">,</span> <span class="s1">'your-webhook-secret-here'</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'HANDLER_SCRIPT'</span><span class="p">,</span> <span class="s1">'/home/web/monitoring/updown-webhook-handler.sh'</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'ALERT_EMAIL'</span><span class="p">,</span> <span class="s1">'admin@example.com'</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">'LOG_FILE'</span><span class="p">,</span> <span class="s1">'/home/web/monitoring/webhook.log'</span><span class="p">);</span>
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Upload to web-accessible location</strong>:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Not in document root recommended</span>
+/home/web/monitoring/webhook.php
+
+<span class="c"># Or in public_html if necessary</span>
+/srv/www/example.com/current/web/webhook.php
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Set permissions</strong>:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">chown </span>web:www-data webhook.php
+<span class="nb">chmod </span>750 webhook.php
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Configure in updown.io</strong>:
+    <ul>
+      <li>Webhook URL: <code class="language-plaintext highlighter-rouge">https://example.com/webhook.php</code></li>
+      <li>Webhook secret: <code class="language-plaintext highlighter-rouge">your-webhook-secret-here</code></li>
+      <li>Events: check.down, check.up, check.ssl_expiry</li>
+    </ul>
+  </li>
+</ol>
+
+<h4 id="testing">Testing</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Test webhook locally</span>
+curl <span class="nt">-X</span> POST https://example.com/webhook.php <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s2">"Content-Type: application/json"</span> <span class="se">\</span>
+  <span class="nt">-H</span> <span class="s2">"X-Updown-Signature: signature-here"</span> <span class="se">\</span>
+  <span class="nt">-d</span> <span class="s1">'{"event":"check.down","check":{"url":"https://example.com"}}'</span>
+
+<span class="c"># Check logs</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /home/web/monitoring/webhook.log
+</code></pre></div></div>
+
+<h4 id="security-considerations">Security Considerations</h4>
+
+<ol>
+  <li><strong>Secret Protection</strong>:
+    <ul>
+      <li>Use strong random secret (32+ characters)</li>
+      <li>Store outside web root if possible</li>
+      <li>Never commit secrets to version control</li>
+    </ul>
+  </li>
+  <li><strong>HTTPS Only</strong>:
+    <ul>
+      <li>Configure updown.io to use HTTPS webhook URL</li>
+      <li>Reject HTTP requests</li>
+    </ul>
+  </li>
+  <li><strong>IP Whitelisting</strong> (optional):
+    <ul>
+      <li>Restrict to updown.io IP ranges</li>
+      <li>Add nginx <code class="language-plaintext highlighter-rouge">allow</code> directives</li>
+    </ul>
+  </li>
+  <li><strong>File Permissions</strong>:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">chmod 750</code> for script files</li>
+      <li><code class="language-plaintext highlighter-rouge">chown web:www-data</code> for proper ownership</li>
+    </ul>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="automation-with-cron">Automation with Cron</h2>
+
+<h3 id="backup-automation">Backup Automation</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Daily database backup at 2 AM</span>
+0 2 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /srv/scripts/backup/db-backup.sh example.com production <span class="o">&gt;</span> /var/log/db-backup.log 2&gt;&amp;1
+
+<span class="c"># Weekly full site backup on Sundays at 3 AM</span>
+0 3 <span class="k">*</span> <span class="k">*</span> 0 /srv/scripts/backup/site-backup.sh example.com <span class="o">&gt;</span> /var/log/site-backup.log 2&gt;&amp;1
+
+<span class="c"># Backup retention cleanup (30 days)</span>
+0 4 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> find /srv/backups <span class="nt">-name</span> <span class="s2">"*.gz"</span> <span class="nt">-mtime</span> +30 <span class="nt">-delete</span>
+</code></pre></div></div>
+
+<h3 id="monitoring-automation">Monitoring Automation</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Hourly security scan</span>
+0 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /srv/scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 1 50 <span class="o">&gt;</span> /var/log/security-scan.log 2&gt;&amp;1
+
+<span class="c"># Daily traffic report at 9 AM</span>
+0 9 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /srv/scripts/monitoring/traffic-monitor.sh /srv/www/example.com/logs/access.log 24 <span class="o">&gt;</span> /var/log/traffic-report.log 2&gt;&amp;1
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="best-practices">Best Practices</h2>
+
+<h3 id="general">General</h3>
+
+<ol>
+  <li><strong>Test in development first</strong> - Always test scripts in staging before production</li>
+  <li><strong>Use version control</strong> - Commit all scripts to git</li>
+  <li><strong>Document customizations</strong> - Add comments for site-specific changes</li>
+  <li><strong>Monitor logs</strong> - Check script output regularly</li>
+  <li><strong>Set proper permissions</strong> - Use <code class="language-plaintext highlighter-rouge">chmod 750</code> for executable scripts</li>
+</ol>
+
+<h3 id="backups">Backups</h3>
+
+<ol>
+  <li><strong>Multiple locations</strong> - Store backups on different servers/services</li>
+  <li><strong>Test restoration</strong> - Verify backups can be restored monthly</li>
+  <li><strong>Monitor disk space</strong> - Ensure sufficient space before backups</li>
+  <li><strong>Encrypt sensitive backups</strong> - Use GPG for database backups</li>
+  <li><strong>Automate with cron</strong> - Schedule regular backups</li>
+</ol>
+
+<h3 id="monitoring">Monitoring</h3>
+
+<ol>
+  <li><strong>Set appropriate thresholds</strong> - Adjust alert levels for your traffic</li>
+  <li><strong>Review reports regularly</strong> - Don’t just collect, analyze</li>
+  <li><strong>Act on alerts</strong> - Block malicious IPs promptly</li>
+  <li><strong>Combine tools</strong> - Use both traffic and security monitoring</li>
+  <li><strong>Document incidents</strong> - Keep records of attacks and responses</li>
+</ol>
+
+<h3 id="github-integration-1">GitHub Integration</h3>
+
+<ol>
+  <li><strong>Review AI descriptions</strong> - Always verify before creating PR</li>
+  <li><strong>Use –no-ai for simple PRs</strong> - Save tokens on trivial changes</li>
+  <li><strong>Keep git history clean</strong> - Squash commits when appropriate</li>
+  <li><strong>Link issues in PRs</strong> - Reference related issues</li>
+  <li><strong>Update branch before PR</strong> - Rebase on latest main</li>
+</ol>
+
+<hr />
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="script-permission-errors">Script Permission Errors</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Make script executable</span>
+<span class="nb">chmod</span> +x script-name.sh
+
+<span class="c"># Check ownership</span>
+<span class="nb">ls</span> <span class="nt">-l</span> script-name.sh
+
+<span class="c"># Fix ownership if needed</span>
+<span class="nb">chown </span>web:www-data script-name.sh
+</code></pre></div></div>
+
+<h3 id="backup-script-issues">Backup Script Issues</h3>
+
+<p><strong>Disk space errors:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check available space</span>
+<span class="nb">df</span> <span class="nt">-h</span> /srv/backups
+
+<span class="c"># Clean old backups manually</span>
+find /srv/backups <span class="nt">-name</span> <span class="s2">"*.gz"</span> <span class="nt">-mtime</span> +30 <span class="nt">-delete</span>
+</code></pre></div></div>
+
+<p><strong>WP-CLI not found:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Verify WP-CLI installation</span>
+which wp
+
+<span class="c"># Install if missing (Trellis includes by default)</span>
+curl <span class="nt">-O</span> https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+<span class="nb">chmod</span> +x wp-cli.phar
+<span class="nb">sudo mv </span>wp-cli.phar /usr/local/bin/wp
+</code></pre></div></div>
+
+<h3 id="monitoring-script-issues">Monitoring Script Issues</h3>
+
+<p><strong>Log file not found:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Verify log location (Trellis default)</span>
+<span class="nb">ls</span> <span class="nt">-la</span> /srv/www/example.com/logs/
+
+<span class="c"># Check Nginx log configuration</span>
+<span class="nb">grep</span> <span class="nt">-r</span> <span class="s2">"access_log"</span> /etc/nginx/sites-enabled/
+</code></pre></div></div>
+
+<p><strong>Empty reports:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check log file has data</span>
+<span class="nb">tail</span> /srv/www/example.com/logs/access.log
+
+<span class="c"># Verify time window (may be too narrow)</span>
+./traffic-monitor.sh /path/to/log 24  <span class="c"># Try larger window</span>
+</code></pre></div></div>
+
+<h3 id="webhook-issues">Webhook Issues</h3>
+
+<p><strong>Signature verification failed:</strong></p>
+<ul>
+  <li>Verify webhook secret matches in updown.io and PHP script</li>
+  <li>Check HMAC calculation in PHP</li>
+  <li>Review webhook payload in logs</li>
+</ul>
+
+<p><strong>Handler script not executing:</strong></p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check script permissions</span>
+<span class="nb">ls</span> <span class="nt">-l</span> /home/web/monitoring/updown-webhook-handler.sh
+
+<span class="c"># Verify path in PHP receiver</span>
+<span class="nb">grep </span>HANDLER_SCRIPT webhook.php
+
+<span class="c"># Test handler manually</span>
+./updown-webhook-handler.sh example.com down
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ul>
+  <li><a href="https://wp-cli.org/">WP-CLI Documentation</a></li>
+  <li><a href="https://www.gnu.org/software/bash/manual/">Bash Scripting Guide</a></li>
+  <li><a href="https://cli.github.com/">GitHub CLI Documentation</a></li>
+  <li><a href="https://nginx.org/en/docs/http/ngx_http_log_module.html">Nginx Log Format</a></li>
+  <li><a href="https://updown.io/webhooks">Updown.io Webhooks</a></li>
+  <li><a href="https://en.wikipedia.org/wiki/HMAC">HMAC Authentication</a></li>
+</ul>
+
+<hr />
+
+<h2 id="contributing">Contributing</h2>
+
+<p>When adding new scripts:</p>
+
+<ol>
+  <li>Include header comments with description, usage, and author</li>
+  <li>Use color-coded output for readability (<code class="language-plaintext highlighter-rouge">\033[0;32m</code> for green, etc.)</li>
+  <li>Add error handling and validation</li>
+  <li>Provide usage examples in comments</li>
+  <li>Test with various inputs and edge cases</li>
+  <li>Document in this README</li>
+  <li>Follow existing code style</li>
+  <li>Include logging where appropriate</li>
+</ol>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

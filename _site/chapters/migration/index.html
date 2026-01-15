@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Migration</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 10</span>
+    
+    
+  </div>
+
+  <h1>Migration</h1>
+
+  
+
+  <h1 id="wordpress-migration-guide">WordPress Migration Guide</h1>
+
+<p>This guide documents various commands and techniques for migrating WordPress sites, particularly when using Roots Trellis and Bedrock stacks. These commands are especially useful when:</p>
+
+<ol>
+  <li>Migrating from local development to production environments</li>
+  <li>Setting up and fixing multisite installations</li>
+  <li>Converting regular WordPress image URLs to Bedrock-compatible paths</li>
+  <li>Migrating from traditional WordPress hosting to Trellis/Bedrock</li>
+</ol>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter lays out safe migration paths and the core commands needed to move sites between environments.</p>
+
+<h2 id="migration-scenarios">Migration Scenarios</h2>
+
+<p>This directory contains guides for different migration scenarios:</p>
+
+<h3 id="single-site-migration">Single-Site Migration</h3>
+<ul>
+  <li><strong><a href="/wp-cli/migration/REGULAR-TO-TRELLIS.md">Regular WordPress to Trellis/Bedrock Migration</a></strong> - Complete step-by-step guide for migrating a single WordPress site from traditional hosting (shared hosting, Plesk, cPanel) to Trellis with Bedrock. Includes modern Trellis CLI workflow, <code class="language-plaintext highlighter-rouge">/etc/hosts</code> testing before DNS cutover, database migration, uploads transfer, and strategies for handling Bedrock path changes while maintaining compatibility with non-Sage themes.</li>
+</ul>
+
+<h3 id="multi-site-migration">Multi-Site Migration</h3>
+<ul>
+  <li><strong><a href="/wp-cli/migration/MULTI-SITE-MIGRATION.md">Multi-Site Migration Guide</a></strong> - Strategies and best practices for migrating <strong>multiple WordPress sites</strong> to a single Trellis server. Covers time-saving tips, batch operations, parallel processing, managing multiple Bedrock installations, and common pitfalls to avoid when consolidating sites.</li>
+</ul>
+
+<h3 id="quick-reference">Quick Reference</h3>
+<ul>
+  <li><strong>Current Document</strong> - Commands and techniques for domain migrations and path conversions</li>
+</ul>
+
+<h2 id="domain-migration-commands">Domain Migration Commands</h2>
+
+<p>When moving a site between environments (e.g., from local to production), you need to update all URLs in the database:</p>
+
+<h3 id="basic-domain-migration">Basic Domain Migration</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Preview changes with --dry-run</span>
+wp search-replace <span class="s1">'http://example.test'</span> <span class="s1">'https://example.com'</span> <span class="nt">--dry-run</span>
+
+<span class="c"># Apply the changes</span>
+wp search-replace <span class="s1">'http://example.test'</span> <span class="s1">'https://example.com'</span>
+
+<span class="c"># Replace domain without protocol (for places where only the domain is stored)</span>
+wp search-replace <span class="s1">'example.test'</span> <span class="s1">'example.com'</span>
+</code></pre></div></div>
+
+<h3 id="multisite-domain-migration">Multisite Domain Migration</h3>
+
+<p>For WordPress multisite installations, use these flags for more precise control:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Update URLs for a specific site in a multisite network</span>
+wp search-replace <span class="s1">'http://subsite.example.test'</span> <span class="s1">'https://subsite.example.com'</span> <span class="nt">--all-tables</span> <span class="nt">--url</span><span class="o">=</span>subsite.example.test
+
+<span class="c"># Update across the entire network</span>
+wp search-replace <span class="s1">'http://subsite.example.test'</span> <span class="s1">'https://subsite.example.com'</span> <span class="nt">--all-tables</span> <span class="nt">--network</span> <span class="nt">--url</span><span class="o">=</span>subsite.example.test
+</code></pre></div></div>
+
+<h2 id="bedrock-path-conversion">Bedrock Path Conversion</h2>
+
+<p>When migrating from a standard WordPress installation to a Bedrock-based installation, you’ll need to update file paths in your database:</p>
+
+<h3 id="theme-path-migration">Theme Path Migration</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert theme paths from standard WordPress to Bedrock structure</span>
+wp search-replace <span class="s1">'/wp-content/themes/'</span> <span class="s1">'/app/themes/'</span> <span class="nt">--all-tables</span> <span class="nt">--url</span><span class="o">=</span>example.com
+
+<span class="c"># If you need to target a specific theme</span>
+wp search-replace <span class="s1">'/wp-content/themes/specific-theme'</span> <span class="s1">'/app/themes/specific-theme'</span> <span class="nt">--all-tables</span> <span class="nt">--url</span><span class="o">=</span>example.com
+</code></pre></div></div>
+
+<h3 id="upload-path-migration">Upload Path Migration</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Preview upload path changes</span>
+wp search-replace <span class="s1">'https://example.com/wp-content/uploads/'</span> <span class="s1">'https://example.com/app/uploads/'</span> <span class="nt">--all-tables</span> <span class="nt">--precise</span> <span class="nt">--report-changed-only</span> <span class="nt">--dry-run</span>
+
+<span class="c"># Apply upload path changes</span>
+wp search-replace <span class="s1">'https://example.com/wp-content/uploads/'</span> <span class="s1">'https://example.com/app/uploads/'</span> <span class="nt">--all-tables</span> <span class="nt">--precise</span> <span class="nt">--report-changed-only</span>
+</code></pre></div></div>
+
+<h2 id="command-options-explained">Command Options Explained</h2>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">--dry-run</code>: Preview changes without modifying the database</li>
+  <li><code class="language-plaintext highlighter-rouge">--all-tables</code>: Search through all tables in the database, not just WordPress core tables</li>
+  <li><code class="language-plaintext highlighter-rouge">--network</code>: Apply changes across all sites in a multisite installation</li>
+  <li><code class="language-plaintext highlighter-rouge">--url=example.com</code>: Specify which site in a multisite installation to operate on</li>
+  <li><code class="language-plaintext highlighter-rouge">--precise</code>: Perform a slower but more thorough search, useful for encoded data</li>
+  <li><code class="language-plaintext highlighter-rouge">--report-changed-only</code>: Only show tables where changes were made (reduces output noise)</li>
+</ul>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<ol>
+  <li><strong>Always backup your database</strong> before running search-replace operations</li>
+  <li>Always test with <code class="language-plaintext highlighter-rouge">--dry-run</code> first to preview changes</li>
+  <li>For multisite installations, run commands for each subsite individually</li>
+  <li>After migration, flush caches and permalinks with:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wp cache flush
+wp rewrite flush
+</code></pre></div>    </div>
+  </li>
+  <li>Test the site thoroughly after migration, especially forms and dynamic content</li>
+</ol>
+
+<h2 id="common-migration-workflow">Common Migration Workflow</h2>
+
+<ol>
+  <li>Migrate the database from source to destination environment</li>
+  <li>Run appropriate domain search-replace commands</li>
+  <li>Update path structures if moving between different WordPress setups</li>
+  <li>Flush caches and permalinks</li>
+  <li>Test site functionality</li>
+</ol>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p>If you encounter issues after migration:</p>
+
+<ol>
+  <li>Check for hardcoded URLs in theme files and plugins</li>
+  <li>Look for serialized data issues (the <code class="language-plaintext highlighter-rouge">--precise</code> flag helps with this)</li>
+  <li>Inspect browser console for missing assets or 404 errors</li>
+  <li>Verify that all database tables were included in the search-replace operations</li>
+</ol>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

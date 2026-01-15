@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Browser Caching</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 12</span>
+    
+    
+  </div>
+
+  <h1>Browser Caching</h1>
+
+  
+
+  <h1 id="browser-caching-for-trellis">Browser Caching for Trellis</h1>
+
+<p>This guide covers how to implement effective browser caching for your Trellis-managed WordPress sites. Proper caching can significantly reduce page load times, bandwidth usage, and server load.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter explains how to apply browser caching headers safely and verify that assets are cached as expected.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#nginx-configuration-for-browser-caching">Nginx Configuration for Browser Caching</a></li>
+  <li><a href="#implementation">Implementation</a></li>
+  <li><a href="#file-types-and-cache-duration">File Types and Cache Duration</a></li>
+  <li><a href="#testing-cache-implementation">Testing Cache Implementation</a></li>
+  <li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+
+<h2 id="overview">Overview</h2>
+
+<p>Browser caching instructs visitors’ browsers to store static resources locally for a specified period, reducing the need to download the same files on subsequent visits. The included Nginx configuration adds appropriate caching headers to static files such as:</p>
+
+<ul>
+  <li>Images (JPEG, PNG, GIF, WebP, AVIF)</li>
+  <li>Stylesheets (CSS)</li>
+  <li>JavaScript files</li>
+  <li>Fonts (WOFF, WOFF2, TTF, EOT, OTF)</li>
+  <li>SVG files</li>
+  <li>Other static assets</li>
+</ul>
+
+<h2 id="nginx-configuration-for-browser-caching">Nginx Configuration for Browser Caching</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">nginx-includes/all/assets-expiry.conf.j2</code> file in this repository contains Nginx configuration to set appropriate caching headers for various file types. The configuration uses the <code class="language-plaintext highlighter-rouge">expires</code> directive along with <code class="language-plaintext highlighter-rouge">Cache-Control</code> headers to control how long browsers should cache content.</p>
+
+<h3 id="how-it-works">How it Works</h3>
+
+<ol>
+  <li>The configuration maps content types to specific expiration times</li>
+  <li>Different file types receive appropriate cache durations</li>
+  <li>HTML files are not cached to ensure fresh content</li>
+  <li>Admin areas and PHP files are explicitly set to not cache</li>
+</ol>
+
+<h2 id="implementation">Implementation</h2>
+
+<ol>
+  <li>Copy the <code class="language-plaintext highlighter-rouge">nginx-includes</code> directory to your Trellis project root (same level as <code class="language-plaintext highlighter-rouge">server.yml</code>)</li>
+  <li>The configuration in <code class="language-plaintext highlighter-rouge">nginx-includes/all/assets-expiry.conf.j2</code> will automatically be applied to <strong>all sites</strong> on your server</li>
+  <li>Provision your environment to apply the changes:</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For production</span>
+trellis provision <span class="nt">--tags</span> nginx-includes production 
+
+<span class="c"># For staging  </span>
+trellis provision <span class="nt">--tags</span> nginx-includes staging
+
+<span class="c"># For development</span>
+trellis provision <span class="nt">--tags</span> nginx-includes development
+</code></pre></div></div>
+
+<p><strong>Note</strong>: Since the file is in the <code class="language-plaintext highlighter-rouge">all/</code> directory, it will be automatically included for every site configured in Trellis. You don’t need to modify your <code class="language-plaintext highlighter-rouge">wordpress_sites.yml</code> configuration.</p>
+
+<h2 id="file-types-and-cache-duration">File Types and Cache Duration</h2>
+
+<p>The configuration sets the following cache durations:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>File Type</th>
+      <th>Cache Duration</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Images (JPEG, PNG, GIF, WebP, AVIF)</td>
+      <td>30 days</td>
+    </tr>
+    <tr>
+      <td>CSS files</td>
+      <td>7 days</td>
+    </tr>
+    <tr>
+      <td>JavaScript files</td>
+      <td>7 days</td>
+    </tr>
+    <tr>
+      <td>Fonts (WOFF, WOFF2, TTF, etc.)</td>
+      <td>30 days</td>
+    </tr>
+    <tr>
+      <td>SVG files</td>
+      <td>30 days</td>
+    </tr>
+    <tr>
+      <td>HTML files</td>
+      <td>No cache (always fresh)</td>
+    </tr>
+    <tr>
+      <td>PHP files</td>
+      <td>No cache</td>
+    </tr>
+    <tr>
+      <td>Admin areas</td>
+      <td>No cache</td>
+    </tr>
+    <tr>
+      <td>Other static files</td>
+      <td>1 day</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>These durations provide a good balance between performance and freshness. You can adjust them in the <code class="language-plaintext highlighter-rouge">assets-expiry.conf.j2</code> file to match your specific needs.</p>
+
+<h2 id="testing-cache-implementation">Testing Cache Implementation</h2>
+
+<p>After implementation, you can verify the caching headers are working correctly:</p>
+
+<h3 id="using-browser-dev-tools">Using Browser Dev Tools</h3>
+
+<ol>
+  <li>Open your website in Chrome or Firefox</li>
+  <li>Open Developer Tools (F12)</li>
+  <li>Navigate to the Network tab</li>
+  <li>Reload the page</li>
+  <li>Select any static resource (image, CSS, or JS file)</li>
+  <li>Check the Response Headers section for:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">Cache-Control</code> headers</li>
+      <li><code class="language-plaintext highlighter-rouge">Expires</code> headers</li>
+    </ul>
+  </li>
+</ol>
+
+<h3 id="using-curl">Using curl</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="nt">-I</span> https://example.com/wp-content/uploads/image.jpg
+</code></pre></div></div>
+
+<p>Look for headers like:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Cache-Control: public, max-age=2592000
+Expires: Wed, 17 Jun 2025 12:00:00 GMT
+</code></pre></div></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="resources-not-caching">Resources Not Caching</h3>
+
+<ol>
+  <li>Verify the Nginx configuration was properly included</li>
+  <li>Check file permissions on the configuration file</li>
+  <li>Test with <code class="language-plaintext highlighter-rouge">curl -I</code> to see the actual headers being sent</li>
+  <li>Review Nginx error logs: <code class="language-plaintext highlighter-rouge">/var/log/nginx/error.log</code></li>
+</ol>
+
+<h3 id="too-aggressive-caching">Too Aggressive Caching</h3>
+
+<p>If you’re developing or frequently updating assets:</p>
+
+<ol>
+  <li>Reduce cache durations in the configuration</li>
+  <li>Use versioned file names or query strings (e.g., <code class="language-plaintext highlighter-rouge">style.css?v=1.2</code>)</li>
+  <li>Use a cache-busting technique in your build process</li>
+</ol>
+
+<h3 id="cached-pages-not-updating">Cached Pages Not Updating</h3>
+
+<p>For WordPress pages that should always be fresh:</p>
+
+<ol>
+  <li>Verify HTML pages are not being cached (they shouldn’t be with this configuration)</li>
+  <li>Check for additional caching layers (WordPress plugins, CDN, etc.)</li>
+  <li>Clear browser cache during testing</li>
+</ol>
+
+<h2 id="advanced-configuration">Advanced Configuration</h2>
+
+<p>You can modify the cache durations or add more specific rules by editing the <code class="language-plaintext highlighter-rouge">nginx-includes/assets-expiry.conf.j2</code> file. For example, to change the cache duration for images:</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Change image caching from 30 days to 14 days</span>
+<span class="k">~image/</span>                                 <span class="s">14d</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="performance-benefits">Performance Benefits</h2>
+
+<p>Implementing proper browser caching provides several benefits:</p>
+
+<ul>
+  <li>Reduced bandwidth usage (up to 70% on repeat visits)</li>
+  <li>Faster page load times for returning visitors</li>
+  <li>Reduced server load and resource consumption</li>
+  <li>Improved Google PageSpeed scores</li>
+  <li>Better user experience and engagement</li>
+</ul>
+
+<p>For optimal performance, consider combining this caching configuration with image optimization (see the image-optimization directory) and a content delivery network (CDN).</p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

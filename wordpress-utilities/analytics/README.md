@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Analytics"
+chapter_number: 16
+permalink: /chapters/analytics/
+---
+
 # WordPress Analytics Tools Guide
 
 This guide covers the implementation and detection of popular analytics tools on WordPress sites, including Google Analytics and Matomo.

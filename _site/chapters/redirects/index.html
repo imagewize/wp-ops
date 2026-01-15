@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirects</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 14</span>
+    
+    
+  </div>
+
+  <h1>Redirects</h1>
+
+  
+
+  <h1 id="nginx-redirect-configuration">Nginx Redirect Configuration</h1>
+
+<p>Trellis nginx-includes templates for managing SEO redirects and URL rewrites.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter documents redirect patterns and safe include placement during provisioning.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains example nginx redirect configurations that can be used in Trellis projects. Redirects are managed via nginx-includes templates that are deployed during provisioning.</p>
+
+<h2 id="directory-structure">Directory Structure</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>redirects/
+├── README.md                           # This file
+└── examples/
+    ├── example.com/
+    │   └── seo-redirects.conf.j2       # SEO redirect examples
+    └── generic/
+        ├── wordpress-permalinks.conf.j2 # Common WordPress redirects
+        └── ssl-redirects.conf.j2        # HTTP to HTTPS redirects
+</code></pre></div></div>
+
+<h2 id="how-nginx-includes-work-in-trellis">How Nginx Includes Work in Trellis</h2>
+
+<p>Trellis supports nginx-includes templates that are deployed to the server during provisioning. These templates are stored in your project’s <code class="language-plaintext highlighter-rouge">trellis/nginx-includes/</code> directory.</p>
+
+<h3 id="include-scopes">Include Scopes</h3>
+
+<ol>
+  <li><strong>Global includes</strong> (<code class="language-plaintext highlighter-rouge">nginx-includes/all/</code>): Apply to all sites</li>
+  <li><strong>Site-specific includes</strong> (<code class="language-plaintext highlighter-rouge">nginx-includes/{site-key}/</code>): Apply to specific sites only</li>
+</ol>
+
+<h3 id="directory-structure-in-your-project">Directory Structure in Your Project</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trellis/
+└── nginx-includes/
+    ├── all/                          # Global includes (all sites)
+    │   └── assets-expiry.conf.j2     # Browser caching rules
+    └── example.com/                # Site-specific includes
+        └── seo-redirects.conf.j2     # SEO redirects (example.com only)
+</code></pre></div></div>
+
+<h3 id="deployment-location">Deployment Location</h3>
+
+<p>Templates are deployed to <code class="language-plaintext highlighter-rouge">/etc/nginx/includes.d/</code> on the server:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/etc/nginx/includes.d/
+├── all/
+│   └── assets-expiry.conf         # Rendered from all/assets-expiry.conf.j2
+└── example.com/
+    └── seo-redirects.conf         # Rendered from example.com/seo-redirects.conf.j2
+</code></pre></div></div>
+
+<h2 id="using-the-examples">Using the Examples</h2>
+
+<h3 id="1-copy-example-to-your-project">1. Copy Example to Your Project</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Copy site-specific redirect template</span>
+<span class="nb">cp</span> ~/code/trellis-tools/redirects/examples/example.com/seo-redirects.conf.j2 <span class="se">\</span>
+   ~/code/yourproject.com/trellis/nginx-includes/yoursite.com/
+
+<span class="c"># Or copy to global includes (applies to all sites)</span>
+<span class="nb">cp</span> ~/code/trellis-tools/redirects/examples/generic/wordpress-permalinks.conf.j2 <span class="se">\</span>
+   ~/code/yourproject.com/trellis/nginx-includes/all/
+</code></pre></div></div>
+
+<h3 id="2-edit-the-template">2. Edit the Template</h3>
+
+<p>Edit the <code class="language-plaintext highlighter-rouge">.conf.j2</code> file to add your site-specific redirects:</p>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># SEO Redirects - Fix 404 Errors</span>
+<span class="c1"># Date: 2025-11-30</span>
+
+<span class="c1"># Old URL structure -&gt; New URL structure</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1"># Old category -&gt; New category</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/category/old-category/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/category/new-category/</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="3-deploy-to-production">3. Deploy to Production</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd </span>trellis
+
+<span class="c"># Deploy nginx-includes only (fast)</span>
+trellis provision <span class="nt">--tags</span> nginx-includes production
+
+<span class="c"># Or deploy with full wordpress-setup</span>
+trellis provision <span class="nt">--tags</span> wordpress-setup production
+</code></pre></div></div>
+
+<h3 id="4-verify-deployment">4. Verify Deployment</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check the config file was deployed</span>
+ssh root@yoursite.com <span class="s2">"cat /etc/nginx/includes.d/yoursite.com/seo-redirects.conf"</span>
+
+<span class="c"># Test nginx config is valid</span>
+ssh root@yoursite.com <span class="s2">"nginx -t"</span>
+
+<span class="c"># Test a redirect</span>
+curl <span class="nt">-I</span> https://yoursite.com/old-url
+<span class="c"># Should show: HTTP/2 301</span>
+<span class="c"># Location: https://yoursite.com/new-url/</span>
+</code></pre></div></div>
+
+<h2 id="redirect-best-practices">Redirect Best Practices</h2>
+
+<h3 id="1-use-permanent-redirects-301">1. Use Permanent Redirects (301)</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ✅ Good - Permanent redirect (SEO-friendly)</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1"># ⚠️ Temporary redirect (use sparingly)</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/maintenance/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">302</span> <span class="n">/temporary-page/</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="2-match-exact-paths-with-">2. Match Exact Paths with <code class="language-plaintext highlighter-rouge">=</code></h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ✅ Fast - Exact match (stops processing)</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1"># ⚠️ Slower - Prefix match (continues processing)</span>
+<span class="k">location</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="3-use-regex-for-pattern-matching">3. Use Regex for Pattern Matching</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Redirect all portfolio items to main portfolio page</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/portfolio-item/.*$</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/portfolio/</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1"># Redirect old date-based URLs to new structure</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/(\d</span><span class="p">{</span><span class="kn">4</span><span class="err">}</span><span class="s">)/(</span><span class="err">\</span><span class="s">d</span><span class="p">{</span><span class="kn">2</span><span class="err">}</span><span class="s">)/(.*)</span>$ <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/</span><span class="nv">$3</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="4-preserve-query-strings">4. Preserve Query Strings</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Query strings are automatically preserved</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1"># /old-page/?utm_source=google -&gt; /new-page/?utm_source=google</span>
+</code></pre></div></div>
+
+<h3 id="5-add-comments-and-dates">5. Add Comments and Dates</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># SEO Redirects - Fix 404 Errors</span>
+<span class="c1"># Date: 2025-11-30</span>
+<span class="c1"># Reason: Content restructure after site migration</span>
+
+<span class="k">location</span> <span class="p">=</span> <span class="n">/old-page/</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/new-page/</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="common-redirect-patterns">Common Redirect Patterns</h2>
+
+<h3 id="wordpress-permalinks">WordPress Permalinks</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Old post URLs -&gt; New permalink structure</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/\d</span><span class="p">{</span><span class="kn">4</span><span class="err">}</span><span class="n">/\d</span><span class="p">{</span><span class="kn">2</span><span class="err">}</span><span class="n">/</span><span class="s">(.*)</span>$ <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/</span><span class="nv">$1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="category-consolidation">Category Consolidation</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Merge old categories into new category</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/category/old-cat-1/(.*)$</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/category/new-category/</span><span class="nv">$1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/category/old-cat-2/(.*)$</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/category/new-category/</span><span class="nv">$1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="custom-post-type-urls">Custom Post Type URLs</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Old CPT slug -&gt; New CPT slug</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/old-portfolio/(.*)$</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/portfolio/</span><span class="nv">$1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="languagelocale-redirects">Language/Locale Redirects</h3>
+
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Redirect old language URLs to new structure</span>
+<span class="k">location</span> <span class="p">~</span> <span class="sr">^/en-us/(.*)$</span> <span class="p">{</span>
+    <span class="kn">return</span> <span class="mi">301</span> <span class="n">/en/</span><span class="nv">$1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="testing-redirects">Testing Redirects</h2>
+
+<h3 id="manual-testing-with-curl">Manual Testing with curl</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Test redirect (follow redirects with -L)</span>
+curl <span class="nt">-I</span> https://yoursite.com/old-url
+
+<span class="c"># Expected output:</span>
+<span class="c"># HTTP/2 301</span>
+<span class="c"># Location: https://yoursite.com/new-url/</span>
+</code></pre></div></div>
+
+<h3 id="automated-testing">Automated Testing</h3>
+
+<p>Create a test script to verify all redirects:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+<span class="c"># test-redirects.sh</span>
+
+<span class="nv">SITE</span><span class="o">=</span><span class="s2">"https://yoursite.com"</span>
+
+<span class="c"># Test each redirect</span>
+curl <span class="nt">-I</span> <span class="nt">-s</span> <span class="s2">"</span><span class="nv">$SITE</span><span class="s2">/old-page/"</span> | <span class="nb">grep</span> <span class="nt">-q</span> <span class="s2">"301"</span> <span class="o">&amp;&amp;</span> <span class="nb">echo</span> <span class="s2">"✅ /old-page/ -&gt; 301"</span> <span class="o">||</span> <span class="nb">echo</span> <span class="s2">"❌ /old-page/ failed"</span>
+curl <span class="nt">-I</span> <span class="nt">-s</span> <span class="s2">"</span><span class="nv">$SITE</span><span class="s2">/another-page/"</span> | <span class="nb">grep</span> <span class="nt">-q</span> <span class="s2">"301"</span> <span class="o">&amp;&amp;</span> <span class="nb">echo</span> <span class="s2">"✅ /another-page/ -&gt; 301"</span> <span class="o">||</span> <span class="nb">echo</span> <span class="s2">"❌ /another-page/ failed"</span>
+</code></pre></div></div>
+
+<h2 id="finding-urls-to-redirect">Finding URLs to Redirect</h2>
+
+<h3 id="1-check-google-search-console">1. Check Google Search Console</h3>
+
+<ul>
+  <li><strong>Coverage Report</strong>: Find 404 errors</li>
+  <li><strong>Performance Report</strong>: Find URLs with impressions but low clicks</li>
+</ul>
+
+<h3 id="2-analyze-server-logs">2. Analyze Server Logs</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Find 404 errors in nginx logs</span>
+ssh root@yoursite.com <span class="s2">"grep ' 404 ' /srv/www/yoursite.com/logs/access.log | awk '{print </span><span class="se">\$</span><span class="s2">7}' | sort | uniq -c | sort -rn | head -20"</span>
+</code></pre></div></div>
+
+<h3 id="3-use-screaming-frog-seo-spider">3. Use Screaming Frog SEO Spider</h3>
+
+<ul>
+  <li>Crawl your site</li>
+  <li>Filter by “Response Code = 404”</li>
+  <li>Identify broken internal links</li>
+</ul>
+
+<h3 id="4-check-old-sitemaps">4. Check Old Sitemaps</h3>
+
+<ul>
+  <li>Compare old sitemap.xml with current sitemap</li>
+  <li>Find removed URLs that should redirect</li>
+</ul>
+
+<h2 id="rollback">Rollback</h2>
+
+<p>If redirects cause issues, you can remove them:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Remove or comment out redirects in the .conf.j2 file</span>
+
+<span class="c"># 2. Re-deploy</span>
+<span class="nb">cd </span>trellis
+trellis provision <span class="nt">--tags</span> nginx-includes production
+
+<span class="c"># 3. Or manually remove on server</span>
+ssh root@yoursite.com <span class="s2">"rm /etc/nginx/includes.d/yoursite.com/seo-redirects.conf &amp;&amp; nginx -t &amp;&amp; systemctl reload nginx"</span>
+</code></pre></div></div>
+
+<h2 id="performance-considerations">Performance Considerations</h2>
+
+<h3 id="redirect-limits">Redirect Limits</h3>
+
+<ul>
+  <li>Nginx handles thousands of redirects efficiently</li>
+  <li>Each redirect is compiled to a hash table (O(1) lookup)</li>
+  <li>No significant performance impact up to ~10,000 redirects</li>
+</ul>
+
+<h3 id="optimization-tips">Optimization Tips</h3>
+
+<ol>
+  <li><strong>Use exact matches</strong> (<code class="language-plaintext highlighter-rouge">location =</code>) when possible (fastest)</li>
+  <li><strong>Group similar patterns</strong> with regex instead of individual rules</li>
+  <li><strong>Place most frequently accessed redirects first</strong></li>
+  <li><strong>Monitor redirect chains</strong> (redirect should go directly to final URL)</li>
+</ol>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="redirects-not-working">Redirects Not Working</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Verify file was deployed</span>
+ssh root@yoursite.com <span class="s2">"ls -la /etc/nginx/includes.d/yoursite.com/"</span>
+
+<span class="c"># 2. Check nginx config syntax</span>
+ssh root@yoursite.com <span class="s2">"nginx -t"</span>
+
+<span class="c"># 3. Check nginx error log</span>
+ssh root@yoursite.com <span class="s2">"tail -f /var/log/nginx/error.log"</span>
+
+<span class="c"># 4. Verify nginx was reloaded</span>
+ssh root@yoursite.com <span class="s2">"systemctl status nginx"</span>
+</code></pre></div></div>
+
+<h3 id="404-instead-of-redirect">404 Instead of Redirect</h3>
+
+<ul>
+  <li>Check if redirect location path is exact match (<code class="language-plaintext highlighter-rouge">=</code>)</li>
+  <li>Verify trailing slashes (nginx treats <code class="language-plaintext highlighter-rouge">/page</code> and <code class="language-plaintext highlighter-rouge">/page/</code> differently)</li>
+  <li>Check if another location block takes precedence</li>
+</ul>
+
+<h3 id="redirect-loops">Redirect Loops</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Test for loops</span>
+curl <span class="nt">-I</span> <span class="nt">-L</span> https://yoursite.com/page/
+
+<span class="c"># If it hangs or shows many redirects, you have a loop</span>
+</code></pre></div></div>
+
+<p>Fix by checking your redirect chain:</p>
+<div class="language-nginx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># ❌ Bad - Creates loop</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/page-a/</span> <span class="p">{</span> <span class="kn">return</span> <span class="mi">301</span> <span class="n">/page-b/</span><span class="p">;</span> <span class="p">}</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/page-b/</span> <span class="p">{</span> <span class="kn">return</span> <span class="mi">301</span> <span class="n">/page-a/</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="c1"># ✅ Good - Direct to final destination</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/page-a/</span> <span class="p">{</span> <span class="kn">return</span> <span class="mi">301</span> <span class="n">/final-page/</span><span class="p">;</span> <span class="p">}</span>
+<span class="k">location</span> <span class="p">=</span> <span class="n">/page-b/</span> <span class="p">{</span> <span class="kn">return</span> <span class="mi">301</span> <span class="n">/final-page/</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="documentation">Documentation</h2>
+
+<ul>
+  <li><a href="https://roots.io/trellis/docs/nginx-includes/">Roots Trellis Nginx Includes Docs</a></li>
+  <li><a href="http://nginx.org/en/docs/http/ngx_http_core_module.html#location">Nginx Location Directive</a></li>
+  <li><a href="http://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return">Nginx Return Directive</a></li>
+</ul>
+
+<h2 id="version-history">Version History</h2>
+
+<ul>
+  <li><strong>2025-11-30</strong> - Initial version with SEO redirect examples and comprehensive documentation</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

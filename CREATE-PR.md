@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "PR Helper Script"
+chapter_number: 20
+permalink: /chapters/pr-helper/
+---
+
 # Create PR Script
 
 An intelligent script (`create-pr.sh`) that creates GitHub pull requests with professional, AI-powered descriptions similar to GitHub Copilot.

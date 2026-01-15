@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Provisioning Environments</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 3</span>
+    
+    
+      <span class="reading-time">20 min read</span>
+    
+  </div>
+
+  <h1>Provisioning Environments</h1>
+
+  
+  <div class="callout callout-prerequisites">
+    <h3>Prerequisites</h3>
+    <ul>
+    
+      <li>Chapter 1: Operating Principles</li>
+    
+      <li>Chapter 2: Command Helpers</li>
+    
+    </ul>
+  </div>
+  
+
+  <h1 id="provisioning">Provisioning</h1>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter collects the setup and provisioning steps you need to bring Trellis environments online and keep deployments repeatable.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<h3 id="setup-guides">Setup Guides</h3>
+<ul>
+  <li><a href="/trellis/provision/NEW-MACHINE.md">New Machine Setup</a> - Configure Mac for Trellis development (install tools, understand architecture)</li>
+  <li><a href="/trellis/provision/PROJECT-SETUP.md">Project Setup</a> - Clone and setup existing Trellis/Bedrock projects</li>
+</ul>
+
+<h3 id="configuration-guides">Configuration Guides</h3>
+<ul>
+  <li><a href="/trellis/provision/CRON.md">WordPress Cron</a> - How Trellis handles WordPress cron with system cron</li>
+</ul>
+
+<h3 id="command-reference">Command Reference</h3>
+<ul>
+  <li><a href="#navigate-to-trellis-directory">General Provisioning</a> - Common provisioning commands (below)</li>
+</ul>
+
+<hr />
+
+<h2 id="quick-command-reference">Quick Command Reference</h2>
+
+<p>This section provides common Trellis provisioning and deployment commands. These are the day-to-day commands you’ll use after your machine and project are set up.</p>
+
+<p>For initial setup, see the <a href="#setup-guides">Setup Guides</a> above.</p>
+
+<h2 id="navigate-to-trellis-directory">Navigate to trellis directory</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd </span>trellis
+</code></pre></div></div>
+
+<h2 id="provision-development-environment">Provision development environment</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ansible-playbook dev.yml
+</code></pre></div></div>
+
+<h2 id="deploy-to-stagingproduction">Deploy to staging/production</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ansible-playbook deploy.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+ansible-playbook deploy.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+</code></pre></div></div>
+
+<h2 id="re-provision-production-with-specific-tags">Re-provision production with specific tags</h2>
+
+<p>Use <code class="language-plaintext highlighter-rouge">trellis provision</code> command instead of <code class="language-plaintext highlighter-rouge">ansible-playbook server.yml</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trellis provision <span class="nt">--tags</span> php,nginx,composer production
+</code></pre></div></div>
+
+<h2 id="full-server-provisioning">Full server provisioning</h2>
+
+<p>Use sparingly:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trellis provision production
+</code></pre></div></div>
+
+<h2 id="php-version-upgrade-process">PHP Version Upgrade Process</h2>
+
+<ol>
+  <li>Update <code class="language-plaintext highlighter-rouge">php_version</code> in <code class="language-plaintext highlighter-rouge">trellis/group_vars/all/main.yml</code></li>
+  <li>Run with <code class="language-plaintext highlighter-rouge">php</code>, <code class="language-plaintext highlighter-rouge">nginx</code>, <code class="language-plaintext highlighter-rouge">wordpress-setup</code>, <code class="language-plaintext highlighter-rouge">users</code>, and <code class="language-plaintext highlighter-rouge">memcached</code> tags:</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>trellis provision <span class="nt">--tags</span> php,nginx,wordpress-setup,users,memcached production
+</code></pre></div></div>
+
+<p><strong>Why these tags are required:</strong></p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">php</code> - Installs new PHP version and extensions</li>
+  <li><code class="language-plaintext highlighter-rouge">nginx</code> - Updates Nginx configuration for new PHP-FPM socket</li>
+  <li><code class="language-plaintext highlighter-rouge">wordpress-setup</code> - Creates <code class="language-plaintext highlighter-rouge">/etc/php/X.X/fpm/pool.d/wordpress.conf</code></li>
+  <li><code class="language-plaintext highlighter-rouge">users</code> - <strong>Critical</strong>: Regenerates sudoers with new PHP version for passwordless <code class="language-plaintext highlighter-rouge">php-fpm reload</code></li>
+  <li><code class="language-plaintext highlighter-rouge">memcached</code> - Installs PHP version-specific memcached extension (e.g., <code class="language-plaintext highlighter-rouge">php8.3-memcached</code>)</li>
+</ul>
+
+<p><strong>Note:</strong> Without the <code class="language-plaintext highlighter-rouge">users</code> tag, deployments will fail when trying to reload PHP-FPM because the sudoers configuration still references the old PHP version.</p>
+
+<h2 id="wordpress-cron">WordPress Cron</h2>
+
+<p>Trellis automatically configures system cron instead of WordPress’s built-in WP-Cron for more reliable scheduled task execution.</p>
+
+<p>For complete documentation on how WordPress cron works with Trellis, including:</p>
+<ul>
+  <li>How system cron replaces WP-Cron</li>
+  <li>Verification and troubleshooting</li>
+  <li>Customization options</li>
+  <li>Migration considerations</li>
+</ul>
+
+<p>See <a href="/trellis/provision/CRON.md">CRON.md</a>.</p>
+
+
+  
+  <div class="callout callout-summary">
+    <h3>Key Takeaways</h3>
+    <ul>
+    
+      <li>Start with the setup guides before running provisioning commands.</li>
+    
+      <li>Use trellis provision and tags for safe, targeted changes.</li>
+    
+      <li>PHP upgrades require the full tag set to refresh sudoers and extensions.</li>
+    
+    </ul>
+  </div>
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

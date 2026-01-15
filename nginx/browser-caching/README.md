@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Browser Caching"
+chapter_number: 12
+permalink: /chapters/browser-caching/
+---
+
 # Browser Caching for Trellis
 
 This guide covers how to implement effective browser caching for your Trellis-managed WordPress sites. Proper caching can significantly reduce page load times, bandwidth usage, and server load.

@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Operating Principles and Safety Basics</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 1</span>
+    
+    
+  </div>
+
+  <h1>Operating Principles and Safety Basics</h1>
+
+  
+
+  <div align="center">
+  <img src="assets/logo.svg" alt="WordPress Operations Logo" width="128" height="128" />
+    <h1>WP OPS</h1> 
+</div>
+
+<div align="center">
+Tools, scripts, and guides for modern WordPress development &amp; devops—optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
+</div>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter orients operators to the toolkit, showing what is included and where to start for common workflows.</p>
+
+<h2 id="tools">Tools</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tool</th>
+      <th>Description</th>
+      <th>Documentation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Trellis Updater</strong></td>
+      <td>Safely update Trellis while preserving custom configurations</td>
+      <td><a href="/chapters/updating-trellis/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Backup Tools</strong></td>
+      <td>Ansible playbooks for database and files backup/push/pull operations</td>
+      <td><a href="/trellis/backup/README.html">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Provisioning Reference</strong></td>
+      <td>Common Trellis provisioning commands and workflows</td>
+      <td><a href="/trellis/provision/README.html">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>New Machine Setup</strong></td>
+      <td>Set up macOS for Trellis development (tools, SSH, VM architecture)</td>
+      <td><a href="/trellis/provision/NEW-MACHINE.md">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Project Setup</strong></td>
+      <td>Clone and configure an existing Trellis/Bedrock project</td>
+      <td><a href="/trellis/provision/PROJECT-SETUP.md">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Monitoring</strong></td>
+      <td>Nginx log monitoring for traffic analysis and security threat detection</td>
+      <td><a href="/chapters/monitoring-alerting/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Security</strong></td>
+      <td>WordPress protection via fail2ban automatic IP blocking and manual deny rules</td>
+      <td><a href="/chapters/security-hardening/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Content Creation</strong></td>
+      <td>Automated page creation and WP-CLI content management workflows</td>
+      <td><a href="/chapters/content-creation/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Migration Tools</strong></td>
+      <td>Migrate WordPress sites to Trellis/Bedrock (single and multi-site)</td>
+      <td><a href="/chapters/migration/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>URL Update Methods</strong></td>
+      <td>Generic WordPress URL update methods for migrations</td>
+      <td><a href="/wp-cli/migration/URL-UPDATE-METHODS.md">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Diagnostics</strong></td>
+      <td>WordPress diagnostic tools for transients, caching, and performance issues</td>
+      <td><a href="/chapters/diagnostics/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Security Scanners</strong></td>
+      <td>Dual-scanner suite for WordPress malware detection and security auditing</td>
+      <td><a href="/chapters/security-checks/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Image Optimization</strong></td>
+      <td>Nginx WebP/AVIF configuration with automatic format serving</td>
+      <td><a href="/chapters/image-optimization/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Browser Caching</strong></td>
+      <td>Nginx configuration for optimal static asset caching</td>
+      <td><a href="/chapters/browser-caching/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Redirects</strong></td>
+      <td>Nginx redirect configuration for SEO and URL management</td>
+      <td><a href="/chapters/redirects/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Troubleshooting</strong></td>
+      <td>Diagnose and resolve PHP-FPM, MariaDB, and server issues</td>
+      <td><a href="/troubleshooting/README.md">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>PR Creation Script</strong></td>
+      <td>AI-powered GitHub PR descriptions with multi-AI backend support (Claude/Codex)</td>
+      <td><a href="/chapters/pr-helper/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Theme Release</strong></td>
+      <td>AI-powered version bumping and changelog generation for WordPress themes</td>
+      <td><a href="/scripts/release-theme.sh">→ Script</a></td>
+    </tr>
+    <tr>
+      <td><strong>Theme Sync</strong></td>
+      <td>Rsync script for theme synchronization</td>
+      <td><a href="/scripts/rsync-theme.sh">→ Script</a></td>
+    </tr>
+    <tr>
+      <td><strong>Age Verification</strong></td>
+      <td>Cookie-based age verification system with modal interface and ACF integration</td>
+      <td><a href="/chapters/age-verification/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Analytics</strong></td>
+      <td>Implementation and detection of Google Analytics, Matomo, and other analytics tools</td>
+      <td><a href="/chapters/analytics/">→ Guide</a></td>
+    </tr>
+    <tr>
+      <td><strong>Speed Optimization</strong></td>
+      <td>Performance testing tools and TTFB analysis with curl/wget</td>
+      <td><a href="/chapters/speed-optimization/">→ Guide</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="quick-start">Quick Start</h2>
+
+<p>Choose the tool you need and follow its dedicated guide for detailed setup and usage instructions.</p>
+
+<h2 id="book">Book</h2>
+
+<p>Prefer a guided, ebook-style path? Start here: <code class="language-plaintext highlighter-rouge">BOOK.md</code>.</p>
+
+<h2 id="requirements">Requirements</h2>
+
+<ul>
+  <li><strong>Core</strong>: Git, Bash, rsync</li>
+  <li><strong>Tool-specific</strong>: See individual documentation for Ansible, WP-CLI, ImageMagick, etc.</li>
+</ul>
+
+<h2 id="credits">Credits</h2>
+
+<p>Logo design inspired by <a href="https://blade-ui-kit.com/blade-icons/si-opsgenie">Opsgenie icon</a> from <a href="https://blade-ui-kit.com/blade-icons">Blade Icons</a>.</p>
+
+<h2 id="license">License</h2>
+
+<p>MIT License. See <a href="/LICENSE.md">LICENSE.md</a> for details.</p>
+
+<hr />
+
+<p>Copyright © Imagewize</p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

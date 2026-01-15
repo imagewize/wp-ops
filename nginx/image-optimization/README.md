@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Image Optimization"
+chapter_number: 13
+permalink: /chapters/image-optimization/
+---
+
 # Image Optimization Guide
 
 This guide covers how to optimize images for your Trellis-managed WordPress sites, including Nginx configuration for serving WebP and AVIF images, and methods to convert traditional image formats to these more efficient formats.

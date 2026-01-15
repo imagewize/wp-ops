@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PR Helper Script</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 20</span>
+    
+    
+  </div>
+
+  <h1>PR Helper Script</h1>
+
+  
+
+  <h1 id="create-pr-script">Create PR Script</h1>
+
+<p>An intelligent script (<code class="language-plaintext highlighter-rouge">create-pr.sh</code>) that creates GitHub pull requests with professional, AI-powered descriptions similar to GitHub Copilot.</p>
+
+<h2 id="features">Features</h2>
+
+<ul>
+  <li><strong>Multi-AI Backend Support</strong>: Choose between Claude CLI or Codex CLI for AI-powered descriptions</li>
+  <li><strong>AI-Powered Descriptions</strong>: Uses AI to analyze git diffs and generate intelligent summaries</li>
+  <li><strong>Professional Formatting</strong>: Creates descriptions with grouped sections, bold headings, and detailed bullet points</li>
+  <li><strong>Clickable File Links</strong>: Each file links directly to the changed version on GitHub for quick access</li>
+  <li><strong>Smart Categorization</strong>: Automatically detects change types (dependencies, documentation, styling, etc.)</li>
+  <li><strong>Automatic PR Creation</strong>: Uses GitHub CLI to create the actual pull request</li>
+  <li><strong>Fallback Mode</strong>: Works without AI when API key is not available</li>
+  <li><strong>Interactive AI Selection</strong>: Choose your preferred AI tool when both are available</li>
+</ul>
+
+<h2 id="token-usage-comparison">Token Usage Comparison</h2>
+
+<p>Understanding the cost/benefit of using AI vs no-AI mode:</p>
+
+<h3 id="option-1-claude-code-without-this-script-manual-pr">Option 1: Claude Code without this script (Manual PR)</h3>
+<p><strong>Token Usage</strong>: ~2,000-10,000+ tokens per PR</p>
+<ul>
+  <li>You ask Claude: “Create a PR for my changes”</li>
+  <li>Claude reads multiple files to understand context</li>
+  <li>Back-and-forth conversation to refine the description</li>
+  <li>Claude runs git commands to analyze changes</li>
+  <li><strong>Result</strong>: Uses significant tokens, quality depends on conversation</li>
+</ul>
+
+<h3 id="option-2-this-script-with-ai---no-ai-not-used">Option 2: This Script with AI (<code class="language-plaintext highlighter-rouge">--no-ai</code> NOT used)</h3>
+<p><strong>Token Usage</strong>: ~500-1,500 tokens per PR</p>
+<ul>
+  <li>Script pre-processes all git data (commits, files, diff stats)</li>
+  <li>Sends only structured summary to Claude</li>
+  <li>Single prompt, no back-and-forth needed</li>
+  <li>Claude generates description in one response</li>
+  <li><strong>Result</strong>: 70-85% fewer tokens than manual, high-quality output</li>
+</ul>
+
+<h3 id="option-3-this-script-without-ai---no-ai-flag">Option 3: This Script without AI (<code class="language-plaintext highlighter-rouge">--no-ai</code> flag)</h3>
+<p><strong>Token Usage</strong>: 0 tokens</p>
+<ul>
+  <li>Script generates basic but professional description</li>
+  <li>Lists all commits, files changed, and statistics</li>
+  <li>No intelligent grouping or summarization</li>
+  <li><strong>Result</strong>: Free, but generic descriptions</li>
+</ul>
+
+<h3 id="what-you-get-with-each-option">What You Get With Each Option</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Manual (Claude Code)</th>
+      <th>Script + AI</th>
+      <th>Script –no-ai</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Token cost</td>
+      <td>High (2k-10k+)</td>
+      <td>Low (500-1.5k)</td>
+      <td>Zero</td>
+    </tr>
+    <tr>
+      <td>Intelligent summary</td>
+      <td>✅ Good</td>
+      <td>✅ Excellent</td>
+      <td>❌ Generic</td>
+    </tr>
+    <tr>
+      <td>Grouped sections</td>
+      <td>❌ Sometimes</td>
+      <td>✅ Always</td>
+      <td>❌ No</td>
+    </tr>
+    <tr>
+      <td>File links</td>
+      <td>❌ No</td>
+      <td>✅ Yes</td>
+      <td>✅ Yes</td>
+    </tr>
+    <tr>
+      <td>Version numbers/metrics</td>
+      <td>❌ Sometimes</td>
+      <td>✅ Yes</td>
+      <td>❌ No</td>
+    </tr>
+    <tr>
+      <td>Professional tone</td>
+      <td>⚠️ Varies</td>
+      <td>✅ Consistent</td>
+      <td>✅ Basic</td>
+    </tr>
+    <tr>
+      <td>Time to create</td>
+      <td>Slow</td>
+      <td>Fast</td>
+      <td>Instant</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="recommendation">Recommendation</h3>
+
+<p><strong>Use Script + AI</strong> when:</p>
+<ul>
+  <li>You want Copilot-quality descriptions</li>
+  <li>You want to save 70-85% tokens vs manual</li>
+  <li>The PR has complex changes that need explanation</li>
+  <li>You want consistent, professional output</li>
+</ul>
+
+<p><strong>Use Script –no-ai</strong> when:</p>
+<ul>
+  <li>The PR is simple (e.g., dependency update, single file change)</li>
+  <li>You don’t need intelligent summarization</li>
+  <li>You want zero token usage</li>
+  <li>You’ll manually edit the description anyway</li>
+</ul>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ol>
+  <li><strong>GitHub CLI</strong> (required)
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>brew <span class="nb">install </span>gh
+gh auth login
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><strong>AI CLI</strong> (optional, for AI descriptions)</p>
+
+    <p>Choose one or both:</p>
+
+    <p><strong>Claude CLI</strong> (recommended)</p>
+    <ul>
+      <li>If you’re using Claude Code in VS Code, you already have this installed!</li>
+      <li>Otherwise, download from: https://claude.ai/download</li>
+      <li>The script will automatically use your existing Claude authentication</li>
+    </ul>
+
+    <p><strong>Codex CLI</strong> (alternative)</p>
+    <ul>
+      <li>Install via npm: <code class="language-plaintext highlighter-rouge">npm install -g @anthropic-ai/codex-cli</code></li>
+      <li>Or download from your AI provider</li>
+    </ul>
+
+    <p>The script automatically detects which AI tools are available and lets you choose interactively.</p>
+  </li>
+</ol>
+
+<h2 id="installation">Installation</h2>
+
+<ol>
+  <li>Make the script executable:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">chmod</span> +x create-pr.sh
+</code></pre></div>    </div>
+  </li>
+  <li>Optionally, add to your PATH or create an alias:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Add to ~/.zshrc or ~/.bashrc</span>
+<span class="nb">alias pr</span><span class="o">=</span><span class="s1">'/path/to/create-pr.sh'</span>
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="usage">Usage</h2>
+
+<h3 id="interactive-mode-default">Interactive Mode (Default)</h3>
+
+<p>Just run the script and answer the prompts:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./create-pr.sh
+
+<span class="c"># You'll be prompted for:</span>
+<span class="c"># 1. Base branch (default: main)</span>
+<span class="c"># 2. PR title (default: auto-generated from branch name)</span>
+<span class="c"># 3. Use AI for description? (Y/n)</span>
+</code></pre></div></div>
+
+<p><strong>Example interaction:</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>🚀 Create Pull Request
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current branch: feature/user-auth
+
+Base branch (default: main):
+PR title (default: Feature User Auth): Add user authentication
+Use AI to generate description? (Y/n): y
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</code></pre></div></div>
+
+<h3 id="non-interactive-mode">Non-Interactive Mode</h3>
+
+<p>Provide arguments to skip prompts:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># With all arguments</span>
+./create-pr.sh main <span class="s2">"Add authentication feature"</span>
+
+<span class="c"># Just base branch (title auto-generated)</span>
+./create-pr.sh develop
+
+<span class="c"># Skip all prompts, use defaults</span>
+./create-pr.sh <span class="nt">--no-interactive</span>
+</code></pre></div></div>
+
+<h3 id="options">Options</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Choose AI backend (claude or codex)</span>
+./create-pr.sh <span class="nt">--ai</span><span class="o">=</span>claude
+./create-pr.sh <span class="nt">--ai</span><span class="o">=</span>codex
+
+<span class="c"># Skip AI generation (0 tokens, basic description)</span>
+./create-pr.sh <span class="nt">--no-ai</span>
+
+<span class="c"># Skip all prompts, use arguments/defaults</span>
+./create-pr.sh <span class="nt">--no-interactive</span>
+
+<span class="c"># Combine options</span>
+./create-pr.sh main <span class="s2">"Feature update"</span> <span class="nt">--ai</span><span class="o">=</span>codex <span class="nt">--no-interactive</span>
+./create-pr.sh main <span class="s2">"Feature update"</span> <span class="nt">--no-ai</span> <span class="nt">--no-interactive</span>
+
+<span class="c"># Update existing PR with fresh AI-generated description</span>
+./create-pr.sh <span class="nt">--update</span>
+./create-pr.sh <span class="nt">--update</span> <span class="nt">--ai</span><span class="o">=</span>codex
+</code></pre></div></div>
+
+<h2 id="example-output-comparison">Example Output Comparison</h2>
+
+<p>Let’s say you have a PR with 10 files changed (3 added, 7 modified), 5 commits, updating a dependency and adding a new feature.</p>
+
+<h3 id="with-ai-mode-script--claude">With AI Mode (Script + Claude)</h3>
+<p><strong>Token usage: ~800 tokens</strong> | <strong>Quality: Copilot-level</strong></p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code>This pull request adds user authentication functionality and updates the Express dependency to v4.18.2. The changes introduce JWT-based authentication with secure password hashing, role-based access control, and comprehensive error handling. This provides a foundation for protected API endpoints and user session management.
+
+<span class="gs">**Authentication implementation:**</span>
+<span class="p">
+*</span> Added JWT token generation and validation middleware in <span class="sb">`middleware/auth.js`</span>
+<span class="p">*</span> Implemented bcrypt password hashing with salt rounds configured for security
+<span class="p">*</span> Created user login and registration endpoints with input validation
+
+<span class="gs">**Security enhancements:**</span>
+<span class="p">
+*</span> Added role-based access control (RBAC) supporting admin and user roles
+<span class="p">*</span> Implemented rate limiting on authentication endpoints to prevent brute force attacks
+<span class="p">*</span> Added secure cookie handling for refresh tokens with HTTP-only and secure flags
+
+<span class="gs">**Dependency updates:**</span>
+<span class="p">
+*</span> Upgraded Express from v4.17.1 to v4.18.2 for security patches
+<span class="p">*</span> Added jsonwebtoken v9.0.0 and bcryptjs v2.4.3 for authentication
+
+<span class="gs">**Files Changed:**</span>
+<span class="p">
+-</span> <span class="p">[</span><span class="nv">`package.json`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/package.json</span><span class="p">)</span> <span class="p">(</span><span class="sx">Modified</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/middleware/auth.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/middleware/auth.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Added</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/routes/auth.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/routes/auth.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Added</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/controllers/user.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/controllers/user.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Modified</span><span class="p">)</span>
+...
+</code></pre></div></div>
+
+<h3 id="without-ai-mode---no-ai">Without AI Mode (<code class="language-plaintext highlighter-rouge">--no-ai</code>)</h3>
+<p><strong>Token usage: 0 tokens</strong> | <strong>Quality: Basic but professional</strong></p>
+
+<div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gu">## Summary</span>
+
+This pull request introduces changes from the <span class="sb">`feature/auth`</span> branch into <span class="sb">`main`</span>. The changes include 5 commit(s) affecting 3 added, 7 modified file(s).
+
+<span class="gu">## Changes</span>
+
+10 files changed, 234 insertions(+), 89 deletions(-)
+
+<span class="gu">### Commits</span>
+<span class="p">
+-</span> Add JWT authentication middleware (a1b2c3d)
+<span class="p">-</span> Implement user login endpoint (e4f5g6h)
+<span class="p">-</span> Add password hashing with bcrypt (i7j8k9l)
+<span class="p">-</span> Update Express to v4.18.2 (m1n2o3p)
+<span class="p">-</span> Add role-based access control (q4r5s6t)
+
+<span class="gu">### Files Changed</span>
+<span class="p">
+-</span> <span class="p">[</span><span class="nv">`package.json`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/package.json</span><span class="p">)</span> <span class="p">(</span><span class="sx">Modified</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`package-lock.json`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/package-lock.json</span><span class="p">)</span> <span class="p">(</span><span class="sx">Modified</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/middleware/auth.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/middleware/auth.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Added</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/routes/auth.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/routes/auth.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Added</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/controllers/user.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/controllers/user.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Modified</span><span class="p">)</span>
+<span class="p">-</span> <span class="p">[</span><span class="nv">`src/config/auth.js`</span><span class="p">](</span><span class="sx">https://github.com/user/repo/blob/feature/auth/src/config/auth.js</span><span class="p">)</span> <span class="p">(</span><span class="sx">Added</span><span class="p">)</span>
+...
+</code></pre></div></div>
+
+<h3 id="summary-of-differences">Summary of Differences</h3>
+
+<p><strong>AI Mode advantages:</strong></p>
+<ul>
+  <li>Explains WHY changes were made, not just WHAT</li>
+  <li>Groups related changes with meaningful headings</li>
+  <li>Extracts specific details (version numbers, security features)</li>
+  <li>Provides context for reviewers</li>
+  <li>Looks like a senior developer wrote it</li>
+</ul>
+
+<p><strong>No-AI Mode advantages:</strong></p>
+<ul>
+  <li>Zero token cost</li>
+  <li>Instant generation</li>
+  <li>Still includes all file links and commit messages</li>
+  <li>Good for simple PRs or when you’ll edit manually</li>
+  <li>Professional structure, just less intelligent</li>
+</ul>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<ol>
+  <li><strong>Branch Detection</strong>: Automatically detects current branch and ensures it’s pushed to remote</li>
+  <li><strong>Change Analysis</strong>: Collects commits, file changes, and diff statistics</li>
+  <li><strong>Category Detection</strong>: Identifies change types based on file patterns</li>
+  <li><strong>AI Generation</strong> (if enabled): Sends context to Claude API for intelligent summary</li>
+  <li><strong>PR Creation</strong>: Uses <code class="language-plaintext highlighter-rouge">gh pr create</code> to create the actual GitHub pull request</li>
+</ol>
+
+<h2 id="ai-description-generation">AI Description Generation</h2>
+
+<p>When an AI CLI is available (Claude or Codex), the script:</p>
+
+<ol>
+  <li>Analyzes commit messages, changed files, and categories</li>
+  <li>Sends a structured prompt to your chosen AI tool using your existing authentication</li>
+  <li>Receives a professional description with:
+    <ul>
+      <li>Concise introductory paragraph</li>
+      <li>Grouped sections with bold headings</li>
+      <li>Detailed bullet points</li>
+      <li>Specific metrics and version numbers</li>
+    </ul>
+  </li>
+</ol>
+
+<p>The AI is instructed to write like a senior developer - no emoticons, professional tone, focusing on what changed and why.</p>
+
+<h3 id="choosing-your-ai-backend">Choosing Your AI Backend</h3>
+
+<p>The script supports multiple AI backends:</p>
+
+<p><strong>Automatic Detection</strong>: If you don’t specify <code class="language-plaintext highlighter-rouge">--ai=</code>, the script will:</p>
+<ol>
+  <li>Check for both Claude and Codex CLIs</li>
+  <li>If both are available, ask you to choose</li>
+  <li>If only one is available, use that automatically</li>
+  <li>If none are available, offer no-AI mode</li>
+</ol>
+
+<p><strong>Manual Selection</strong>: Use <code class="language-plaintext highlighter-rouge">--ai=claude</code> or <code class="language-plaintext highlighter-rouge">--ai=codex</code> to force a specific backend</p>
+
+<p><strong>Interactive Selection</strong>: When both are available and you’re in interactive mode:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Available AI tools: claude codex
+Choose AI tool [default: claude]: codex
+</code></pre></div></div>
+
+<h3 id="environment-variables">Environment Variables</h3>
+
+<p>For advanced users, you can customize the CLI commands and arguments:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Use custom Claude command name</span>
+<span class="nb">export </span><span class="nv">CLAUDE_COMMAND</span><span class="o">=</span><span class="s2">"claude-custom"</span>
+
+<span class="c"># Use custom Codex command name</span>
+<span class="nb">export </span><span class="nv">CODEX_COMMAND</span><span class="o">=</span><span class="s2">"my-codex"</span>
+
+<span class="c"># Pass custom arguments to Claude CLI</span>
+<span class="nb">export </span><span class="nv">CLAUDE_CLI_ARGS</span><span class="o">=</span><span class="s2">"--model=opus --timeout=30"</span>
+
+<span class="c"># Pass custom arguments to Codex CLI</span>
+<span class="nb">export </span><span class="nv">CODEX_CLI_ARGS</span><span class="o">=</span><span class="s2">"--verbose"</span>
+
+./create-pr.sh
+</code></pre></div></div>
+
+<p><strong>Note</strong>: If you’re using Claude Code in VS Code, the Claude CLI works automatically with no additional setup!</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="no-ai-cli-found">“No AI CLI found”</h3>
+
+<p>The script checks for both <code class="language-plaintext highlighter-rouge">claude</code> and <code class="language-plaintext highlighter-rouge">codex</code> commands. If neither is found:</p>
+
+<p><strong>For Claude CLI:</strong></p>
+<ul>
+  <li>If you’re using Claude Code in VS Code, make sure the <code class="language-plaintext highlighter-rouge">claude</code> command is in your PATH:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>which claude
+<span class="c"># Should output: /Users/yourname/.volta/bin/claude</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Restart your terminal after installing Claude Code</li>
+  <li>Download Claude CLI from: https://claude.ai/download</li>
+</ul>
+
+<p><strong>For Codex CLI:</strong></p>
+<ul>
+  <li>Install via npm: <code class="language-plaintext highlighter-rouge">npm install -g @anthropic-ai/codex-cli</code></li>
+  <li>Or check your AI provider’s installation instructions</li>
+</ul>
+
+<p><strong>Workaround:</strong></p>
+<ul>
+  <li>Run with <code class="language-plaintext highlighter-rouge">--no-ai</code> flag to skip AI generation and use basic descriptions</li>
+</ul>
+
+<h3 id="ai-tool-codex-not-found">“AI tool ‘codex’ not found”</h3>
+
+<p>If you specified <code class="language-plaintext highlighter-rouge">--ai=codex</code> but don’t have it installed:</p>
+<ul>
+  <li>Remove the <code class="language-plaintext highlighter-rouge">--ai=codex</code> flag to use Claude (if available)</li>
+  <li>Install Codex CLI</li>
+  <li>Or use <code class="language-plaintext highlighter-rouge">--no-ai</code> for basic descriptions</li>
+</ul>
+
+<h3 id="gh-is-not-installed">“gh is not installed”</h3>
+
+<p>Install with: <code class="language-plaintext highlighter-rouge">brew install gh</code> and authenticate with <code class="language-plaintext highlighter-rouge">gh auth login</code></p>
+
+<h3 id="pr-creation-fails">PR creation fails</h3>
+
+<p>Make sure:</p>
+<ul>
+  <li>You’re on a feature branch (not main/master)</li>
+  <li>Your branch is pushed to remote</li>
+  <li>You’re authenticated with GitHub CLI</li>
+</ul>
+
+<h2 id="comparison-with-github-copilot">Comparison with GitHub Copilot</h2>
+
+<p>This script provides similar functionality to GitHub Copilot’s PR descriptions:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>This Script</th>
+      <th>GitHub Copilot</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AI-powered summaries</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Grouped sections</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>File reference links</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Clickable file links</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Professional tone</td>
+      <td>✅</td>
+      <td>✅</td>
+    </tr>
+    <tr>
+      <td>Works offline</td>
+      <td>✅ (with –no-ai)</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Free (with your own API key)</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td>Customizable prompts</td>
+      <td>✅</td>
+      <td>❌</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="customization">Customization</h2>
+
+<p>You can modify the AI prompt in the script to match your team’s preferences:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Edit the prompt in generate_ai_description() function</span>
+<span class="c"># Located around line 202 in the script</span>
+</code></pre></div></div>
+
+<h2 id="license">License</h2>
+
+<p>MIT</p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Content Creation</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 8</span>
+    
+    
+  </div>
+
+  <h1>Content Creation</h1>
+
+  
+
+  <h1 id="content-creation-guide-for-wordpress">Content Creation Guide for WordPress</h1>
+
+<p>WP-CLI, Trellis, and block-pattern tooling for creating and updating WordPress content in Bedrock/Trellis environments. Use this file as a landing page; the deep guides live alongside it.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter provides the entry points and commands for repeatable content creation with WP-CLI and patterns.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+  <li><a href="#whats-in-this-folder">What’s in This Folder</a></li>
+  <li><a href="#choose-your-path">Choose Your Path</a></li>
+  <li><a href="#quick-wp-cli-commands-bedrock-paths">Quick WP-CLI Commands (Bedrock paths)</a></li>
+  <li><a href="#pattern-essentials">Pattern Essentials</a></li>
+  <li><a href="#troubleshooting-pointers">Troubleshooting Pointers</a></li>
+</ul>
+
+<h2 id="whats-in-this-folder">What’s in This Folder</h2>
+<ul>
+  <li><a href="/wp-cli/content-creation/PAGE-CREATION.md"><code class="language-plaintext highlighter-rouge">PAGE-CREATION.md</code></a> – Full workflows for local (Trellis VM) and production deployments.</li>
+  <li><a href="/wp-cli/content-creation/PATTERN-REQUIREMENTS.md"><code class="language-plaintext highlighter-rouge">PATTERN-REQUIREMENTS.md</code></a> – Canonical block pattern standards and validation checklist.</li>
+  <li><a href="/wp-cli/content-creation/page-creation.sh"><code class="language-plaintext highlighter-rouge">page-creation.sh</code></a> – Automated production page deploy script (copies content, checks conflicts, verifies output).</li>
+  <li><a href="/wp-cli/content-creation/examples/example-page-content.html"><code class="language-plaintext highlighter-rouge">examples/example-page-content.html</code></a> – Gutenberg block markup sample to copy and customize.</li>
+</ul>
+
+<h2 id="choose-your-path">Choose Your Path</h2>
+<ul>
+  <li><strong>Create/update pages end-to-end:</strong> Follow <a href="/wp-cli/content-creation/PAGE-CREATION.md"><code class="language-plaintext highlighter-rouge">PAGE-CREATION.md</code></a> (includes slug checks, remote commands, troubleshooting).</li>
+  <li><strong>Automate production deploys:</strong> Configure and run <code class="language-plaintext highlighter-rouge">./page-creation.sh path/to/content.html "Page Title" "page-slug"</code> (see script header for server vars).</li>
+  <li><strong>Validate or author patterns:</strong> Read <a href="/wp-cli/content-creation/PATTERN-REQUIREMENTS.md"><code class="language-plaintext highlighter-rouge">PATTERN-REQUIREMENTS.md</code></a> for required metadata, spacing, and layout rules before adding pattern-based content.</li>
+  <li><strong>Need a starting template?</strong> Copy <a href="/wp-cli/content-creation/examples/example-page-content.html"><code class="language-plaintext highlighter-rouge">examples/example-page-content.html</code></a> and edit the block markup to fit your page.</li>
+</ul>
+
+<h2 id="quick-wp-cli-commands-bedrock-paths">Quick WP-CLI Commands (Bedrock paths)</h2>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Create a page locally in Trellis VM (replace file/title/slug)</span>
+trellis vm shell <span class="nt">--workdir</span> /srv/www/example.com/current <span class="nt">--</span> bash <span class="nt">-c</span> <span class="s1">'
+CONTENT=$(cat /srv/www/example.com/current/site/about-page-content.html)
+wp post create --post_type=page --post_title="About" --post_name="about" \
+  --post_status=publish --post_content="$CONTENT" --path=web/wp
+'</span>
+
+<span class="c"># Check for slug conflicts before creating</span>
+trellis vm shell <span class="nt">--workdir</span> /srv/www/example.com/current <span class="nt">--</span> <span class="se">\</span>
+  wp post list <span class="nt">--name</span><span class="o">=</span>about <span class="nt">--post_type</span><span class="o">=</span>any <span class="nt">--path</span><span class="o">=</span>web/wp <span class="se">\</span>
+  <span class="nt">--fields</span><span class="o">=</span>ID,post_type,post_title,post_name,post_status
+</code></pre></div></div>
+<p>More detailed sequences live in <a href="/wp-cli/content-creation/PAGE-CREATION.md"><code class="language-plaintext highlighter-rouge">PAGE-CREATION.md</code></a>.</p>
+
+<h2 id="pattern-essentials">Pattern Essentials</h2>
+<ul>
+  <li>See <a href="/wp-cli/content-creation/PATTERN-REQUIREMENTS.md"><code class="language-plaintext highlighter-rouge">PATTERN-REQUIREMENTS.md</code></a> for full standards and validation steps.</li>
+  <li>Outermost block must include <code class="language-plaintext highlighter-rouge">metadata</code> with <code class="language-plaintext highlighter-rouge">name</code>, <code class="language-plaintext highlighter-rouge">categories</code>, and <code class="language-plaintext highlighter-rouge">patternName</code> matching the header.</li>
+  <li>Use theme presets for spacing/colors; avoid hardcoded px values.</li>
+  <li>For full-width sections, keep the outer group <code class="language-plaintext highlighter-rouge">layout.type: "default"</code> and reset vertical margins; constrain inner groups.</li>
+  <li>Prefer grid (<code class="language-plaintext highlighter-rouge">layout.type: "grid"</code> + <code class="language-plaintext highlighter-rouge">minimumColumnWidth</code>) over <code class="language-plaintext highlighter-rouge">wp:columns</code> for responsive cards/grids.</li>
+  <li>Validate slugs against your theme’s registered patterns before deploying content.</li>
+</ul>
+
+<h2 id="troubleshooting-pointers">Troubleshooting Pointers</h2>
+<ul>
+  <li>Slug collisions produce <code class="language-plaintext highlighter-rouge">about-2</code> style names: list and remove conflicts (<code class="language-plaintext highlighter-rouge">wp post list --name=&lt;slug&gt; ...</code>).</li>
+  <li>Content not updating: <code class="language-plaintext highlighter-rouge">wp cache flush --path=web/wp</code>; verify content with <code class="language-plaintext highlighter-rouge">wp post get &lt;ID&gt; --field=post_content</code>.</li>
+  <li>Pattern not rendering: confirm the slug exists and matches exactly; see validation steps in <a href="/wp-cli/content-creation/PATTERN-REQUIREMENTS.md"><code class="language-plaintext highlighter-rouge">PATTERN-REQUIREMENTS.md</code></a>.</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Image Optimization</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 13</span>
+    
+    
+  </div>
+
+  <h1>Image Optimization</h1>
+
+  
+
+  <h1 id="image-optimization-guide">Image Optimization Guide</h1>
+
+<p>This guide covers how to optimize images for your Trellis-managed WordPress sites, including Nginx configuration for serving WebP and AVIF images, and methods to convert traditional image formats to these more efficient formats.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter shows how to serve modern image formats and automate conversions without breaking existing assets.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+  <li><a href="#nginx-configuration-for-webp-and-avif">Nginx Configuration for WebP and AVIF</a></li>
+  <li><a href="#image-resizing-and-cropping">Image Resizing and Cropping</a></li>
+  <li><a href="#converting-images-to-webp">Converting Images to WebP</a></li>
+  <li><a href="#converting-images-to-avif">Converting Images to AVIF</a></li>
+  <li><a href="#automating-image-conversion">Automating Image Conversion</a></li>
+  <li><a href="#wordpress-plugins">WordPress Plugins</a></li>
+</ul>
+
+<h2 id="nginx-configuration-for-webp-and-avif">Nginx Configuration for WebP and AVIF</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">nginx-includes/webp-avf.conf.j2</code> file in this repository contains Nginx configuration to automatically serve WebP or AVIF versions of images when the browser supports them. This configuration works by checking the <code class="language-plaintext highlighter-rouge">Accept</code> header from the browser and serving the appropriate image format.</p>
+
+<h3 id="how-it-works">How it Works</h3>
+
+<p>When a browser requests an image:</p>
+
+<ol>
+  <li>Nginx checks if the browser accepts WebP or AVIF formats</li>
+  <li>If supported formats exist on the server (e.g., <code class="language-plaintext highlighter-rouge">image.jpg.webp</code> or <code class="language-plaintext highlighter-rouge">image.jpg.avif</code>), Nginx serves them instead of the original</li>
+  <li>If no optimized version exists, the original image is served</li>
+</ol>
+
+<h3 id="implementation">Implementation</h3>
+
+<ol>
+  <li>Copy the <code class="language-plaintext highlighter-rouge">nginx-includes</code> directory to your Trellis project</li>
+  <li>Update your Trellis WordPress site configuration to include the custom Nginx configuration:</li>
+</ol>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># group_vars/production/wordpress_sites.yml (or staging/development)</span>
+<span class="na">wordpress_sites</span><span class="pi">:</span>
+  <span class="na">example.com</span><span class="pi">:</span>
+    <span class="c1"># ... existing configuration ...</span>
+    <span class="na">nginx_includes</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">nginx-includes/webp-avf.conf.j2</span>
+</code></pre></div></div>
+
+<ol>
+  <li>Provision your environment to apply the changes:</li>
+</ol>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># For production</span>
+trellis provision production
+
+<span class="c"># For staging</span>
+trellis provision staging
+
+<span class="c"># For development</span>
+trellis provision development
+</code></pre></div></div>
+
+<h2 id="image-resizing-and-cropping">Image Resizing and Cropping</h2>
+
+<p>Before converting images to WebP or AVIF, you may need to resize or crop them to the appropriate dimensions. ImageMagick is a powerful tool for this purpose.</p>
+
+<h3 id="installing-imagemagick">Installing ImageMagick</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># macOS (using Homebrew)</span>
+brew <span class="nb">install </span>imagemagick
+
+<span class="c"># Ubuntu/Debian</span>
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>imagemagick
+</code></pre></div></div>
+
+<p>For detailed instructions on resizing, cropping, and preparing images for conversion, see the <a href="/nginx/image-optimization/RESIZE-AND-CONVERSION.md">Image Resizing and Conversion Guide</a>.</p>
+
+<h3 id="quick-example">Quick Example</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Resize and crop to 400x400, then convert to WebP</span>
+magick input.jpg <span class="se">\</span>
+  <span class="nt">-resize</span> 500x500^ <span class="se">\</span>
+  <span class="nt">-gravity</span> center <span class="se">\</span>
+  <span class="nt">-crop</span> 400x400+0+0 <span class="se">\</span>
+  <span class="nt">-quality</span> 90 <span class="se">\</span>
+  output.jpg
+
+cwebp <span class="nt">-q</span> 85 output.jpg <span class="nt">-o</span> output.webp
+</code></pre></div></div>
+
+<p>See <a href="/nginx/image-optimization/RESIZE-AND-CONVERSION.md">RESIZE-AND-CONVERSION.md</a> for more examples, including:</p>
+<ul>
+  <li>Creating thumbnails and avatars</li>
+  <li>Batch processing multiple images</li>
+  <li>Responsive image workflows</li>
+  <li>Custom crop offsets</li>
+  <li>Quality settings recommendations</li>
+</ul>
+
+<h2 id="converting-images-to-webp">Converting Images to WebP</h2>
+
+<h3 id="using-cwebp-command-line">Using cwebp (Command Line)</h3>
+
+<p>The <code class="language-plaintext highlighter-rouge">cwebp</code> tool from Google allows you to convert images to WebP format from the command line.</p>
+
+<h4 id="installation">Installation</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># macOS (using Homebrew)</span>
+brew <span class="nb">install </span>webp
+
+<span class="c"># Ubuntu/Debian</span>
+<span class="nb">sudo </span>apt-get <span class="nb">install </span>webp
+</code></pre></div></div>
+
+<h4 id="basic-usage">Basic Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert a single image</span>
+cwebp <span class="nt">-q</span> 80 image.jpg <span class="nt">-o</span> image.jpg.webp
+
+<span class="c"># Convert with metadata preservation</span>
+cwebp <span class="nt">-metadata</span> all <span class="nt">-q</span> 80 image.jpg <span class="nt">-o</span> image.jpg.webp
+</code></pre></div></div>
+
+<h4 id="batch-conversion">Batch Conversion</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert all JPG files in current directory</span>
+find <span class="nb">.</span> <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.jpg"</span> <span class="nt">-exec</span> cwebp <span class="nt">-q</span> 80 <span class="o">{}</span> <span class="nt">-o</span> <span class="o">{}</span>.webp <span class="se">\;</span>
+
+<span class="c"># Convert all PNG files in current directory</span>
+find <span class="nb">.</span> <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.png"</span> <span class="nt">-exec</span> cwebp <span class="nt">-q</span> 80 <span class="o">{}</span> <span class="nt">-o</span> <span class="o">{}</span>.webp <span class="se">\;</span>
+</code></pre></div></div>
+
+<h3 id="quality-settings">Quality Settings</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">-q 0</code> to <code class="language-plaintext highlighter-rouge">-q 100</code>: Lower values = smaller files but lower quality</li>
+  <li>Recommended: 75-85 for photos, 85-95 for images with text</li>
+  <li>See <a href="/nginx/image-optimization/RESIZE-AND-CONVERSION.md">RESIZE-AND-CONVERSION.md</a> for detailed quality comparisons</li>
+</ul>
+
+<h2 id="converting-images-to-avif">Converting Images to AVIF</h2>
+
+<p>AVIF offers even better compression than WebP but requires more processing power to create.</p>
+
+<h3 id="using-cavif-command-line">Using cavif (Command Line)</h3>
+
+<h4 id="installation-1">Installation</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># macOS (using Homebrew)</span>
+brew <span class="nb">install </span>cavif
+
+<span class="c"># From source</span>
+git clone https://github.com/kornelski/cavif-rs
+<span class="nb">cd </span>cavif-rs
+cargo <span class="nb">install</span> <span class="nt">--path</span> <span class="nb">.</span>
+</code></pre></div></div>
+
+<h4 id="basic-usage-1">Basic Usage</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert a single image</span>
+cavif <span class="nt">--quality</span> 80 image.jpg <span class="nt">-o</span> image.jpg.avif
+
+<span class="c"># Convert with specific settings</span>
+cavif <span class="nt">--quality</span> 80 <span class="nt">--speed</span> 5 image.jpg
+</code></pre></div></div>
+
+<h4 id="batch-conversion-1">Batch Conversion</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Convert all JPG files in current directory</span>
+find <span class="nb">.</span> <span class="nt">-type</span> f <span class="nt">-name</span> <span class="s2">"*.jpg"</span> <span class="nt">-exec</span> cavif <span class="nt">--quality</span> 80 <span class="o">{}</span> <span class="se">\;</span>
+</code></pre></div></div>
+
+<h2 id="automating-image-conversion">Automating Image Conversion</h2>
+
+<p>For comprehensive automation examples including resizing and cropping, see <a href="/nginx/image-optimization/RESIZE-AND-CONVERSION.md#complete-workflow-examples">RESIZE-AND-CONVERSION.md</a>.</p>
+
+<h3 id="using-a-shell-script">Using a Shell Script</h3>
+
+<p>Create a script called <code class="language-plaintext highlighter-rouge">convert-images.sh</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+<span class="c"># Directory containing images to convert</span>
+<span class="nv">IMAGE_DIR</span><span class="o">=</span><span class="s2">"path/to/images"</span>
+<span class="nv">QUALITY</span><span class="o">=</span>80
+
+<span class="c"># Process JPEG images to WebP</span>
+find <span class="s2">"</span><span class="nv">$IMAGE_DIR</span><span class="s2">"</span> <span class="nt">-type</span> f <span class="se">\(</span> <span class="nt">-iname</span> <span class="s2">"*.jpg"</span> <span class="nt">-o</span> <span class="nt">-iname</span> <span class="s2">"*.jpeg"</span> <span class="se">\)</span> | <span class="k">while </span><span class="nb">read </span>img<span class="p">;</span> <span class="k">do
+  if</span> <span class="o">[</span> <span class="o">!</span> <span class="nt">-f</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.webp"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Converting </span><span class="nv">$img</span><span class="s2"> to WebP"</span>
+    cwebp <span class="nt">-q</span> <span class="nv">$QUALITY</span> <span class="s2">"</span><span class="nv">$img</span><span class="s2">"</span> <span class="nt">-o</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.webp"</span>
+  <span class="k">fi
+  
+  if</span> <span class="o">[</span> <span class="o">!</span> <span class="nt">-f</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.avif"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Converting </span><span class="nv">$img</span><span class="s2"> to AVIF"</span>
+    cavif <span class="nt">--quality</span> <span class="nv">$QUALITY</span> <span class="s2">"</span><span class="nv">$img</span><span class="s2">"</span> <span class="nt">-o</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.avif"</span>
+  <span class="k">fi
+done</span>
+
+<span class="c"># Process PNG images</span>
+find <span class="s2">"</span><span class="nv">$IMAGE_DIR</span><span class="s2">"</span> <span class="nt">-type</span> f <span class="nt">-iname</span> <span class="s2">"*.png"</span> | <span class="k">while </span><span class="nb">read </span>img<span class="p">;</span> <span class="k">do
+  if</span> <span class="o">[</span> <span class="o">!</span> <span class="nt">-f</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.webp"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Converting </span><span class="nv">$img</span><span class="s2"> to WebP"</span>
+    cwebp <span class="nt">-q</span> <span class="nv">$QUALITY</span> <span class="s2">"</span><span class="nv">$img</span><span class="s2">"</span> <span class="nt">-o</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.webp"</span>
+  <span class="k">fi
+  
+  if</span> <span class="o">[</span> <span class="o">!</span> <span class="nt">-f</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.avif"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+    </span><span class="nb">echo</span> <span class="s2">"Converting </span><span class="nv">$img</span><span class="s2"> to AVIF"</span>
+    cavif <span class="nt">--quality</span> <span class="nv">$QUALITY</span> <span class="s2">"</span><span class="nv">$img</span><span class="s2">"</span> <span class="nt">-o</span> <span class="s2">"</span><span class="k">${</span><span class="nv">img</span><span class="k">}</span><span class="s2">.avif"</span>
+  <span class="k">fi
+done
+
+</span><span class="nb">echo</span> <span class="s2">"Conversion complete!"</span>
+</code></pre></div></div>
+
+<p>Make it executable:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">chmod</span> +x convert-images.sh
+</code></pre></div></div>
+
+<h3 id="setting-up-a-cron-job">Setting Up a Cron Job</h3>
+
+<p>To automatically run the conversion script periodically:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Edit crontab</span>
+crontab <span class="nt">-e</span>
+
+<span class="c"># Add this line to run daily at 2 AM</span>
+0 2 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> /path/to/convert-images.sh <span class="o">&gt;&gt;</span> /path/to/conversion.log 2&gt;&amp;1
+</code></pre></div></div>
+
+<h2 id="wordpress-plugins">WordPress Plugins</h2>
+
+<p>Several WordPress plugins can automatically generate and serve WebP/AVIF images:</p>
+
+<ol>
+  <li><strong><a href="https://wordpress.org/plugins/webp-express/">WebP Express</a></strong>: Converts images and works with the Nginx configuration</li>
+  <li><strong><a href="https://wordpress.org/plugins/ewww-image-optimizer/">EWWW Image Optimizer</a></strong>: Comprehensive image optimization</li>
+  <li><strong><a href="https://wordpress.org/plugins/imagify/">Imagify</a></strong>: Easy WebP conversion</li>
+  <li><strong><a href="https://wordpress.org/plugins/shortpixel-image-optimiser/">ShortPixel Image Optimizer</a></strong>: Supports WebP and AVIF</li>
+</ol>
+
+<h3 id="plugin-integration">Plugin Integration</h3>
+
+<p>For the best results:</p>
+
+<ol>
+  <li>Install one of the above plugins</li>
+  <li>Configure it to generate WebP/AVIF versions on upload</li>
+  <li>Ensure the plugin saves the optimized versions with the correct file extension pattern (<code class="language-plaintext highlighter-rouge">.jpg.webp</code>, <code class="language-plaintext highlighter-rouge">.jpg.avif</code>, etc.)</li>
+  <li>The Nginx configuration will automatically serve the optimized versions</li>
+</ol>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<ol>
+  <li>Always keep the original images as fallbacks</li>
+  <li>Use appropriate quality settings (70-85) for a good balance of size and quality</li>
+  <li>Test optimized images on different devices and browsers</li>
+  <li>Consider using a CDN that supports content negotiation for WebP/AVIF</li>
+  <li>Implement responsive images in your WordPress theme for additional optimization</li>
+</ol>
+
+<h2 id="performance-impact">Performance Impact</h2>
+
+<p>Using WebP and AVIF formats can significantly improve website performance:</p>
+
+<ul>
+  <li>WebP: 25-35% smaller than JPEG at similar quality</li>
+  <li>AVIF: 50%+ smaller than JPEG at similar quality</li>
+  <li>Faster load times lead to better SEO and user experience</li>
+  <li>Reduced bandwidth consumption for both server and visitors</li>
+</ul>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

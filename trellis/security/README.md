@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Security Hardening"
+chapter_number: 6
+permalink: /chapters/security-hardening/
+---
+
 # Trellis Security
 
 WordPress security tools and configurations for Trellis-managed servers.
@@ -267,7 +274,7 @@ fail2ban_findtime: 600         # 10 minute window
 # IP whitelist (never ban these IPs)
 ip_whitelist:
   - 127.0.0.0/8
-  - "{{ ipify_public_ip | default('') }}"
+  - "{% raw %}{{ ipify_public_ip | default('') }}{% endraw %}"
   - 1.2.213.123  # Your static IP (example)
 
 # fail2ban jails

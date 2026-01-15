@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Command Helpers and Doc Conventions"
+chapter_number: 2
+permalink: /chapters/command-helpers/
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Content Creation"
+chapter_number: 8
+permalink: /chapters/content-creation/
+---
+
 # Content Creation Guide for WordPress
 
 WP-CLI, Trellis, and block-pattern tooling for creating and updating WordPress content in Bedrock/Trellis environments. Use this file as a landing page; the deep guides live alongside it.

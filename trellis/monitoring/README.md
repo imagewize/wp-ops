@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Monitoring and Alerting"
+chapter_number: 5
+permalink: /chapters/monitoring-alerting/
+---
+
 # Nginx Log Monitoring
 
 Tools and documentation for monitoring WordPress/Trellis sites via Nginx access and error logs. Includes traffic analysis, security monitoring, and detection of malicious actors.

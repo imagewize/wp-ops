@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Updating Trellis</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 7</span>
+    
+    
+  </div>
+
+  <h1>Updating Trellis</h1>
+
+  
+
+  <h1 id="trellis-updater">Trellis Updater</h1>
+
+<p>A Bash script to safely update your <a href="https://roots.io/trellis/">Roots Trellis</a> installation while preserving your custom configurations.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter walks through updating Trellis while keeping your project-specific settings intact.</p>
+
+<h2 id="features">Features</h2>
+
+<ul>
+  <li>Creates a backup of your current Trellis directory</li>
+  <li>Downloads the latest version of Trellis</li>
+  <li>Generates a diff to see what would change</li>
+  <li>Updates your Trellis files while preserving important configurations:
+    <ul>
+      <li>Vault files with passwords and sensitive data</li>
+      <li>WordPress site configurations</li>
+      <li>User configurations</li>
+      <li>Host configurations</li>
+      <li>Trellis CLI configuration</li>
+    </ul>
+  </li>
+  <li>Commits changes to your Git repository</li>
+</ul>
+
+<h2 id="what-this-script-preserves">What This Script Preserves</h2>
+
+<p>The updater script specifically preserves the following files/directories:</p>
+
+<h3 id="secrets--credentials">Secrets &amp; Credentials</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.vault_pass</code> - Vault password file</li>
+  <li><code class="language-plaintext highlighter-rouge">ansible.cfg</code> - Contains <code class="language-plaintext highlighter-rouge">vault_password_file</code> setting (CRITICAL!)</li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/all/vault.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/development/vault.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/production/vault.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/staging/vault.yml</code></li>
+</ul>
+
+<h3 id="git--cicd">Git &amp; CI/CD</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">.git/</code></li>
+  <li><code class="language-plaintext highlighter-rouge">.github/</code></li>
+  <li><code class="language-plaintext highlighter-rouge">.trellis/</code></li>
+</ul>
+
+<h3 id="site-specific-configurations">Site-Specific Configurations</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/development/wordpress_sites.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/production/wordpress_sites.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/staging/wordpress_sites.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/all/users.yml</code></li>
+  <li><code class="language-plaintext highlighter-rouge">hosts/</code> directory</li>
+  <li><code class="language-plaintext highlighter-rouge">trellis.cli.yml</code></li>
+</ul>
+
+<h3 id="custom-phpserver-settings">Custom PHP/Server Settings</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/all/main.yml</code> - PHP memory limits, timezone, etc.</li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/production/main.yml</code> - PHP-FPM pool settings, MariaDB config</li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/staging/main.yml</code> - Environment-specific overrides</li>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/development/main.yml</code> - Development settings</li>
+</ul>
+
+<h3 id="custom-smtp-settings">Custom SMTP Settings</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">group_vars/all/mail.yml</code> - SMTP server configuration (Brevo/Sendgrid credentials)</li>
+</ul>
+
+<h3 id="custom-deploy-hooks">Custom Deploy Hooks</h3>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">deploy-hooks/</code> - Custom deployment scripts (e.g., memory limits for wp acorn)</li>
+</ul>
+
+<h2 id="post-upgrade-manual-review">Post-Upgrade Manual Review</h2>
+
+<p>After upgrading, you should manually review and potentially merge changes from the new Trellis version:</p>
+
+<ol>
+  <li><strong>Role template changes</strong> - Check if upstream changed any templates you’ve customized:
+    <ul>
+      <li><code class="language-plaintext highlighter-rouge">roles/mariadb/templates/</code> - If you added custom MariaDB settings</li>
+      <li><code class="language-plaintext highlighter-rouge">roles/wordpress-setup/templates/</code> - If you modified PHP-FPM pool templates</li>
+    </ul>
+  </li>
+  <li>
+    <p><strong>New variables</strong> - Check upstream <code class="language-plaintext highlighter-rouge">main.yml</code> files for new useful variables you may want to adopt</p>
+  </li>
+  <li><strong>Galaxy roles</strong> - Run <code class="language-plaintext highlighter-rouge">ansible-galaxy install -r galaxy.yml</code> to update dependencies</li>
+</ol>
+
+<h2 id="usage">Usage</h2>
+
+<ol>
+  <li>Edit the script to set your project slug:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Set your project slug here like example.com</span>
+<span class="nv">PROJECT</span><span class="o">=</span><span class="s2">"your-site-name"</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Make the script executable:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">chmod</span> +x updates/trellis-updater.sh
+</code></pre></div>    </div>
+  </li>
+  <li>Run the script:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./updates/trellis-updater.sh
+</code></pre></div>    </div>
+  </li>
+  <li>Review the changes in your Git repository before pushing them.</li>
+</ol>
+
+<h2 id="troubleshooting--tips">Troubleshooting &amp; Tips</h2>
+
+<h3 id="backup-directory-issues">Backup Directory Issues</h3>
+<p>The script uses <code class="language-plaintext highlighter-rouge">~/trellis-backup/</code> by default. If you get errors like <code class="language-plaintext highlighter-rouge">mkdir: : No such file or directory</code>, ensure you’re using absolute paths in the script variables.</p>
+
+<h3 id="mariadb-template-customizations">MariaDB Template Customizations</h3>
+<p>The rsync command will overwrite role templates. If you have customizations in:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">roles/mariadb/templates/50-server.cnf.j2</code> (e.g., <code class="language-plaintext highlighter-rouge">max_allowed_packet</code>, <code class="language-plaintext highlighter-rouge">max_connections</code>)</li>
+  <li><code class="language-plaintext highlighter-rouge">roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2</code></li>
+</ul>
+
+<p>You’ll need to re-apply them after the upgrade. Check with:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git diff trellis/roles/mariadb/templates/50-server.cnf.j2
+</code></pre></div></div>
+
+<h3 id="testing-without-full-provision">Testing Without Full Provision</h3>
+<p>Instead of running <code class="language-plaintext highlighter-rouge">trellis provision development</code> (which takes time), you can verify the upgrade works with quick VM checks:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># If VM is already running</span>
+trellis vm shell <span class="nt">--workdir</span> /srv/www/yoursite.com/current <span class="nt">--</span> wp <span class="nt">--version</span> <span class="nt">--path</span><span class="o">=</span>web/wp
+trellis vm shell <span class="nt">--workdir</span> /srv/www/yoursite.com/current <span class="nt">--</span> wp db check <span class="nt">--path</span><span class="o">=</span>web/wp
+</code></pre></div></div>
+
+<h3 id="galaxy-roles">Galaxy Roles</h3>
+<p>Always use <code class="language-plaintext highlighter-rouge">--force</code> flag when updating Galaxy roles after an upgrade:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ansible-galaxy <span class="nb">install</span> <span class="nt">-r</span> galaxy.yml <span class="nt">--force</span>
+</code></pre></div></div>
+
+<h3 id="diff-review-tips">Diff Review Tips</h3>
+<p>The generated diff at <code class="language-plaintext highlighter-rouge">~/trellis-diff/changes.txt</code> shows file-level changes. For detailed line-by-line review:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git diff trellis/
+</code></pre></div></div>
+
+<p>Look specifically for:</p>
+<ul>
+  <li>New roles (e.g., <code class="language-plaintext highlighter-rouge">roles/redis/</code> in v1.26.0+)</li>
+  <li>Changed defaults in <code class="language-plaintext highlighter-rouge">roles/*/defaults/main.yml</code></li>
+  <li>Template changes that might conflict with your customizations</li>
+</ul>
+
+<h3 id="vault-password--provision-failures">Vault Password / Provision Failures</h3>
+<p>If you see “Attempting to decrypt but no vault secrets found” when running <code class="language-plaintext highlighter-rouge">trellis provision</code>:</p>
+
+<ol>
+  <li><strong>Check <code class="language-plaintext highlighter-rouge">.vault_pass</code> exists:</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">ls</span> <span class="nt">-la</span> ~/code/yoursite.com/trellis/.vault_pass
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Check <code class="language-plaintext highlighter-rouge">ansible.cfg</code> has vault setting:</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">grep </span>vault_password_file ~/code/yoursite.com/trellis/ansible.cfg
+</code></pre></div>    </div>
+    <p>Should show: <code class="language-plaintext highlighter-rouge">vault_password_file = .vault_pass</code></p>
+  </li>
+  <li><strong>Check vault.yml files exist:</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">ls</span> <span class="nt">-la</span> ~/code/yoursite.com/trellis/group_vars/<span class="k">*</span>/vault.yml
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Restore from backup if missing:</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cp</span> ~/trellis-backup/.vault_pass ~/code/yoursite.com/trellis/
+<span class="nb">cp</span> ~/trellis-backup/ansible.cfg ~/code/yoursite.com/trellis/
+<span class="nb">cp</span> ~/trellis-backup/group_vars/<span class="k">*</span>/vault.yml ~/code/yoursite.com/trellis/group_vars/<span class="k">*</span>/
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="requirements">Requirements</h2>
+
+<ul>
+  <li>Git</li>
+  <li>Bash</li>
+  <li>rsync</li>
+</ul>
+
+<h2 id="license">License</h2>
+
+<p>MIT License. See <a href="/LICENSE.md">LICENSE.md</a> for details.</p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

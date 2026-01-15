@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Backups and Restores</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 4</span>
+    
+    
+      <span class="reading-time">25 min read</span>
+    
+  </div>
+
+  <h1>Backups and Restores</h1>
+
+  
+  <div class="callout callout-prerequisites">
+    <h3>Prerequisites</h3>
+    <ul>
+    
+      <li>Chapter 3: Provisioning Environments</li>
+    
+      <li>SSH access to target environments</li>
+    
+    </ul>
+  </div>
+  
+
+  <h1 id="trellis-backup-integration">Trellis Backup Integration</h1>
+
+<p>Ansible playbooks for automated database backup, synchronization, and management across Trellis environments.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter explains how to run Trellis backup and restore workflows safely, with emphasis on dry runs and predictable artifacts.</p>
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#prerequisites">Prerequisites</a></li>
+  <li><a href="#installation">Installation</a></li>
+  <li><a href="#usage">Usage</a>
+    <ul>
+      <li><a href="#database-backup">Database Backup</a></li>
+      <li><a href="#database-pull">Database Pull</a>
+        <ul>
+          <li><a href="#alternative-direct-shell-script-method">Alternative: Direct Shell Script Method</a></li>
+        </ul>
+      </li>
+      <li><a href="#database-push">Database Push</a></li>
+      <li><a href="#files-backup">Files Backup</a></li>
+      <li><a href="#files-pull">Files Pull</a></li>
+      <li><a href="#files-push">Files Push</a></li>
+    </ul>
+  </li>
+  <li><a href="#configuration">Configuration</a>
+    <ul>
+      <li><a href="#site-configuration">Site Configuration</a></li>
+      <li><a href="#backup-directory-structure">Backup Directory Structure</a></li>
+    </ul>
+  </li>
+  <li><a href="#file-naming-convention">File Naming Convention</a></li>
+  <li><a href="#compression-methods">Compression Methods</a></li>
+  <li><a href="#url-search-and-replace">URL Search and Replace</a></li>
+  <li><a href="#security-considerations">Security Considerations</a></li>
+  <li><a href="#error-handling">Error Handling</a></li>
+  <li><a href="#automation">Automation</a>
+    <ul>
+      <li><a href="#scheduled-backups">Scheduled Backups</a></li>
+      <li><a href="#cleanup-script">Cleanup Script</a></li>
+    </ul>
+  </li>
+  <li><a href="#integration-with-cicd">Integration with CI/CD</a></li>
+  <li><a href="#troubleshooting">Troubleshooting</a>
+    <ul>
+      <li><a href="#debug-mode">Debug Mode</a></li>
+      <li><a href="#manual-verification">Manual Verification</a></li>
+      <li><a href="#log-monitoring">Log Monitoring</a></li>
+    </ul>
+  </li>
+  <li><a href="#best-practices">Best Practices</a></li>
+  <li><a href="#support">Support</a></li>
+</ul>
+
+<h2 id="overview">Overview</h2>
+
+<p>This directory contains Ansible playbooks that integrate with your existing Trellis setup to provide automated database and files operations:</p>
+
+<h3 id="database-operations">Database Operations</h3>
+<ul>
+  <li><strong>database-backup.yml</strong> - Create database backups from any environment</li>
+  <li><strong>database-pull.yml</strong> - Pull database from remote environment to development</li>
+  <li><strong>database-push.yml</strong> - Push database from development to remote environment</li>
+</ul>
+
+<h3 id="files-operations">Files Operations</h3>
+<ul>
+  <li><strong>files-backup.yml</strong> - Create WordPress uploads backups from any environment</li>
+  <li><strong>files-pull.yml</strong> - Pull WordPress uploads from remote environment to development</li>
+  <li><strong>files-push.yml</strong> - Push WordPress uploads from development to remote environment</li>
+</ul>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<ul>
+  <li>Working Trellis installation with configured environments</li>
+  <li>Ansible installed and configured</li>
+  <li>SSH access to all target environments</li>
+  <li>WP-CLI available on all servers (included with Trellis)</li>
+</ul>
+
+<h2 id="installation">Installation</h2>
+
+<ol>
+  <li>Copy the playbook files to your Trellis directory:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># From your trellis-tools directory</span>
+<span class="nb">cp</span> <span class="nt">-r</span> backup/trellis/<span class="k">*</span> /path/to/your/trellis/
+</code></pre></div>    </div>
+  </li>
+  <li>Or reference them directly from this repository:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Run from your Trellis directory</span>
+ansible-playbook /path/to/trellis-tools/backup/trellis/database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="usage">Usage</h2>
+
+<p>All playbooks require two variables:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">site</code> - The site name as defined in your Trellis configuration</li>
+  <li><code class="language-plaintext highlighter-rouge">env</code> - The environment (development, staging, production)</li>
+</ul>
+
+<h3 id="database-backup">Database Backup</h3>
+
+<p>Creates a compressed database backup and stores it in the <code class="language-plaintext highlighter-rouge">database_backup</code> directory.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Backup production database</span>
+ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Backup staging database</span>
+ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+
+<span class="c"># Backup development database</span>
+ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>development
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates timestamped compressed SQL backup</li>
+  <li>For remote environments: downloads backup to development server</li>
+  <li>Stores backup in <code class="language-plaintext highlighter-rouge">web/app/database_backup/</code> directory</li>
+  <li>Automatically cleans up temporary files</li>
+</ul>
+
+<h3 id="database-pull">Database Pull</h3>
+
+<p>Pulls database from a remote environment to development with automatic URL replacement.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Pull production database to development</span>
+ansible-playbook database-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Pull staging database to development</span>
+ansible-playbook database-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates backup of current development database</li>
+  <li>Exports database from remote environment</li>
+  <li>Downloads and imports to development</li>
+  <li>Performs URL search-replace for local development URLs</li>
+  <li>Cleans up temporary files</li>
+</ul>
+
+<p><strong>Note:</strong> Cannot pull from development to development (will abort with error).</p>
+
+<h4 id="alternative-direct-shell-script-method">Alternative: Direct Shell Script Method</h4>
+
+<p>For interactive development work, you can use a direct shell script approach that runs inside the Trellis VM. This method is <strong>simpler and faster</strong> than the Ansible playbook, using SSH pipes to stream the database directly without intermediate files.</p>
+
+<p><strong>Standard site example:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> /path/to/trellis <span class="o">&amp;&amp;</span> trellis vm shell <span class="nt">--workdir</span> /srv/www/example.com/current <span class="nt">--</span> bash <span class="nt">-c</span> <span class="s2">"
+echo '=== Backing up current development database ==='
+wp db export /tmp/dev_backup_</span><span class="se">\$</span><span class="s2">(date +%Y%m%d_%H%M%S).sql.gz --path=web/wp
+
+echo ''
+echo '=== Pulling production database dump ==='
+ssh -o StrictHostKeyChecking=no web@example.com 'cd /srv/www/example.com/current &amp;&amp; wp db export - --path=web/wp' | gzip &gt; /tmp/prod_import.sql.gz
+
+echo ''
+echo '=== Importing production database to development ==='
+gunzip &lt; /tmp/prod_import.sql.gz | wp db import - --path=web/wp
+
+echo ''
+echo '=== Running search-replace for URLs ==='
+wp search-replace 'https://example.com' 'https://example.test' --all-tables --precise --path=web/wp
+
+echo ''
+echo '=== Flushing cache ==='
+wp cache flush --path=web/wp
+
+echo ''
+echo '=== Database pull complete! ==='
+"</span>
+</code></pre></div></div>
+
+<p><strong>Multisite example:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cd</span> /path/to/trellis <span class="o">&amp;&amp;</span> trellis vm shell <span class="nt">--workdir</span> /srv/www/example.com/current <span class="nt">--</span> bash <span class="nt">-c</span> <span class="s2">"
+echo '=== Backing up current development database ==='
+wp db export /tmp/dev_backup_</span><span class="se">\$</span><span class="s2">(date +%Y%m%d_%H%M%S).sql.gz --path=web/wp
+
+echo ''
+echo '=== Pulling production database dump ==='
+ssh -o StrictHostKeyChecking=no web@example.com 'cd /srv/www/example.com/current &amp;&amp; wp db export - --path=web/wp' | gzip &gt; /tmp/prod_import.sql.gz
+
+echo ''
+echo '=== Importing production database to development ==='
+gunzip &lt; /tmp/prod_import.sql.gz | wp db import - --path=web/wp
+
+echo ''
+echo '=== Running search-replace for URLs (multisite) ==='
+wp search-replace 'https://example.com' 'http://example.test' --all-tables --precise --path=web/wp --url=https://example.com
+
+echo ''
+echo '=== Fixing multisite blog domains ==='
+wp db query </span><span class="se">\"</span><span class="s2">UPDATE wp_blogs SET domain = REPLACE(domain, 'example.com', 'example.test');</span><span class="se">\"</span><span class="s2"> --path=web/wp
+
+echo ''
+echo '=== Flushing cache ==='
+wp cache flush --path=web/wp
+
+echo ''
+echo '=== Database pull complete! ==='
+"</span>
+</code></pre></div></div>
+
+<p><strong>Advantages of this approach:</strong></p>
+<ul>
+  <li>Single command execution with full visibility</li>
+  <li>Streams database via SSH pipe (no intermediate transfer files)</li>
+  <li>Includes cache flushing step</li>
+  <li>Progress messages show exactly what’s happening</li>
+  <li>Faster than Ansible playbook for quick manual operations</li>
+</ul>
+
+<p><strong>When to use:</strong></p>
+<ul>
+  <li>Manual, interactive development work</li>
+  <li>Quick database syncs during active development</li>
+  <li>When you want full visibility into each step</li>
+  <li>Testing or troubleshooting database operations</li>
+</ul>
+
+<p><strong>When to use Ansible playbooks instead:</strong></p>
+<ul>
+  <li>Automated/scheduled operations</li>
+  <li>CI/CD pipelines</li>
+  <li>When you need consistent, repeatable automation</li>
+  <li>Managing multiple sites or environments</li>
+</ul>
+
+<p><strong>Multisite notes:</strong></p>
+<ul>
+  <li>Include <code class="language-plaintext highlighter-rouge">--url=https://example.com</code> parameter in <code class="language-plaintext highlighter-rouge">wp search-replace</code></li>
+  <li>This ensures WordPress knows which site context to use for the search-replace operation</li>
+  <li><strong>Critical</strong>: Must update <code class="language-plaintext highlighter-rouge">wp_blogs</code> table domains separately with direct SQL query</li>
+  <li>The <code class="language-plaintext highlighter-rouge">wp_blogs</code> table stores the domain for each site in the network</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">wp db query "UPDATE wp_blogs SET domain = REPLACE(domain, 'production.com', 'local.test');"</code> to update all blog domains</li>
+  <li>Both <code class="language-plaintext highlighter-rouge">wp search-replace</code> (for content/options) and <code class="language-plaintext highlighter-rouge">wp_blogs</code> update (for network domains) are required for proper multisite operation</li>
+</ul>
+
+<h3 id="database-push">Database Push</h3>
+
+<p>Pushes database from development to a remote environment with URL replacement.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Push development database to staging</span>
+ansible-playbook database-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+
+<span class="c"># Push development database to production (use with caution!)</span>
+ansible-playbook database-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates backup of target environment database</li>
+  <li>Exports development database</li>
+  <li>Uploads and imports to target environment</li>
+  <li>Performs URL search-replace for target environment URLs</li>
+  <li>Cleans up temporary files</li>
+</ul>
+
+<p><strong>Note:</strong> Cannot push from development to development (will abort with error).</p>
+
+<h3 id="files-backup">Files Backup</h3>
+
+<p>Creates a compressed backup of WordPress uploads directory and stores it in the <code class="language-plaintext highlighter-rouge">files_backup</code> directory.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Backup production uploads</span>
+ansible-playbook files-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Backup staging uploads</span>
+ansible-playbook files-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+
+<span class="c"># Backup development uploads</span>
+ansible-playbook files-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>development
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates timestamped compressed uploads backup</li>
+  <li>For remote environments: downloads backup to development server</li>
+  <li>Stores backup in <code class="language-plaintext highlighter-rouge">web/app/files_backup/</code> directory</li>
+  <li>Automatically cleans up temporary files</li>
+</ul>
+
+<h3 id="files-pull">Files Pull</h3>
+
+<p>Pulls WordPress uploads from a remote environment to development.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Pull production uploads to development</span>
+ansible-playbook files-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Pull staging uploads to development</span>
+ansible-playbook files-pull.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates backup of current development uploads</li>
+  <li>Creates archive of uploads from remote environment</li>
+  <li>Downloads and extracts to development</li>
+  <li>Cleans up temporary files</li>
+</ul>
+
+<p><strong>Note:</strong> Cannot pull from development to development (will abort with error).</p>
+
+<h3 id="files-push">Files Push</h3>
+
+<p>Pushes WordPress uploads from development to a remote environment.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Push development uploads to staging</span>
+ansible-playbook files-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+
+<span class="c"># Push development uploads to production (use with caution!)</span>
+ansible-playbook files-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+</code></pre></div></div>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Creates backup of target environment uploads</li>
+  <li>Creates archive of development uploads</li>
+  <li>Uploads and extracts to target environment</li>
+  <li>Cleans up temporary files</li>
+</ul>
+
+<p><strong>Note:</strong> Cannot push from development to development (will abort with error).</p>
+
+<h2 id="configuration">Configuration</h2>
+
+<h3 id="site-configuration">Site Configuration</h3>
+
+<p>Ensure your site is properly configured in your Trellis <code class="language-plaintext highlighter-rouge">group_vars</code> files:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># group_vars/development/wordpress_sites.yml</span>
+<span class="na">wordpress_sites</span><span class="pi">:</span>
+  <span class="na">example.com</span><span class="pi">:</span>
+    <span class="na">site_hosts</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">canonical</span><span class="pi">:</span> <span class="s">example.test</span>
+    <span class="na">local_path</span><span class="pi">:</span> <span class="s">../site</span> <span class="c1"># Path to your Bedrock installation</span>
+    <span class="c1"># ... other configuration</span>
+</code></pre></div></div>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># group_vars/production/wordpress_sites.yml</span>
+<span class="na">wordpress_sites</span><span class="pi">:</span>
+  <span class="na">example.com</span><span class="pi">:</span>
+    <span class="na">site_hosts</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">canonical</span><span class="pi">:</span> <span class="s">example.com</span>
+    <span class="c1"># ... other configuration</span>
+</code></pre></div></div>
+
+<h3 id="backup-directory-structure">Backup Directory Structure</h3>
+
+<p>Backups are stored in the following structure:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>site/current/web/app/
+├── database_backup/
+│   ├── example_com_production_2023_12_01_14_30_45.sql.gz
+│   ├── example_com_staging_2023_12_01_15_15_22.sql.gz
+│   └── example_com_development_2023_12_01_16_45_33.sql.gz
+└── files_backup/
+    ├── example_com_production_uploads_2023_12_01_14_30_45.tar.gz
+    ├── example_com_staging_uploads_2023_12_01_15_15_22.tar.gz
+    └── example_com_development_uploads_2023_12_01_16_45_33.tar.gz
+</code></pre></div></div>
+
+<h2 id="file-naming-convention">File Naming Convention</h2>
+
+<p>Backup files use the following naming patterns:</p>
+
+<h3 id="database-backups">Database Backups</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{site_name}_{environment}_{date}_{time}.sql.gz
+</code></pre></div></div>
+
+<h3 id="files-backups">Files Backups</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{site_name}_{environment}_uploads_{date}_{time}.tar.gz
+</code></pre></div></div>
+
+<p>Where:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">site_name</code> - Site name with dots replaced by underscores</li>
+  <li><code class="language-plaintext highlighter-rouge">environment</code> - development, staging, or production</li>
+  <li><code class="language-plaintext highlighter-rouge">date</code> - YYYY_MM_DD format</li>
+  <li><code class="language-plaintext highlighter-rouge">time</code> - HH_MM_SS format</li>
+</ul>
+
+<p>Examples:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">example_com_production_2023_12_01_14_30_45.sql.gz</code></li>
+  <li><code class="language-plaintext highlighter-rouge">example_com_production_uploads_2023_12_01_14_30_45.tar.gz</code></li>
+  <li><code class="language-plaintext highlighter-rouge">mysite_co_uk_staging_2023_12_01_15_15_22.sql.gz</code></li>
+  <li><code class="language-plaintext highlighter-rouge">mysite_co_uk_staging_uploads_2023_12_01_15_15_22.tar.gz</code></li>
+</ul>
+
+<h2 id="compression-methods">Compression Methods</h2>
+
+<p>Different compression methods are used based on backup type for optimal performance:</p>
+
+<ul>
+  <li><strong>Database backups: <code class="language-plaintext highlighter-rouge">.sql.gz</code></strong> - Uses <code class="language-plaintext highlighter-rouge">gzip</code> compression for single SQL files. Faster with direct piping (<code class="language-plaintext highlighter-rouge">wp db export - | gzip</code>) without temporary files.</li>
+  <li><strong>Files backups: <code class="language-plaintext highlighter-rouge">.tar.gz</code></strong> - Uses <code class="language-plaintext highlighter-rouge">tar</code> + <code class="language-plaintext highlighter-rouge">gzip</code> for directory archives. Required for preserving directory structure and handling multiple files efficiently.</li>
+</ul>
+
+<h2 id="url-search-and-replace">URL Search and Replace</h2>
+
+<p>The playbooks automatically handle URL replacement when moving databases between environments:</p>
+
+<h3 id="pull-operations">Pull Operations</h3>
+<ul>
+  <li><strong>From Production</strong>: <code class="language-plaintext highlighter-rouge">https://example.com</code> → <code class="language-plaintext highlighter-rouge">http://example.test</code></li>
+  <li><strong>From Staging</strong>: <code class="language-plaintext highlighter-rouge">https://staging.example.com</code> → <code class="language-plaintext highlighter-rouge">http://example.test</code></li>
+</ul>
+
+<h3 id="push-operations">Push Operations</h3>
+<ul>
+  <li><strong>To Production</strong>: <code class="language-plaintext highlighter-rouge">http://example.test</code> → <code class="language-plaintext highlighter-rouge">https://example.com</code></li>
+  <li><strong>To Staging</strong>: <code class="language-plaintext highlighter-rouge">http://example.test</code> → <code class="language-plaintext highlighter-rouge">https://staging.example.com</code></li>
+</ul>
+
+<p>URLs are determined from your Trellis site configuration using the <code class="language-plaintext highlighter-rouge">canonical</code> hostname.</p>
+
+<h2 id="security-considerations">Security Considerations</h2>
+
+<ol>
+  <li>
+    <p><strong>Backup Storage</strong>: Backups contain sensitive data. Ensure proper file permissions on backup directories.</p>
+  </li>
+  <li>
+    <p><strong>Production Pushes</strong>: Be extremely cautious when pushing to production. Always test on staging first.</p>
+  </li>
+  <li>
+    <p><strong>Database Credentials</strong>: All database operations use WP-CLI, which reads credentials from WordPress configuration.</p>
+  </li>
+  <li>
+    <p><strong>SSH Access</strong>: Ensure SSH keys are properly configured for all target environments.</p>
+  </li>
+</ol>
+
+<h2 id="error-handling">Error Handling</h2>
+
+<h3 id="common-errors-and-solutions">Common Errors and Solutions</h3>
+
+<p><strong>“Site folder doesn’t exist”</strong></p>
+<ul>
+  <li>Verify the site name matches your Trellis configuration</li>
+  <li>Check that the site has been deployed to the target environment</li>
+</ul>
+
+<p><strong>“Cannot pull/push from development to development”</strong></p>
+<ul>
+  <li>These operations are blocked by design</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">database-backup.yml</code> for development backups</li>
+</ul>
+
+<p><strong>“WP-CLI command failed”</strong></p>
+<ul>
+  <li>Verify WordPress is properly installed</li>
+  <li>Check database connectivity</li>
+  <li>Ensure WP-CLI is available on the server</li>
+</ul>
+
+<p><strong>Permission denied errors</strong></p>
+<ul>
+  <li>Verify SSH access to target servers</li>
+  <li>Check file permissions in WordPress directories</li>
+</ul>
+
+<h2 id="automation">Automation</h2>
+
+<h3 id="scheduled-backups">Scheduled Backups</h3>
+
+<p>Add to your server’s crontab for automated backups:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Daily production backup at 2 AM</span>
+0 2 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="nb">cd</span> /path/to/trellis <span class="o">&amp;&amp;</span> ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># Weekly staging backup on Sundays at 3 AM</span>
+0 3 <span class="k">*</span> <span class="k">*</span> 0 <span class="nb">cd</span> /path/to/trellis <span class="o">&amp;&amp;</span> ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+</code></pre></div></div>
+
+<h3 id="cleanup-script">Cleanup Script</h3>
+
+<p>Create a cleanup script to manage old backups:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+<span class="c"># cleanup-backups.sh</span>
+
+<span class="nv">SITE_PATH</span><span class="o">=</span><span class="s2">"/srv/www/example.com/current/web/app"</span>
+<span class="nv">RETENTION_DAYS</span><span class="o">=</span>30
+
+<span class="c"># Clean up old database backups</span>
+find <span class="s2">"</span><span class="nv">$SITE_PATH</span><span class="s2">/database_backup"</span> <span class="nt">-name</span> <span class="s2">"*.sql.gz"</span> <span class="nt">-mtime</span> +<span class="nv">$RETENTION_DAYS</span> <span class="nt">-delete</span>
+
+<span class="c"># Clean up old files backups</span>
+find <span class="s2">"</span><span class="nv">$SITE_PATH</span><span class="s2">/files_backup"</span> <span class="nt">-name</span> <span class="s2">"*.tar.gz"</span> <span class="nt">-mtime</span> +<span class="nv">$RETENTION_DAYS</span> <span class="nt">-delete</span>
+</code></pre></div></div>
+
+<h2 id="integration-with-cicd">Integration with CI/CD</h2>
+
+<h3 id="github-actions-example">GitHub Actions Example</h3>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Database Sync</span>
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">workflow_dispatch</span><span class="pi">:</span>
+    <span class="na">inputs</span><span class="pi">:</span>
+      <span class="na">environment</span><span class="pi">:</span>
+        <span class="na">description</span><span class="pi">:</span> <span class="s1">'</span><span class="s">Source</span><span class="nv"> </span><span class="s">environment'</span>
+        <span class="na">required</span><span class="pi">:</span> <span class="kc">true</span>
+        <span class="na">default</span><span class="pi">:</span> <span class="s1">'</span><span class="s">production'</span>
+        <span class="na">type</span><span class="pi">:</span> <span class="s">choice</span>
+        <span class="na">options</span><span class="pi">:</span>
+        <span class="pi">-</span> <span class="s">production</span>
+        <span class="pi">-</span> <span class="s">staging</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">sync-database</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v3</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Setup SSH</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">webfactory/ssh-agent@v0.7.0</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">ssh-private-key</span><span class="pi">:</span> <span class="s">$</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Pull database</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">cd trellis</span>
+          <span class="s">ansible-playbook database-pull.yml -e site=example.com -e env=$</span>
+</code></pre></div></div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="debug-mode">Debug Mode</h3>
+
+<p>Run playbooks with verbose output for debugging:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ansible-playbook database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production <span class="nt">-vvv</span>
+</code></pre></div></div>
+
+<h3 id="manual-verification">Manual Verification</h3>
+
+<p>Verify backup integrity:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Test database backup file</span>
+<span class="nb">gunzip</span> <span class="nt">-t</span> /path/to/backup.sql.gz
+
+<span class="c"># Check database backup contents</span>
+<span class="nb">gunzip</span> <span class="nt">-c</span> /path/to/backup.sql.gz | <span class="nb">head</span> <span class="nt">-20</span>
+
+<span class="c"># Test files backup file</span>
+<span class="nb">tar</span> <span class="nt">-tzf</span> /path/to/uploads.tar.gz
+
+<span class="c"># Check files backup contents</span>
+<span class="nb">tar</span> <span class="nt">-xzOf</span> /path/to/uploads.tar.gz | <span class="nb">head</span> <span class="nt">-20</span>
+</code></pre></div></div>
+
+<h3 id="log-monitoring">Log Monitoring</h3>
+
+<p>Monitor backup operations:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check Ansible logs</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /var/log/ansible.log
+
+<span class="c"># Check WordPress logs</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /srv/www/example.com/shared/logs/error.log
+</code></pre></div></div>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<ol>
+  <li><strong>Test First</strong>: Always test pull/push operations on staging before production</li>
+  <li><strong>Backup Before Push</strong>: The playbooks automatically create backups, but verify they complete successfully</li>
+  <li><strong>Monitor Disk Space</strong>: Regular backups can consume significant disk space</li>
+  <li><strong>Document Procedures</strong>: Keep a record of when and why database operations are performed</li>
+  <li><strong>Verify URLs</strong>: Check that URL replacements work correctly after pull/push operations</li>
+  <li><strong>Regular Cleanup</strong>: Implement automated cleanup of old backup files</li>
+</ol>
+
+<h2 id="support">Support</h2>
+
+<p>For issues specific to these playbooks:</p>
+<ol>
+  <li>Check the Ansible output for specific error messages</li>
+  <li>Verify your Trellis configuration is correct</li>
+  <li>Test SSH connectivity to target servers</li>
+  <li>Ensure WP-CLI is working on all environments</li>
+</ol>
+
+<p>For general Trellis support, refer to the <a href="https://roots.io/trellis/docs/">official Trellis documentation</a>.</p>
+
+
+  
+  <div class="callout callout-summary">
+    <h3>Key Takeaways</h3>
+    <ul>
+    
+      <li>Favor backups and dry runs before pushing or pulling data.</li>
+    
+      <li>Backups produce predictable artifacts and naming conventions.</li>
+    
+      <li>Automate cleanup and schedules to avoid storage drift.</li>
+    
+    </ul>
+  </div>
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

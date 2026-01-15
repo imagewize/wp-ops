@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Age Verification"
+chapter_number: 15
+permalink: /chapters/age-verification/
+---
+
 # Age Verification Script
 
 A JavaScript-based age verification system for WordPress websites that manages content visibility based on user age and preferences.

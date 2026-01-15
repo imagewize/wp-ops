@@ -14,7 +14,7 @@
           <a href="/">Book</a>
           <a href="/toc/">TOC</a>
           <a href="/ebook/">Ideas</a>
-          <a href="/README.html">README</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
         </nav>
       </div>
     </header>
@@ -110,11 +110,12 @@
   <li>Table of contents (<code class="language-plaintext highlighter-rouge">TOC.md</code>)</li>
   <li>Book-themed styling with serif fonts and warm colors (<code class="language-plaintext highlighter-rouge">assets/main.css</code>)</li>
   <li>Reading paths for different user types</li>
+  <li>Enhanced Jekyll configuration with Gemfile and plugins (2026-01-15)</li>
+  <li>Ruby 4.0 compatibility (2026-01-15)</li>
 </ul>
 
 <p>🔨 <strong>Needs improvement:</strong></p>
 <ul>
-  <li>Jekyll configuration is minimal</li>
   <li>No chapter-specific layouts</li>
   <li>Missing callout boxes for tips/warnings/cautions</li>
   <li>No chapter navigation (prev/next)</li>
@@ -128,9 +129,19 @@
 
 <h2 id="improvement-roadmap">Improvement Roadmap</h2>
 
-<h3 id="1-enhanced-jekyll-configuration">1. Enhanced Jekyll Configuration</h3>
+<h3 id="1-enhanced-jekyll-configuration--completed">1. Enhanced Jekyll Configuration ✅ <strong>COMPLETED</strong></h3>
 
-<p>Expand <code class="language-plaintext highlighter-rouge">_config.yml</code> with better metadata and plugins:</p>
+<p><strong>Status:</strong> Implemented on 2026-01-15</p>
+
+<p><strong>Changes made:</strong></p>
+<ul>
+  <li>Created <code class="language-plaintext highlighter-rouge">Gemfile</code> with Jekyll 4.4 and required plugins</li>
+  <li>Added Ruby 4.0 compatibility gems (logger, csv, base64)</li>
+  <li>Configured <code class="language-plaintext highlighter-rouge">_config.yml</code> with metadata and plugins</li>
+  <li>Successfully building with <code class="language-plaintext highlighter-rouge">bundle exec jekyll build</code></li>
+</ul>
+
+<p><strong>Original plan:</strong> Expand <code class="language-plaintext highlighter-rouge">_config.yml</code> with better metadata and plugins:</p>
 
 <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">title</span><span class="pi">:</span> <span class="s">WP OPS - WordPress Operations Handbook</span>
 <span class="na">description</span><span class="pi">:</span> <span class="s">Comprehensive guide for WordPress server management with Trellis, WP-CLI, and Nginx</span>
@@ -192,99 +203,529 @@ layout: default
 
   
 
-  <span class="nt">&lt;h1</span> <span class="na">id=</span><span class="s">"wp-ops-book"</span><span class="nt">&gt;</span>WP OPS BOOK<span class="nt">&lt;/h1&gt;</span>
+  <span class="nt">&lt;article</span> <span class="na">class=</span><span class="s">"chapter"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"chapter-meta"</span><span class="nt">&gt;</span>
+    
+      <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"chapter-number"</span><span class="nt">&gt;</span>Chapter 20<span class="nt">&lt;/span&gt;</span>
+    
+    
+  <span class="nt">&lt;/div&gt;</span>
 
-<span class="nt">&lt;p&gt;</span>This book is a curated reading path for the wp-ops repository. Use it as your front door, then jump into the chapter you need.<span class="nt">&lt;/p&gt;</span>
+  <span class="nt">&lt;h1&gt;</span>PR Helper Script<span class="nt">&lt;/h1&gt;</span>
 
-<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"how-to-use-this-book"</span><span class="nt">&gt;</span>How to Use This Book<span class="nt">&lt;/h2&gt;</span>
+  
+
+  <span class="nt">&lt;h1</span> <span class="na">id=</span><span class="s">"create-pr-script"</span><span class="nt">&gt;</span>Create PR Script<span class="nt">&lt;/h1&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>An intelligent script (<span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>create-pr.sh<span class="nt">&lt;/code&gt;</span>) that creates GitHub pull requests with professional, AI-powered descriptions similar to GitHub Copilot.<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"features"</span><span class="nt">&gt;</span>Features<span class="nt">&lt;/h2&gt;</span>
+
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Start with the Foundations if you are new to the stack.<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Use the reading paths to move quickly through a specific objective.<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Each chapter begins with a short “Chapter Purpose” section.<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Multi-AI Backend Support<span class="nt">&lt;/strong&gt;</span>: Choose between Claude CLI or Codex CLI for AI-powered descriptions<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>AI-Powered Descriptions<span class="nt">&lt;/strong&gt;</span>: Uses AI to analyze git diffs and generate intelligent summaries<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Professional Formatting<span class="nt">&lt;/strong&gt;</span>: Creates descriptions with grouped sections, bold headings, and detailed bullet points<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Clickable File Links<span class="nt">&lt;/strong&gt;</span>: Each file links directly to the changed version on GitHub for quick access<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Smart Categorization<span class="nt">&lt;/strong&gt;</span>: Automatically detects change types (dependencies, documentation, styling, etc.)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Automatic PR Creation<span class="nt">&lt;/strong&gt;</span>: Uses GitHub CLI to create the actual pull request<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Fallback Mode<span class="nt">&lt;/strong&gt;</span>: Works without AI when API key is not available<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Interactive AI Selection<span class="nt">&lt;/strong&gt;</span>: Choose your preferred AI tool when both are available<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"reading-paths"</span><span class="nt">&gt;</span>Reading Paths<span class="nt">&lt;/h2&gt;</span>
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"token-usage-comparison"</span><span class="nt">&gt;</span>Token Usage Comparison<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Understanding the cost/benefit of using AI vs no-AI mode:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"option-1-claude-code-without-this-script-manual-pr"</span><span class="nt">&gt;</span>Option 1: Claude Code without this script (Manual PR)<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Token Usage<span class="nt">&lt;/strong&gt;</span>: ~2,000-10,000+ tokens per PR<span class="nt">&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>New operator<span class="nt">&lt;/strong&gt;</span>: Foundations -<span class="ni">&amp;gt;</span> Provisioning -<span class="ni">&amp;gt;</span> Backups -<span class="ni">&amp;gt;</span> Monitoring -<span class="ni">&amp;gt;</span> Troubleshooting<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Migration<span class="nt">&lt;/strong&gt;</span>: Foundations -<span class="ni">&amp;gt;</span> Migration -<span class="ni">&amp;gt;</span> Backups -<span class="ni">&amp;gt;</span> Redirects -<span class="ni">&amp;gt;</span> Diagnostics<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Performance<span class="nt">&lt;/strong&gt;</span>: Foundations -<span class="ni">&amp;gt;</span> Browser Caching -<span class="ni">&amp;gt;</span> Image Optimization -<span class="ni">&amp;gt;</span> Speed Optimization<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Security<span class="nt">&lt;/strong&gt;</span>: Foundations -<span class="ni">&amp;gt;</span> Trellis Security -<span class="ni">&amp;gt;</span> WP-CLI Security -<span class="ni">&amp;gt;</span> Monitoring<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You ask Claude: “Create a PR for my changes”<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Claude reads multiple files to understand context<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Back-and-forth conversation to refine the description<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Claude runs git commands to analyze changes<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Result<span class="nt">&lt;/strong&gt;</span>: Uses significant tokens, quality depends on conversation<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"table-of-contents"</span><span class="nt">&gt;</span>Table of Contents<span class="nt">&lt;/h2&gt;</span>
-
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"front-matter"</span><span class="nt">&gt;</span>Front Matter<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"option-2-this-script-with-ai---no-ai-not-used"</span><span class="nt">&gt;</span>Option 2: This Script with AI (<span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/code&gt;</span> NOT used)<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Token Usage<span class="nt">&lt;/strong&gt;</span>: ~500-1,500 tokens per PR<span class="nt">&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Title + how to use this book: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>README.md<span class="nt">&lt;/code&gt;&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Repository rules for operators: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>AGENTS.md<span class="nt">&lt;/code&gt;&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Edition history: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>CHANGELOG.md<span class="nt">&lt;/code&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Script pre-processes all git data (commits, files, diff stats)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Sends only structured summary to Claude<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Single prompt, no back-and-forth needed<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Claude generates description in one response<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Result<span class="nt">&lt;/strong&gt;</span>: 70-85% fewer tokens than manual, high-quality output<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-i-foundations"</span><span class="nt">&gt;</span>Part I: Foundations<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"option-3-this-script-without-ai---no-ai-flag"</span><span class="nt">&gt;</span>Option 3: This Script without AI (<span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/code&gt;</span> flag)<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Token Usage<span class="nt">&lt;/strong&gt;</span>: 0 tokens<span class="nt">&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 1: Operating principles and safety basics — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>README.md<span class="nt">&lt;/code&gt;</span> (scope, safety rules, and starting points)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 2: Command helpers and doc conventions — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>CLAUDE.md<span class="nt">&lt;/code&gt;</span>, <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>CREATE-PR.md<span class="nt">&lt;/code&gt;</span> (workflow norms and PR creation)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Script generates basic but professional description<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Lists all commits, files changed, and statistics<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>No intelligent grouping or summarization<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Result<span class="nt">&lt;/strong&gt;</span>: Free, but generic descriptions<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-ii-trellis-operations"</span><span class="nt">&gt;</span>Part II: Trellis Operations<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"what-you-get-with-each-option"</span><span class="nt">&gt;</span>What You Get With Each Option<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;table&gt;</span>
+  <span class="nt">&lt;thead&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Feature<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Manual (Claude Code)<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Script + AI<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Script –no-ai<span class="nt">&lt;/th&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+  <span class="nt">&lt;/thead&gt;</span>
+  <span class="nt">&lt;tbody&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Token cost<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>High (2k-10k+)<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Low (500-1.5k)<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Zero<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Intelligent summary<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Good<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Excellent<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ Generic<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Grouped sections<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ Sometimes<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Always<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ No<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>File links<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ No<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Yes<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Yes<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Version numbers/metrics<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ Sometimes<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Yes<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌ No<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Professional tone<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>⚠️ Varies<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Consistent<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ Basic<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Time to create<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Slow<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Fast<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Instant<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+  <span class="nt">&lt;/tbody&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"recommendation"</span><span class="nt">&gt;</span>Recommendation<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Use Script + AI<span class="nt">&lt;/strong&gt;</span> when:<span class="nt">&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 3: Provisioning environments — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>trellis/provision/README.md<span class="nt">&lt;/code&gt;</span> (setup guides and core provisioning commands)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 4: Backups and restores — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>trellis/backup/README.md<span class="nt">&lt;/code&gt;</span>, <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/backup/<span class="nt">&lt;/code&gt;</span> (backup cadence and restore drills)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 5: Monitoring and alerting — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>trellis/monitoring/README.md<span class="nt">&lt;/code&gt;</span>, <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/monitoring/<span class="nt">&lt;/code&gt;</span> (traffic analysis and alerts)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 6: Security hardening — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>trellis/security/README.md<span class="nt">&lt;/code&gt;</span> (layered controls and safe defaults)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 7: Updating Trellis — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>trellis/updater/README.md<span class="nt">&lt;/code&gt;</span> (upgrade workflow and preserved configs)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You want Copilot-quality descriptions<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You want to save 70-85% tokens vs manual<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>The PR has complex changes that need explanation<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You want consistent, professional output<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-iii-wp-cli-workflows"</span><span class="nt">&gt;</span>Part III: WP-CLI Workflows<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Use Script –no-ai<span class="nt">&lt;/strong&gt;</span> when:<span class="nt">&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 8: Content creation — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wp-cli/content-creation/README.md<span class="nt">&lt;/code&gt;</span> (repeatable page and pattern workflows)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 9: Diagnostics — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wp-cli/diagnostics/README.md<span class="nt">&lt;/code&gt;</span> (triage scripts and safe inspection)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 10: Migration — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wp-cli/migration/README.md<span class="nt">&lt;/code&gt;</span> (end-to-end migration paths)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 11: Security checks — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wp-cli/security/README.md<span class="nt">&lt;/code&gt;</span> (scanner usage and audit cadence)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>The PR is simple (e.g., dependency update, single file change)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You don’t need intelligent summarization<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You want zero token usage<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You’ll manually edit the description anyway<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-iv-nginx-patterns"</span><span class="nt">&gt;</span>Part IV: Nginx Patterns<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"prerequisites"</span><span class="nt">&gt;</span>Prerequisites<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;ol&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>GitHub CLI<span class="nt">&lt;/strong&gt;</span> (required)
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>brew <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>install <span class="nt">&lt;/span&gt;</span>gh
+gh auth login
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</span>    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>
+    <span class="nt">&lt;p&gt;&lt;strong&gt;</span>AI CLI<span class="nt">&lt;/strong&gt;</span> (optional, for AI descriptions)<span class="nt">&lt;/p&gt;</span>
+
+    <span class="nt">&lt;p&gt;</span>Choose one or both:<span class="nt">&lt;/p&gt;</span>
+
+    <span class="nt">&lt;p&gt;&lt;strong&gt;</span>Claude CLI<span class="nt">&lt;/strong&gt;</span> (recommended)<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;ul&gt;</span>
+      <span class="nt">&lt;li&gt;</span>If you’re using Claude Code in VS Code, you already have this installed!<span class="nt">&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Otherwise, download from: https://claude.ai/download<span class="nt">&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>The script will automatically use your existing Claude authentication<span class="nt">&lt;/li&gt;</span>
+    <span class="nt">&lt;/ul&gt;</span>
+
+    <span class="nt">&lt;p&gt;&lt;strong&gt;</span>Codex CLI<span class="nt">&lt;/strong&gt;</span> (alternative)<span class="nt">&lt;/p&gt;</span>
+    <span class="nt">&lt;ul&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Install via npm: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>npm install -g @anthropic-ai/codex-cli<span class="nt">&lt;/code&gt;&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Or download from your AI provider<span class="nt">&lt;/li&gt;</span>
+    <span class="nt">&lt;/ul&gt;</span>
+
+    <span class="nt">&lt;p&gt;</span>The script automatically detects which AI tools are available and lets you choose interactively.<span class="nt">&lt;/p&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ol&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"installation"</span><span class="nt">&gt;</span>Installation<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;ol&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Make the script executable:
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>chmod<span class="nt">&lt;/span&gt;</span> +x create-pr.sh
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</span>    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Optionally, add to your PATH or create an alias:
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Add to ~/.zshrc or ~/.bashrc<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>alias pr<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"s1"</span><span class="nt">&gt;</span>'/path/to/create-pr.sh'<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</span>    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ol&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"usage"</span><span class="nt">&gt;</span>Usage<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"interactive-mode-default"</span><span class="nt">&gt;</span>Interactive Mode (Default)<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Just run the script and answer the prompts:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>./create-pr.sh
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># You'll be prompted for:<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># 1. Base branch (default: main)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># 2. PR title (default: auto-generated from branch name)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># 3. Use AI for description? (Y/n)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Example interaction:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>🚀 Create Pull Request
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current branch: feature/user-auth
+
+Base branch (default: main):
+PR title (default: Feature User Auth): Add user authentication
+Use AI to generate description? (Y/n): y
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"non-interactive-mode"</span><span class="nt">&gt;</span>Non-Interactive Mode<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Provide arguments to skip prompts:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># With all arguments<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh main <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"Add authentication feature"<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Just base branch (title auto-generated)<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh develop
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Skip all prompts, use defaults<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-interactive<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"options"</span><span class="nt">&gt;</span>Options<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Choose AI backend (claude or codex)<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--ai<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;</span>claude
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--ai<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;</span>codex
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Skip AI generation (0 tokens, basic description)<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Skip all prompts, use arguments/defaults<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-interactive<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Combine options<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh main <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"Feature update"<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--ai<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;</span>codex <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-interactive<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh main <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"Feature update"<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--no-interactive<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Update existing PR with fresh AI-generated description<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--update<span class="nt">&lt;/span&gt;</span>
+./create-pr.sh <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--update<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nt"</span><span class="nt">&gt;</span>--ai<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;</span>codex
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"example-output-comparison"</span><span class="nt">&gt;</span>Example Output Comparison<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Let’s say you have a PR with 10 files changed (3 added, 7 modified), 5 commits, updating a dependency and adding a new feature.<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"with-ai-mode-script--claude"</span><span class="nt">&gt;</span>With AI Mode (Script + Claude)<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Token usage: ~800 tokens<span class="nt">&lt;/strong&gt;</span> | <span class="nt">&lt;strong&gt;</span>Quality: Copilot-level<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-markdown highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>This pull request adds user authentication functionality and updates the Express dependency to v4.18.2. The changes introduce JWT-based authentication with secure password hashing, role-based access control, and comprehensive error handling. This provides a foundation for protected API endpoints and user session management.
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gs"</span><span class="nt">&gt;</span>**Authentication implementation:**<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+*<span class="nt">&lt;/span&gt;</span> Added JWT token generation and validation middleware in <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"sb"</span><span class="nt">&gt;</span>`middleware/auth.js`<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/span&gt;</span> Implemented bcrypt password hashing with salt rounds configured for security
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/span&gt;</span> Created user login and registration endpoints with input validation
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gs"</span><span class="nt">&gt;</span>**Security enhancements:**<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+*<span class="nt">&lt;/span&gt;</span> Added role-based access control (RBAC) supporting admin and user roles
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/span&gt;</span> Implemented rate limiting on authentication endpoints to prevent brute force attacks
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/span&gt;</span> Added secure cookie handling for refresh tokens with HTTP-only and secure flags
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gs"</span><span class="nt">&gt;</span>**Dependency updates:**<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+*<span class="nt">&lt;/span&gt;</span> Upgraded Express from v4.17.1 to v4.18.2 for security patches
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>*<span class="nt">&lt;/span&gt;</span> Added jsonwebtoken v9.0.0 and bcryptjs v2.4.3 for authentication
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gs"</span><span class="nt">&gt;</span>**Files Changed:**<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`package.json`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/package.json<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Modified<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/middleware/auth.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/middleware/auth.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Added<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/routes/auth.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/routes/auth.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Added<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/controllers/user.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/controllers/user.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Modified<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+...
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"without-ai-mode---no-ai"</span><span class="nt">&gt;</span>Without AI Mode (<span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/code&gt;</span>)<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Token usage: 0 tokens<span class="nt">&lt;/strong&gt;</span> | <span class="nt">&lt;strong&gt;</span>Quality: Basic but professional<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-markdown highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"gu"</span><span class="nt">&gt;</span>## Summary<span class="nt">&lt;/span&gt;</span>
+
+This pull request introduces changes from the <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"sb"</span><span class="nt">&gt;</span>`feature/auth`<span class="nt">&lt;/span&gt;</span> branch into <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"sb"</span><span class="nt">&gt;</span>`main`<span class="nt">&lt;/span&gt;</span>. The changes include 5 commit(s) affecting 3 added, 7 modified file(s).
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gu"</span><span class="nt">&gt;</span>## Changes<span class="nt">&lt;/span&gt;</span>
+
+10 files changed, 234 insertions(+), 89 deletions(-)
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gu"</span><span class="nt">&gt;</span>### Commits<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+-<span class="nt">&lt;/span&gt;</span> Add JWT authentication middleware (a1b2c3d)
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> Implement user login endpoint (e4f5g6h)
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> Add password hashing with bcrypt (i7j8k9l)
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> Update Express to v4.18.2 (m1n2o3p)
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> Add role-based access control (q4r5s6t)
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"gu"</span><span class="nt">&gt;</span>### Files Changed<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>
+-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`package.json`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/package.json<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Modified<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`package-lock.json`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/package-lock.json<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Modified<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/middleware/auth.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/middleware/auth.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Added<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/routes/auth.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/routes/auth.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Added<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/controllers/user.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/controllers/user.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Modified<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>-<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>[<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>`src/config/auth.js`<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>](<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>https://github.com/user/repo/blob/feature/auth/src/config/auth.js<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span> <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>(<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"sx"</span><span class="nt">&gt;</span>Added<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"p"</span><span class="nt">&gt;</span>)<span class="nt">&lt;/span&gt;</span>
+...
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"summary-of-differences"</span><span class="nt">&gt;</span>Summary of Differences<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>AI Mode advantages:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 12: Browser caching — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>nginx/browser-caching/README.md<span class="nt">&lt;/code&gt;</span> (cache headers and validation steps)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 13: Image optimization — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>nginx/image-optimization/README.md<span class="nt">&lt;/code&gt;</span> (modern formats and automation)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 14: Redirects — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>nginx/redirects/README.md<span class="nt">&lt;/code&gt;</span> (safe include placement and rules)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Explains WHY changes were made, not just WHAT<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Groups related changes with meaningful headings<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Extracts specific details (version numbers, security features)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Provides context for reviewers<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Looks like a senior developer wrote it<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-v-wordpress-utilities"</span><span class="nt">&gt;</span>Part V: WordPress Utilities<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>No-AI Mode advantages:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 15: Age verification — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wordpress-utilities/age-verification/README.md<span class="nt">&lt;/code&gt;</span> (flow overview and integration steps)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 16: Analytics — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wordpress-utilities/analytics/README.md<span class="nt">&lt;/code&gt;</span> (implementation options and detection)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 17: Speed optimization — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>wordpress-utilities/speed-optimization/README.md<span class="nt">&lt;/code&gt;</span> (TTFB checks and tooling)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Zero token cost<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Instant generation<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Still includes all file links and commit messages<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Good for simple PRs or when you’ll edit manually<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Professional structure, just less intelligent<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"part-vi-scripts-and-automation"</span><span class="nt">&gt;</span>Part VI: Scripts and Automation<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"how-it-works"</span><span class="nt">&gt;</span>How It Works<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;ol&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Branch Detection<span class="nt">&lt;/strong&gt;</span>: Automatically detects current branch and ensures it’s pushed to remote<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Change Analysis<span class="nt">&lt;/strong&gt;</span>: Collects commits, file changes, and diff statistics<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>Category Detection<span class="nt">&lt;/strong&gt;</span>: Identifies change types based on file patterns<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>AI Generation<span class="nt">&lt;/strong&gt;</span> (if enabled): Sends context to Claude API for intelligent summary<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;&lt;strong&gt;</span>PR Creation<span class="nt">&lt;/strong&gt;</span>: Uses <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>gh pr create<span class="nt">&lt;/code&gt;</span> to create the actual GitHub pull request<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ol&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"ai-description-generation"</span><span class="nt">&gt;</span>AI Description Generation<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>When an AI CLI is available (Claude or Codex), the script:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;ol&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Analyzes commit messages, changed files, and categories<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Sends a structured prompt to your chosen AI tool using your existing authentication<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Receives a professional description with:
+    <span class="nt">&lt;ul&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Concise introductory paragraph<span class="nt">&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Grouped sections with bold headings<span class="nt">&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Detailed bullet points<span class="nt">&lt;/li&gt;</span>
+      <span class="nt">&lt;li&gt;</span>Specific metrics and version numbers<span class="nt">&lt;/li&gt;</span>
+    <span class="nt">&lt;/ul&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ol&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>The AI is instructed to write like a senior developer - no emoticons, professional tone, focusing on what changed and why.<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"choosing-your-ai-backend"</span><span class="nt">&gt;</span>Choosing Your AI Backend<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>The script supports multiple AI backends:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Automatic Detection<span class="nt">&lt;/strong&gt;</span>: If you don’t specify <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--ai=<span class="nt">&lt;/code&gt;</span>, the script will:<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;ol&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Check for both Claude and Codex CLIs<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>If both are available, ask you to choose<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>If only one is available, use that automatically<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>If none are available, offer no-AI mode<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ol&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Manual Selection<span class="nt">&lt;/strong&gt;</span>: Use <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--ai=claude<span class="nt">&lt;/code&gt;</span> or <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--ai=codex<span class="nt">&lt;/code&gt;</span> to force a specific backend<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Interactive Selection<span class="nt">&lt;/strong&gt;</span>: When both are available and you’re in interactive mode:<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>Available AI tools: claude codex
+Choose AI tool [default: claude]: codex
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"environment-variables"</span><span class="nt">&gt;</span>Environment Variables<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>For advanced users, you can customize the CLI commands and arguments:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Use custom Claude command name<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>export <span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>CLAUDE_COMMAND<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"claude-custom"<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Use custom Codex command name<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>export <span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>CODEX_COMMAND<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"my-codex"<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Pass custom arguments to Claude CLI<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>export <span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>CLAUDE_CLI_ARGS<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"--model=opus --timeout=30"<span class="nt">&lt;/span&gt;</span>
+
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Pass custom arguments to Codex CLI<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"nb"</span><span class="nt">&gt;</span>export <span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"nv"</span><span class="nt">&gt;</span>CODEX_CLI_ARGS<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"o"</span><span class="nt">&gt;</span>=<span class="nt">&lt;/span&gt;&lt;span</span> <span class="na">class=</span><span class="s">"s2"</span><span class="nt">&gt;</span>"--verbose"<span class="nt">&lt;/span&gt;</span>
+
+./create-pr.sh
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Note<span class="nt">&lt;/strong&gt;</span>: If you’re using Claude Code in VS Code, the Claude CLI works automatically with no additional setup!<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"troubleshooting"</span><span class="nt">&gt;</span>Troubleshooting<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"no-ai-cli-found"</span><span class="nt">&gt;</span>“No AI CLI found”<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>The script checks for both <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>claude<span class="nt">&lt;/code&gt;</span> and <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>codex<span class="nt">&lt;/code&gt;</span> commands. If neither is found:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>For Claude CLI:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 18: Utility scripts overview — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/README.md<span class="nt">&lt;/code&gt;</span> (inventory and usage notes)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 19: Release and theme sync scripts — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/release-theme.sh<span class="nt">&lt;/code&gt;</span>, <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/rsync-theme.sh<span class="nt">&lt;/code&gt;</span> (deploy helpers and sync flows)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Chapter 20: PR helper script — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>scripts/create-pr.sh<span class="nt">&lt;/code&gt;</span> (generate consistent PR text)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>If you’re using Claude Code in VS Code, make sure the <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>claude<span class="nt">&lt;/code&gt;</span> command is in your PATH:
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;</span>which claude
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Should output: /Users/yourname/.volta/bin/claude<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</span>    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Restart your terminal after installing Claude Code<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Download Claude CLI from: https://claude.ai/download<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"appendices"</span><span class="nt">&gt;</span>Appendices<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>For Codex CLI:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix A: Troubleshooting index — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>troubleshooting/README.md<span class="nt">&lt;/code&gt;</span> (symptom-based entry points)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix B: Mail issues — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>troubleshooting/MAIL.md<span class="nt">&lt;/code&gt;</span> (SMTP and delivery failures)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix C: MariaDB issues — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>troubleshooting/MariaDB.md<span class="nt">&lt;/code&gt;</span> (DB outages and recovery)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix D: OOM issues — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>troubleshooting/OOM.md<span class="nt">&lt;/code&gt;</span> (memory exhaustion triage)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix E: PHP-FPM issues — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>troubleshooting/PHP-FPM.md<span class="nt">&lt;/code&gt;</span> (worker health and tuning)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Appendix F: License — <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>LICENSE.md<span class="nt">&lt;/code&gt;</span> (legal and reuse terms)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Install via npm: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>npm install -g @anthropic-ai/codex-cli<span class="nt">&lt;/code&gt;&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Or check your AI provider’s installation instructions<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
 
-<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"chapter-template"</span><span class="nt">&gt;</span>Chapter Template<span class="nt">&lt;/h2&gt;</span>
+<span class="nt">&lt;p&gt;&lt;strong&gt;</span>Workaround:<span class="nt">&lt;/strong&gt;&lt;/p&gt;</span>
 <span class="nt">&lt;ul&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Title and purpose<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Prerequisites<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Safety checklist<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Step-by-step workflow (with dry run first)<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Verification steps<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Cleanup / rollback<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>Troubleshooting notes<span class="nt">&lt;/li&gt;</span>
-  <span class="nt">&lt;li&gt;</span>References / related chapters<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Run with <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/code&gt;</span> flag to skip AI generation and use basic descriptions<span class="nt">&lt;/li&gt;</span>
 <span class="nt">&lt;/ul&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"ai-tool-codex-not-found"</span><span class="nt">&gt;</span>“AI tool ‘codex’ not found”<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>If you specified <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--ai=codex<span class="nt">&lt;/code&gt;</span> but don’t have it installed:<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Remove the <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--ai=codex<span class="nt">&lt;/code&gt;</span> flag to use Claude (if available)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Install Codex CLI<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Or use <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>--no-ai<span class="nt">&lt;/code&gt;</span> for basic descriptions<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"gh-is-not-installed"</span><span class="nt">&gt;</span>“gh is not installed”<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Install with: <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>brew install gh<span class="nt">&lt;/code&gt;</span> and authenticate with <span class="nt">&lt;code</span> <span class="na">class=</span><span class="s">"language-plaintext highlighter-rouge"</span><span class="nt">&gt;</span>gh auth login<span class="nt">&lt;/code&gt;&lt;/p&gt;</span>
+
+<span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">"pr-creation-fails"</span><span class="nt">&gt;</span>PR creation fails<span class="nt">&lt;/h3&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>Make sure:<span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;ul&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You’re on a feature branch (not main/master)<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>Your branch is pushed to remote<span class="nt">&lt;/li&gt;</span>
+  <span class="nt">&lt;li&gt;</span>You’re authenticated with GitHub CLI<span class="nt">&lt;/li&gt;</span>
+<span class="nt">&lt;/ul&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"comparison-with-github-copilot"</span><span class="nt">&gt;</span>Comparison with GitHub Copilot<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>This script provides similar functionality to GitHub Copilot’s PR descriptions:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;table&gt;</span>
+  <span class="nt">&lt;thead&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Feature<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>This Script<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>GitHub Copilot<span class="nt">&lt;/th&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+  <span class="nt">&lt;/thead&gt;</span>
+  <span class="nt">&lt;tbody&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>AI-powered summaries<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Grouped sections<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>File reference links<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Clickable file links<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Professional tone<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Works offline<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅ (with –no-ai)<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Free (with your own API key)<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;td&gt;</span>Customizable prompts<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>✅<span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;td&gt;</span>❌<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+  <span class="nt">&lt;/tbody&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"customization"</span><span class="nt">&gt;</span>Customization<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>You can modify the AI prompt in the script to match your team’s preferences:<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"language-bash highlighter-rouge"</span><span class="nt">&gt;&lt;div</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;pre</span> <span class="na">class=</span><span class="s">"highlight"</span><span class="nt">&gt;&lt;code&gt;&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Edit the prompt in generate_ai_description() function<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"c"</span><span class="nt">&gt;</span># Located around line 202 in the script<span class="nt">&lt;/span&gt;</span>
+<span class="nt">&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;</span>
+
+<span class="nt">&lt;h2</span> <span class="na">id=</span><span class="s">"license"</span><span class="nt">&gt;</span>License<span class="nt">&lt;/h2&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>MIT<span class="nt">&lt;/p&gt;</span>
+
+
+  
+
+  <span class="nt">&lt;nav</span> <span class="na">class=</span><span class="s">"chapter-nav"</span><span class="nt">&gt;</span>
+    
+    
+  <span class="nt">&lt;/nav&gt;</span>
+<span class="nt">&lt;/article&gt;</span>
 
 
   
@@ -1025,7 +1466,7 @@ wkhtmltopdf <span class="nt">--print-media-type</span> <span class="se">\</span>
 
 <p><strong>Phase 1: Core Reading Experience</strong> (2-3 hours)</p>
 <ol>
-  <li>Enhanced _config.yml</li>
+  <li>✅ Enhanced _config.yml (Completed 2026-01-15)</li>
   <li>Callout box styling</li>
   <li>Chapter navigation styling</li>
   <li>Print/PDF styles</li>

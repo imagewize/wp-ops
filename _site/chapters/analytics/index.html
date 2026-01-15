@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Analytics</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 16</span>
+    
+    
+  </div>
+
+  <h1>Analytics</h1>
+
+  
+
+  <h1 id="wordpress-analytics-tools-guide">WordPress Analytics Tools Guide</h1>
+
+<p>This guide covers the implementation and detection of popular analytics tools on WordPress sites, including Google Analytics and Matomo.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter compares common analytics setups and outlines the safest implementation paths.</p>
+
+<h2 id="overview">Overview</h2>
+
+<p>Analytics tools help track website performance, user behavior, and conversion metrics. The most common solutions for WordPress are:</p>
+
+<ul>
+  <li><strong>Google Analytics</strong> (via Google Site Kit plugin or manual implementation)</li>
+  <li><strong>Matomo</strong> (via official Matomo plugin or manual implementation)</li>
+</ul>
+
+<h2 id="google-analytics-implementation">Google Analytics Implementation</h2>
+
+<h3 id="method-1-google-site-kit-plugin">Method 1: Google Site Kit Plugin</h3>
+
+<p>The recommended approach for Google Analytics on WordPress is using the official Google Site Kit plugin.</p>
+
+<p><strong>Installation:</strong></p>
+<ol>
+  <li>Install the “Site Kit by Google” plugin from WordPress repository</li>
+  <li>Activate and connect to your Google account</li>
+  <li>Configure Google Analytics through the Site Kit dashboard</li>
+</ol>
+
+<p><strong>Features:</strong></p>
+<ul>
+  <li>Automatic tracking code implementation</li>
+  <li>Dashboard integration within WordPress admin</li>
+  <li>Multiple Google services integration (Analytics, Search Console, AdSense, etc.)</li>
+  <li>Automatic updates and maintenance</li>
+</ul>
+
+<h3 id="method-2-manual-implementation">Method 2: Manual Implementation</h3>
+
+<p>For advanced users who need custom tracking configurations:</p>
+
+<ol>
+  <li>Create a Google Analytics account and property</li>
+  <li>Get your Measurement ID (GA4) or Tracking ID (Universal Analytics)</li>
+  <li>Add tracking code to your theme’s header or use a plugin like “Insert Headers and Footers”</li>
+</ol>
+
+<h2 id="matomo-implementation">Matomo Implementation</h2>
+
+<h3 id="method-1-matomo-plugin">Method 1: Matomo Plugin</h3>
+
+<p>The official Matomo plugin provides easy integration:</p>
+
+<p><strong>Installation:</strong></p>
+<ol>
+  <li>Install “Matomo Analytics - Ethical Stats” plugin</li>
+  <li>Choose between Matomo Cloud or self-hosted installation</li>
+  <li>Configure tracking settings in the plugin dashboard</li>
+</ol>
+
+<p><strong>Features:</strong></p>
+<ul>
+  <li>Privacy-focused analytics (GDPR compliant by default)</li>
+  <li>Self-hosted option for complete data ownership</li>
+  <li>Real-time analytics</li>
+  <li>No data sampling</li>
+  <li>Integrated heatmaps and session recordings</li>
+</ul>
+
+<h3 id="method-2-manual-implementation-1">Method 2: Manual Implementation</h3>
+
+<p>For self-hosted Matomo installations:</p>
+
+<ol>
+  <li>Set up Matomo on your server</li>
+  <li>Get your site ID and tracking code</li>
+  <li>Add the JavaScript tracking code to your theme</li>
+</ol>
+
+<h2 id="detection-methods">Detection Methods</h2>
+
+<p>You can check if analytics tools are properly implemented on any WordPress site using curl commands.</p>
+
+<h3 id="detecting-google-site-kit">Detecting Google Site Kit</h3>
+
+<p>Check for Site Kit meta tags and configuration:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for Site Kit meta tags and setup</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'googlesitekit|gtagconfig'</span>
+
+<span class="c"># Expected output example:</span>
+<span class="c"># &lt;meta name="googlesitekit-setup" content="abc123-def4-567g-8hij-klmnopqrstuv" /&gt;</span>
+<span class="c"># &lt;meta name="generator" content="Site Kit by Google 1.150.0" /&gt;</span>
+</code></pre></div></div>
+
+<h3 id="detecting-google-analytics">Detecting Google Analytics</h3>
+
+<p>Check for Google Analytics tracking code implementation:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for Google Analytics tracking code</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'gtag\(|googletagmanager|analytics\.js|GA_MEASUREMENT_ID'</span>
+
+<span class="c"># Check for DNS prefetch (performance optimization)</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'dns-prefetch.*googletagmanager'</span>
+
+<span class="c"># Expected output example:</span>
+<span class="c"># &lt;link rel='dns-prefetch' href='//www.googletagmanager.com' /&gt;</span>
+</code></pre></div></div>
+
+<h3 id="detecting-google-tag-manager">Detecting Google Tag Manager</h3>
+
+<p>Check specifically for Google Tag Manager implementation:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for GTM container</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'googletagmanager\.com/gtm\.js\?id=GTM-'</span>
+
+<span class="c"># Expected output example:</span>
+<span class="c"># &lt;script src="https://www.googletagmanager.com/gtm.js?id=GTM-XXXXXXX"&gt;&lt;/script&gt;</span>
+</code></pre></div></div>
+
+<h3 id="detecting-matomo">Detecting Matomo</h3>
+
+<p>Check for Matomo tracking implementation:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for Matomo tracking code (self-hosted)</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'matomo\.js|piwik\.js|_paq\.push'</span>
+
+<span class="c"># Check for Matomo Cloud</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'cdn\.matomo\.cloud'</span>
+
+<span class="c"># Check for Matomo tracking pixel</span>
+curl <span class="nt">-sL</span> https://example.com | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'matomo\.php\?|piwik\.php\?'</span>
+
+<span class="c"># Expected output examples:</span>
+<span class="c"># &lt;script src="https://analytics.example.com/matomo.js"&gt;&lt;/script&gt;</span>
+<span class="c"># var _paq = window._paq = window._paq || [];</span>
+<span class="c"># &lt;script src="https://cdn.matomo.cloud/example.matomo.cloud/matomo.js"&gt;&lt;/script&gt;</span>
+</code></pre></div></div>
+
+<h2 id="complete-site-analysis-script">Complete Site Analysis Script</h2>
+
+<p>Here’s a comprehensive bash script to check for all analytics implementations:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+<span class="nv">DOMAIN</span><span class="o">=</span><span class="s2">"example.com"</span>
+
+<span class="nb">echo</span> <span class="s2">"=== Analytics Detection for </span><span class="nv">$DOMAIN</span><span class="s2"> ==="</span>
+<span class="nb">echo
+
+echo</span> <span class="s2">"1. Checking for Google Site Kit..."</span>
+curl <span class="nt">-sL</span> https://<span class="nv">$DOMAIN</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'googlesitekit|Site Kit by Google'</span> | <span class="nb">head</span> <span class="nt">-3</span>
+<span class="nb">echo
+
+echo</span> <span class="s2">"2. Checking for Google Analytics..."</span>
+curl <span class="nt">-sL</span> https://<span class="nv">$DOMAIN</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'gtag\(|googletagmanager|GA_MEASUREMENT_ID'</span> | <span class="nb">head</span> <span class="nt">-3</span>
+<span class="nb">echo
+
+echo</span> <span class="s2">"3. Checking for Google Tag Manager..."</span>
+curl <span class="nt">-sL</span> https://<span class="nv">$DOMAIN</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'googletagmanager\.com/gtm\.js\?id=GTM-'</span> | <span class="nb">head</span> <span class="nt">-3</span>
+<span class="nb">echo
+
+echo</span> <span class="s2">"4. Checking for Matomo..."</span>
+curl <span class="nt">-sL</span> https://<span class="nv">$DOMAIN</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'matomo\.js|piwik\.js|_paq\.push|cdn\.matomo\.cloud'</span> | <span class="nb">head</span> <span class="nt">-3</span>
+<span class="nb">echo
+
+echo</span> <span class="s2">"5. Checking for other analytics..."</span>
+curl <span class="nt">-sL</span> https://<span class="nv">$DOMAIN</span> | <span class="nb">grep</span> <span class="nt">-E</span> <span class="s1">'facebook\.net/.*fbevents|hotjar\.com|segment\.com'</span> | <span class="nb">head</span> <span class="nt">-3</span>
+</code></pre></div></div>
+
+<h2 id="best-practices">Best Practices</h2>
+
+<h3 id="privacy-compliance">Privacy Compliance</h3>
+<ul>
+  <li>Always implement cookie consent mechanisms</li>
+  <li>Consider privacy-focused alternatives like Matomo</li>
+  <li>Anonymize IP addresses where required</li>
+  <li>Provide clear privacy policies</li>
+</ul>
+
+<h3 id="performance-optimization">Performance Optimization</h3>
+<ul>
+  <li>Use DNS prefetching for external analytics scripts</li>
+  <li>Implement analytics tracking asynchronously</li>
+  <li>Consider server-side tracking for critical metrics</li>
+</ul>
+
+<h3 id="wordpress-specific">WordPress Specific</h3>
+<ul>
+  <li>Use plugins for easier management and updates</li>
+  <li>Test analytics implementation in staging environments</li>
+  <li>Monitor for plugin conflicts</li>
+  <li>Regular audits of tracking accuracy</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3 id="common-issues">Common Issues</h3>
+<ol>
+  <li><strong>Tracking code not firing</strong>: Check for JavaScript errors and plugin conflicts</li>
+  <li><strong>Duplicate tracking</strong>: Ensure only one implementation method is active</li>
+  <li><strong>Missing data</strong>: Verify tracking ID/Measurement ID configuration</li>
+  <li><strong>Plugin conflicts</strong>: Disable other analytics plugins when testing</li>
+</ol>
+
+<h3 id="debugging-tools">Debugging Tools</h3>
+<ul>
+  <li>Google Analytics Debugger (Chrome extension)</li>
+  <li>Google Tag Assistant</li>
+  <li>Browser developer tools (Network tab)</li>
+  <li>WordPress debug logs</li>
+</ul>
+
+<h2 id="recommended-plugins">Recommended Plugins</h2>
+
+<h3 id="google-analytics">Google Analytics</h3>
+<ul>
+  <li><strong>Site Kit by Google</strong> (Official Google plugin)</li>
+  <li><strong>MonsterInsights</strong> (Popular third-party option)</li>
+  <li><strong>GA Google Analytics</strong> (Lightweight option)</li>
+</ul>
+
+<h3 id="matomo">Matomo</h3>
+<ul>
+  <li><strong>Matomo Analytics</strong> (Official Matomo plugin)</li>
+  <li><strong>WP-Matomo</strong> (Alternative implementation)</li>
+</ul>
+
+<h2 id="security-considerations">Security Considerations</h2>
+
+<ul>
+  <li>Keep analytics plugins updated</li>
+  <li>Use HTTPS for all tracking requests</li>
+  <li>Implement Content Security Policy headers</li>
+  <li>Regular security audits of third-party scripts</li>
+  <li>Consider self-hosted solutions for sensitive data</li>
+</ul>
+
+<hr />
+
+<p><em>Last updated: [Current Date]</em>
+<em>For more WordPress tools and utilities, check the other directories in this repository.</em></p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

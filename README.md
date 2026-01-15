@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Operating Principles and Safety Basics"
+chapter_number: 1
+permalink: /chapters/operating-principles/
+---
+
 <div align="center">
   <img src="assets/logo.svg" alt="WordPress Operations Logo" width="128" height="128">
     <h1>WP OPS</h1> 

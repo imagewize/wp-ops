@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Scripts and Automation"
+chapter_number: 18
+permalink: /chapters/scripts-automation/
+---
+
 # Automation Scripts
 
 Production-ready Bash and PHP scripts for WordPress operations, GitHub integration, server monitoring, and backup automation.

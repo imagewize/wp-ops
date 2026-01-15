@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Redirects"
+chapter_number: 14
+permalink: /chapters/redirects/
+---
+
 # Nginx Redirect Configuration
 
 Trellis nginx-includes templates for managing SEO redirects and URL rewrites.

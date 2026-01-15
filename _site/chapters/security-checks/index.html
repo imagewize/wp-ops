@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Security Checks</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS - WordPress Operations Handbook</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/chapters/operating-principles/">Foundations</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <article class="chapter">
+  <div class="chapter-meta">
+    
+      <span class="chapter-number">Chapter 11</span>
+    
+    
+  </div>
+
+  <h1>Security Checks</h1>
+
+  
+
+  <h1 id="wordpress-security-scanners">WordPress Security Scanners</h1>
+
+<p>Comprehensive dual-scanner security suite for WordPress malware detection and security auditing.</p>
+
+<h2 id="chapter-purpose">Chapter Purpose</h2>
+
+<p>This chapter introduces the scanner tools and when to run them as part of incident response or routine audits.</p>
+
+<p>Part of the <a href="https://github.com/imagewize/wp-ops">wp-ops</a> toolkit for WordPress operations and server management.</p>
+
+<hr />
+
+<h2 id="️-requirements--installation">⚙️ Requirements &amp; Installation</h2>
+
+<h3 id="check-if-wp-cli-is-available">Check if WP-CLI is Available</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Test if WP-CLI is installed</span>
+wp <span class="nt">--version</span>
+
+<span class="c"># If you see version output, WP-CLI is available ✓</span>
+<span class="c"># If "command not found", see installation below</span>
+</code></pre></div></div>
+
+<h3 id="installing-wp-cli">Installing WP-CLI</h3>
+
+<h4 id="vpsdedicated-server-with-ssh-root-access">VPS/Dedicated Server (with SSH root access)</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Download WP-CLI</span>
+curl <span class="nt">-O</span> https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+
+<span class="c"># Make executable</span>
+<span class="nb">chmod</span> +x wp-cli.phar
+
+<span class="c"># Move to system PATH</span>
+<span class="nb">sudo mv </span>wp-cli.phar /usr/local/bin/wp
+
+<span class="c"># Verify installation</span>
+wp <span class="nt">--version</span>
+</code></pre></div></div>
+
+<h4 id="shared-hosting-ssh-access-no-root">Shared Hosting (SSH access, no root)</h4>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Download to home directory</span>
+<span class="nb">cd</span> ~
+curl <span class="nt">-O</span> https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+<span class="nb">chmod</span> +x wp-cli.phar
+
+<span class="c"># Create alias in ~/.bashrc or ~/.bash_profile</span>
+<span class="nb">echo</span> <span class="s2">"alias wp='php ~/wp-cli.phar'"</span> <span class="o">&gt;&gt;</span> ~/.bashrc
+<span class="nb">source</span> ~/.bashrc
+
+<span class="c"># Verify</span>
+wp <span class="nt">--version</span>
+</code></pre></div></div>
+
+<h4 id="trellisbedrock-projects">Trellis/Bedrock Projects</h4>
+
+<p>WP-CLI is pre-installed ✓</p>
+
+<h3 id="execution-methods-by-hosting-type">Execution Methods by Hosting Type</h3>
+
+<p>Choose the method that matches your hosting environment:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Hosting Type</th>
+      <th>WP-CLI</th>
+      <th>Direct PHP</th>
+      <th>Browser</th>
+      <th>Recommended Method</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>VPS/Dedicated</strong></td>
+      <td>✅ Yes</td>
+      <td>✅ Yes</td>
+      <td>⚠️ Not recommended</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file</code></td>
+    </tr>
+    <tr>
+      <td><strong>Shared (SSH)</strong></td>
+      <td>Install it</td>
+      <td>✅ Yes</td>
+      <td>⚠️ Not recommended</td>
+      <td>Install WP-CLI or use <code class="language-plaintext highlighter-rouge">php</code></td>
+    </tr>
+    <tr>
+      <td><strong>Shared (no SSH)</strong></td>
+      <td>❌ No</td>
+      <td>❌ No</td>
+      <td>⚠️ Last resort</td>
+      <td>See <a href="#browser-access-last-resort">Browser Access</a></td>
+    </tr>
+    <tr>
+      <td><strong>Trellis/Bedrock</strong></td>
+      <td>✅ Pre-installed</td>
+      <td>✅ Yes</td>
+      <td>⚠️ Not recommended</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file</code></td>
+    </tr>
+    <tr>
+      <td><strong>cPanel/Plesk</strong></td>
+      <td>Maybe</td>
+      <td>✅ Via Terminal</td>
+      <td>⚠️ Not recommended</td>
+      <td>See <a href="#cpanelplesk-terminal">cPanel/Plesk</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="cpanelplesk-terminal">cPanel/Plesk Terminal</h3>
+
+<p>Some shared hosts provide browser-based terminals:</p>
+
+<p><strong>cPanel:</strong></p>
+<ol>
+  <li>Login → Advanced → Terminal</li>
+  <li>Navigate to WordPress: <code class="language-plaintext highlighter-rouge">cd public_html</code> (or your WordPress directory)</li>
+  <li>Run scanner:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>php scanner-targeted.php
+<span class="c"># Or with full path:</span>
+php /home/username/public_html/wp-cli/security/scanner-targeted.php
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p><strong>Plesk:</strong></p>
+<ol>
+  <li>Login → File Manager → Open in Terminal (or Tools &amp; Settings → Scheduled Tasks → Terminal)</li>
+  <li>Navigate to WordPress directory</li>
+  <li>Run scanner:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>php scanner-targeted.php
+<span class="c"># Or use version-specific PHP binary:</span>
+/opt/plesk/php/8.2/bin/php scanner-targeted.php
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="browser-access-last-resort">Browser Access (Last Resort)</h3>
+
+<p>⚠️ <strong>SECURITY WARNING</strong>: Only use this method if you have NO other option!</p>
+
+<p><strong>Setup:</strong></p>
+
+<ol>
+  <li><strong>Upload scanner files</strong> to WordPress root via FTP or File Manager</li>
+  <li><strong>Add IP whitelist</strong> - Edit the scanner file (e.g., <code class="language-plaintext highlighter-rouge">scanner-targeted.php</code>) around line 15:</li>
+</ol>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Find and update this section:</span>
+<span class="nv">$allowed_ips</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">'127.0.0.1'</span><span class="p">,</span>
+    <span class="s1">'YOUR.IP.ADDRESS.HERE'</span><span class="p">,</span>  <span class="c1">// ← Add your public IP address</span>
+<span class="p">];</span>
+</code></pre></div></div>
+
+<ol>
+  <li><strong>Find your IP address</strong>: Visit https://whatismyipaddress.com/</li>
+  <li><strong>Access via browser</strong>:
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://yoursite.com/scanner-targeted.php
+</code></pre></div>    </div>
+  </li>
+  <li><strong>CRITICAL - Delete immediately after use</strong>:
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Via FTP/File Manager, delete:</span>
+scanner-targeted.php
+scanner-general.php
+scanner-wrapper.php
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p><strong>Why browser access is dangerous:</strong></p>
+<ul>
+  <li>❌ Exposes security scanner to the public internet</li>
+  <li>❌ Could leak file structure and configuration details</li>
+  <li>❌ Scanner file itself could be exploited by attackers</li>
+  <li>❌ Often flagged/blocked by security plugins and WAFs</li>
+  <li>❌ May be logged by server access logs</li>
+</ul>
+
+<p><strong>Safer alternative for restricted hosting:</strong></p>
+
+<p>Download your WordPress files via FTP and scan them locally on your computer:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># On your local machine (after downloading WordPress via FTP)</span>
+php scanner-targeted.php /path/to/downloaded-wordpress
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-quick-start">🎯 Quick Start</h2>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># From WordPress root directory</span>
+
+<span class="c"># Run both scanners (recommended first scan)</span>
+wp eval-file wp-cli/security/scanner-wrapper.php
+
+<span class="c"># Or run individually</span>
+wp eval-file wp-cli/security/scanner-targeted.php  <span class="c"># Quick check (1-2s)</span>
+wp eval-file wp-cli/security/scanner-general.php   <span class="c"># Deep scan (2-3s)</span>
+</code></pre></div></div>
+
+<h3 id="direct-php-usage">Direct PHP Usage</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># If WP-CLI is not available</span>
+php wp-cli/security/scanner-wrapper.php
+php wp-cli/security/scanner-targeted.php
+php wp-cli/security/scanner-general.php
+
+<span class="c"># Scan specific directory</span>
+php wp-cli/security/scanner-targeted.php /path/to/wordpress
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-whats-included">📁 What’s Included</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wp-cli/security/
+├── scanner-wrapper.php        # Wrapper (runs both scanners)
+├── scanner-targeted.php       # Site-specific threat detection
+├── scanner-general.php        # Broad malware detection
+├── SECURITY-GUIDE.md          # Complete documentation
+├── SCANNER-SUMMARY.md         # Quick reference guide
+└── README.md                  # This file
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-two-scanner-strategy">🔍 Two-Scanner Strategy</h2>
+
+<h3 id="targeted-scanner-site-specific">Targeted Scanner (Site-Specific)</h3>
+<p><strong>Purpose:</strong> Fast detection of common WordPress vulnerabilities
+<strong>Speed:</strong> ~1.7 seconds for 6,600 files</p>
+
+<p><strong>Detects:</strong></p>
+<ul>
+  <li>Facebook redirect attempts</li>
+  <li>File disclosure vulnerabilities</li>
+  <li>WordPress-specific exploits (unauthenticated AJAX)</li>
+  <li>SQL injection patterns</li>
+  <li>PHP malware (eval, base64_decode)</li>
+  <li>Code obfuscation</li>
+</ul>
+
+<p><strong>Use:</strong> Weekly monitoring, post-deployment checks</p>
+
+<h3 id="general-scanner-broad-detection">General Scanner (Broad Detection)</h3>
+<p><strong>Purpose:</strong> Comprehensive malware detection
+<strong>Speed:</strong> ~2.5 seconds for 7,400 files</p>
+
+<p><strong>Detects:</strong></p>
+<ul>
+  <li>Known malware filenames (c99.php, r57.php, shell.php, etc.)</li>
+  <li>Pharmaceutical spam injection</li>
+  <li>SEO spam and hidden iframes</li>
+  <li>Webshell signatures (FilesMan, WSO, etc.)</li>
+  <li>Multiple encoding layers</li>
+  <li>Backdoor functions</li>
+  <li>Long suspicious base64/hex strings</li>
+</ul>
+
+<p><strong>Use:</strong> Monthly deep scans, after suspected compromise</p>
+
+<hr />
+
+<h2 id="-usage-examples">🚀 Usage Examples</h2>
+
+<h3 id="local-development-bedrock">Local Development (Bedrock)</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># From Bedrock site directory</span>
+wp eval-file wp-ops/wp-cli/security/scanner-targeted.php
+</code></pre></div></div>
+
+<h3 id="remote-via-trellis">Remote via Trellis</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># SSH into remote server</span>
+trellis ssh production
+
+<span class="c"># Navigate to WordPress root</span>
+<span class="nb">cd</span> /srv/www/example.com/current
+
+<span class="c"># Run scanner (if wp-ops is deployed to server)</span>
+wp eval-file /path/to/wp-ops/wp-cli/security/scanner-targeted.php
+
+<span class="c"># Or copy scanner to server temporarily</span>
+scp wp-cli/security/scanner-targeted.php web@example.com:/tmp/
+trellis ssh production <span class="nt">--</span> <span class="s2">"cd /srv/www/example.com/current &amp;&amp; wp eval-file /tmp/scanner-targeted.php"</span>
+</code></pre></div></div>
+
+<h3 id="scan-multiple-sites">Scan Multiple Sites</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+<span class="c"># weekly-scan.sh</span>
+
+<span class="nv">sites</span><span class="o">=(</span>
+    <span class="s2">"/var/www/site1.com"</span>
+    <span class="s2">"/var/www/site2.com"</span>
+    <span class="s2">"/var/www/site3.com"</span>
+<span class="o">)</span>
+
+<span class="k">for </span>site <span class="k">in</span> <span class="s2">"</span><span class="k">${</span><span class="nv">sites</span><span class="p">[@]</span><span class="k">}</span><span class="s2">"</span><span class="p">;</span> <span class="k">do
+    </span><span class="nb">echo</span> <span class="s2">"Scanning </span><span class="nv">$site</span><span class="s2">..."</span>
+    wp eval-file wp-cli/security/scanner-targeted.php <span class="nt">--path</span><span class="o">=</span><span class="s2">"</span><span class="nv">$site</span><span class="s2">"</span>
+<span class="k">done</span>
+</code></pre></div></div>
+
+<h3 id="recommended-schedule">Recommended Schedule</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Frequency</th>
+      <th>Scanner</th>
+      <th>Command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Weekly</strong></td>
+      <td>Targeted</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file wp-cli/security/scanner-targeted.php</code></td>
+    </tr>
+    <tr>
+      <td><strong>Monthly</strong></td>
+      <td>General</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file wp-cli/security/scanner-general.php</code></td>
+    </tr>
+    <tr>
+      <td><strong>After Deployment</strong></td>
+      <td>Targeted</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file wp-cli/security/scanner-targeted.php</code></td>
+    </tr>
+    <tr>
+      <td><strong>After Incident</strong></td>
+      <td>Both</td>
+      <td><code class="language-plaintext highlighter-rouge">wp eval-file wp-cli/security/scanner-wrapper.php</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="-sample-output">📊 Sample Output</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>============================================
+  SECURITY SCAN COMPLETE
+============================================
+
+SCAN SUMMARY:
+  Directories scanned: 1,828
+  Files scanned: 6,638
+  Files with matches: 79
+  Total matches: 86
+  Errors: 0
+  Scan time: 1.69 seconds
+
+✓ No suspicious patterns detected!
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-integration-with-wp-ops-workflows">🔗 Integration with wp-ops Workflows</h2>
+
+<h3 id="pre-deployment-security-check">Pre-Deployment Security Check</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Before pushing database to staging</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+ansible-playbook trellis/backup/database-push.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>staging
+</code></pre></div></div>
+
+<h3 id="post-deployment-verification">Post-Deployment Verification</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># After production deployment</span>
+ansible-playbook deploy.yml <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># SSH in and scan</span>
+trellis ssh production <span class="nt">--</span> <span class="s2">"cd /srv/www/example.com/current &amp;&amp; </span><span class="se">\</span><span class="s2">
+  wp eval-file /path/to/scanner-targeted.php"</span>
+</code></pre></div></div>
+
+<h3 id="incident-response-workflow">Incident Response Workflow</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># 1. Scan for malware</span>
+wp eval-file wp-cli/security/scanner-general.php
+
+<span class="c"># 2. Backup before cleanup (see trellis/backup/)</span>
+ansible-playbook trellis/backup/database-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+ansible-playbook trellis/backup/files-backup.yml <span class="nt">-e</span> <span class="nv">site</span><span class="o">=</span>example.com <span class="nt">-e</span> <span class="nb">env</span><span class="o">=</span>production
+
+<span class="c"># 3. Clean malware (manual remediation)</span>
+
+<span class="c"># 4. Verify clean</span>
+wp eval-file wp-cli/security/scanner-targeted.php
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="️-security-notes">⚠️ Security Notes</h2>
+
+<p><strong>IMPORTANT:</strong></p>
+<ol>
+  <li><strong>Never commit scanner results</strong> to version control</li>
+  <li><strong>Delete scanner files from production</strong> after use (if copied temporarily)</li>
+  <li><strong>Use WP-CLI method</strong> (recommended) instead of browser access</li>
+  <li><strong>Review output carefully</strong> - not all matches are threats (see false positives)</li>
+</ol>
+
+<h3 id="browser-access-not-recommended">Browser Access (Not Recommended)</h3>
+
+<p>If you must access via browser:</p>
+
+<ol>
+  <li>Edit scanner file and add your IP:
+    <div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$allowed_ips</span> <span class="o">=</span> <span class="p">[</span>
+ <span class="s1">'127.0.0.1'</span><span class="p">,</span>
+ <span class="s1">'YOUR.IP.ADDRESS.HERE'</span><span class="p">,</span> <span class="c1">// Add your IP</span>
+<span class="p">];</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Navigate to:
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>https://yoursite.com/wp-cli/security/scanner-wrapper.php
+</code></pre></div>    </div>
+  </li>
+  <li><strong>DELETE immediately after use!</strong></li>
+</ol>
+
+<hr />
+
+<h2 id="-understanding-results">🎓 Understanding Results</h2>
+
+<h3 id="severity-levels">Severity Levels</h3>
+
+<ul>
+  <li><strong>CRITICAL</strong> - Investigate immediately (malware signatures, backdoors)</li>
+  <li><strong>HIGH</strong> - Review within 24 hours (suspicious redirects, file operations)</li>
+  <li><strong>MEDIUM</strong> - Review as time permits (WordPress exploits, obfuscation)</li>
+</ul>
+
+<h3 id="common-false-positives">Common False Positives</h3>
+
+<p><strong>These are SAFE and can be ignored:</strong></p>
+
+<p>✅ <code class="language-plaintext highlighter-rouge">xmlrpc.php</code> - Legitimate WordPress XML-RPC
+✅ <code class="language-plaintext highlighter-rouge">wp-includes/rest-api/*</code> - Legitimate REST API
+✅ LiteSpeed Cache files - Legitimate optimization
+✅ ACF Pro AJAX - Legitimate frontend functionality
+✅ Gravity Forms - Legitimate form handling
+✅ SimplePie/MySQL.php - Legitimate library</p>
+
+<p><strong>See <a href="/wp-cli/security/SCANNER-SUMMARY.md">SCANNER-SUMMARY.md</a> for complete false positive list</strong></p>
+
+<h3 id="real-threats-examples">Real Threats (Examples)</h3>
+
+<p><strong>Investigate these immediately:</strong></p>
+
+<p>❌ <code class="language-plaintext highlighter-rouge">c99.php</code>, <code class="language-plaintext highlighter-rouge">r57.php</code>, <code class="language-plaintext highlighter-rouge">shell.php</code> in uploads
+❌ <code class="language-plaintext highlighter-rouge">eval(base64_decode(...))</code> in theme files
+❌ <code class="language-plaintext highlighter-rouge">system($_GET['cmd'])</code> anywhere
+❌ Files modified in last 24 hours with suspicious names
+❌ New PHP files in <code class="language-plaintext highlighter-rouge">/wp-content/uploads/</code></p>
+
+<hr />
+
+<h2 id="️-advanced-usage">🛠️ Advanced Usage</h2>
+
+<h3 id="automated-cron-job">Automated Cron Job</h3>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Add to crontab: crontab -e</span>
+<span class="c"># Weekly scan every Monday at 3am</span>
+0 3 <span class="k">*</span> <span class="k">*</span> 1 /usr/bin/wp eval-file /path/to/wp-ops/wp-cli/security/scanner-targeted.php <span class="nt">--path</span><span class="o">=</span>/var/www/wordpress <span class="o">&gt;</span> /var/log/wp-scan.log 2&gt;&amp;1
+</code></pre></div></div>
+
+<h3 id="customization">Customization</h3>
+
+<h4 id="add-custom-patterns">Add Custom Patterns</h4>
+
+<p>Edit the scanner file and add your patterns:</p>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// In scanner-targeted.php or scanner-general.php</span>
+<span class="nv">$patterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1">// ... existing patterns ...</span>
+
+    <span class="s1">'custom_threat'</span> <span class="o">=&gt;</span> <span class="p">[</span>
+        <span class="s1">'name'</span> <span class="o">=&gt;</span> <span class="s1">'My Custom Threat'</span><span class="p">,</span>
+        <span class="s1">'description'</span> <span class="o">=&gt;</span> <span class="s1">'Description of what this detects'</span><span class="p">,</span>
+        <span class="s1">'patterns'</span> <span class="o">=&gt;</span> <span class="p">[</span>
+            <span class="s1">'/your-regex-pattern-here/i'</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s1">'severity'</span> <span class="o">=&gt;</span> <span class="s1">'CRITICAL'</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">];</span>
+</code></pre></div></div>
+
+<h4 id="exclude-directories">Exclude Directories</h4>
+
+<div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$config</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">'exclude_dirs'</span> <span class="o">=&gt;</span> <span class="p">[</span>
+        <span class="s1">'node_modules'</span><span class="p">,</span>
+        <span class="s1">'.git'</span><span class="p">,</span>
+        <span class="s1">'vendor'</span><span class="p">,</span>
+        <span class="s1">'your-custom-dir'</span><span class="p">,</span>  <span class="c1">// Add your exclusions</span>
+    <span class="p">],</span>
+<span class="p">];</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-troubleshooting">🐛 Troubleshooting</h2>
+
+<h3 id="wp-command-not-found">“wp: command not found”</h3>
+
+<p><strong>Cause:</strong> WP-CLI is not installed or not in your system PATH</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Option 1: Install WP-CLI (see Requirements &amp; Installation section)</span>
+curl <span class="nt">-O</span> https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+<span class="nb">chmod</span> +x wp-cli.phar
+<span class="nb">sudo mv </span>wp-cli.phar /usr/local/bin/wp
+
+<span class="c"># Option 2: Use full path to wp-cli.phar</span>
+php ~/wp-cli.phar eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Option 3: Use direct PHP method instead</span>
+php wp-cli/security/scanner-targeted.php
+</code></pre></div></div>
+
+<h3 id="php-command-not-found-shared-hosting">“PHP: command not found” (Shared Hosting)</h3>
+
+<p><strong>Cause:</strong> PHP is not in your PATH or has a different binary name</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Try alternative PHP binary names</span>
+/usr/bin/php scanner-targeted.php
+/usr/local/bin/php scanner-targeted.php
+php-cli scanner-targeted.php
+php8.2 scanner-targeted.php  <span class="c"># Version-specific (common on cPanel)</span>
+
+<span class="c"># Find PHP location</span>
+which php
+whereis php
+find /usr <span class="nt">-name</span> <span class="s2">"php*"</span> <span class="nt">-type</span> f 2&gt;/dev/null | <span class="nb">grep </span>bin
+</code></pre></div></div>
+
+<h3 id="cpanelplesk-php-version-issues">cPanel/Plesk PHP Version Issues</h3>
+
+<p><strong>cPanel - Select PHP version:</strong></p>
+
+<ol>
+  <li>MultiPHP Manager → Select desired PHP version for domain</li>
+  <li>Or use version-specific binary:
+```bash
+    <h1 id="check-available-php-versions">Check available PHP versions</h1>
+    <p>ls /opt/cpanel/ea-php*/root/usr/bin/php</p>
+  </li>
+</ol>
+
+<h1 id="use-specific-version">Use specific version</h1>
+<p>/opt/cpanel/ea-php82/root/usr/bin/php scanner-targeted.php</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+**Plesk - Use specific PHP version:**
+
+```bash
+# List available PHP versions
+ls /opt/plesk/php/
+
+# Use specific version
+/opt/plesk/php/8.2/bin/php scanner-targeted.php
+</code></pre></div></div>
+
+<h3 id="file-upload-restrictions">File Upload Restrictions</h3>
+
+<p><strong>Problem:</strong> Cannot upload <code class="language-plaintext highlighter-rouge">.php</code> files via File Manager (security restriction)</p>
+
+<p><strong>Workaround:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Method 1: Upload as .txt, then rename</span>
+1. Upload as: scanner-targeted.txt
+2. Rename via File Manager to: scanner-targeted.php
+
+<span class="c"># Method 2: Use FTP instead (usually less restricted than web-based File Manager)</span>
+<span class="c"># FTP clients like FileZilla typically allow .php uploads</span>
+
+<span class="c"># Method 3: Upload via SSH/SCP (if available)</span>
+scp scanner-targeted.php user@yoursite.com:~/public_html/
+</code></pre></div></div>
+
+<h3 id="scanner-reports-no-files-found">Scanner Reports No Files Found</h3>
+
+<p><strong>Cause:</strong> Incorrect path or scanner not in WordPress root</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Method 1: Specify full WordPress path</span>
+php scanner-targeted.php /full/path/to/wordpress
+
+<span class="c"># Method 2: Navigate to WordPress root first</span>
+<span class="nb">cd</span> /var/www/html  <span class="c"># or your WordPress directory</span>
+php /path/to/scanner-targeted.php
+
+<span class="c"># Method 3: Use pwd to verify current directory</span>
+<span class="nb">pwd</span>  <span class="c"># Should show WordPress root with wp-config.php</span>
+<span class="nb">ls</span> <span class="nt">-la</span> wp-config.php  <span class="c"># Verify you're in the right place</span>
+</code></pre></div></div>
+
+<h3 id="timeout-errors">Timeout Errors</h3>
+
+<p><strong>Problem:</strong> Scanner times out on large WordPress installations</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Increase PHP timeout</span>
+php <span class="nt">-d</span> <span class="nv">max_execution_time</span><span class="o">=</span>600 wp-cli/security/scanner-wrapper.php
+
+<span class="c"># Or edit scanner file directly (add at top after &lt;?php):</span>
+ini_set<span class="o">(</span><span class="s1">'max_execution_time'</span>, 600<span class="o">)</span><span class="p">;</span>
+
+<span class="c"># For WP-CLI</span>
+wp eval-file scanner-targeted.php <span class="nt">--path</span><span class="o">=</span>/var/www/html <span class="nt">--skip-plugins</span> <span class="nt">--skip-themes</span>
+</code></pre></div></div>
+
+<h3 id="memory-errors">Memory Errors</h3>
+
+<p><strong>Problem:</strong> PHP runs out of memory</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Increase memory limit</span>
+php <span class="nt">-d</span> <span class="nv">memory_limit</span><span class="o">=</span>512M wp-cli/security/scanner-wrapper.php
+
+<span class="c"># Or edit scanner file directly (add at top after &lt;?php):</span>
+ini_set<span class="o">(</span><span class="s1">'memory_limit'</span>, <span class="s1">'512M'</span><span class="o">)</span><span class="p">;</span>
+
+<span class="c"># Check current memory limit</span>
+php <span class="nt">-i</span> | <span class="nb">grep </span>memory_limit
+</code></pre></div></div>
+
+<h3 id="permission-errors">Permission Errors</h3>
+
+<p><strong>Problem:</strong> Cannot read files or directories</p>
+
+<p><strong>Solutions:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Method 1: Run as web server user</span>
+<span class="nb">sudo</span> <span class="nt">-u</span> www-data wp eval-file wp-cli/security/scanner-targeted.php
+
+<span class="c"># Method 2: Fix file permissions (carefully!)</span>
+<span class="c"># For development only - DO NOT run on production without understanding implications</span>
+<span class="nb">sudo chown</span> <span class="nt">-R</span> www-data:www-data /var/www/html
+<span class="nb">sudo </span>find /var/www/html <span class="nt">-type</span> d <span class="nt">-exec</span> <span class="nb">chmod </span>755 <span class="o">{}</span> <span class="se">\;</span>
+<span class="nb">sudo </span>find /var/www/html <span class="nt">-type</span> f <span class="nt">-exec</span> <span class="nb">chmod </span>644 <span class="o">{}</span> <span class="se">\;</span>
+
+<span class="c"># Method 3: Run scanner from a directory you own</span>
+<span class="nb">cp </span>scanner-targeted.php ~/scanner-targeted.php
+php ~/scanner-targeted.php /var/www/html
+</code></pre></div></div>
+
+<h3 id="browser-access-returns-blank-page">Browser Access Returns Blank Page</h3>
+
+<p><strong>Cause:</strong> Usually PHP errors being suppressed</p>
+
+<p><strong>Solutions:</strong></p>
+
+<ol>
+  <li><strong>Check server error logs:</strong>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Common log locations</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /var/log/apache2/error.log  <span class="c"># Apache</span>
+<span class="nb">tail</span> <span class="nt">-f</span> /var/log/nginx/error.log    <span class="c"># Nginx</span>
+<span class="nb">tail</span> <span class="nt">-f</span> ~/logs/error_log             <span class="c"># cPanel</span>
+</code></pre></div>    </div>
+  </li>
+  <li><strong>Enable PHP error display</strong> (temporarily, for debugging):
+    <div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Add to top of scanner file (after <span class="cp">&lt;?php</span><span class="p">)</span>
+<span class="nb">error_reporting</span><span class="p">(</span><span class="kc">E_ALL</span><span class="p">);</span>
+<span class="nb">ini_set</span><span class="p">(</span><span class="s1">'display_errors'</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><strong>Check if your IP is whitelisted</strong> (see Browser Access section)</p>
+  </li>
+  <li><strong>Verify PHP file execution is allowed</strong> in that directory</li>
+</ol>
+
+<h3 id="headers-already-sent-error">“Headers already sent” Error</h3>
+
+<p><strong>Cause:</strong> Output or whitespace before PHP opening tag</p>
+
+<p><strong>Solution:</strong></p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># Check for whitespace/BOM at start of scanner file</span>
+hexdump <span class="nt">-C</span> scanner-targeted.php | <span class="nb">head</span> <span class="nt">-n</span> 2
+
+<span class="c"># Should start with: 3c 3f 70 68 70  (which is "&lt;?php")</span>
+<span class="c"># If you see: ef bb bf before 3c 3f, that's a UTF-8 BOM - remove it</span>
+
+<span class="c"># Fix with text editor that can save as UTF-8 without BOM</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="-related-documentation">📚 Related Documentation</h2>
+
+<ul>
+  <li><strong><a href="/wp-cli/security/SECURITY-GUIDE.md">SECURITY-GUIDE.md</a></strong> - Complete usage guide with examples</li>
+  <li><strong><a href="/wp-cli/security/SCANNER-SUMMARY.md">SCANNER-SUMMARY.md</a></strong> - Quick reference for busy developers</li>
+  <li><strong><a href="../diagnostics/">wp-cli/diagnostics/</a></strong> - WordPress diagnostic tools</li>
+  <li><strong><a href="../../troubleshooting/">troubleshooting/</a></strong> - Server and WordPress troubleshooting guides</li>
+  <li><strong><a href="../../trellis/backup/">trellis/backup/</a></strong> - Backup operations before security cleanup</li>
+</ul>
+
+<hr />
+
+<h2 id="-performance">📈 Performance</h2>
+
+<h3 id="benchmark-results">Benchmark Results</h3>
+
+<p>Tested on MacBook Pro M1, PHP 8.2:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Scanner</th>
+      <th>Files</th>
+      <th>Time</th>
+      <th>Speed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Targeted</td>
+      <td>6,638</td>
+      <td>1.7s</td>
+      <td>3,905 files/sec</td>
+    </tr>
+    <tr>
+      <td>General</td>
+      <td>7,380</td>
+      <td>2.5s</td>
+      <td>2,952 files/sec</td>
+    </tr>
+    <tr>
+      <td>Both</td>
+      <td>7,380</td>
+      <td>4.2s</td>
+      <td>1,757 files/sec</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="optimization-tips">Optimization Tips</h3>
+
+<ol>
+  <li>Exclude large directories (<code class="language-plaintext highlighter-rouge">node_modules</code>, <code class="language-plaintext highlighter-rouge">vendor</code>)</li>
+  <li>Run during off-peak hours for production</li>
+  <li>Use targeted scanner for frequent checks</li>
+  <li>Use general scanner for monthly deep scans</li>
+</ol>
+
+<hr />
+
+<h2 id="-license">📜 License</h2>
+
+<p>MIT License - Part of the wp-ops project</p>
+
+<hr />
+
+<h2 id="-credits">🙏 Credits</h2>
+
+<ul>
+  <li>Based on malware detection patterns from WordPress Security Best Practices</li>
+  <li>Inspired by <a href="https://gist.github.com/jasperf/3191259">lookforbadguys.php</a></li>
+  <li>Originally built for Rob Disbergen WordPress site security investigation (November 2025)</li>
+  <li>Integrated into wp-ops toolkit (December 2025)</li>
+</ul>
+
+<hr />
+
+<p><strong>Part of the <a href="https://github.com/imagewize/wp-ops">wp-ops</a> toolkit for WordPress operations</strong></p>
+
+
+  
+
+  <nav class="chapter-nav">
+    
+    
+  </nav>
+</article>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

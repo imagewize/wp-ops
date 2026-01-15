@@ -1,3 +1,10 @@
+---
+layout: chapter
+title: "Security Checks"
+chapter_number: 11
+permalink: /chapters/security-checks/
+---
+
 # WordPress Security Scanners
 
 Comprehensive dual-scanner security suite for WordPress malware detection and security auditing.
