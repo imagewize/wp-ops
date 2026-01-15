@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Table of Contents</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/README.html">README</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <h1 id="table-of-contents">TABLE OF CONTENTS</h1>
+
+<p>This TOC maps every existing repo section into a numbered chapter so the docs read like an ebook.</p>
+
+<h2 id="front-matter">Front Matter</h2>
+<ul>
+  <li>Title + how to use this book: <code class="language-plaintext highlighter-rouge">README.md</code></li>
+  <li>Repository rules for operators: <code class="language-plaintext highlighter-rouge">AGENTS.md</code></li>
+  <li>Edition history: <code class="language-plaintext highlighter-rouge">CHANGELOG.md</code></li>
+</ul>
+
+<h2 id="part-i-foundations">Part I: Foundations</h2>
+<ul>
+  <li>Chapter 1: Operating principles and safety basics — <code class="language-plaintext highlighter-rouge">README.md</code> (scope, safety rules, and starting points)</li>
+  <li>Chapter 2: Command helpers and doc conventions — <code class="language-plaintext highlighter-rouge">CLAUDE.md</code>, <code class="language-plaintext highlighter-rouge">CREATE-PR.md</code> (workflow norms and PR creation)</li>
+</ul>
+
+<h2 id="part-ii-trellis-operations">Part II: Trellis Operations</h2>
+<ul>
+  <li>Chapter 3: Provisioning environments — <code class="language-plaintext highlighter-rouge">trellis/provision/README.md</code> (setup guides and core provisioning commands)</li>
+  <li>Chapter 4: Backups and restores — <code class="language-plaintext highlighter-rouge">trellis/backup/README.md</code>, <code class="language-plaintext highlighter-rouge">scripts/backup/</code> (backup cadence and restore drills)</li>
+  <li>Chapter 5: Monitoring and alerting — <code class="language-plaintext highlighter-rouge">trellis/monitoring/README.md</code>, <code class="language-plaintext highlighter-rouge">scripts/monitoring/</code> (traffic analysis and alerts)</li>
+  <li>Chapter 6: Security hardening — <code class="language-plaintext highlighter-rouge">trellis/security/README.md</code> (layered controls and safe defaults)</li>
+  <li>Chapter 7: Updating Trellis — <code class="language-plaintext highlighter-rouge">trellis/updater/README.md</code> (upgrade workflow and preserved configs)</li>
+</ul>
+
+<h2 id="part-iii-wp-cli-workflows">Part III: WP-CLI Workflows</h2>
+<ul>
+  <li>Chapter 8: Content creation — <code class="language-plaintext highlighter-rouge">wp-cli/content-creation/README.md</code> (repeatable page and pattern workflows)</li>
+  <li>Chapter 9: Diagnostics — <code class="language-plaintext highlighter-rouge">wp-cli/diagnostics/README.md</code> (triage scripts and safe inspection)</li>
+  <li>Chapter 10: Migration — <code class="language-plaintext highlighter-rouge">wp-cli/migration/README.md</code> (end-to-end migration paths)</li>
+  <li>Chapter 11: Security checks — <code class="language-plaintext highlighter-rouge">wp-cli/security/README.md</code> (scanner usage and audit cadence)</li>
+</ul>
+
+<h2 id="part-iv-nginx-patterns">Part IV: Nginx Patterns</h2>
+<ul>
+  <li>Chapter 12: Browser caching — <code class="language-plaintext highlighter-rouge">nginx/browser-caching/README.md</code> (cache headers and validation steps)</li>
+  <li>Chapter 13: Image optimization — <code class="language-plaintext highlighter-rouge">nginx/image-optimization/README.md</code> (modern formats and automation)</li>
+  <li>Chapter 14: Redirects — <code class="language-plaintext highlighter-rouge">nginx/redirects/README.md</code> (safe include placement and rules)</li>
+</ul>
+
+<h2 id="part-v-wordpress-utilities">Part V: WordPress Utilities</h2>
+<ul>
+  <li>Chapter 15: Age verification — <code class="language-plaintext highlighter-rouge">wordpress-utilities/age-verification/README.md</code> (flow overview and integration steps)</li>
+  <li>Chapter 16: Analytics — <code class="language-plaintext highlighter-rouge">wordpress-utilities/analytics/README.md</code> (implementation options and detection)</li>
+  <li>Chapter 17: Speed optimization — <code class="language-plaintext highlighter-rouge">wordpress-utilities/speed-optimization/README.md</code> (TTFB checks and tooling)</li>
+</ul>
+
+<h2 id="part-vi-scripts-and-automation">Part VI: Scripts and Automation</h2>
+<ul>
+  <li>Chapter 18: Utility scripts overview — <code class="language-plaintext highlighter-rouge">scripts/README.md</code> (inventory and usage notes)</li>
+  <li>Chapter 19: Release and theme sync scripts — <code class="language-plaintext highlighter-rouge">scripts/release-theme.sh</code>, <code class="language-plaintext highlighter-rouge">scripts/rsync-theme.sh</code> (deploy helpers and sync flows)</li>
+  <li>Chapter 20: PR helper script — <code class="language-plaintext highlighter-rouge">scripts/create-pr.sh</code> (generate consistent PR text)</li>
+</ul>
+
+<h2 id="appendices">Appendices</h2>
+<ul>
+  <li>Appendix A: Troubleshooting index — <code class="language-plaintext highlighter-rouge">troubleshooting/README.md</code> (symptom-based entry points)</li>
+  <li>Appendix B: Mail issues — <code class="language-plaintext highlighter-rouge">troubleshooting/MAIL.md</code> (SMTP and delivery failures)</li>
+  <li>Appendix C: MariaDB issues — <code class="language-plaintext highlighter-rouge">troubleshooting/MariaDB.md</code> (DB outages and recovery)</li>
+  <li>Appendix D: OOM issues — <code class="language-plaintext highlighter-rouge">troubleshooting/OOM.md</code> (memory exhaustion triage)</li>
+  <li>Appendix E: PHP-FPM issues — <code class="language-plaintext highlighter-rouge">troubleshooting/PHP-FPM.md</code> (worker health and tuning)</li>
+  <li>Appendix F: License — <code class="language-plaintext highlighter-rouge">LICENSE.md</code> (legal and reuse terms)</li>
+</ul>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

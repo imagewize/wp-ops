@@ -1,0 +1,27 @@
+map $http_accept $webp_suffix {
+    default "";
+    "~*image/webp" ".webp";
+}
+
+map $http_accept $avif_suffix {
+    default "";
+    "~*image/avif" ".avif";
+}
+
+location ~* ^/app/uploads/(.*)\.(jpg|jpeg|png)$ {
+    root {{ www_root }}/{{ site.name }}/current/web;
+
+    set $img_path /app/uploads/$1;
+
+    if (-f $document_root${img_path}${avif_suffix}) {
+        add_header Vary Accept;
+        rewrite ^ $img_path$avif_suffix break;
+    }
+
+    if (-f $document_root${img_path}${webp_suffix}) {
+        add_header Vary Accept;
+        rewrite ^ $img_path$webp_suffix break;
+    }
+
+    try_files $uri =404;
+}

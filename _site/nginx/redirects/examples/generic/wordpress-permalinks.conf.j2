@@ -1,0 +1,52 @@
+# WordPress Permalink Redirects
+# Common WordPress URL structure migrations
+
+# Date-based permalinks -> Post name only
+# Example: /2024/11/my-post/ -> /my-post/
+location ~ ^/\d{4}/\d{2}/(.*)$ {
+    return 301 /$1;
+}
+
+# Category + date -> Post name only
+# Example: /category/tech/2024/11/my-post/ -> /my-post/
+location ~ ^/category/[^/]+/\d{4}/\d{2}/(.*)$ {
+    return 301 /$1;
+}
+
+# Old category slug -> New category slug
+# Example: /category/old-name/ -> /category/new-name/
+location ~ ^/category/old-category-slug/(.*)$ {
+    return 301 /category/new-category-slug/$1;
+}
+
+# Remove /blog/ prefix from post URLs
+# Example: /blog/my-post/ -> /my-post/
+location ~ ^/blog/(.*)$ {
+    return 301 /$1;
+}
+
+# Custom post type slug change
+# Example: /old-cpt/item-name/ -> /new-cpt/item-name/
+location ~ ^/old-cpt/(.*)$ {
+    return 301 /new-cpt/$1;
+}
+
+# Tag archives -> Category archives
+# Example: /tag/sometag/ -> /category/sometag/
+location ~ ^/tag/(.*)$ {
+    return 301 /category/$1;
+}
+
+# Author archives to home page (if disabling author pages)
+location ~ ^/author/(.*)$ {
+    return 301 /;
+}
+
+# Feed redirects (if moving to different feed system)
+location = /feed/ {
+    return 301 /rss.xml;
+}
+
+location = /comments/feed/ {
+    return 301 /;
+}

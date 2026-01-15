@@ -1,0 +1,203 @@
+/**
+ * Age Verification Modal Styles
+ * 
+ * Custom CSS for the age verification modal component.
+ * Include this file in your WordPress theme or copy styles to your main stylesheet.
+ */
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-base {
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.btn-default {
+  background-color: #2da7cf;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 10px 20px;
+  display: inline-block;
+  text-decoration: none;
+  color: #fff!important;
+  transition: all ease-in-out 0.3s;
+  font-size: 16px;
+  cursor: pointer!important;
+}
+
+.btn-default:hover {
+  background-color: rgba(45, 167, 207, 0.8);
+  color: #fff;
+}
+
+.modal-overlayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99999;
+  background-color: rgba(45, 167, 207, 0.6);
+  -webkit-backdrop-filter: blur(35px);
+          backdrop-filter: blur(35px);
+  transition: all ease-out 0.4s;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.modal-overlayer.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-data-panel {
+  max-width: 660px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 10px;
+  margin: auto;
+  padding: 30px;
+}
+
+.modal-verification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all ease-out 0.2s;
+  padding: 0 12px;
+}
+
+.modal-verification.modal-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-verification .modal-header-panel .modal-logo {
+  max-width: 220px;
+  width: 100%;
+  margin: 0 auto 36px;
+}
+
+.modal-verification .modal-header-panel .modal-header-data {
+  margin-bottom: 18px;
+}
+
+.modal-verification .modal-header-panel .modal-header-data h5 {
+  color: #2da7cf;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.modal-verification .modal-header-panel .modal-header-data h1 {
+  color: #29324e;
+  margin-bottom: 18px;
+}
+
+.modal-verification .modal-content-panel {
+  margin-bottom: 18px;
+}
+
+.modal-verification .modal-content-panel .btn-stack {
+  margin-bottom: 18px;
+}
+
+.modal-verification .modal-content-panel .btn-stack .btn-default {
+  font-weight: 400;
+}
+
+@media (min-width: 992px) {
+  .modal-verification .modal-content-panel .btn-stack .btn-default {
+    padding: 20px 15px;
+    font-size: 18px;
+  }
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox] {
+  display: none;
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox] + label {
+  position: relative;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 32px;
+  padding-top: 5px;
+  cursor: pointer;
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox] + label:before {
+  content: "";
+  width: 25px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #fff;
+  border: 1px solid rgba(41, 50, 78, 0.4);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox] + label:after {
+  content: "";
+  height: 24px;
+  width: 25px;
+  /* background-image: url("./images/check-box.svg"); */
+  background-size: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: absolute;
+  left: 0;
+  top: 15px;
+  z-index: 1;
+  display: none;
+  transform: translateY(-50%);
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox]:checked + label::before {
+  background-color: #2da7cf;
+  border-color: #2da7cf!important;
+}
+
+.modal-verification .modal-content-panel .verification-check input[type=checkbox]:checked + label:after {
+  display: block;
+}
+
+.modal-verification .modal-bottom-text {
+  font-size: 14px;
+  margin-top: 18px;
+}
+
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  row-gap: 18px;
+}
+
+@media (max-width: 991px) {
+  .btn-stack {
+    row-gap: 8px;
+  }
+}
+
+.btn-stack .btn-default {
+  text-align: center;
+}
+
+/* Utility classes for content control */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.d-none {
+  display: none !important;
+}

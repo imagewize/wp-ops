@@ -1,0 +1,42 @@
+# SSL/HTTPS Redirects
+# Force HTTPS for specific paths (if not using global HTTPS redirect)
+
+# Note: Trellis handles HTTP -> HTTPS redirects by default for all sites
+# These examples are for special cases only
+
+# Force HTTPS for admin area (redundant if site-wide HTTPS enabled)
+location ~ ^/wp-admin/ {
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# Force HTTPS for login page
+location = /wp-login.php {
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# Force HTTPS for specific secure pages
+location ~ ^/(checkout|cart|my-account|payment)/ {
+    if ($scheme = http) {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+# Redirect www to non-www (or vice versa)
+# Note: This is usually handled in wordpress_sites.yml with site_hosts
+# Only use if you need custom logic
+
+# Example: www.example.com -> example.com
+# server {
+#     server_name www.example.com;
+#     return 301 $scheme://example.com$request_uri;
+# }
+
+# Example: example.com -> www.example.com
+# server {
+#     server_name example.com;
+#     return 301 $scheme://www.example.com$request_uri;
+# }

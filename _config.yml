@@ -1,5 +1,5 @@
 title: WP OPS
-theme: minima
 markdown: kramdown
 exclude:
   - trellis/backup/*.yml
+  - trellis/monitoring/*.yml

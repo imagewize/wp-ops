@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ebook Ideas</title>
+    <link rel="stylesheet" href="/assets/main.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a class="site-title" href="/">WP OPS</a>
+        <nav class="site-nav">
+          <a href="/">Book</a>
+          <a href="/toc/">TOC</a>
+          <a href="/ebook/">Ideas</a>
+          <a href="/README.html">README</a>
+        </nav>
+      </div>
+    </header>
+    <main class="content container">
+      <h1 id="ebook-ideas">EBOOK IDEAS</h1>
+
+<p>Goal: make this repository read like an ebook while staying practical for operators.</p>
+
+<h2 id="suggested-book-structure">Suggested book structure</h2>
+<ul>
+  <li>Front matter: title page, edition, changelog link, how to use this book.</li>
+  <li>Part I: Foundations (stack overview, safety rules, environment setup).</li>
+  <li>Part II: Core workflows (provision, deploy, backups, restores, monitoring).</li>
+  <li>Part III: Operations playbook (incidents, migrations, performance).</li>
+  <li>Part IV: Advanced topics (multi-env, scaling, security hardening).</li>
+  <li>Appendices: glossary, command reference, troubleshooting index.</li>
+</ul>
+
+<h2 id="concrete-changes-to-make-it-feel-like-an-ebook">Concrete changes to make it feel like an ebook</h2>
+<ul>
+  <li>Add a <code class="language-plaintext highlighter-rouge">BOOK.md</code> or <code class="language-plaintext highlighter-rouge">TOC.md</code> with a curated reading path and chapter order.</li>
+  <li>Use consistent chapter numbering in headings (e.g., “Chapter 3: Backups”).</li>
+  <li>Add short chapter intros with goals, prerequisites, and time estimates.</li>
+  <li>Include “Key takeaways” and “Next steps” at the end of each chapter.</li>
+  <li>Create sidebars for “Caution”, “Tip”, and “Gotcha” blocks.</li>
+  <li>Add a glossary that defines Trellis, Bedrock, vault, etc.</li>
+  <li>Add a command index: “ansible-playbook”, “wp”, “rsync”, “ssh”.</li>
+  <li>Use consistent diagrams (Mermaid) for flows and architecture.</li>
+</ul>
+
+<h2 id="mapping-existing-docs-into-a-book">Mapping existing docs into a book</h2>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">README.md</code> becomes the “Preface” and “How to use this book”.</li>
+  <li><code class="language-plaintext highlighter-rouge">trellis/</code>, <code class="language-plaintext highlighter-rouge">wp-cli/</code>, and <code class="language-plaintext highlighter-rouge">nginx/</code> become core chapters with sub-sections.</li>
+  <li><code class="language-plaintext highlighter-rouge">troubleshooting/</code> becomes an appendix indexed by symptoms.</li>
+  <li><code class="language-plaintext highlighter-rouge">CHANGELOG.md</code> becomes “Edition history”.</li>
+</ul>
+
+<h2 id="chapter-template-example">Chapter template (example)</h2>
+<ul>
+  <li>Title and purpose</li>
+  <li>Prerequisites</li>
+  <li>Safety checklist</li>
+  <li>Step-by-step workflow (with dry-run first)</li>
+  <li>Verification steps</li>
+  <li>Cleanup / rollback</li>
+  <li>Troubleshooting notes</li>
+  <li>References / related chapters</li>
+</ul>
+
+<h2 id="reading-paths">Reading paths</h2>
+<ul>
+  <li>“New operator”: setup -&gt; backups -&gt; monitoring -&gt; incident response</li>
+  <li>“Migration”: inventory -&gt; backup -&gt; dry-run -&gt; cutover -&gt; verify</li>
+  <li>“Performance”: caching -&gt; image optimization -&gt; monitoring</li>
+</ul>
+
+<h2 id="visual-and-format-ideas">Visual and format ideas</h2>
+<ul>
+  <li>Add callout styling using Markdown blockquotes with labels.</li>
+  <li>Use diagrams to show data flow and failure points.</li>
+  <li>Provide “before/after” snippets for config changes.</li>
+  <li>Include small, realistic case studies for each major workflow.</li>
+  <li>Add periodic “You should know” recap sections.</li>
+</ul>
+
+<h2 id="tooling-options-if-desired">Tooling options (if desired)</h2>
+<ul>
+  <li>Generate a static ebook with mdBook or MkDocs.</li>
+  <li>Keep markdown as the source of truth; export to PDF/EPUB.</li>
+  <li>Use a <code class="language-plaintext highlighter-rouge">docs/</code> build step later, but keep repo structure intact.</li>
+</ul>
+
+<h2 id="next-candidate-chapters-to-write">Next candidate chapters to write</h2>
+<ul>
+  <li>Chapter: Safe backup and restore (Trellis + wp-cli).</li>
+  <li>Chapter: Deployment checklist and rollback.</li>
+  <li>Chapter: Monitoring signals and alert triage.</li>
+  <li>Chapter: Image optimization pipeline.</li>
+</ul>
+
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <span>WP OPS Documentation</span>
+      </div>
+    </footer>
+  </body>
+</html>

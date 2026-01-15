@@ -1,0 +1,45 @@
+# Nginx configuration for browser caching of static assets
+
+# Settings for SVG files (moved before general static files to take precedence)
+location ~* \.svg$ {
+    add_header Content-Security-Policy "default-src 'self'";
+    expires 1y;
+    add_header Cache-Control "public, no-transform";
+    add_header Vary Accept;
+    access_log off;
+    etag on;
+    try_files $uri =404;
+}
+
+# Enable cache for all static files (removed svg from this block)
+# Images and fonts - cache for 1 year
+location ~* \.(jpg|jpeg|png|gif|ico|webp|avif|eot|ttf|woff|woff2|otf)$ {
+    try_files $uri =404;
+    
+    expires 1y;
+    add_header Cache-Control "public, no-transform";
+    add_header Vary Accept;
+    access_log off;
+    
+    # Set ETag header for better cache validation
+    etag on;
+}
+
+# CSS and JS files - cache for 1 year (with versioning they're safe to cache long)
+location ~* \.(css|js)$ {
+    try_files $uri =404;
+    
+    expires 1y;
+    add_header Cache-Control "public, no-transform";
+    add_header Vary Accept;
+    access_log off;
+    
+    etag on;
+}
+
+# Cache WordPress common files (minified JS/CSS, emoji JS) - 1 year since they're versioned
+location ~* /wp-content/.*\.(min\.(css|js)|wp-emoji-release\.min\.js)$ {
+    try_files $uri =404;
+    expires 1y;
+    add_header Cache-Control "public, no-transform";
+}

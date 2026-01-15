@@ -1,0 +1,31 @@
+# SEO Redirects - Fix 404 Errors
+# Date: 2025-11-30
+# Trellis Child Template - deployed via 'trellis provision --tags nginx-includes production'
+
+# Sage theme deployment - old category structure
+location = /wordpress-stuff/sage/sage-theme-deployment/ {
+    return 301 /sage-theme-deployment/;
+}
+
+# Old portfolio custom post type URLs -> main portfolio page
+location = /portfolio-item/goedbevallen/ {
+    return 301 /portfolio/;
+}
+
+location = /portfolio-item/rocket-pure/ {
+    return 301 /portfolio/;
+}
+
+location = /portfolio-item/hillsound/ {
+    return 301 /portfolio/;
+}
+
+# Old quotation page -> contact form
+location = /quotation/ {
+    return 301 /contact-us/;
+}
+
+# CBA for WordPress -> FBA post
+location = /about-us/cba-for-wordpress/ {
+    return 301 /fba-for-woocommerce/;
+}
