@@ -1,5 +1,29 @@
-title: WP OPS
+title: WP OPS - WordPress Operations Handbook
+description: Comprehensive guide for WordPress server management with Trellis, WP-CLI, and Nginx
+author: WP OPS Team
+baseurl: "" # for GitHub Pages: /wp-ops
+url: "" # for GitHub Pages: https://yourusername.github.io
+
 markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: "highlight"
 exclude:
   - trellis/backup/*.yml
   - trellis/monitoring/*.yml
+  - .git
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+
+collections:
+  chapters:
+    output: true
+    permalink: /chapters/:name/
+
+plugins:
+  - jekyll-relative-links
+  - jekyll-toc

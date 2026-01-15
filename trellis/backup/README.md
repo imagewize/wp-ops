@@ -1,3 +1,17 @@
+---
+layout: chapter
+title: "Backups and Restores"
+chapter_number: 4
+reading_time: 25
+prerequisites:
+  - "Chapter 3: Provisioning Environments"
+  - "SSH access to target environments"
+key_takeaways:
+  - "Favor backups and dry runs before pushing or pulling data."
+  - "Backups produce predictable artifacts and naming conventions."
+  - "Automate cleanup and schedules to avoid storage drift."
+---
+
 # Trellis Backup Integration
 
 Ansible playbooks for automated database backup, synchronization, and management across Trellis environments.

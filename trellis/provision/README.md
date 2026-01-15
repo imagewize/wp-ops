@@ -1,3 +1,17 @@
+---
+layout: chapter
+title: "Provisioning Environments"
+chapter_number: 3
+reading_time: 20
+prerequisites:
+  - "Chapter 1: Operating Principles"
+  - "Chapter 2: Command Helpers"
+key_takeaways:
+  - "Start with the setup guides before running provisioning commands."
+  - "Use trellis provision and tags for safe, targeted changes."
+  - "PHP upgrades require the full tag set to refresh sudoers and extensions."
+---
+
 # Provisioning
 
 ## Chapter Purpose
