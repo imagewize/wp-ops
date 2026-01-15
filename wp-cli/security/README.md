@@ -2,6 +2,10 @@
 
 Comprehensive dual-scanner security suite for WordPress malware detection and security auditing.
 
+## Chapter Purpose
+
+This chapter introduces the scanner tools and when to run them as part of incident response or routine audits.
+
 Part of the [wp-ops](https://github.com/imagewize/wp-ops) toolkit for WordPress operations and server management.
 
 ---

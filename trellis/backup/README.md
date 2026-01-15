@@ -2,6 +2,10 @@
 
 Ansible playbooks for automated database backup, synchronization, and management across Trellis environments.
 
+## Chapter Purpose
+
+This chapter explains how to run Trellis backup and restore workflows safely, with emphasis on dry runs and predictable artifacts.
+
 ## Table of Contents
 
 - [Overview](#overview)

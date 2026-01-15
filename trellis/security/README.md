@@ -2,6 +2,10 @@
 
 WordPress security tools and configurations for Trellis-managed servers.
 
+## Chapter Purpose
+
+This chapter outlines the layered security controls used in Trellis environments and how to apply them safely.
+
 Part of the [wp-ops](https://github.com/imagewize/wp-ops) toolkit for WordPress operations and server management.
 
 ---

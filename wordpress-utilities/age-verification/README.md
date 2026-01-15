@@ -2,6 +2,10 @@
 
 A JavaScript-based age verification system for WordPress websites that manages content visibility based on user age and preferences.
 
+## Chapter Purpose
+
+This chapter explains how the age verification flow works and how to integrate it into a site safely.
+
 ## Features
 
 - **Age-based content filtering**: Restricts access to specific content blocks based on user age

@@ -2,6 +2,10 @@
 
 This guide covers how to optimize images for your Trellis-managed WordPress sites, including Nginx configuration for serving WebP and AVIF images, and methods to convert traditional image formats to these more efficient formats.
 
+## Chapter Purpose
+
+This chapter shows how to serve modern image formats and automate conversions without breaking existing assets.
+
 ## Table of Contents
 - [Nginx Configuration for WebP and AVIF](#nginx-configuration-for-webp-and-avif)
 - [Image Resizing and Cropping](#image-resizing-and-cropping)

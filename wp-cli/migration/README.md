@@ -7,6 +7,10 @@ This guide documents various commands and techniques for migrating WordPress sit
 3. Converting regular WordPress image URLs to Bedrock-compatible paths
 4. Migrating from traditional WordPress hosting to Trellis/Bedrock
 
+## Chapter Purpose
+
+This chapter lays out safe migration paths and the core commands needed to move sites between environments.
+
 ## Migration Scenarios
 
 This directory contains guides for different migration scenarios:

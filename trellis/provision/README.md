@@ -1,5 +1,9 @@
 # Provisioning
 
+## Chapter Purpose
+
+This chapter collects the setup and provisioning steps you need to bring Trellis environments online and keep deployments repeatable.
+
 ## Table of Contents
 
 ### Setup Guides

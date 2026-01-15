@@ -2,6 +2,10 @@
 
 WP-CLI, Trellis, and block-pattern tooling for creating and updating WordPress content in Bedrock/Trellis environments. Use this file as a landing page; the deep guides live alongside it.
 
+## Chapter Purpose
+
+This chapter provides the entry points and commands for repeatable content creation with WP-CLI and patterns.
+
 ## Table of Contents
 - [What's in This Folder](#whats-in-this-folder)
 - [Choose Your Path](#choose-your-path)

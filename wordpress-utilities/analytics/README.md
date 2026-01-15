@@ -2,6 +2,10 @@
 
 This guide covers the implementation and detection of popular analytics tools on WordPress sites, including Google Analytics and Matomo.
 
+## Chapter Purpose
+
+This chapter compares common analytics setups and outlines the safest implementation paths.
+
 ## Overview
 
 Analytics tools help track website performance, user behavior, and conversion metrics. The most common solutions for WordPress are:

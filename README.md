@@ -8,6 +8,10 @@
 Tools, scripts, and guides for modern WordPress development & devops—optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
 </div>
 
+## Chapter Purpose
+
+This chapter orients operators to the toolkit, showing what is included and where to start for common workflows.
+
 ## Tools
 
 | Tool | Description | Documentation |
@@ -38,6 +42,10 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 ## Quick Start
 
 Choose the tool you need and follow its dedicated guide for detailed setup and usage instructions.
+
+## Book
+
+Prefer a guided, ebook-style path? Start here: `BOOK.md`.
 
 ## Requirements
 

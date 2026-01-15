@@ -2,6 +2,10 @@
 
 Production-ready Bash and PHP scripts for WordPress operations, GitHub integration, server monitoring, and backup automation.
 
+## Chapter Purpose
+
+This chapter helps you pick the right operational script and understand its intent before running it.
+
 ## Overview
 
 This directory contains 9 utility scripts organized into three functional areas:

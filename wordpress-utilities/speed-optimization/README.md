@@ -1,5 +1,9 @@
 # WordPress Speed Optimization Tools
 
+## Chapter Purpose
+
+This chapter focuses on measuring TTFB and using command-line checks to spot performance regressions.
+
 ## Understanding TTFB Performance
 
 According to Google's web.dev documentation at https://web.dev/articles/ttfb:

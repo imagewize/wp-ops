@@ -2,6 +2,10 @@
 
 Trellis nginx-includes templates for managing SEO redirects and URL rewrites.
 
+## Chapter Purpose
+
+This chapter documents redirect patterns and safe include placement during provisioning.
+
 ## Overview
 
 This directory contains example nginx redirect configurations that can be used in Trellis projects. Redirects are managed via nginx-includes templates that are deployed during provisioning.

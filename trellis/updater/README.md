@@ -2,6 +2,10 @@
 
 A Bash script to safely update your [Roots Trellis](https://roots.io/trellis/) installation while preserving your custom configurations.
 
+## Chapter Purpose
+
+This chapter walks through updating Trellis while keeping your project-specific settings intact.
+
 ## Features
 
 - Creates a backup of your current Trellis directory

@@ -2,6 +2,10 @@
 
 Tools and documentation for monitoring WordPress/Trellis sites via Nginx access and error logs. Includes traffic analysis, security monitoring, and detection of malicious actors.
 
+## Chapter Purpose
+
+This chapter shows how to observe live traffic and detect threats using Nginx logs and supporting scripts.
+
 ## Overview
 
 This directory contains scripts and Ansible playbooks for:

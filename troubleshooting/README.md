@@ -2,6 +2,10 @@
 
 This section contains guides for diagnosing and resolving common issues with WordPress servers. While examples reference Trellis-managed servers, the diagnostic techniques and solutions apply to most WordPress hosting environments.
 
+## Chapter Purpose
+
+This chapter gives a symptom-based entry point into deeper troubleshooting guides and quick triage commands.
+
 ## Guides
 
 | Guide | Description |

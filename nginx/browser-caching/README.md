@@ -2,6 +2,10 @@
 
 This guide covers how to implement effective browser caching for your Trellis-managed WordPress sites. Proper caching can significantly reduce page load times, bandwidth usage, and server load.
 
+## Chapter Purpose
+
+This chapter explains how to apply browser caching headers safely and verify that assets are cached as expected.
+
 ## Table of Contents
 - [Overview](#overview)
 - [Nginx Configuration for Browser Caching](#nginx-configuration-for-browser-caching)
