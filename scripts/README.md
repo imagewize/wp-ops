@@ -4,10 +4,10 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 9 utility scripts organized into three functional areas:
+This directory contains 10 utility scripts organized into four functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
-- **Theme Management** - WordPress theme release automation and file synchronization
+- **WordPress Management** - Plugin and theme release automation, file synchronization
 - **Operations** - Server monitoring and backup infrastructure
 - **Webhook Integration** - Updown.io downtime alert handling
 
@@ -24,6 +24,7 @@ scripts/
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
 ├── create-pr.sh                # AI-powered GitHub PR creation
+├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation
 └── rsync-theme.sh             # Theme file synchronization utility
 ```
@@ -155,6 +156,161 @@ npm install -g @anthropics/claude-cli
 # Or use Codex (optional)
 pip install openai-codex
 ```
+
+---
+
+## WordPress Management
+
+### release-plugin.sh (422 lines)
+
+Automates WordPress plugin version releases with AI-generated changelogs using Claude CLI or Codex.
+
+#### Features
+
+- **AI-Generated Changelogs**:
+  - Supports Claude CLI or Codex for changelog generation
+  - Analyzes git diff between current branch and main branch
+  - Generates two changelog formats:
+    - **CHANGELOG.md**: Detailed Keep a Changelog format (Changed, Added, Fixed, Technical)
+    - **readme.txt**: Concise WordPress.org style
+  - Customizable AI tool selection with `--ai=claude|codex` flag
+
+- **Semantic Versioning**:
+  - Validates X.Y.Z format
+  - Prevents invalid version numbers
+  - Updates version in three locations:
+    - Plugin header comment in main PHP file
+    - Plugin version constant (e.g., `ELAYNE_BLOCKS_VERSION`)
+    - Stable tag in readme.txt
+
+- **Updates Three Files**:
+  - Main plugin file (e.g., `elayne-blocks.php`) - Version header and constant
+  - `readme.txt` - Stable tag and changelog
+  - `CHANGELOG.md` - Detailed version history
+
+- **Safety Features**:
+  - Shows git diff before committing
+  - Interactive confirmation prompts
+  - Optional `--commit` flag for automatic commits
+  - Preserves `.bak` backup files
+  - Color-coded output with progress indicators
+  - Detects no changes between branches
+
+#### Usage
+
+```bash
+# Generate changelog with AI (manual commit)
+./release-plugin.sh 2.5.3
+
+# Generate changelog and auto-commit
+./release-plugin.sh 2.5.3 --commit
+
+# Specify AI tool
+./release-plugin.sh 2.5.3 --ai=codex
+./release-plugin.sh 2.5.3 --commit --ai=claude
+
+# Interactive AI tool selection (if both installed)
+./release-plugin.sh 2.5.3
+# Prompts: "Choose AI tool [default: claude]:"
+```
+
+#### Example Workflow
+
+1. Create feature branch and make changes
+2. Run release script:
+   ```bash
+   ./release-plugin.sh 2.5.3
+   ```
+3. Script analyzes `git diff main..HEAD`
+4. AI generates professional changelog
+5. Updates version in all three files
+6. Shows preview of changes
+7. Optionally commits changes
+8. Push and create PR:
+   ```bash
+   git push origin feature-branch
+   ./create-pr.sh main "Elayne Blocks Version 2.5.3"
+   ```
+
+#### Example Changelog Output
+
+**CHANGELOG.md format:**
+```markdown
+## [2.5.3] - 2026-01-20
+
+### Added
+**Mega Menu Icon Features:**
+- Added new icon-based pattern for mega menu content
+- Supports custom icons with flexible positioning
+
+### Changed
+- Updated block editor controls for better UX
+- Improved pattern preview in block inserter
+
+### Fixed
+- Hero section alignment on tablet devices
+- Missing alt text in gallery patterns
+```
+
+**readme.txt format:**
+```
+= 2.5.3 =
+* Added: Mega Menu Icon Features pattern with custom icon support
+* Changed: Updated block editor controls for better UX
+* Fixed: Hero section tablet alignment and gallery alt text
+```
+
+#### Configuration
+
+The script automatically detects the plugin's main PHP file and version constant. Default behavior:
+- Analyzes changes from `main` branch
+- Uses current branch for updates
+- Generates changelog via Claude CLI (if available)
+- Shows preview before committing
+
+#### AI Tool Selection
+
+**Automatic detection:**
+- If only Claude CLI installed → uses Claude
+- If only Codex installed → uses Codex
+- If both installed → prompts for selection
+
+**Manual selection:**
+```bash
+./release-plugin.sh 2.5.3 --ai=claude
+./release-plugin.sh 2.5.3 --ai=codex
+```
+
+**Environment variables:**
+```bash
+# Custom CLI command names
+export CLAUDE_COMMAND="claude-custom"
+export CODEX_COMMAND="codex-custom"
+
+# Custom CLI arguments
+export CLAUDE_CLI_ARGS="--model opus"
+export CODEX_CLI_ARGS="--temperature 0.7"
+```
+
+#### Requirements
+
+```bash
+# Install Claude CLI (recommended)
+npm install -g @anthropic-ai/claude-cli
+
+# Configure API key
+export ANTHROPIC_API_KEY="your-key-here"
+
+# Or install Codex CLI (alternative)
+npm install -g @openai/codex
+export OPENAI_API_KEY="your-key-here"
+```
+
+#### Token Usage
+
+- **With AI**: 500-1,500 tokens depending on diff size
+- **Without AI**: Manual changelog editing required
+- **Cost**: ~$0.01-0.05 per release (Claude Sonnet)
 
 ---
 
