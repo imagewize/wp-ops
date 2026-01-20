@@ -29,6 +29,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 | **Redirects** | Nginx redirect configuration for SEO and URL management | [→ Guide](nginx/redirects/README.md) |
 | **Troubleshooting** | Diagnose and resolve PHP-FPM, MariaDB, and server issues | [→ Guide](troubleshooting/README.md) |
 | **PR Creation Script** | AI-powered GitHub PR descriptions with multi-AI backend support (Claude/Codex) | [→ Guide](CREATE-PR.md) |
+| **Plugin Release** | AI-powered version bumping and changelog generation for WordPress plugins | [→ Script](scripts/release-plugin.sh) |
 | **Theme Release** | AI-powered version bumping and changelog generation for WordPress themes | [→ Script](scripts/release-theme.sh) |
 | **Theme Sync** | Rsync script for theme synchronization | [→ Script](scripts/rsync-theme.sh) |
 | **Age Verification** | Cookie-based age verification system with modal interface and ACF integration | [→ Guide](wordpress-utilities/age-verification/README.md) |
