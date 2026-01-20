@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-01-20
+
+### Added
+
+- **WordPress Plugin Release Automation** - New AI-powered plugin release script with comprehensive changelog generation:
+  - **[scripts/release-plugin.sh](scripts/release-plugin.sh)** - Automated version bumping and changelog generation for WordPress plugins (422 lines)
+  - Multi-AI backend support (Claude CLI or Codex) with automatic detection and interactive selection
+  - Semantic versioning validation (X.Y.Z format)
+  - Updates three files automatically: main plugin file (version header and constant), readme.txt (stable tag and changelog), CHANGELOG.md (detailed version history)
+  - AI-powered changelog generation in two formats:
+    - **CHANGELOG.md**: Detailed Keep a Changelog format with sections (Changed, Added, Fixed, Technical)
+    - **readme.txt**: Concise WordPress.org style with single-line entries
+  - Git diff analysis between current branch and main branch
+  - Interactive confirmation prompts with change preview
+  - Optional `--commit` flag for automatic commits with standardized messages
+  - `--ai=claude|codex` flag for explicit AI tool selection
+  - Environment variable support for custom CLI commands and arguments (`CLAUDE_COMMAND`, `CODEX_COMMAND`, `CLAUDE_CLI_ARGS`, `CODEX_CLI_ARGS`)
+  - Safety features: git diff preview, backup files (.bak), color-coded output, no-changes detection
+  - Token usage: 500-1,500 tokens per release (~$0.01-0.05 cost)
+
+### Changed
+
+- Enhanced [scripts/README.md](scripts/README.md) with WordPress Plugin Release documentation:
+  - Updated directory structure to include release-plugin.sh
+  - Changed "Theme Management" to "WordPress Management" to reflect broader scope
+  - Added comprehensive release-plugin.sh section (after create-pr.sh, before release-theme.sh)
+  - Documented features, usage examples, workflow, changelog formats, AI tool selection, and requirements
+  - Updated script count from 9 to 10 utility scripts
+  - Reorganized functional areas to include "WordPress Management" category
+
+- Updated main [README.md](README.md) tools table:
+  - Added Plugin Release Script entry between PR Creation and Theme Release
+  - Consistent tool ordering: PR Creation → Plugin Release → Theme Release → Theme Sync
+
+### Improved
+
+- Complete parity between plugin and theme release automation workflows
+- Unified AI-powered changelog generation for both WordPress plugins and themes
+- Consistent documentation structure across all release automation scripts
+- Better developer experience with interactive AI tool selection when multiple CLIs available
+
 ## [2.3.6] - 2026-01-15
 
 ### Fixed
