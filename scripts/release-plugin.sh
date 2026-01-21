@@ -282,8 +282,18 @@ CHANGELOG_DATE=$(date +%Y-%m-%d)  # 2026-01-20
 echo -e "${BLUE}Step 3: Updating version numbers...${NC}"
 
 # Update elayne-blocks.php (two places: plugin header and constant)
-sed -i.bak "s/^[[:space:]]*\* Version: .* / * Version: $NEW_VERSION/" elayne-blocks.php
-sed -i '' "s/^define( 'ELAYNE_BLOCKS_VERSION', '.*' );$/define( 'ELAYNE_BLOCKS_VERSION', '$NEW_VERSION' );/" elayne-blocks.php
+awk -v new_ver="$NEW_VERSION" '
+/^[[:space:]]*\* Version:/ {
+    match($0, /^[[:space:]]*\* Version: /);
+    print substr($0, 1, RLENGTH-1) new_ver;
+    next
+}
+/^define\( .ELAYNE_BLOCKS_VERSION./ {
+    print "define( '\''ELAYNE_BLOCKS_VERSION'\'', '\''" new_ver "'\'' );"
+    next
+}
+{ print }
+' elayne-blocks.php > elayne-blocks.php.tmp && mv elayne-blocks.php.tmp elayne-blocks.php
 echo "  ✓ Updated elayne-blocks.php"
 
 # Update readme.txt stable tag

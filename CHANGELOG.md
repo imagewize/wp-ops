@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-01-21
+
+### Fixed
+
+- **Plugin Release Script Version Update** - Replaced fragile `sed` pattern matching with robust `awk`-based version updates in [scripts/release-plugin.sh](scripts/release-plugin.sh):
+  - Replaced two `sed` commands with single `awk` script for plugin file version updates
+  - More reliable pattern matching for plugin header "Version:" field
+  - More reliable pattern matching for `define( 'ELAYNE_BLOCKS_VERSION', ... )` constant
+  - Eliminates dependency on POSIX character classes in sed (which vary by platform)
+  - Single temp file operation instead of multiple in-place edits
+  - More portable solution that works consistently across macOS, Linux, and BSD systems
+
 ## [2.4.1] - 2026-01-21
 
 ### Fixed
