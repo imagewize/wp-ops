@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-01-21
+
+### Fixed
+
+- **Plugin Release Script sed Pattern** - Fixed version update regex in [scripts/release-plugin.sh](scripts/release-plugin.sh) to correctly handle whitespace in plugin header:
+  - Replaced `\s*` with `[[:space:]]*` for POSIX-compliant whitespace matching in sed
+  - Ensures proper version number updates in plugin file headers
+  - Resolves issues where version updates might fail due to whitespace variations
+
 ## [2.4.0] - 2026-01-20
 
 ### Added
