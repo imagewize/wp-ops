@@ -32,6 +32,9 @@ BOT_PATTERN='updown\.io|[Bb]ot|[Ss]pider|[Cc]rawl|Geedo|Semrush|DuckDuckBot|Ahre
 # Static file extensions to exclude from page view analysis
 STATIC_PATTERN='\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|svg|webp|avif|ttf|eot|map|txt|xml)($|\?)'
 
+# SEO-relevant bot patterns
+SEO_BOTS='Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp'
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -73,6 +76,248 @@ filter_recent_logs() {
 
     # Use tail to get recent lines (much faster than filtering entire log)
     tail -n "$estimated_lines" "$LOG_FILE"
+}
+
+# ============================================================================
+# SEO Analysis Functions
+# ============================================================================
+
+analyze_404_errors() {
+    print_section "404 Errors - Broken Links & SEO Issues"
+
+    local results
+    results=$(grep 'HTTP/1.[01]" 404' "$TEMP_LOG" \
+        | grep -vE "$BOT_PATTERN" \
+        | awk '{print $7}' \
+        | cut -d'?' -f1 \
+        | sort \
+        | uniq -c \
+        | sort -rn \
+        | head -20)
+
+    if [[ -z "$results" ]]; then
+        echo "No 404 errors detected from real users"
+        return
+    fi
+
+    echo "$results" | while read -r count url; do
+        printf "${YELLOW}%8d${NC}  %s\n" "$count" "$url"
+    done
+
+    echo ""
+    echo -e "${CYAN}Action:${NC} Create redirects for high-traffic 404s or restore missing content"
+}
+
+analyze_search_crawlers() {
+    print_section "Search Engine Crawler Activity"
+
+    local crawler_results
+    crawler_results=$(grep -E "$SEO_BOTS" "$TEMP_LOG" \
+        | awk -F'"' '{print $6}' \
+        | sed 's/\/.*//' \
+        | sort \
+        | uniq -c \
+        | sort -rn)
+
+    if [[ -z "$crawler_results" ]]; then
+        echo "No search engine crawler activity detected"
+        return
+    fi
+
+    echo "$crawler_results" | while read -r count bot; do
+        printf "${GREEN}%8d${NC}  %s\n" "$count" "$bot"
+    done
+
+    # What pages are crawlers indexing?
+    echo ""
+    echo "Most crawled pages:"
+    grep -E "$SEO_BOTS" "$TEMP_LOG" \
+        | awk '{print $7}' \
+        | cut -d'?' -f1 \
+        | grep -vE "$STATIC_PATTERN" \
+        | sort \
+        | uniq -c \
+        | sort -rn \
+        | head -10 \
+        | while read -r count url; do
+            printf "${CYAN}%8d${NC}  %s\n" "$count" "$url"
+        done
+}
+
+analyze_device_types() {
+    print_section "Device Type Analysis (Mobile-First Indexing)"
+
+    # Mobile patterns
+    local mobile_count
+    mobile_count=$(awk -F'"' '{print $6}' "$TEMP_LOG" \
+        | grep -vE "$BOT_PATTERN" \
+        | grep -iE 'Mobile|Android|iPhone|iPad|iPod' \
+        | wc -l | tr -d ' ')
+
+    # Desktop patterns
+    local desktop_count
+    desktop_count=$(awk -F'"' '{print $6}' "$TEMP_LOG" \
+        | grep -vE "$BOT_PATTERN" \
+        | grep -viE 'Mobile|Android|iPhone|iPad|iPod' \
+        | grep -vE '^-$|^$' \
+        | wc -l | tr -d ' ')
+
+    local total=$((mobile_count + desktop_count))
+
+    if [[ $total -eq 0 ]]; then
+        echo "No device data available"
+        return
+    fi
+
+    local mobile_pct=$((mobile_count * 100 / total))
+    local desktop_pct=$((100 - mobile_pct))
+
+    echo -e "Mobile traffic:  ${GREEN}${mobile_count}${NC} (${mobile_pct}%)"
+    echo -e "Desktop traffic: ${CYAN}${desktop_count}${NC} (${desktop_pct}%)"
+
+    echo ""
+    if [[ $mobile_pct -gt 60 ]]; then
+        echo -e "${GREEN}✓${NC} Mobile-first indexing priority confirmed"
+    elif [[ $mobile_pct -gt 40 ]]; then
+        echo -e "${YELLOW}!${NC} Balanced mobile/desktop traffic - ensure responsive design"
+    else
+        echo -e "${CYAN}i${NC} Desktop-heavy traffic - verify mobile experience"
+    fi
+}
+
+analyze_organic_search() {
+    print_section "Organic Search Traffic Sources"
+
+    local search_results
+    search_results=$(awk -F'"' '{print $4}' "$TEMP_LOG" \
+        | grep -iE 'google\.com|bing\.com|yahoo\.com|duckduckgo\.com|baidu\.com|yandex\.' \
+        | grep -vE '(imagewize\.com|\.php|/config/|//|/\.)' \
+        | sed 's/\?.*//' \
+        | sort \
+        | uniq -c \
+        | sort -rn)
+
+    if [[ -z "$search_results" ]]; then
+        echo "No organic search referrals detected"
+        return
+    fi
+
+    echo "$search_results" | while read -r count referrer; do
+        printf "${GREEN}%8d${NC}  %s\n" "$count" "$referrer"
+    done
+}
+
+analyze_landing_pages() {
+    print_section "Top Landing Pages (External Traffic)"
+
+    # Get domain from log file path for better filtering
+    local site_domain
+    site_domain=$(echo "$LOG_FILE" | grep -oE '[^/]+\.com' | head -1 || echo "")
+
+    local landing_results
+    landing_results=$(awk -F'"' '$4 !~ /^-$/ && $4 !~ /localhost/ {print $0}' "$TEMP_LOG" \
+        | awk -F'"' '$4 !~ /'"${site_domain}"'/ {print $0}' \
+        | awk '{print $7}' \
+        | cut -d'?' -f1 \
+        | grep -vE "$STATIC_PATTERN" \
+        | grep -vE '(wp-login|wp-admin|wp-plain|xmlrpc\.php|/db\.php|\.env|\.git|\.yml|\.config|\.dockerenv|alfacgiapi|ALFA_DATA|/config/|//\.|yahoo_mail|googlemail|\.ebextensions|seotheme|timthumb|/app/etc/|[a-z]{8}\.php$)' \
+        | sort \
+        | uniq -c \
+        | sort -rn \
+        | head -10)
+
+    if [[ -z "$landing_results" ]]; then
+        echo "No external landing page data available"
+        return
+    fi
+
+    echo "$landing_results" | while read -r count url; do
+        printf "${MAGENTA}%8d${NC}  %s\n" "$count" "$url"
+    done
+}
+
+analyze_social_traffic() {
+    print_section "Social Media Traffic"
+
+    # Get domain from log file path for better filtering
+    local site_domain
+    site_domain=$(echo "$LOG_FILE" | grep -oE '[^/]+\.com' | head -1 || echo "")
+
+    local social_results
+    social_results=$(awk -F'"' '{print $4}' "$TEMP_LOG" \
+        | grep -iE 'facebook\.com|twitter\.com|linkedin\.com|instagram\.com|pinterest\.com|reddit\.com|youtube\.com|t\.co|x\.com' \
+        | grep -viE "${site_domain}|\.ebextensions|\.env|\.config" \
+        | sed 's/\?.*//' \
+        | sort \
+        | uniq -c \
+        | sort -rn)
+
+    if [[ -z "$social_results" ]]; then
+        echo "No social media referrals detected"
+        return
+    fi
+
+    echo "$social_results" | while read -r count referrer; do
+        printf "${MAGENTA}%8d${NC}  %s\n" "$count" "$referrer"
+    done
+}
+
+analyze_redirects() {
+    print_section "Redirects (301/302) - SEO Impact"
+
+    local redirect_results
+    redirect_results=$(grep 'HTTP/1.[01]" 30[12]' "$TEMP_LOG" \
+        | awk '{print $7, $9}' \
+        | sort \
+        | uniq -c \
+        | sort -rn \
+        | head -20)
+
+    if [[ -z "$redirect_results" ]]; then
+        echo "No redirects detected"
+        return
+    fi
+
+    echo "$redirect_results" | while read -r count url code; do
+        local color=$CYAN
+        [[ "$code" == "301" ]] && color=$GREEN
+        printf "%8d  ${color}%s${NC}  %s\n" "$count" "$code" "$url"
+    done
+
+    echo ""
+    echo -e "${CYAN}Note:${NC} 301 = Permanent (passes SEO value), 302 = Temporary (doesn't pass full SEO value)"
+}
+
+analyze_url_depth() {
+    print_section "URL Depth Analysis (Site Structure)"
+
+    grep -vE "$BOT_PATTERN" "$TEMP_LOG" \
+        | awk '{print $7}' \
+        | grep -vE "$STATIC_PATTERN" \
+        | awk '{
+            depth = gsub(/\//, "/", $0)
+            counts[depth]++
+        }
+        END {
+            for (d in counts) {
+                printf "%d %d\n", d, counts[d]
+            }
+        }' \
+        | sort -n \
+        | while read -r depth count; do
+            local level_name="Root"
+            case $depth in
+                1) level_name="Root (/)" ;;
+                2) level_name="Level 1 (/page/)" ;;
+                3) level_name="Level 2 (/category/page/)" ;;
+                4) level_name="Level 3 (/cat/subcat/page/)" ;;
+                *) level_name="Level $((depth - 1))" ;;
+            esac
+            printf "${CYAN}%8d${NC}  %s\n" "$count" "$level_name"
+        done
+
+    echo ""
+    echo -e "${CYAN}Best Practice:${NC} Keep important content within 3 clicks (depth ≤ 3) for better crawling"
 }
 
 # ============================================================================
@@ -184,9 +429,13 @@ main() {
     # Top referrers (excluding empty and same-domain)
     print_section "Top 10 External Referrers"
 
+    # Get domain from log file path for better filtering
+    local site_domain
+    site_domain=$(echo "$LOG_FILE" | grep -oE '[^/]+\.com' | head -1 || hostname)
+
     awk -F'"' '{print $4}' "$TEMP_LOG" \
         | grep -vE '^-$|^$' \
-        | grep -v "$(hostname)" \
+        | grep -viE "${site_domain}|localhost" \
         | sort \
         | uniq -c \
         | sort -rn \
@@ -237,6 +486,18 @@ main() {
     else
         echo "Bandwidth data not available in log format"
     fi
+
+    # SEO-focused analysis sections
+    print_header "SEO & Content Analysis"
+
+    analyze_404_errors
+    analyze_search_crawlers
+    analyze_device_types
+    analyze_organic_search
+    analyze_landing_pages
+    analyze_social_traffic
+    analyze_redirects
+    analyze_url_depth
 
     print_header "Report Complete"
 }

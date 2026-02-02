@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-01-30
+
+### Added
+
+- **SEO-Focused Traffic Analysis Enhancements** - Major upgrade to [scripts/monitoring/traffic-monitor.sh](scripts/monitoring/traffic-monitor.sh) with comprehensive SEO analytics:
+  - **404 Error Analysis** - Identifies broken links and missing content from real users (excluding bots) with actionable redirect recommendations
+  - **Search Engine Crawler Activity** - Tracks Googlebot, Bingbot, DuckDuckBot, Baiduspider, Yandex, and Slurp activity with most-crawled pages analysis
+  - **Mobile vs Desktop Traffic** - Device type breakdown with mobile-first indexing recommendations based on traffic percentages
+  - **Organic Search Traffic Sources** - Identifies which search engines are sending traffic with robust filtering to exclude spoofed referrers
+  - **Top Landing Pages (External Traffic)** - Shows which content pages attract external visitors, excluding admin pages and malware scans
+  - **Social Media Traffic** - Tracks referrals from Facebook, Twitter, LinkedIn, Instagram, Pinterest, Reddit, YouTube, and t.co
+  - **Redirect Analysis (301/302)** - Lists all redirects with color-coded SEO impact indicators (301 = permanent, 302 = temporary)
+  - **URL Depth Analysis** - Analyzes site structure with recommendations to keep content within 3 clicks for better crawling
+  - New configuration variable `SEO_BOTS` for targeting legitimate search engine crawlers
+
+### Improved
+
+- **Advanced Referrer Filtering** - Enhanced fake referrer detection to block sophisticated attack patterns:
+  - Filters spoofed search engine referrers (e.g., `imagewize.com//yahoo.php` masquerading as Yahoo traffic)
+  - Blocks attack patterns: `.php` files, `/config/`, `//`, `/./`, `.env`, `.git`, `.yml`, `.dockerenv`
+  - Excludes WordPress admin/malware scans: `wp-login`, `wp-admin`, `xmlrpc.php`, `/db.php`, `seotheme`, `timthumb`
+  - Removes Magento config scans (`/app/etc/`), random PHP shells (8-character filenames), and AWS config scans (`.ebextensions`)
+  - Prevents same-domain referrers from appearing in external referrer lists
+  - Social media filters now require actual platform domains (facebook.com, twitter.com, etc.)
+
+- **Separation of Concerns** - Clear division between traffic analysis (traffic-monitor.sh) and security monitoring (security-monitor.sh):
+  - Traffic monitor focuses on SEO insights, content performance, and user behavior
+  - Security monitor handles threat detection, brute force attempts, and malicious activity
+  - No duplication of security-focused analysis between scripts
+
+### Changed
+
+- **Enhanced External Referrers Section** - Now uses site domain extraction from log file path for accurate same-domain filtering
+- **Improved Landing Pages Analysis** - Multi-layer filtering pipeline to show only legitimate content pages
+- **Better Organic Search Detection** - Domain-specific matching (google.com, bing.com) instead of keyword matching to prevent spoofing
+- Updated report structure with dedicated "SEO & Content Analysis" section following standard traffic metrics
+
 ## [2.4.2] - 2026-01-21
 
 ### Fixed
