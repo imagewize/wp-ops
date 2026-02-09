@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # Exit on error
 
 # Set your project slug here like example.com
 PROJECT="site.com"
@@ -6,29 +7,58 @@ PROJECT="site.com"
 # Paths based on project
 PROJECT_DIR=~/code/$PROJECT
 TRELLIS_DIR=$PROJECT_DIR/trellis
-BACKUP_DIR=~/trellis-backup
+BACKUP_DIR=~/trellis-backup-$(date +%Y%m%d_%H%M%S)
 TEMP_DIR=~/trellis-temp
 DIFF_DIR=~/trellis-diff
+
+# Verify project exists
+if [ ! -d "$PROJECT_DIR" ]; then
+  echo "ERROR: Project directory not found: $PROJECT_DIR"
+  echo "Please update the PROJECT variable in this script"
+  exit 1
+fi
+
+echo "=== Trellis Updater for $PROJECT ==="
+echo "Project: $PROJECT_DIR"
+echo "Backup: $BACKUP_DIR"
+echo ""
 
 # Step 1: Create backup directory
 mkdir -p $BACKUP_DIR
 
 # Step 2: Back up the entire current Trellis directory including hidden files
+echo "=== Backing up current Trellis directory ==="
 cp -r $TRELLIS_DIR/ $BACKUP_DIR/
+echo "✓ Backup created at: $BACKUP_DIR"
+echo ""
 
 # Step 3: Clone fresh Trellis to temporary directory
+echo "=== Cloning latest Trellis from GitHub ==="
 mkdir -p $TEMP_DIR
 cd $TEMP_DIR
-git clone git@github.com:roots/trellis.git
+if [ -d "trellis" ]; then
+  echo "Removing existing temp directory..."
+  rm -rf trellis
+fi
+git clone --depth 1 git@github.com:roots/trellis.git
+echo "✓ Latest Trellis cloned"
+echo ""
 
 # Step 4: Generate diff to see what would change
+echo "=== Generating diff of changes ==="
 mkdir -p $DIFF_DIR
-diff -rq $TEMP_DIR/trellis/ $TRELLIS_DIR/ > $DIFF_DIR/changes.txt
+diff -rq $TEMP_DIR/trellis/ $TRELLIS_DIR/ > $DIFF_DIR/changes.txt || true
+echo "✓ Diff saved to: $DIFF_DIR/changes.txt"
+echo ""
 
 # Step 5: Remove .git directory from the cloned Trellis to prevent conflicts
+echo "=== Preparing fresh Trellis for sync ==="
 rm -rf $TEMP_DIR/trellis/.git
+echo "✓ Removed .git directory from cloned Trellis"
+echo ""
 
 # Step 6: Update Trellis files using rsync with explicit excludes
+echo "=== Syncing Trellis updates while preserving custom configurations ==="
 # Note: Excludes are organized by category:
 #   - Secrets & credentials (vault files, .vault_pass)
 #   - Git & CI/CD (.git, .github)
@@ -61,6 +91,8 @@ rsync -av --delete \
   --exclude="hosts/" \
   $TEMP_DIR/trellis/ $TRELLIS_DIR/
 
+echo "✓ Trellis files updated"
+
 # Step 6b: Verify critical files were preserved
 echo ""
 echo "=== Verifying critical files ==="
@@ -83,22 +115,29 @@ for env in all development production staging; do
     echo "  cp $BACKUP_DIR/group_vars/$env/vault.yml $TRELLIS_DIR/group_vars/$env/"
   fi
 done
+echo "✓ All critical files verified"
 echo "=== Verification complete ==="
+echo ""
 
-# Step 7: Clean up temporary directory
-# rm -rf $TEMP_DIR
+# Step 7: Show summary
+echo "=== Update Summary ==="
+echo "Next steps:"
+echo "1. Review changes: cd $PROJECT_DIR && git diff trellis/"
+echo "2. Check diff summary: cat $DIFF_DIR/changes.txt"
+echo "3. Update Galaxy roles: cd $TRELLIS_DIR && ansible-galaxy install -r galaxy.yml --force"
+echo "4. Test in development (if applicable)"
+echo "5. Commit changes: git add trellis/ && git commit -m 'Update Trellis to latest version'"
+echo ""
+echo "Backup location: $BACKUP_DIR"
+echo "Temp directory: $TEMP_DIR (manually remove when done)"
+echo ""
 
 # Step 8: Return to project directory
-# cd $PROJECT_DIR
+cd $PROJECT_DIR
 
-# Step 9: Check status of changes
+# Commented out: Manual steps for user to review and execute
 # git status
-
-# Step 10: Review diff of changes
 # git diff trellis/
-
-# Step 11: Add changes if everything looks good
 # git add trellis/
-
-# Step 12: Commit the changes
 # git commit -m "Update Trellis to latest version while preserving custom configurations"
+# cd trellis && ansible-galaxy install -r galaxy.yml --force

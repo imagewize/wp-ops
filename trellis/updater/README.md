@@ -64,30 +64,107 @@ After upgrading, you should manually review and potentially merge changes from t
 
 3. **Galaxy roles** - Run `ansible-galaxy install -r galaxy.yml` to update dependencies
 
+## Prerequisites
+
+- Ansible 2.10+ (check with `ansible --version`)
+- Git access to roots/trellis repository
+- Backup of your current Trellis configuration (script creates this automatically)
+
 ## Usage
 
-1. Edit the script to set your project slug:
+1. **Fetch latest upstream changes** (if using upstream remote):
 ```bash
-# Set your project slug here like example.com
-PROJECT="your-site-name"
+cd ~/code/your-site-name
+git fetch upstream  # Assuming you have upstream remote configured
+git log HEAD..upstream/master | head -20  # Review what's new
 ```
 
-2. Make the script executable:
+2. **Edit the script to set your project slug**:
 ```bash
-chmod +x updates/trellis-updater.sh
+# Open the script and update line 4
+PROJECT="your-site-name"  # e.g., "imagewize.com"
 ```
 
-3. Run the script:
+3. **Make the script executable** (first time only):
 ```bash
-./updates/trellis-updater.sh
+chmod +x trellis-updater.sh
 ```
 
-4. Review the changes in your Git repository before pushing them.
+4. **Run the updater script**:
+```bash
+./trellis-updater.sh
+```
+
+5. **Review the changes**:
+```bash
+# Check diff summary
+cat ~/trellis-diff/changes.txt
+
+# Review detailed changes
+cd ~/code/your-site-name
+git status
+git diff trellis/
+
+# Check specific files
+git diff trellis/requirements.txt
+git diff trellis/CHANGELOG.md
+```
+
+6. **Update Ansible Galaxy roles**:
+```bash
+cd ~/code/your-site-name/trellis
+ansible-galaxy install -r galaxy.yml --force
+```
+
+7. **Test in development** (if applicable):
+```bash
+# Quick VM test (if VM is running)
+trellis vm shell --workdir /srv/www/yoursite.com/current -- wp --version --path=web/wp
+
+# Or full provision (takes longer)
+# trellis provision development
+```
+
+8. **Commit the changes**:
+```bash
+git add trellis/
+git commit -m "Update Trellis to latest version
+
+- Fetch upstream changes from roots/trellis
+- Preserve custom configurations (vault, wordpress_sites, PHP settings, SMTP)
+- Update Galaxy roles
+- Tested in development environment"
+
+git push origin main
+```
+
+## What Changed in This Version
+
+**Script Improvements (2026-02-09)**:
+- ✅ Added timestamped backups (`~/trellis-backup-YYYYMMDD_HHMMSS`)
+- ✅ Added error handling (`set -e`)
+- ✅ Added project directory validation
+- ✅ Added progress messages with checkmarks
+- ✅ Improved diff handling (won't fail on differences)
+- ✅ Added `--depth 1` to git clone (faster)
+- ✅ Added comprehensive summary with next steps
+- ✅ Added automatic cleanup of existing temp directories
 
 ## Troubleshooting & Tips
 
+### Ansible Version Compatibility
+Recent Trellis versions support Ansible 2.10+ and have removed the `ansible-core<2.19.0` constraint. If you're upgrading from an older Trellis version:
+
+```bash
+# Check your Ansible version
+ansible --version
+
+# Expected: ansible-core 2.10.0 or higher
+# Note: Homebrew ansible 13.x includes ansible-core 2.20.x (compatible)
+```
+
 ### Backup Directory Issues
-The script uses `~/trellis-backup/` by default. If you get errors like `mkdir: : No such file or directory`, ensure you're using absolute paths in the script variables.
+The script now uses timestamped backups (`~/trellis-backup-YYYYMMDD_HHMMSS/`). Each run creates a new backup, so you can safely run multiple times without overwriting previous backups.
 
 ### MariaDB Template Customizations
 The rsync command will overwrite role templates. If you have customizations in:
