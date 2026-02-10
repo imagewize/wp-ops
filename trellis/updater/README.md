@@ -52,6 +52,19 @@ The updater script specifically preserves the following files/directories:
 ### Custom Deploy Hooks
 - `deploy-hooks/` - Custom deployment scripts (e.g., memory limits for wp acorn)
 
+### Custom Ansible Playbooks
+- `database-backup.yml`, `database-pull.yml`, `database-push.yml` - Database management
+- `files-backup.yml`, `files-pull.yml`, `files-push.yml` - Uploads management
+- `uploads.yml` - Uploads sync playbook
+
+### Custom Nginx Configurations
+- `nginx-includes/` - Custom Nginx configs (SEO redirects, asset expiry, security rules)
+
+### Custom Documentation
+- `docs/` - Project-specific documentation
+- `CHANGELOG.md` - Trellis upgrade changelog
+- `CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md` - Migration notes
+
 ## Post-Upgrade Manual Review
 
 After upgrading, you should manually review and potentially merge changes from the new Trellis version:
