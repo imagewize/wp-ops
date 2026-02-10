@@ -36,7 +36,7 @@ scripts/
 - Bash shell (included on all Linux/macOS systems)
 - Git (for GitHub integration scripts)
 - WP-CLI (for WordPress backup/release scripts)
-- Claude CLI or Codex (optional, for AI features)
+- Claude CLI, Codex, or Mistral Vibe (optional, for AI features)
 - PHP (for webhook receiver)
 
 ### Common Operations
@@ -62,9 +62,9 @@ scripts/
 
 ## GitHub Integration
 
-### create-pr.sh (414 lines)
+### create-pr.sh (635 lines)
 
-Intelligent GitHub pull request creation with AI-powered descriptions using Claude CLI or Codex.
+Intelligent GitHub pull request creation with AI-powered descriptions using Claude CLI, Codex, or Mistral Vibe.
 
 #### Features
 
@@ -95,7 +95,7 @@ Intelligent GitHub pull request creation with AI-powered descriptions using Clau
   - `--no-ai` - Skip AI generation (simple PR, saves tokens)
   - `--no-interactive` - Non-interactive mode
   - `--update` - Update existing PR description
-  - `--ai=claude|codex` - Choose AI provider
+  - `--ai=claude|codex|vibe` - Choose AI provider
 
 #### Usage
 
@@ -114,6 +114,7 @@ Intelligent GitHub pull request creation with AI-powered descriptions using Clau
 
 # Specific AI provider
 ./create-pr.sh --ai=codex main "Fix bug"
+./create-pr.sh --ai=vibe main "Add feature"
 ```
 
 #### Example Output
@@ -155,6 +156,9 @@ npm install -g @anthropics/claude-cli
 
 # Or use Codex (optional)
 pip install openai-codex
+
+# Or use Mistral Vibe (optional)
+npm install -g @mistralai/vibe-cli
 ```
 
 ---

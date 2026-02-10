@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-02-10
+
+### Added
+
+- **Mistral Vibe AI Support for PR Creation** - Enhanced [scripts/create-pr.sh](scripts/create-pr.sh) with Mistral Vibe CLI integration:
+  - Added `--ai=vibe` flag for explicit Mistral Vibe selection alongside Claude and Codex
+  - Automatic detection of Vibe CLI with multi-tool selection prompt
+  - Environment variable support for custom Vibe command (`VIBE_COMMAND`) and arguments (`VIBE_CLI_ARGS`)
+  - Vibe-specific command execution with `-p` flag and `--output text` parameter
+  - Interactive AI tool selection now includes Vibe when multiple CLIs are available
+  - Updated [scripts/README.md](scripts/README.md) with Vibe installation instructions and usage examples
+
+### Changed
+
+- **PR Creation Script AI Backend** - Updated [scripts/create-pr.sh](scripts/create-pr.sh) option parsing and execution logic:
+  - Extended AI tool validation to accept "claude", "codex", or "vibe"
+  - Enhanced non-interactive mode to support Vibe as fallback option
+  - Updated error messages to include Vibe in supported AI tools list
+  - Modified AI tool detection to check for all three CLI tools (Claude, Codex, Vibe)
+
 ## [2.5.1] - 2026-02-10
 
 ### Changed
