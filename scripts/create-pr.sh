@@ -5,10 +5,10 @@
 # Example: ./create-pr.sh main "Add new feature"
 #
 # Options:
-#   --ai=claude|codex Choose AI backend (default: claude)
-#   --no-ai          Skip AI-powered description generation (faster but less detailed)
-#   --no-interactive Skip all prompts, use defaults/arguments
-#   --update         Update existing PR description for current branch
+#   --ai=claude|codex|vibe Choose AI backend (default: claude)
+#   --no-ai              Skip AI-powered description generation (faster but less detailed)
+#   --no-interactive     Skip all prompts, use defaults/arguments
+#   --update             Update existing PR description for current branch
 
 set -e
 
@@ -40,7 +40,7 @@ while [ $# -gt 0 ]; do
             AI_TOOL_SPECIFIED=true
             shift
         else
-            echo "Error: --ai requires a value (claude or codex)."
+            echo "Error: --ai requires a value (claude, codex, or vibe)."
             exit 1
         fi
         ;;
@@ -53,14 +53,15 @@ done
 set -- "${ARGS[@]}"
 
 AI_TOOL=$(echo "$AI_TOOL" | tr '[:upper:]' '[:lower:]')
-if [ "$AI_TOOL" != "claude" ] && [ "$AI_TOOL" != "codex" ]; then
-    echo "Error: Unsupported AI tool '$AI_TOOL'. Use 'claude' or 'codex'."
+if [ "$AI_TOOL" != "claude" ] && [ "$AI_TOOL" != "codex" ] && [ "$AI_TOOL" != "vibe" ]; then
+    echo "Error: Unsupported AI tool '$AI_TOOL'. Use 'claude', 'codex', or 'vibe'."
     exit 1
 fi
 
 # CLI command names can be overridden via environment if needed
 CLAUDE_COMMAND=${CLAUDE_COMMAND:-claude}
 CODEX_COMMAND=${CODEX_COMMAND:-codex}
+VIBE_COMMAND=${VIBE_COMMAND:-vibe}
 
 # Check if we're in a git repository
 if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
@@ -113,9 +114,10 @@ if [ "$INTERACTIVE" = true ]; then
         AVAILABLE_AI_TOOLS=()
         command -v "$CLAUDE_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("claude")
         command -v "$CODEX_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("codex")
+        command -v "$VIBE_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("vibe")
 
         if [ ${#AVAILABLE_AI_TOOLS[@]} -eq 0 ]; then
-            echo "⚠️  No AI CLI found (checked for '$CLAUDE_COMMAND' and '$CODEX_COMMAND'). AI mode not available."
+            echo "⚠️  No AI CLI found (checked for '$CLAUDE_COMMAND', '$CODEX_COMMAND', and '$VIBE_COMMAND'). AI mode not available."
             USE_AI=false
         else
             echo "AI-powered description generation is available."
@@ -159,6 +161,8 @@ else
     if [ -z "$USE_AI" ]; then
         if [ "$AI_TOOL" = "codex" ] && command -v "$CODEX_COMMAND" &> /dev/null; then
             USE_AI=true
+        elif [ "$AI_TOOL" = "vibe" ] && command -v "$VIBE_COMMAND" &> /dev/null; then
+            USE_AI=true
         elif [ "$AI_TOOL" = "claude" ] && command -v "$CLAUDE_COMMAND" &> /dev/null; then
             USE_AI=true
         elif command -v "$CLAUDE_COMMAND" &> /dev/null; then
@@ -166,6 +170,9 @@ else
             USE_AI=true
         elif command -v "$CODEX_COMMAND" &> /dev/null; then
             AI_TOOL="codex"
+            USE_AI=true
+        elif command -v "$VIBE_COMMAND" &> /dev/null; then
+            AI_TOOL="vibe"
             USE_AI=true
         else
             USE_AI=false
@@ -463,6 +470,14 @@ Now provide ONLY the description content (no meta-commentary). Start directly wi
             # shellcheck disable=SC2206
             ai_args=($CODEX_CLI_ARGS)
         fi
+    elif [ "$AI_TOOL" = "vibe" ]; then
+        ai_command="$VIBE_COMMAND"
+        if [ -n "${VIBE_CLI_ARGS:-}" ]; then
+            # shellcheck disable=SC2206
+            ai_args=($VIBE_CLI_ARGS)
+        else
+            ai_args=(-p)
+        fi
     else
         ai_command="$CLAUDE_COMMAND"
         if [ -n "${CLAUDE_CLI_ARGS:-}" ]; then
@@ -485,7 +500,7 @@ Now provide ONLY the description content (no meta-commentary). Start directly wi
     local ai_description=""
     local exit_code=0
 
-    # Call selected AI CLI (Codex requires exec for non-interactive output)
+    # Call selected AI CLI (Codex requires exec for non-interactive output, Vibe requires prompt as argument)
     set +e
     if [ "$AI_TOOL" = "codex" ]; then
         local tmp_output
@@ -496,6 +511,9 @@ Now provide ONLY the description content (no meta-commentary). Start directly wi
             ai_description=$(cat "$tmp_output")
         fi
         rm -f "$tmp_output"
+    elif [ "$AI_TOOL" = "vibe" ]; then
+        ai_description=$("$ai_command" "${ai_args[@]}" "$prompt" --output text 2>&1)
+        exit_code=$?
     else
         ai_description=$(echo "$prompt" | "$ai_command" "${ai_args[@]}" 2>"$tmp_error")
         exit_code=$?
