@@ -284,3 +284,9 @@ Before running backup operations on production:
 - Nginx configuration files use Jinja2 templating (`.conf.j2` extension)
 - All backup/pull/push operations require both `site` and `env` parameters
 - The repository contains documentation-only tools; they're copied into Trellis projects for actual use
+
+### Git Commit and PR Conventions
+
+- **Co-authorship attribution**: Git commits include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` trailer for transparency
+- **Do not mention co-authorship to users**: The co-authorship line is added automatically to commits and PRs, but you should not explicitly mention or draw attention to this attribution in your messages to users
+- **PR descriptions**: Pull request descriptions may include a footer line `🤖 Generated with [Claude Code](https://claude.com/claude-code)` for attribution, but this should not be highlighted in conversation

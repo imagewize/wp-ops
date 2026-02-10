@@ -67,6 +67,9 @@ echo "=== Syncing Trellis updates while preserving custom configurations ==="
 #   - Custom SMTP settings (mail.yml with Brevo/Sendgrid credentials)
 #   - Custom deploy hooks (build-before.yml, build-after.yml with memory limits)
 #   - CLI config (trellis.cli.yml)
+#   - Custom Ansible playbooks (database-*.yml, files-*.yml, uploads.yml)
+#   - Custom Nginx configs (nginx-includes/)
+#   - Custom documentation (docs/, CHANGELOG.md)
 rsync -av --delete \
   --exclude=".vault_pass" \
   --exclude="ansible.cfg" \
@@ -89,6 +92,17 @@ rsync -av --delete \
   --exclude="deploy-hooks/" \
   --exclude="trellis.cli.yml" \
   --exclude="hosts/" \
+  --exclude="database-backup.yml" \
+  --exclude="database-pull.yml" \
+  --exclude="database-push.yml" \
+  --exclude="files-backup.yml" \
+  --exclude="files-pull.yml" \
+  --exclude="files-push.yml" \
+  --exclude="uploads.yml" \
+  --exclude="nginx-includes/" \
+  --exclude="docs/" \
+  --exclude="CHANGELOG.md" \
+  --exclude="CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md" \
   $TEMP_DIR/trellis/ $TRELLIS_DIR/
 
 echo "✓ Trellis files updated"
