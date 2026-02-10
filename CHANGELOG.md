@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-02-10
+
+### Changed
+
+- **Trellis Updater File Preservation** - Extended [trellis/updater/trellis-updater.sh](trellis/updater/trellis-updater.sh) to preserve additional custom files:
+  - **Custom Ansible playbooks** - Database and files management playbooks (`database-backup.yml`, `database-pull.yml`, `database-push.yml`, `files-backup.yml`, `files-pull.yml`, `files-push.yml`, `uploads.yml`)
+  - **Custom Nginx configurations** - Project-specific Nginx includes (`nginx-includes/` directory)
+  - **Custom documentation** - Project docs and changelogs (`docs/`, `CHANGELOG.md`, `CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md`)
+  - Updated [trellis/updater/README.md](trellis/updater/README.md) to document newly preserved file categories
+
+### Improved
+
+- Trellis updater script now preserves a more comprehensive set of custom configurations during version updates
+- Better documentation of which files and directories are excluded from rsync during Trellis updates
+
 ## [2.5.0] - 2026-01-30
 
 ### Added
