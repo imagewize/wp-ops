@@ -10,7 +10,7 @@ This section contains guides for diagnosing and resolving common issues with Wor
 | [MariaDB.md](MariaDB.md) | Startup failures, plugin issues, connection problems |
 | [OOM.md](OOM.md) | Out of memory issues, WP-Cron memory leaks, PHP CLI limits |
 | [MAIL.md](MAIL.md) | SMTP configuration issues after Trellis upgrades |
-
+| [MULTI-SITE-ADDITION.md](MULTI-SITE-ADDITION.md) | Multi Site site addition debugging |
 ## Quick Diagnostic Commands
 
 SSH to your server and run these commands to quickly assess server health.
