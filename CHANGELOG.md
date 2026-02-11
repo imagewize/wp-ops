@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.3] - 2026-02-10
+
+### Added
+
+- ** Multi Site site addition issues and solutions** 
+  - Added Multi site site addition trouble shooting section including commands to deal with issues when ID, slug and or name don't match post addition new site
+
 ## [2.5.2] - 2026-02-10
 
 ### Added
