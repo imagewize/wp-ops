@@ -56,6 +56,7 @@ rsync -av \
   --exclude="group_vars/all/users.yml" \
   --exclude="group_vars/all/main.yml" \
   --exclude="group_vars/all/mail.yml" \
+  --exclude="group_vars/all/security.yml" \
   --exclude="group_vars/production/main.yml" \
   --exclude="group_vars/staging/main.yml" \
   --exclude="group_vars/development/main.yml" \
@@ -68,6 +69,7 @@ rsync -av \
 **Note:** The excluded files contain your custom configurations:
 - `main.yml` files: PHP/server settings (memory limits, PHP-FPM pool config, MariaDB settings)
 - `mail.yml`: SMTP server configuration (Brevo/Sendgrid credentials)
+- `security.yml`: fail2ban jails (wordpress_wp_login), bantime, maxretry, IP whitelist ⚠️
 - `deploy-hooks/`: Custom deployment scripts
 These are excluded to preserve your customizations.
 
