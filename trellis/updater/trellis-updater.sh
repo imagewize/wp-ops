@@ -86,6 +86,7 @@ rsync -av --delete \
   --exclude="group_vars/all/users.yml" \
   --exclude="group_vars/all/main.yml" \
   --exclude="group_vars/all/mail.yml" \
+  --exclude="group_vars/all/security.yml" \
   --exclude="group_vars/production/main.yml" \
   --exclude="group_vars/staging/main.yml" \
   --exclude="group_vars/development/main.yml" \
@@ -117,6 +118,12 @@ fi
 if ! grep -q "vault_password_file" "$TRELLIS_DIR/ansible.cfg" 2>/dev/null; then
   echo "WARNING: ansible.cfg missing vault_password_file! Restore from backup:"
   echo "  cp $BACKUP_DIR/ansible.cfg $TRELLIS_DIR/"
+fi
+if ! grep -q 'wordpress_wp_login' "$TRELLIS_DIR/group_vars/all/security.yml" 2>/dev/null || \
+   grep -A3 'wordpress_wp_login' "$TRELLIS_DIR/group_vars/all/security.yml" | grep -q 'enabled: "false"'; then
+  echo "WARNING: security.yml fail2ban wordpress_wp_login jail may be disabled! Verify:"
+  echo "  grep -A5 'wordpress_wp_login' $TRELLIS_DIR/group_vars/all/security.yml"
+  echo "  It should be: enabled: \"true\""
 fi
 if ! grep -q "smtp-relay.brevo.com\|smtp.sendgrid.net" "$TRELLIS_DIR/group_vars/all/mail.yml" 2>/dev/null; then
   echo "WARNING: mail.yml may have been overwritten with example values! Restore from backup:"
