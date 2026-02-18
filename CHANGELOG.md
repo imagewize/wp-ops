@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.4] - 2026-02-18
+
+### Added
+
+- **Trellis Updater security.yml Preservation** - Extended `trellis/updater/trellis-updater.sh` and `trellis/updater/manual-update.md` to preserve `group_vars/all/security.yml` during Trellis updates:
+  - Added `--exclude="group_vars/all/security.yml"` to rsync exclusion list in both the automated script and manual update guide
+  - Added post-update verification check in `trellis-updater.sh` that warns when the `wordpress_wp_login` fail2ban jail is missing or disabled
+  - Documented `security.yml` in the manual update notes with a warning about fail2ban jail configuration (bantime, maxretry, IP whitelist)
+
 ## [2.5.3] - 2026-02-10
 
 ### Added
