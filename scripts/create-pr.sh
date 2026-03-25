@@ -88,23 +88,28 @@ if [ "$INTERACTIVE" = true ]; then
     echo "Current branch: $CURRENT_BRANCH"
     echo ""
 
-    # Prompt for base branch
-    if [ -z "$1" ]; then
-        read -p "Base branch (default: main): " input_base
-        BASE_BRANCH="${input_base:-main}"
-    else
-        BASE_BRANCH="$1"
-    fi
+    # Prompt for base branch (not needed in update mode)
+    if [ "$UPDATE_MODE" = false ]; then
+        if [ -z "$1" ]; then
+            read -p "Base branch (default: main): " input_base
+            BASE_BRANCH="${input_base:-main}"
+        else
+            BASE_BRANCH="$1"
+        fi
 
-    # Prompt for PR title
-    if [ -z "$2" ]; then
-        # Generate default title from branch name
-        DEFAULT_TITLE=$(echo "$CURRENT_BRANCH" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
-        echo ""
-        read -p "PR title (default: $DEFAULT_TITLE): " input_title
-        PR_TITLE="${input_title:-$DEFAULT_TITLE}"
+        # Prompt for PR title
+        if [ -z "$2" ]; then
+            # Generate default title from branch name
+            DEFAULT_TITLE=$(echo "$CURRENT_BRANCH" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2));}1')
+            echo ""
+            read -p "PR title (default: $DEFAULT_TITLE): " input_title
+            PR_TITLE="${input_title:-$DEFAULT_TITLE}"
+        else
+            PR_TITLE="$2"
+        fi
     else
-        PR_TITLE="$2"
+        BASE_BRANCH="${1:-main}"
+        PR_TITLE="${2:-}"
     fi
 
     # Prompt for AI mode if not already specified
@@ -512,7 +517,7 @@ Now provide ONLY the description content (no meta-commentary). Start directly wi
         fi
         rm -f "$tmp_output"
     elif [ "$AI_TOOL" = "vibe" ]; then
-        ai_description=$("$ai_command" "${ai_args[@]}" "$prompt" --output text 2>&1)
+        ai_description=$("$ai_command" "${ai_args[@]}" "$prompt" --output text < /dev/null 2>&1)
         exit_code=$?
     else
         ai_description=$(echo "$prompt" | "$ai_command" "${ai_args[@]}" 2>"$tmp_error")

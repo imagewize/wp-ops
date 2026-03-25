@@ -70,6 +70,7 @@ echo "=== Syncing Trellis updates while preserving custom configurations ==="
 #   - Custom Ansible playbooks (database-*.yml, files-*.yml, uploads.yml)
 #   - Custom Nginx configs (nginx-includes/)
 #   - Custom documentation (docs/, CHANGELOG.md)
+#   - Custom role templates (php-fpm-pool with request_terminate_timeout)
 rsync -av --delete \
   --exclude=".vault_pass" \
   --exclude="ansible.cfg" \
@@ -104,6 +105,7 @@ rsync -av --delete \
   --exclude="docs/" \
   --exclude="CHANGELOG.md" \
   --exclude="CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md" \
+  --exclude="roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2" \
   $TEMP_DIR/trellis/ $TRELLIS_DIR/
 
 echo "✓ Trellis files updated"

@@ -287,6 +287,6 @@ Before running backup operations on production:
 
 ### Git Commit and PR Conventions
 
-- **Co-authorship attribution**: Git commits include `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` trailer for transparency
-- **Do not mention co-authorship to users**: The co-authorship line is added automatically to commits and PRs, but you should not explicitly mention or draw attention to this attribution in your messages to users
-- **PR descriptions**: Pull request descriptions may include a footer line `🤖 Generated with [Claude Code](https://claude.com/claude-code)` for attribution, but this should not be highlighted in conversation
+- **Atomic commits**: Each commit should represent a single logical change. Do not bundle unrelated changes in one commit. This makes history easier to review and revert when needed.
+- **No Claude mentions**: Do not mention Claude, AI, or co-authorship in commit messages or PR descriptions. Keep attribution neutral and professional.
+- **PR descriptions**: Pull request descriptions should be professional and focused on the changes. Do not include AI attribution footers or tool references.
