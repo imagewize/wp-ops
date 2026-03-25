@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.5] - 2026-03-25
+
+### Added
+
+- **Trellis Updater php-fpm-pool Template Preservation** - Extended [trellis/updater/trellis-updater.sh](trellis/updater/trellis-updater.sh) to preserve custom PHP-FPM pool template:
+  - Added `--exclude="roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2"` to rsync exclusion list
+  - Added comment noting this preserves custom `request_terminate_timeout` settings
+
+### Changed
+
+- **create-pr.sh Update Mode Prompts** - Fixed [scripts/create-pr.sh](scripts/create-pr.sh) interactive mode to skip base branch and PR title prompts when running with `--update` flag
+- **create-pr.sh Vibe stdin Fix** - Fixed Vibe CLI invocation to use `< /dev/null` to prevent stdin blocking in non-interactive contexts
+
+### Documentation
+
+- **CLAUDE.md Git Conventions** - Updated Git Commit and PR Conventions section:
+  - Added atomic commits policy (one logical change per commit)
+  - Replaced co-authorship attribution note with a no-Claude-mentions policy
+
 ## [2.5.4] - 2026-02-18
 
 ### Added
