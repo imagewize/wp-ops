@@ -4,7 +4,7 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 10 utility scripts organized into four functional areas:
+This directory contains 12 utility scripts organized into four functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
@@ -19,6 +19,8 @@ scripts/
 │   ├── db-backup.sh            # Database-only backup with URL replacement
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
 ├── monitoring/                  # Server monitoring and alerting
+│   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
+│   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── updown-webhook-handler.sh     # Webhook event handler
@@ -56,6 +58,12 @@ scripts/
 
 # Scan for security threats
 ./scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 24
+
+# Analyze AI crawler traffic
+./scripts/monitoring/ai-bot-monitor.sh /srv/www/example.com/logs/access.log 24
+
+# Run all monitors and save timestamped reports
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
 ```
 
 ---
@@ -633,7 +641,7 @@ Content Backup:
 
 ## Monitoring Scripts
 
-### traffic-monitor.sh (249 lines)
+### traffic-monitor.sh (533 lines)
 
 Real-time Nginx traffic analysis with intelligent bot filtering and comprehensive reporting.
 
@@ -662,8 +670,11 @@ Real-time Nginx traffic analysis with intelligent bot filtering and comprehensiv
   - Bandwidth summary (MB/GB calculation)
 
 - **Configurable Time Windows**:
-  - Hours parameter for analysis period
-  - Automatic log filtering for performance
+  - Exact epoch-based filtering via `gawk` (falls back to line estimate if unavailable)
+  - Cutoff timestamp shown in analysis header
+
+- **Output File Support**:
+  - Optional third argument saves report to disk via `tee`
 
 #### Usage
 
@@ -674,8 +685,8 @@ Real-time Nginx traffic analysis with intelligent bot filtering and comprehensiv
 # Specific log file and time window
 ./traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6
 
-# Last 24 hours
-./traffic-monitor.sh /var/log/nginx/access.log 24
+# Last 24 hours, save to file
+./traffic-monitor.sh /var/log/nginx/access.log 24 /tmp/traffic-report.txt
 
 # Production usage
 ./traffic-monitor.sh /srv/www/example.com/logs/access.log 12
@@ -715,7 +726,7 @@ Bandwidth: 1.2 GB total
 
 ---
 
-### security-monitor.sh (524 lines)
+### security-monitor.sh (552 lines)
 
 Advanced Nginx security threat detection with detailed attack pattern analysis and IP blocking recommendations.
 
@@ -795,11 +806,11 @@ Advanced Nginx security threat detection with detailed attack pattern analysis a
 # Specific log, time window, and alert threshold
 ./security-monitor.sh /srv/www/example.com/logs/access.log 1 50
 
-# Last 24 hours, alert at 100 requests
-./security-monitor.sh /var/log/nginx/access.log 24 100
+# Last 24 hours, alert at 100 requests, save to file
+./security-monitor.sh /var/log/nginx/access.log 24 100 /tmp/security-report.txt
 
 # Syntax
-./security-monitor.sh [LOG_FILE] [HOURS] [ALERT_THRESHOLD]
+./security-monitor.sh [LOG_FILE] [HOURS] [ALERT_THRESHOLD] [OUTPUT_FILE]
 ```
 
 #### Example Output
@@ -852,6 +863,99 @@ location / {
 Deploy with:
 ```bash
 trellis provision --tags nginx-includes production
+```
+
+---
+
+### ai-bot-monitor.sh (390 lines)
+
+Analyzes AI crawler traffic from Nginx logs, with per-bot breakdowns, bandwidth usage, scraped pages, and robots.txt compliance.
+
+#### Features
+
+- **Detects 20+ AI Crawlers**:
+  - OpenAI: GPTBot, ChatGPT-User, OAI-SearchBot
+  - Anthropic: ClaudeBot, anthropic-ai
+  - Google: Google-Extended
+  - Meta: meta-externalagent
+  - Others: PerplexityBot, CCBot, Bytespider, Amazonbot, Diffbot, YouBot, cohere-ai, Applebot-Extended, AI2Bot, and more
+
+- **Comprehensive Reports**:
+  - AI vs non-AI traffic split with percentage
+  - Requests and bandwidth per crawler
+  - Top 30 pages scraped by all AI bots combined
+  - Top 10 pages per major crawler
+  - Hourly AI traffic distribution with ASCII bar chart
+  - HTTP status codes returned to AI bots
+  - Total bandwidth consumed (MB/GB) and share of total
+  - Top IP addresses used by AI crawlers
+  - Robots.txt compliance check
+
+- **Operator IP Cross-Check** (optional):
+  - Flag AI UA requests from known operator IP ranges
+  - Distinguishes tool sessions from autonomous crawlers
+  - Configure `OPERATOR_IP_PATTERN` in script header
+
+- **Accurate Time Filtering**:
+  - gawk-based epoch timestamp filtering; falls back to tail estimate if unavailable
+
+#### Usage
+
+```bash
+# Default: example.com log, last 24 hours
+./ai-bot-monitor.sh
+
+# Specific log file and time window
+./ai-bot-monitor.sh /srv/www/demo.example.com/logs/access.log 6
+
+# Last 7 days, save to file
+./ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168 /tmp/ai-bots.txt
+
+# Syntax
+./ai-bot-monitor.sh [LOG_FILE] [HOURS] [OUTPUT_FILE]
+```
+
+---
+
+### run-monitoring.sh (285 lines)
+
+Orchestrator that runs all three monitoring scripts in sequence and generates a consolidated markdown summary report.
+
+#### Features
+
+- **Runs All Monitors**:
+  - `traffic-monitor.sh` — traffic analysis
+  - `security-monitor.sh` — security threat detection
+  - `ai-bot-monitor.sh` — AI crawler analysis
+
+- **Timestamped Output Files**:
+  - `traffic-monitor-YYYY-MM-DD-HHmmss.txt`
+  - `security-monitor-YYYY-MM-DD-HHmmss.txt`
+  - `ai-bot-monitor-YYYY-MM-DD-HHmmss.txt`
+  - `monitoring-summary-YYYY-MM-DD.md` — consolidated markdown report
+
+- **Auto-Detects Context**:
+  - Production server (`/srv/www` present): saves to `~/monitoring/`
+  - Local or other context: saves to `./monitoring-reports/`
+
+- **Summary Report Includes**:
+  - Total requests, real user traffic, unique visitors, bandwidth
+  - Security alert and warning counts with top alerts listed
+  - AI crawler share of traffic and bandwidth
+  - Top 10 most requested pages (real users)
+  - Recommendations and next steps
+
+#### Usage
+
+```bash
+# Remote execution (recommended — streams script over SSH)
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+
+# Remote with custom hours window
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 48
+
+# Local execution on production server
+./run-monitoring.sh 24
 ```
 
 ---
@@ -1057,11 +1161,17 @@ tail -f /home/web/monitoring/webhook.log
 ### Monitoring Automation
 
 ```bash
-# Hourly security scan
+# Run all monitors daily at 9 AM (traffic + security + AI bots + summary)
+0 9 * * * /srv/scripts/monitoring/run-monitoring.sh 24 >> /var/log/monitoring.log 2>&1
+
+# Hourly security scan (standalone)
 0 * * * * /srv/scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 1 50 > /var/log/security-scan.log 2>&1
 
-# Daily traffic report at 9 AM
+# Daily traffic report at 9 AM (standalone)
 0 9 * * * /srv/scripts/monitoring/traffic-monitor.sh /srv/www/example.com/logs/access.log 24 > /var/log/traffic-report.log 2>&1
+
+# Weekly AI crawler report on Mondays at 8 AM
+0 8 * * 1 /srv/scripts/monitoring/ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168 > /var/log/ai-bot-report.log 2>&1
 ```
 
 ---

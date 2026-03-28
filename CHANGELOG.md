@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.6] - 2026-03-28
+
+### Added
+
+- **AI Bot Monitor** - New [scripts/monitoring/ai-bot-monitor.sh](scripts/monitoring/ai-bot-monitor.sh) script for analyzing AI crawler traffic from Nginx logs:
+  - Detects 20+ AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, CCBot, Bytespider, etc.)
+  - Reports requests and bandwidth per crawler, top scraped pages (overall + per bot), traffic by hour, HTTP status codes, robots.txt compliance, and IP breakdown
+  - Optional operator IP cross-check to distinguish tool sessions from autonomous crawlers
+  - Accepts optional `output_file` argument to save report to disk
+  - Uses gawk-based timestamp filtering for accurate time windows
+
+- **Run Monitoring Orchestrator** - New [scripts/monitoring/run-monitoring.sh](scripts/monitoring/run-monitoring.sh) script that runs all three monitors in sequence:
+  - Runs `traffic-monitor.sh`, `security-monitor.sh`, and `ai-bot-monitor.sh` with timestamped output files
+  - Generates a consolidated `monitoring-summary-YYYY-MM-DD.md` markdown report with key metrics
+  - Auto-detects production vs. local context for output directory selection
+  - Designed for remote execution: `ssh web@example.com 'bash -s' < run-monitoring.sh`
+
+### Changed
+
+- **traffic-monitor.sh Accurate Time Filtering** - Updated [scripts/monitoring/traffic-monitor.sh](scripts/monitoring/traffic-monitor.sh) to use gawk-based timestamp parsing instead of tail-line estimation:
+  - Replaced `tail -n estimated_lines` with exact epoch-based filtering via `gawk`; falls back to tail estimate if gawk is unavailable
+  - Added optional `output_file` third argument — pipes output to both stdout and file via `tee`
+  - Increased top pages from 10 to 50 results
+  - Improved "Analyzing..." label to show exact cutoff timestamp
+
+- **security-monitor.sh Accurate Time Filtering** - Updated [scripts/monitoring/security-monitor.sh](scripts/monitoring/security-monitor.sh) with the same gawk-based timestamp filtering:
+  - Replaced tail estimation with exact epoch-based filtering; gawk fallback preserved
+  - Added optional `output_file` fourth argument for saving reports to disk
+  - Added cutoff timestamp label to analysis header
+
 ## [2.5.5] - 2026-03-25
 
 ### Added
