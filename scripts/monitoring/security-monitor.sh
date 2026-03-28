@@ -26,6 +26,7 @@ set -e
 LOG_FILE="${1:-/srv/www/example.com/logs/access.log}"
 HOURS="${2:-24}"
 ALERT_THRESHOLD="${3:-100}"  # Alert if single IP exceeds this many requests
+OUTPUT_FILE="${4:-}"  # Optional: path to save report
 
 # WordPress attack patterns
 WP_LOGIN_PATTERN='wp-login\.php'
@@ -87,16 +88,31 @@ check_log_file() {
 }
 
 filter_recent_logs() {
-    # Simple approach: estimate lines based on hours
-    # Average website gets ~500-1000 requests/hour
-    # For accuracy, we'll scan more than needed and rely on the report time grouping
-    local estimated_lines=$((HOURS * 1000))
+    # Calculate exact cutoff epoch (N hours ago) using GNU date (Linux/Ubuntu)
+    local cutoff_epoch
+    cutoff_epoch=$(date -d "${HOURS} hours ago" +%s)
 
-    # Limit to reasonable max
-    [[ $estimated_lines -gt 50000 ]] && estimated_lines=50000
-
-    # Use tail to get recent lines (much faster than filtering entire log)
-    tail -n "$estimated_lines" "$LOG_FILE"
+    # Parse nginx combined log timestamps and filter by actual time.
+    # Requires gawk (available by default on Ubuntu); falls back to tail estimate if missing.
+    # Nginx timestamp format: [DD/Mon/YYYY:HH:MM:SS +ZONE]
+    if command -v gawk &>/dev/null; then
+        gawk -v cutoff="$cutoff_epoch" '
+        BEGIN {
+            split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m)
+            for (i = 1; i <= 12; i++) month[m[i]] = i
+        }
+        {
+            if (match($0, /\[([0-9]{2})\/([A-Za-z]{3})\/([0-9]{4}):([0-9]{2}):([0-9]{2}):([0-9]{2})/, a)) {
+                ts = mktime(a[3] " " month[a[2]] " " (a[1]+0) " " (a[4]+0) " " (a[5]+0) " " (a[6]+0))
+                if (ts >= cutoff) print
+            }
+        }' "$LOG_FILE"
+    else
+        echo "Warning: gawk not found, falling back to line-based estimate" >&2
+        local estimated_lines=$((HOURS * 1000))
+        [[ $estimated_lines -gt 50000 ]] && estimated_lines=50000
+        tail -n "$estimated_lines" "$LOG_FILE"
+    fi
 }
 
 # ============================================================================
@@ -475,6 +491,11 @@ generate_block_recommendations() {
 main() {
     check_log_file
 
+    # Setup output redirection if output file specified
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        exec > >(tee "$OUTPUT_FILE")
+    fi
+
     print_header "Nginx Security Analysis Report - Last ${HOURS} Hours"
     echo "Log file: $LOG_FILE"
     echo "Alert threshold: $ALERT_THRESHOLD requests per IP"
@@ -484,7 +505,10 @@ main() {
     TEMP_LOG=$(mktemp)
     trap 'rm -f "$TEMP_LOG"' EXIT
 
-    # Filter logs by time period
+    # Filter logs by actual timestamp
+    local since_label
+    since_label=$(date -d "${HOURS} hours ago" '+%Y-%m-%d %H:%M UTC')
+    echo "--- Analyzing traffic since ${since_label} (last ${HOURS} hours)... ---"
     filter_recent_logs > "$TEMP_LOG"
 
     local total_requests
@@ -514,6 +538,11 @@ main() {
     echo "2. Consider installing fail2ban for automatic blocking"
     echo "3. Check error logs: tail -50 /var/log/nginx/error.log"
     echo "4. Review successful attacks (200 status on sensitive files)"
+
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        echo ""
+        echo "Report saved to: $OUTPUT_FILE"
+    fi
 }
 
 # ============================================================================
