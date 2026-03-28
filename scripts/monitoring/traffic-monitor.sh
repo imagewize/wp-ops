@@ -25,6 +25,7 @@ set -e
 #   /var/log/nginx/access.log
 LOG_FILE="${1:-/srv/www/example.com/logs/access.log}"
 HOURS="${2:-24}"
+OUTPUT_FILE="${3:-}"  # Optional: path to save report
 
 # Bot patterns to exclude from traffic analysis
 BOT_PATTERN='updown\.io|[Bb]ot|[Ss]pider|[Cc]rawl|Geedo|Semrush|DuckDuckBot|AhrefsBot|MJ12bot|SemrushBot|DataForSeoBot|YandexBot|facebookexternalhit|Googlebot|bingbot|PetalBot|BLEXBot'
@@ -66,16 +67,31 @@ check_log_file() {
 }
 
 filter_recent_logs() {
-    # Simple approach: estimate lines based on hours
-    # Average website gets ~500-1000 requests/hour
-    # For accuracy, we'll scan more than needed and rely on the report time grouping
-    local estimated_lines=$((HOURS * 1000))
+    # Calculate exact cutoff epoch (N hours ago) using GNU date (Linux/Ubuntu)
+    local cutoff_epoch
+    cutoff_epoch=$(date -d "${HOURS} hours ago" +%s)
 
-    # Limit to reasonable max
-    [[ $estimated_lines -gt 50000 ]] && estimated_lines=50000
-
-    # Use tail to get recent lines (much faster than filtering entire log)
-    tail -n "$estimated_lines" "$LOG_FILE"
+    # Parse nginx combined log timestamps and filter by actual time.
+    # Requires gawk (available by default on Ubuntu); falls back to tail estimate if missing.
+    # Nginx timestamp format: [DD/Mon/YYYY:HH:MM:SS +ZONE]
+    if command -v gawk &>/dev/null; then
+        gawk -v cutoff="$cutoff_epoch" '
+        BEGIN {
+            split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m)
+            for (i = 1; i <= 12; i++) month[m[i]] = i
+        }
+        {
+            if (match($0, /\[([0-9]{2})\/([A-Za-z]{3})\/([0-9]{4}):([0-9]{2}):([0-9]{2}):([0-9]{2})/, a)) {
+                ts = mktime(a[3] " " month[a[2]] " " (a[1]+0) " " (a[4]+0) " " (a[5]+0) " " (a[6]+0))
+                if (ts >= cutoff) print
+            }
+        }' "$LOG_FILE"
+    else
+        echo "Warning: gawk not found, falling back to line-based estimate" >&2
+        local estimated_lines=$((HOURS * 1000))
+        [[ $estimated_lines -gt 50000 ]] && estimated_lines=50000
+        tail -n "$estimated_lines" "$LOG_FILE"
+    fi
 }
 
 # ============================================================================
@@ -191,7 +207,7 @@ analyze_organic_search() {
     local search_results
     search_results=$(awk -F'"' '{print $4}' "$TEMP_LOG" \
         | grep -iE 'google\.com|bing\.com|yahoo\.com|duckduckgo\.com|baidu\.com|yandex\.' \
-        | grep -vE '(imagewize\.com|\.php|/config/|//|/\.)' \
+        | grep -vE '(\.php|/config/|//|/\.)' \
         | sed 's/\?.*//' \
         | sort \
         | uniq -c \
@@ -327,6 +343,11 @@ analyze_url_depth() {
 main() {
     check_log_file
 
+    # Setup output redirection if output file specified
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        exec > >(tee "$OUTPUT_FILE")
+    fi
+
     print_header "Nginx Traffic Analysis Report - Last ${HOURS} Hours"
     echo "Log file: $LOG_FILE"
     echo "Generated: $(date)"
@@ -335,8 +356,10 @@ main() {
     TEMP_LOG=$(mktemp)
     trap 'rm -f "$TEMP_LOG"' EXIT
 
-    # Get recent logs (estimated based on traffic volume)
-    print_section "Analyzing recent traffic (last ~${HOURS} hours)..."
+    # Filter logs by actual timestamp
+    local since_label
+    since_label=$(date -d "${HOURS} hours ago" '+%Y-%m-%d %H:%M UTC')
+    print_section "Analyzing traffic since ${since_label} (last ${HOURS} hours)..."
     filter_recent_logs > "$TEMP_LOG"
 
     local total_requests
@@ -380,7 +403,7 @@ main() {
         done
 
     # Top pages (excluding bots and static files)
-    print_section "Top 10 Most Requested Pages"
+    print_section "Top 50 Most Requested Pages"
 
     grep 'HTTP/1.[01]" 200' "$TEMP_LOG" \
         | grep -vE "$BOT_PATTERN" \
@@ -390,7 +413,7 @@ main() {
         | sort \
         | uniq -c \
         | sort -rn \
-        | head -10 \
+        | head -50 \
         | while read -r count url; do
             printf "${GREEN}%8d${NC}  %s\n" "$count" "$url"
         done
@@ -429,13 +452,9 @@ main() {
     # Top referrers (excluding empty and same-domain)
     print_section "Top 10 External Referrers"
 
-    # Get domain from log file path for better filtering
-    local site_domain
-    site_domain=$(echo "$LOG_FILE" | grep -oE '[^/]+\.com' | head -1 || hostname)
-
     awk -F'"' '{print $4}' "$TEMP_LOG" \
         | grep -vE '^-$|^$' \
-        | grep -viE "${site_domain}|localhost" \
+        | grep -v "$(hostname)" \
         | sort \
         | uniq -c \
         | sort -rn \
@@ -500,6 +519,11 @@ main() {
     analyze_url_depth
 
     print_header "Report Complete"
+
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        echo ""
+        echo "Report saved to: $OUTPUT_FILE"
+    fi
 }
 
 # ============================================================================
