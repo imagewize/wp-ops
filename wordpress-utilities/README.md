@@ -51,6 +51,17 @@ Implementation guides and detection methods for popular analytics platforms.
 - `README.md` - Complete implementation and detection guide
 - Bash scripts for analytics detection across multiple platforms
 
+### [Snippets](snippets/)
+
+Small, self-contained PHP snippets ready to drop into `functions.php` or a custom plugin.
+
+**Available:**
+- `post-expiry-noindex.php` — Auto-noindex posts past their expiry date via Yoast SEO, using the site's configured WordPress timezone
+
+**Key Files:**
+- `README.md` - Snippet index and usage notes
+- Individual `.php` files — copy directly into your theme or plugin
+
 ### [Speed Optimization](speed-optimization/)
 
 Performance testing tools and TTFB (Time To First Byte) analysis utilities.

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.7] - 2026-04-06
+
+### Added
+
+- **WordPress Snippets Directory** - New [wordpress-utilities/snippets/](wordpress-utilities/snippets/) directory for small, self-contained PHP snippets:
+  - `post-expiry-noindex.php` — Auto-noindex posts past their expiry date via Yoast SEO's `wpseo_robots` filter, evaluated in the site's configured WordPress timezone (not UTC); adds a "Noindex After Date" meta box to the post sidebar; scoped to configurable category IDs; outputs `noindex, follow`
+  - `README.md` — Snippet index with usage notes, dependencies (Yoast SEO, WP 5.3+), and setup instructions
+- Updated [wordpress-utilities/README.md](wordpress-utilities/README.md) to document the new Snippets section
+
 ## [2.5.6] - 2026-03-28
 
 ### Added
