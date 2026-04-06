@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.8] - 2026-04-06
+
+### Changed
+
+- **README restructured** - Reorganized [README.md](README.md) for clarity and conciseness:
+  - Grouped tools into sections (Trellis, WP-CLI, Nginx, Scripts, WordPress Utilities) with a TOC
+  - Shortened descriptions and removed redundant label text in the Docs column
+  - Removed empty Quick Start section
+  - Moved Troubleshooting under Trellis
+  - Added missing Snippets entry to the tools table
+
 ## [2.5.7] - 2026-04-06
 
 ### Added
