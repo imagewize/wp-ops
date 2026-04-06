@@ -8,42 +8,67 @@
 Tools, scripts, and guides for modern WordPress development & devops—optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
 </div>
 
-## Tools
+## Contents
 
-| Tool | Description | Documentation |
-|------|-------------|---------------|
-| **Trellis Updater** | Safely update Trellis while preserving custom configurations | [→ Guide](trellis/updater/README.md) |
-| **Backup Tools** | Ansible playbooks for database and files backup/push/pull operations | [→ Guide](trellis/backup/README.md) |
-| **Provisioning Reference** | Common Trellis provisioning commands and workflows | [→ Guide](trellis/provision/README.md) |
-| **New Machine Setup** | Set up macOS for Trellis development (tools, SSH, VM architecture) | [→ Guide](trellis/provision/NEW-MACHINE.md) |
-| **Project Setup** | Clone and configure an existing Trellis/Bedrock project | [→ Guide](trellis/provision/PROJECT-SETUP.md) |
-| **Monitoring** | Nginx log monitoring for traffic analysis and security threat detection | [→ Guide](trellis/monitoring/README.md) |
-| **Security** | WordPress protection via fail2ban automatic IP blocking and manual deny rules | [→ Guide](trellis/security/README.md) |
-| **Content Creation** | Automated page creation and WP-CLI content management workflows | [→ Guide](wp-cli/content-creation/README.md) |
-| **Migration Tools** | Migrate WordPress sites to Trellis/Bedrock (single and multi-site) | [→ Guide](wp-cli/migration/README.md) |
-| **URL Update Methods** | Generic WordPress URL update methods for migrations | [→ Guide](wp-cli/migration/URL-UPDATE-METHODS.md) |
-| **Diagnostics** | WordPress diagnostic tools for transients, caching, and performance issues | [→ Guide](wp-cli/diagnostics/README.md) |
-| **Security Scanners** | Dual-scanner suite for WordPress malware detection and security auditing | [→ Guide](wp-cli/security/README.md) |
-| **Image Optimization** | Nginx WebP/AVIF configuration with automatic format serving | [→ Guide](nginx/image-optimization/README.md) |
-| **Browser Caching** | Nginx configuration for optimal static asset caching | [→ Guide](nginx/browser-caching/README.md) |
-| **Redirects** | Nginx redirect configuration for SEO and URL management | [→ Guide](nginx/redirects/README.md) |
-| **Troubleshooting** | Diagnose and resolve PHP-FPM, MariaDB, and server issues | [→ Guide](troubleshooting/README.md) |
-| **PR Creation Script** | AI-powered GitHub PR descriptions with multi-AI backend support (Claude/Codex) | [→ Guide](CREATE-PR.md) |
-| **Plugin Release** | AI-powered version bumping and changelog generation for WordPress plugins | [→ Script](scripts/release-plugin.sh) |
-| **Theme Release** | AI-powered version bumping and changelog generation for WordPress themes | [→ Script](scripts/release-theme.sh) |
-| **Theme Sync** | Rsync script for theme synchronization | [→ Script](scripts/rsync-theme.sh) |
-| **Age Verification** | Cookie-based age verification system with modal interface and ACF integration | [→ Guide](wordpress-utilities/age-verification/README.md) |
-| **Analytics** | Implementation and detection of Google Analytics, Matomo, and other analytics tools | [→ Guide](wordpress-utilities/analytics/README.md) |
-| **Speed Optimization** | Performance testing tools and TTFB analysis with curl/wget | [→ Guide](wordpress-utilities/speed-optimization/README.md) |
+- [Trellis](#trellis)
+- [WP-CLI](#wp-cli)
+- [Nginx](#nginx)
+- [Scripts](#scripts)
+- [WordPress Utilities](#wordpress-utilities)
 
-## Quick Start
+## Trellis
 
-Choose the tool you need and follow its dedicated guide for detailed setup and usage instructions.
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Updater** | Safely update Trellis while preserving custom configurations | [→](trellis/updater/README.md) |
+| **Backup Tools** | Ansible playbooks for database and files backup/push/pull | [→](trellis/backup/README.md) |
+| **Provisioning** | Common provisioning commands and workflows | [→](trellis/provision/README.md) |
+| **New Machine Setup** | Set up macOS for Trellis development | [→](trellis/provision/NEW-MACHINE.md) |
+| **Project Setup** | Clone and configure an existing Trellis/Bedrock project | [→](trellis/provision/PROJECT-SETUP.md) |
+| **Monitoring** | Nginx log monitoring for traffic analysis and security threat detection | [→](trellis/monitoring/README.md) |
+| **Security** | fail2ban IP blocking and manual deny rules | [→](trellis/security/README.md) |
+| **Troubleshooting** | Diagnose PHP-FPM, MariaDB, and server issues | [→](troubleshooting/README.md) |
+
+## WP-CLI
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Content Creation** | Automated page creation and content management workflows | [→](wp-cli/content-creation/README.md) |
+| **Migration Tools** | Migrate WordPress sites to Trellis/Bedrock (single and multi-site) | [→](wp-cli/migration/README.md) |
+| **URL Update Methods** | WordPress URL update methods for migrations | [→](wp-cli/migration/URL-UPDATE-METHODS.md) |
+| **Diagnostics** | Diagnostic tools for transients, caching, and performance | [→](wp-cli/diagnostics/README.md) |
+| **Security Scanners** | Dual-scanner suite for malware detection and security auditing | [→](wp-cli/security/README.md) |
+
+## Nginx
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Image Optimization** | WebP/AVIF configuration with automatic format serving | [→](nginx/image-optimization/README.md) |
+| **Browser Caching** | Optimal static asset caching configuration | [→](nginx/browser-caching/README.md) |
+| **Redirects** | Redirect configuration for SEO and URL management | [→](nginx/redirects/README.md) |
+
+## Scripts
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **PR Creation** | AI-powered GitHub PR descriptions (Claude/Codex) | [→](CREATE-PR.md) |
+| **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release-plugin.sh) |
+| **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release-theme.sh) |
+| **Theme Sync** | Rsync script for theme synchronization | [→](scripts/rsync-theme.sh) |
+
+## WordPress Utilities
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Snippets** | Self-contained PHP snippets ready to drop into themes or plugins | [→](wordpress-utilities/snippets/README.md) |
+| **Age Verification** | Cookie-based age verification with modal interface and ACF integration | [→](wordpress-utilities/age-verification/README.md) |
+| **Analytics** | Google Analytics, Matomo implementation and detection | [→](wordpress-utilities/analytics/README.md) |
+| **Speed Optimization** | Performance testing and TTFB analysis with curl/wget | [→](wordpress-utilities/speed-optimization/README.md) |
 
 ## Requirements
 
 - **Core**: Git, Bash, rsync
-- **Tool-specific**: See individual documentation for Ansible, WP-CLI, ImageMagick, etc.
+- **Tool-specific**: See individual docs for Ansible, WP-CLI, ImageMagick, etc.
 
 ## Credits
 
