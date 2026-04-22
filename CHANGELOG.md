@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.9] - 2026-04-22
+
+### Added
+
+- **Google Organic Referrals Quick Reference** - New [scripts/monitoring/GOOGLE-ORGANIC-REFERRALS.md](scripts/monitoring/GOOGLE-ORGANIC-REFERRALS.md) with Nginx access log commands for extracting organic traffic data:
+  - Full organic landing page breakdown with hit counts sorted by most visited
+  - Bot and crawler noise filtering (Googlebot, AhrefsBot, SemrushBot, etc.)
+  - Distinct organic landing page count over a 24h window
+  - Per-slug organic traffic check
+  - Category-scoped hit lookup excluding bots
+
+- **Post Expiry Noindex WP-CLI Checks** - New [wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md](wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md) with diagnostic commands for verifying the post expiry noindex feature:
+  - Check `_post_expiry_date` meta is saved correctly
+  - Verify post category membership against configured expiry categories
+  - Timezone-aware expiry logic test via `wp eval` that bypasses `is_singular()` (always false in WP-CLI context)
+  - Notes on Yoast SEO admin UI limitations and staging noindex behaviour
+
+### Changed
+
+- **RESIZE-AND-CONVERSION.md WordPress Featured Image Workflow** - Added new [WordPress Featured Image from macOS Screenshot](nginx/image-optimization/RESIZE-AND-CONVERSION.md) section:
+  - Uses built-in `sips` to scale Retina screenshots (2× resolution) to 1200px wide before converting
+  - `cwebp` conversion at quality 85 — ~95% size reduction vs unscaled PNG
+  - One-liner workflow with input/output path variables
+  - Naming convention guidance (`{post-slug}-{descriptor}.webp`)
+  - Comparison of `sips` vs ImageMagick for single-file proportional resizes
+
 ## [2.5.8] - 2026-04-06
 
 ### Changed

@@ -4,6 +4,7 @@ This guide covers how to resize, crop, and convert images using ImageMagick and 
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
+- [WordPress Featured Image from macOS Screenshot](#wordpress-featured-image-from-macos-screenshot)
 - [Resizing and Cropping with ImageMagick](#resizing-and-cropping-with-imagemagick)
 - [Converting to WebP](#converting-to-webp)
 - [Converting to AVIF](#converting-to-avif)
@@ -45,6 +46,58 @@ brew install cavif
 # From source
 cargo install cavif
 ```
+
+## WordPress Featured Image from macOS Screenshot
+
+macOS Retina screenshots are 2× resolution (e.g. a 1627×870 display area saves as 3254×1740 px).
+Use `sips` (built-in macOS) to scale down proportionally, then `cwebp` to convert to WebP.
+No extra tools needed beyond `brew install webp`.
+
+### Check source dimensions
+
+```bash
+sips -g pixelWidth -g pixelHeight "/path/to/Screenshot.png"
+```
+
+### Scale to 1200px wide and convert to WebP
+
+```bash
+# Scale to 1200px wide (maintains aspect ratio — output is typically 1200×640–680)
+sips --resampleWidth 1200 "/path/to/Screenshot.png" --out /tmp/featured-scaled.png
+
+# Convert to WebP at quality 85
+cwebp -q 85 /tmp/featured-scaled.png -o "/path/to/output-featured-image.webp"
+
+# Clean up temp file
+rm /tmp/featured-scaled.png
+```
+
+**One-liner version:**
+
+```bash
+INPUT="/Users/jasperfrumau/Desktop/Screenshot 2026-04-22 at 09.16.10.png"
+OUTPUT="/Users/jasperfrumau/Desktop/wordpress-technical-seo-gsc-impressions-april-2026.webp"
+
+sips --resampleWidth 1200 "$INPUT" --out /tmp/featured-scaled.png && \
+cwebp -q 85 /tmp/featured-scaled.png -o "$OUTPUT" && \
+rm /tmp/featured-scaled.png
+```
+
+**Naming convention for featured images:** `{post-slug}-{descriptor}.webp`
+e.g. `wordpress-technical-seo-gsc-impressions-april-2026.webp`
+
+### Why sips over ImageMagick for this task?
+
+- `sips` is built into macOS — no install required
+- Faster for simple proportional resizes of single files
+- ImageMagick is better for batch processing, cropping, and format-agnostic pipelines
+
+### Expected output
+
+A Retina screenshot (3254×1740 px) scales to **1200×641 px** at ~47 KB WebP.
+The unscaled PNG equivalent would be 1–2 MB — roughly a **95% size reduction**.
+
+---
 
 ## Resizing and Cropping with ImageMagick
 
