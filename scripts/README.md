@@ -4,7 +4,7 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 12 utility scripts organized into four functional areas:
+This directory contains 13 utility scripts organized into four functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
@@ -20,6 +20,7 @@ scripts/
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
 ├── monitoring/                  # Server monitoring and alerting
 │   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
+│   ├── redirect-check.sh       # Mass URL redirect checker using curl
 │   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
@@ -52,6 +53,9 @@ scripts/
 
 # Backup WordPress database
 ./scripts/backup/db-backup.sh example.com production
+
+# Check a list of URLs for redirects
+./scripts/monitoring/redirect-check.sh https://example.com/old-path/ https://example.com/another/
 
 # Monitor Nginx traffic
 ./scripts/monitoring/traffic-monitor.sh /var/log/nginx/access.log 6
@@ -913,6 +917,49 @@ Analyzes AI crawler traffic from Nginx logs, with per-bot breakdowns, bandwidth 
 
 # Syntax
 ./ai-bot-monitor.sh [LOG_FILE] [HOURS] [OUTPUT_FILE]
+```
+
+---
+
+### redirect-check.sh
+
+Mass URL redirect checker using curl. Useful for verifying redirect rules, `.htaccess` changes, or migration redirect mappings.
+
+#### Features
+
+- Checks HTTP status code and redirect target for each URL
+- Accepts URLs as command-line arguments or uses built-in defaults
+- Shows `URL => HTTP_CODE -> REDIRECT_URL` for each entry
+- Uses `--max-redirs 0` to stop after the first redirect and reveal the target
+
+#### Use Cases
+
+- Verifying bulk redirects after a site migration
+- Checking `.htaccess` or Nginx redirect rules
+- Auditing canonical URL implementations
+- Debugging 301/302 redirect chains
+
+#### Usage
+
+```bash
+# Run with default URLs (edit the defaults array in the script)
+bash redirect-check.sh
+
+# Pass URLs as arguments
+bash redirect-check.sh \
+  https://example.com/old-path/ \
+  https://example.com/new-path/
+
+# Pipe a list of URLs from a file
+cat urls.txt | xargs bash redirect-check.sh
+```
+
+#### Example Output
+
+```
+https://example.com/contact-us/ => 301 -> https://example.com/contact/
+https://example.com/cart/ => 200 ->
+https://example.com/old-page/ => 404 ->
 ```
 
 ---
