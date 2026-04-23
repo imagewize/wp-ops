@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.10] - 2026-04-23
+
+### Changed
+
+- **redirect-check.sh Moved to Monitoring** - Relocated [scripts/monitoring/redirect-check.sh](scripts/monitoring/redirect-check.sh) from `wordpress-utilities/snippets/` to `scripts/monitoring/` where it better fits alongside other diagnostic shell scripts:
+  - Replaced hardcoded `imagewize.com` example URLs with `example.com` placeholders
+  - Updated [wordpress-utilities/snippets/README.md](wordpress-utilities/snippets/README.md) to remove the entry
+  - Updated [scripts/README.md](scripts/README.md) with the script in the directory tree, Quick Start section, and a full Monitoring Scripts entry
+
 ## [2.5.9] - 2026-04-22
 
 ### Added

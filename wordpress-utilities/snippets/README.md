@@ -1,6 +1,6 @@
 # WordPress Snippets
 
-Small, self-contained PHP snippets for WordPress themes and plugins. Each file is ready to copy into `functions.php` or a custom plugin with minimal adjustment.
+Small, self-contained snippets for WordPress. PHP snippets are ready to copy into `functions.php` or a custom plugin. Shell scripts can be run directly for diagnostics.
 
 ## Available Snippets
 
