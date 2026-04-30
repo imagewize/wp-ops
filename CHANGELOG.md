@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.11] - 2026-04-30
+
+### Added
+
+- **WebP Featured Image Conversion Script** - New [scripts/convert-to-webp.sh](scripts/convert-to-webp.sh) for converting JPG images to WebP format optimized for WordPress featured images and Facebook Open Graph sharing:
+  - Defaults to 800×419 px (1.91:1 ratio — Facebook OG minimum-compliant, above 600×315 floor)
+  - Uses ImageMagick center-crop (`-resize WxH^` + `-gravity center -extent`) to avoid distortion on non-1.91:1 sources
+  - Pipes cropped output directly to `cwebp -q 82` for efficient single-step conversion
+  - Accepts optional arguments: output filename, quality (default 82), width (default 800), height (default 419)
+
+- **WebP Featured Image Snippet** - New [wordpress-utilities/snippets/webp-featured-image.md](wordpress-utilities/snippets/webp-featured-image.md) with command reference for WebP conversion:
+  - Single image and batch conversion examples using ImageMagick + cwebp pipeline
+  - Quality settings guidance and Nginx integration notes
+  - Batch convert with existing WebP check (skip already-converted files)
+  - Complete workflow example for uploads directories
+
+- **Mistral Vibe CLI Project Configuration** - New [.vibe/](:.vibe/) directory with project-specific Vibe CLI setup:
+  - `config.toml` — model settings (mistral-medium-3.5), tool permissions, session logging config
+  - `prompts/wp-ops.md` — project system prompt covering repo structure, coding style, safety rules, and git workflow
+
+### Changed
+
+- **scripts/README.md** - Added Image Utilities as a fifth functional area:
+  - Updated script count from 13 to 14
+  - Added `convert-to-webp.sh` to directory structure
+  - Added quick start example for image conversion
+  - Added dedicated Image Utilities section with usage, requirements, and cross-reference to the snippet
+
+- **wordpress-utilities/snippets/README.md** - Added entry for `webp-featured-image.md` with feature summary and setup steps
+
 ## [2.5.10] - 2026-04-23
 
 ### Changed
