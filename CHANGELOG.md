@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.5.12] - 2026-04-30
+
+### Changed
+
+- **convert-to-webp.sh IM7 Compatibility** - Updated [scripts/convert-to-webp.sh](scripts/convert-to-webp.sh) to use `magick` (ImageMagick 7+) with automatic fallback to `convert` (ImageMagick 6) for backwards compatibility, fixing deprecation warning in newer ImageMagick versions
 
 ## [2.5.11] - 2026-04-30
 
