@@ -4,11 +4,12 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 14 utility scripts organized into five functional areas:
+This directory contains 15 utility scripts organized into six functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
+- **Git Utilities** - Quick access to recent commit history
 - **Operations** - Server monitoring and backup infrastructure
 - **Webhook Integration** - Updown.io downtime alert handling
 
@@ -29,6 +30,7 @@ scripts/
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
+├── git-log-oneline.sh          # Show recent git commits as one-liners
 ├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation
 └── rsync-theme.sh             # Theme file synchronization utility
@@ -52,6 +54,10 @@ scripts/
 
 # Create GitHub PR with AI description
 ./scripts/create-pr.sh main "Add feature name"
+
+# Show recent git commits as one-liners
+./scripts/git-log-oneline.sh
+./scripts/git-log-oneline.sh 25
 
 # Release WordPress theme version
 ./scripts/release-theme.sh theme-name 1.2.5
@@ -110,6 +116,54 @@ Saved: featured.webp (800x419, q82)
 ```
 
 See also: `wordpress-utilities/snippets/webp-featured-image.md` for batch conversion commands.
+
+---
+
+## Git Utilities
+
+### git-log-oneline.sh
+
+Shows recent git commits as compact one-liners with short hash and commit message. Quick way to review recent work or changes before creating a PR.
+
+#### Features
+
+- **Compact Output**: Displays short commit hash + message on a single line
+- **Configurable Count**: Show 1, 10, 25, or any number of recent commits
+- **Input Validation**: Validates that the count is a positive integer
+- **Error Handling**: Clear error messages for invalid input
+
+#### Usage
+
+```bash
+# Show last 10 commits (default)
+./git-log-oneline.sh
+
+# Show last 20 commits
+./git-log-oneline.sh 20
+
+# Show last 5 commits
+./git-log-oneline.sh 5
+
+# Show last 100 commits, but only display first 25
+./git-log-oneline.sh 100 | head -n 25
+```
+
+#### Example Output
+
+```
+476fc26 Release 2.5.11 - WebP conversion script and Vibe CLI config
+4633427 Add Mistral Vibe CLI project configuration
+1da9044 Add webp-featured-image.md entry to snippets README
+9737050 Document convert-to-webp.sh in scripts README
+2762531 Add convert-to-webp.sh script
+```
+
+#### Use Cases
+
+- Quickly check what you've been working on
+- Review recent commits before creating a PR
+- Verify the last deployment included the right changes
+- Check if a specific fix has been committed
 
 ---
 

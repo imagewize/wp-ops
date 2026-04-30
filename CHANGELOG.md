@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.13] - 2025-05-06
+
+### Added
+
+- **Git Log Oneline Script** - New [scripts/git-log-oneline.sh](scripts/git-log-oneline.sh) utility for showing recent git commits as compact one-liners:
+  - Displays short commit hash and message on a single line per commit
+  - Accepts optional argument for number of commits to show (default: 10)
+  - Includes input validation and error handling
+  - Useful for quickly reviewing recent work before creating PRs or checking recent changes
+
 ## [2.5.12] - 2026-04-30
 
 ### Changed
