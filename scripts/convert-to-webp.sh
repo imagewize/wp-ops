@@ -23,7 +23,17 @@ if [ -z "$OUTPUT" ]; then
   OUTPUT="${INPUT%.*}.webp"
 fi
 
-convert "$INPUT" -resize "${WIDTH}x${HEIGHT}^" -gravity center -extent "${WIDTH}x${HEIGHT}" miff:- \
+# Use magick (IM7+) or fall back to convert (IM6) for backwards compatibility
+if command -v magick >/dev/null 2>&1; then
+  COMD="magick"
+elif command -v convert >/dev/null 2>&1; then
+  COMD="convert"
+else
+  echo "Error: Neither magick nor convert found. Please install ImageMagick."
+  exit 1
+fi
+
+$COMD "$INPUT" -resize "${WIDTH}x${HEIGHT}^" -gravity center -extent "${WIDTH}x${HEIGHT}" miff:- \
   | cwebp -q "$QUALITY" -- - -o "$OUTPUT"
 
 echo "Saved: $OUTPUT (${WIDTH}x${HEIGHT}, q${QUALITY})"
