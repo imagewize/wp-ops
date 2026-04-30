@@ -27,3 +27,21 @@ Auto-noindex posts past their expiry date via Yoast SEO, evaluated in the site's
 1. Copy `post-expiry-noindex.php` into your child theme's `functions.php` (or a custom plugin)
 2. Replace `$expiry_categories = [ 0 ]` with your actual category IDs
 3. Edit any post — the "Noindex After Date" field appears in the sidebar under Post settings
+
+### [webp-featured-image.md](webp-featured-image.md)
+
+Converts images to WebP format optimized for WordPress featured images and Facebook Open Graph sharing. Uses the command `cwebp -q 82 -resize 800 419 image.jpg -o image.webp` to create 800×419 images that hit Facebook's 1.91:1 ratio requirement while fitting WordPress content columns (typically 645px wide).
+
+**Features:**
+- Single image and batch conversion examples
+- Quality 82 for optimal balance of size and quality
+- Metadata preservation option
+- Nginx integration notes for automatic WebP serving
+
+**Dependencies:**
+- `webp` package (provides `cwebp` command)
+
+**Setup:**
+1. Install `cwebp` (see Installation section in the snippet)
+2. Run the conversion command on your images
+3. Use with Nginx `webp-avf.conf.j2` from `nginx/image-optimization/` for automatic serving
