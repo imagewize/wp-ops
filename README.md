@@ -70,10 +70,6 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 - **Core**: Git, Bash, rsync
 - **Tool-specific**: See individual docs for Ansible, WP-CLI, ImageMagick, etc.
 
-## Credits
-
-Logo design inspired by [Opsgenie icon](https://blade-ui-kit.com/blade-icons/si-opsgenie) from [Blade Icons](https://blade-ui-kit.com/blade-icons).
-
 ## License
 
 MIT License. See [LICENSE.md](LICENSE.md) for details.
