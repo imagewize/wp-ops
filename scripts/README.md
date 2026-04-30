@@ -4,10 +4,11 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 13 utility scripts organized into four functional areas:
+This directory contains 14 utility scripts organized into five functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
+- **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
 - **Operations** - Server monitoring and backup infrastructure
 - **Webhook Integration** - Updown.io downtime alert handling
 
@@ -26,6 +27,7 @@ scripts/
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
+├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
 ├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation
@@ -45,6 +47,9 @@ scripts/
 ### Common Operations
 
 ```bash
+# Convert JPG to WebP for Facebook OG / featured image (800x419, center crop)
+./scripts/convert-to-webp.sh image.jpg
+
 # Create GitHub PR with AI description
 ./scripts/create-pr.sh main "Add feature name"
 
@@ -69,6 +74,42 @@ scripts/
 # Run all monitors and save timestamped reports
 ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
 ```
+
+---
+
+## Image Utilities
+
+### convert-to-webp.sh
+
+Converts a JPG to WebP at 800×419 (1.91:1 Facebook Open Graph ratio) using a center crop so non-standard source images aren't distorted. Quality and dimensions are configurable.
+
+#### Requirements
+
+```bash
+brew install imagemagick webp   # macOS
+sudo apt-get install imagemagick webp  # Ubuntu/Debian
+```
+
+#### Usage
+
+```bash
+# Defaults: 800x419, quality 82
+./convert-to-webp.sh featured.jpg
+
+# Custom output filename
+./convert-to-webp.sh featured.jpg hero.webp
+
+# Custom quality and dimensions
+./convert-to-webp.sh featured.jpg hero.webp 90 1200 630
+```
+
+#### Output
+
+```
+Saved: featured.webp (800x419, q82)
+```
+
+See also: `wordpress-utilities/snippets/webp-featured-image.md` for batch conversion commands.
 
 ---
 
