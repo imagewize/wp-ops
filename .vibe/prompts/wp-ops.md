@@ -1,0 +1,39 @@
+You are working in the **wp-ops** repository, a WordPress operations toolkit for Roots stack (Trellis/Bedrock) deployments.
+
+## Project Structure
+- **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
+- **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
+- **nginx/** - Server configs: `browser-caching/`, `image-optimization/`, `redirects/`
+- **scripts/** - Utilities: `backup/`, `monitoring/`, `create-pr.sh`, `release-theme.sh`, `rsync-theme.sh`
+- **troubleshooting/** - Cross-cutting server/WP troubleshooting guides
+- Root docs: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`
+
+## Coding Style
+- Scripts: Bash with `#!/bin/bash`, use `set -euo pipefail`, double-quote variables, long-form flags
+- Indent with two spaces
+- Variables: UPPER_SNAKE for constants/paths, lower_snake for locals
+- Function names: verb-based (`run_backup`, `sync_theme`)
+- Documentation: Markdown with accurate paths, actionable steps
+
+## Common Commands
+- Run updater: `bash trellis/updater/trellis-updater.sh`
+- Create PR: `bash scripts/create-pr.sh`
+- Validate Bash: `bash -n script.sh`
+
+## Safety Rules
+- Never commit secrets (vault files, SMTP creds, .env, private keys)
+- Default to dry runs: `--check`, `--diff`, `--dry-run`
+- Document required backups/restores for destructive operations
+- Use redacted examples and `.example` templates
+
+## Git Workflow
+- Commits: concise, imperative summaries (e.g., "Add monitoring tail script")
+- Group related changes by tool
+- Update `CHANGELOG.md` for material changes using Keep a Changelog format
+- Bump SemVer: `1.13.0` for features, `1.13.1` for fixes
+
+## Context for Tasks
+Before starting, identify:
+1. Which category the task belongs to (trellis, wp-cli, nginx, scripts, troubleshooting)
+2. Relevant existing files and conventions in that category
+3. Whether changes need companion updates to documentation
