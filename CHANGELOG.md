@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Usage examples for different dimensions and quality settings
   - Links to full script documentation in scripts/README.md
 
+### Changed
+
+- **Create PR Script Help Documentation** - Updated [`scripts/create-pr.sh`](scripts/create-pr.sh) with `--help`/`--h` flag support:
+  - Added help function with clean usage, options, arguments, and examples display
+  - Updated header comments to reflect new options
+- **CREATE-PR.md Documentation** - Enhanced [CREATE-PR.md](CREATE-PR.md) with comprehensive updates:
+  - Added `--help` flag documentation and examples
+  - Added Vibe CLI support throughout (AI backend, installation, environment variables)
+  - Updated AI backend options to include vibe alongside claude and codex
+  - Added note about help message availability
+- **.vibe/prompts/wp-ops.md Workflow** - Updated [.vibe/prompts/wp-ops.md](.vibe/prompts/wp-ops.md) with detailed standard workflow:
+  - Step-by-step branch creation, atomic commits, CHANGELOG updates, push, and PR creation
+  - Added create-pr.sh usage examples
+  - Enhanced Git Workflow section with clear process
+
 ## [2.5.13] - 2025-05-06
 
 ### Added
