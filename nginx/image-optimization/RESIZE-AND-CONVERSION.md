@@ -7,6 +7,7 @@ This guide covers how to resize, crop, and convert images using ImageMagick and 
 - [WordPress Featured Image from macOS Screenshot](#wordpress-featured-image-from-macos-screenshot)
 - [Resizing and Cropping with ImageMagick](#resizing-and-cropping-with-imagemagick)
 - [Converting to WebP](#converting-to-webp)
+- [One-Step Resize and Convert to WebP](#one-step-resize-and-convert-to-webp)
 - [Converting to AVIF](#converting-to-avif)
 - [Complete Workflow Examples](#complete-workflow-examples)
 - [Tips and Best Practices](#tips-and-best-practices)
@@ -203,6 +204,42 @@ stat -f%z output.webp 2>/dev/null | awk '{printf "%.1fKB\n", $1/1024}'
 # Linux
 stat -c%s output.webp 2>/dev/null | awk '{printf "%.1fKB\n", $1/1024}'
 ```
+
+## One-Step Resize and Convert to WebP
+
+For maximum efficiency, combine resizing and WebP conversion in a single operation using a pipe:
+
+```bash
+magick input.jpg \
+  -resize 1200x630^ \
+  -gravity center \
+  -extent 1200x630 \
+  -quality 90 \
+  - | cwebp -q 82 - -o output.webp
+```
+
+This approach:
+- Resizes to 1200x630 (ideal for Facebook Open Graph / WordPress featured images)
+- Center-crops to exact dimensions
+- Converts to WebP in one step
+- No intermediate files created
+
+### Using the convert-to-webp.sh Script
+
+For convenience, use the [`scripts/convert-to-webp.sh`](../../scripts/convert-to-webp.sh) script which wraps this workflow:
+
+```bash
+# Basic usage (800x419 default, 1.91:1 aspect ratio for Facebook OG)
+./scripts/convert-to-webp.sh input.jpg
+
+# Custom output filename
+./scripts/convert-to-webp.sh input.jpg featured-image.webp
+
+# Custom dimensions and quality
+./scripts/convert-to-webp.sh input.jpg featured-image.webp 90 1200 630
+```
+
+See the [scripts README](../../scripts/README.md#convert-to-webpsh) for full documentation.
 
 ## Converting to AVIF
 

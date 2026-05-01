@@ -4,7 +4,7 @@ You are working in the **wp-ops** repository, a WordPress operations toolkit for
 - **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
 - **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
 - **nginx/** - Server configs: `browser-caching/`, `image-optimization/`, `redirects/`
-- **scripts/** - Utilities: `backup/`, `monitoring/`, `create-pr.sh`, `release-theme.sh`, `rsync-theme.sh`
+- **scripts/** - Utilities: `backup/`, `monitoring/`, `create-pr.sh`, `release-theme.sh`, `rsync-theme.sh`, `convert-to-webp.sh`, `git-log-oneline.sh`
 - **troubleshooting/** - Cross-cutting server/WP troubleshooting guides
 - Root docs: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`
 
