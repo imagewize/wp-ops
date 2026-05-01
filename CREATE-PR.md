@@ -4,14 +4,14 @@ An intelligent script (`create-pr.sh`) that creates GitHub pull requests with pr
 
 ## Features
 
-- **Multi-AI Backend Support**: Choose between Claude CLI or Codex CLI for AI-powered descriptions
+- **Multi-AI Backend Support**: Choose between Claude CLI, Codex CLI, or Vibe CLI for AI-powered descriptions
 - **AI-Powered Descriptions**: Uses AI to analyze git diffs and generate intelligent summaries
 - **Professional Formatting**: Creates descriptions with grouped sections, bold headings, and detailed bullet points
 - **Clickable File Links**: Each file links directly to the changed version on GitHub for quick access
 - **Smart Categorization**: Automatically detects change types (dependencies, documentation, styling, etc.)
 - **Automatic PR Creation**: Uses GitHub CLI to create the actual pull request
 - **Fallback Mode**: Works without AI when API key is not available
-- **Interactive AI Selection**: Choose your preferred AI tool when both are available
+- **Interactive AI Selection**: Choose your preferred AI tool when multiple are available
 
 ## Token Usage Comparison
 
@@ -26,11 +26,11 @@ Understanding the cost/benefit of using AI vs no-AI mode:
 - **Result**: Uses significant tokens, quality depends on conversation
 
 ### Option 2: This Script with AI (`--no-ai` NOT used)
-**Token Usage**: ~500-1,500 tokens per PR
+**Token Usage**: ~500-1,500 tokens per PR (Claude/Codex/Vibe)
 - Script pre-processes all git data (commits, files, diff stats)
-- Sends only structured summary to Claude
+- Sends only structured summary to your chosen AI tool
 - Single prompt, no back-and-forth needed
-- Claude generates description in one response
+- AI generates description in one response
 - **Result**: 70-85% fewer tokens than manual, high-quality output
 
 ### Option 3: This Script without AI (`--no-ai` flag)
@@ -76,7 +76,7 @@ Understanding the cost/benefit of using AI vs no-AI mode:
 
 2. **AI CLI** (optional, for AI descriptions)
 
-   Choose one or both:
+   Choose one or more:
 
    **Claude CLI** (recommended)
    - If you're using Claude Code in VS Code, you already have this installed!
@@ -86,6 +86,10 @@ Understanding the cost/benefit of using AI vs no-AI mode:
    **Codex CLI** (alternative)
    - Install via npm: `npm install -g @anthropic-ai/codex-cli`
    - Or download from your AI provider
+
+   **Vibe CLI** (alternative)
+   - If you're using Mistral Vibe, the `vibe` command is automatically available
+   - Works with Vibe CLI authentication
 
    The script automatically detects which AI tools are available and lets you choose interactively.
 
@@ -149,9 +153,14 @@ Provide arguments to skip prompts:
 ### Options
 
 ```bash
-# Choose AI backend (claude or codex)
+# Show help
+./create-pr.sh --help
+./create-pr.sh -h
+
+# Choose AI backend (claude, codex, or vibe)
 ./create-pr.sh --ai=claude
 ./create-pr.sh --ai=codex
+./create-pr.sh --ai=vibe
 
 # Skip AI generation (0 tokens, basic description)
 ./create-pr.sh --no-ai
@@ -167,6 +176,8 @@ Provide arguments to skip prompts:
 ./create-pr.sh --update
 ./create-pr.sh --update --ai=codex
 ```
+
+**Note:** Use `-h` or `--help` to display a full help message with all available options, arguments, and examples.
 
 ## Example Output Comparison
 
@@ -275,20 +286,20 @@ The AI is instructed to write like a senior developer - no emoticons, profession
 
 ### Choosing Your AI Backend
 
-The script supports multiple AI backends:
+The script supports multiple AI backends: Claude, Codex, and Vibe.
 
 **Automatic Detection**: If you don't specify `--ai=`, the script will:
-1. Check for both Claude and Codex CLIs
-2. If both are available, ask you to choose
+1. Check for all available AI CLIs (Claude, Codex, Vibe)
+2. If multiple are available, ask you to choose
 3. If only one is available, use that automatically
 4. If none are available, offer no-AI mode
 
-**Manual Selection**: Use `--ai=claude` or `--ai=codex` to force a specific backend
+**Manual Selection**: Use `--ai=claude`, `--ai=codex`, or `--ai=vibe` to force a specific backend
 
-**Interactive Selection**: When both are available and you're in interactive mode:
+**Interactive Selection**: When multiple AI tools are available and you're in interactive mode:
 ```
-Available AI tools: claude codex
-Choose AI tool [default: claude]: codex
+Available AI tools: claude codex vibe
+Choose AI tool [default: claude]: vibe
 ```
 
 ### Environment Variables
@@ -302,16 +313,22 @@ export CLAUDE_COMMAND="claude-custom"
 # Use custom Codex command name
 export CODEX_COMMAND="my-codex"
 
+# Use custom Vibe command name
+export VIBE_COMMAND="my-vibe"
+
 # Pass custom arguments to Claude CLI
 export CLAUDE_CLI_ARGS="--model=opus --timeout=30"
 
 # Pass custom arguments to Codex CLI
 export CODEX_CLI_ARGS="--verbose"
 
+# Pass custom arguments to Vibe CLI
+export VIBE_CLI_ARGS="-p --output text"
+
 ./create-pr.sh
 ```
 
-**Note**: If you're using Claude Code in VS Code, the Claude CLI works automatically with no additional setup!
+**Note**: If you're using Claude Code in VS Code, the Claude CLI works automatically with no additional setup! Vibe CLI is automatically available in Vibe environments.
 
 ## Troubleshooting
 

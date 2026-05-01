@@ -1,16 +1,44 @@
 #!/bin/bash
 
 # Script to create a GitHub PR with an AI-generated description
-# Usage: ./create-pr.sh [base-branch] [pr-title]
+# Usage: ./create-pr.sh [options] [base-branch] [pr-title]
 # Example: ./create-pr.sh main "Add new feature"
 #
 # Options:
-#   --ai=claude|codex|vibe Choose AI backend (default: claude)
+#   -h, --help            Show this help message
+#   --ai=claude|codex|vibe Choose AI backend (default: auto-detect, fallback: claude)
 #   --no-ai              Skip AI-powered description generation (faster but less detailed)
 #   --no-interactive     Skip all prompts, use defaults/arguments
 #   --update             Update existing PR description for current branch
 
 set -e
+
+# Help function
+display_help() {
+    cat <<'EOF'
+Script to create a GitHub PR with an AI-generated description
+
+Usage: ./create-pr.sh [options] [base-branch] [pr-title]
+Example: ./create-pr.sh main "Add new feature"
+
+Options:
+  -h, --help            Show this help message and exit
+  --ai=claude|codex|vibe Choose AI backend (default: auto-detect)
+  --no-ai              Skip AI description generation
+  --no-interactive     Skip all interactive prompts
+  --update             Update existing PR for current branch
+
+Arguments:
+  [base-branch]        Target branch for PR (default: main)
+  [pr-title]           PR title (prompted if not provided)
+
+Examples:
+  ./create-pr.sh --ai=vibe
+  ./create-pr.sh main "Add new feature" --no-ai
+  ./create-pr.sh --update --ai=claude
+EOF
+    exit 0
+}
 
 # Parse options
 USE_AI=""
@@ -21,6 +49,9 @@ AI_TOOL_SPECIFIED=false
 ARGS=()
 while [ $# -gt 0 ]; do
     case "$1" in
+    -h|--help)
+        display_help
+        ;;
     --no-ai)
         USE_AI=false
         ;;
