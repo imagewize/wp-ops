@@ -4,7 +4,7 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 15 utility scripts organized into six functional areas:
+This directory contains 16 utility scripts organized into six functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
@@ -30,6 +30,7 @@ scripts/
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
+├── find-and-replace-files.sh  # Batch find and replace files across directory trees
 ├── git-log-oneline.sh          # Show recent git commits as one-liners
 ├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.15] - 2026-05-01
+
+### Added
+
+- **Find and Replace Files Script** - New [`scripts/find-and-replace-files.sh`](scripts/find-and-replace-files.sh) utility for batch operations across projects:
+  - Finds all instances of a file by name recursively through directory trees
+  - Replaces multiple copies with an updated version in one operation
+  - **Dry-run mode** (`-n`/`--dry-run`) to preview changes before applying
+  - **List-only mode** (`-l`/`--list`) to just locate files
+  - **Size display** (`-s`/`--size`) to show file sizes and line counts
+  - Configurable search directory (`-d`/`--directory`) and max depth (`-m`/`--maxdepth`)
+  - Preserves file permissions (executable flags)
+  - Safe handling of filenames with spaces (null-terminated output)
+
+### Documentation
+
+- **README for Find and Replace Script** - New [scripts/README-FIND-AND-REPLACE.md](scripts/README-FIND-AND-REPLACE.md) with:
+  - Comprehensive usage examples and options reference
+  - Use cases for batch script updates and file synchronization
+  - Best practices for dry-run workflow
+- **scripts/README.md** - Updated directory structure and script count (15 → 16)
+  - Added `find-and-replace-files.sh` to root-level scripts list
+
 ## [2.5.14] - 2026-05-01
 
 ### Added
