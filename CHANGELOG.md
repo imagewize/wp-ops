@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-05-05
+
+### Added
+
+- **Admin User Creation Snippets** - New snippets in [`wordpress-utilities/snippets/`](wordpress-utilities/snippets/):
+  - [`admin-user-creation.php`](wordpress-utilities/snippets/admin-user-creation.php) - Temporary admin user creation for functions.php with placeholder values and safety checks
+  - [`admin-user-creation-wpcli.md`](wordpress-utilities/snippets/admin-user-creation-wpcli.md) - Comprehensive WP-CLI guide with secure password generation, emergency recovery, batch creation, and cleanup commands
+
+## [Unreleased]
+
 ## [2.5.15] - 2026-05-01
 
 ### Added

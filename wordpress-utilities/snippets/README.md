@@ -4,6 +4,46 @@ Small, self-contained snippets for WordPress. PHP snippets are ready to copy int
 
 ## Available Snippets
 
+### [admin-user-creation.php](admin-user-creation.php)
+
+Create a temporary administrator user via `functions.php`. **REMOVE THIS CODE IMMEDIATELY after the user is created** for security.
+
+**Features:**
+- One-time user creation on page load
+- Checks if user already exists before creating
+- Uses placeholder values that must be replaced (prevents accidental commits)
+- Logs creation result to error log
+- Safety check: aborts if placeholder values aren't replaced
+
+**Security Warning:**
+- NEVER commit this to version control
+- Remove the code immediately after first login
+- WP-CLI method (`admin-user-creation-wpcli.md`) is preferred when available
+
+**Setup:**
+1. Copy into your theme's `functions.php` or a mu-plugin
+2. Replace `REPLACE_ME_USERNAME`, `REPLACE_ME@examp.le`, and `REPLACE_ME_PASSWORD`
+3. Load any page on your site once to trigger creation
+4. Log in with the new credentials
+5. **IMMEDIATELY remove this code from functions.php**
+
+### [admin-user-creation-wpcli.md](admin-user-creation-wpcli.md)
+
+**Recommended approach** for creating WordPress administrator users safely from the command line.
+
+**Features:**
+- No code to add/remove from WordPress files
+- Credentials aren't stored in files
+- Full control via command line
+- Secure random password generation examples
+- Batch user creation from CSV files
+- Emergency lockout recovery workflow
+
+**Quick Start:**
+```bash
+wp user create temp_admin temp@example.com --role=administrator --user_pass="$(openssl rand -base64 16)"
+```
+
 ### [post-expiry-noindex.php](post-expiry-noindex.php)
 
 Auto-noindex posts past their expiry date via Yoast SEO, evaluated in the site's configured WordPress timezone.
