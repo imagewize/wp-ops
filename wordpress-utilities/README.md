@@ -56,11 +56,14 @@ Implementation guides and detection methods for popular analytics platforms.
 Small, self-contained PHP snippets ready to drop into `functions.php` or a custom plugin.
 
 **Available:**
+- `admin-user-creation.php` — Create temporary administrator user (remove after use!)
+- `admin-user-creation-wpcli.md` — WP-CLI commands for safe admin user creation (recommended)
 - `post-expiry-noindex.php` — Auto-noindex posts past their expiry date via Yoast SEO, using the site's configured WordPress timezone
+- `webp-featured-image.md` — Convert images to WebP format optimized for featured images and Open Graph
 
 **Key Files:**
 - `README.md` - Snippet index and usage notes
-- Individual `.php` files — copy directly into your theme or plugin
+- Individual `.php`/`.md` files — copy directly into your theme, plugin, or run from CLI
 
 ### [Speed Optimization](speed-optimization/)
 
