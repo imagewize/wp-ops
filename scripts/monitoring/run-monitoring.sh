@@ -222,8 +222,9 @@ EOF
         echo "" >> "$SUMMARY_REPORT"
         echo '```' >> "$SUMMARY_REPORT"
 
-        # Extract the "Top 50 Most Requested Pages" section
-        awk '/Top 50 Most Requested Pages/,/^---/' "$TRAFFIC_REPORT" \
+        # Extract the "Top X Most Requested Pages" section
+        awk '/Top.*Most Requested Pages/,/^---/' "$TRAFFIC_REPORT" \
+            | sed 's/\x1b\[[0-9;]*m//g' \
             | grep -E '^\s+[0-9]+\s+/' \
             | head -10 >> "$SUMMARY_REPORT" || echo "No page data available" >> "$SUMMARY_REPORT"
 
