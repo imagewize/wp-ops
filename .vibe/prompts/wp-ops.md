@@ -38,8 +38,9 @@ You are working in the **wp-ops** repository, a WordPress operations toolkit for
    - Group related changes by tool or feature
 3. **Update CHANGELOG.md** for material changes:
    - Use Keep a Changelog format
-   - Add new `[Unreleased]` or versioned section at top
-   - Bump SemVer: `X.Y.0` for features, `X.Y.Z` for fixes
+   - Add new versioned section at top with date (e.g., `## [2.6.0] - 2026-05-05`)
+   - Bump SemVer: `X.Y.0` for features (new functionality), `X.Y.Z` for fixes (bug fixes)
+   - Include `[Unreleased]` section below versioned section for ongoing changes
 4. **Push branch** to origin:
    - `git push origin add/feature-name`
 5. **Create Pull Request** using the helper script:
