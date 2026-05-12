@@ -12,6 +12,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `trellis/backup/` - Ansible playbooks for database/files backup, pull, and push operations
   - `trellis/monitoring/` - Nginx log monitoring and traffic analysis
   - `trellis/provision/` - Provisioning guides and command reference
+  - `trellis/security/` - fail2ban WordPress protection and manual IP blocking guides
   - `trellis/updater/` - Safe Trellis update scripts
 - **wp-cli/** - WordPress command-line operations
   - `wp-cli/content-creation/` - WP-CLI content creation and block patterns
@@ -25,12 +26,19 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
 - **scripts/** - General utility scripts
   - `scripts/backup/` - Standalone backup shell scripts
   - `scripts/monitoring/` - Monitoring helper scripts
+  - `scripts/woocommerce/` - WooCommerce automation scripts (product variation creation)
+  - `scripts/batch-resize.sh` - Batch image resize with center-crop
+  - `scripts/convert-to-webp.sh` - Convert JPG images to WebP format
   - `scripts/create-pr.sh` - AI-powered GitHub PR creation
+  - `scripts/find-and-replace-files.sh` - Batch find-and-replace files across projects
+  - `scripts/git-log-oneline.sh` - Compact git log output utility
+  - `scripts/release-plugin.sh` - WordPress plugin release automation
   - `scripts/release-theme.sh` - WordPress theme release automation
   - `scripts/rsync-theme.sh` - Theme synchronization
 - **wordpress-utilities/** - Reusable WordPress components and utilities
   - `wordpress-utilities/age-verification/` - Cookie-based age verification system with modal and ACF integration
   - `wordpress-utilities/analytics/` - Analytics implementation and detection (Google Analytics, Matomo)
+  - `wordpress-utilities/snippets/` - Small PHP snippets and WP-CLI command references
   - `wordpress-utilities/speed-optimization/` - Performance testing and TTFB analysis tools (curl, wget)
 - **troubleshooting/** - Server and WordPress troubleshooting guides
 
