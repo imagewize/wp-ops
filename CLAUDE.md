@@ -149,18 +149,20 @@ find . -type f -name "*.jpg" -exec cwebp -q 80 {} -o {}.webp \;
 The create-pr.sh script uses Claude CLI to generate AI-powered PR descriptions:
 
 ```bash
-# Interactive mode with AI description
+# Interactive mode (prompts for base branch, title, and AI choice)
 ./scripts/create-pr.sh
 
-# Non-interactive with arguments
-./scripts/create-pr.sh main "Add feature name"
+# Non-interactive: must pass --no-interactive to suppress all prompts
+./scripts/create-pr.sh --no-interactive main "Add feature name" --ai=claude
 
-# Skip AI generation (0 tokens)
-./scripts/create-pr.sh --no-ai
+# Skip AI generation entirely
+./scripts/create-pr.sh --no-interactive main "Add feature name" --no-ai
 
-# Update existing PR
-./scripts/create-pr.sh --update
+# Update existing PR description
+./scripts/create-pr.sh --update --no-interactive --ai=claude
 ```
+
+**Important:** Passing positional arguments alone (`main "title"`) does NOT disable prompts. Always use `--no-interactive` for scripted or automated invocations.
 
 ## Architecture and Patterns
 
