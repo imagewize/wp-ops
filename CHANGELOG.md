@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-05-12
+
+### Documentation
+
+- **CLAUDE.md create-pr.sh usage** - Corrected GitHub PR Creation examples to show `--no-interactive` flag:
+  - Passing positional args alone does not suppress the AI prompt; `--no-interactive` is required for scripted use
+  - Added explicit examples for non-interactive AI, no-AI, and update-mode invocations
+
+- **.vibe/prompts/wp-ops.md create-pr.sh usage** - Updated Git Workflow step 5 to reflect the same fix:
+  - Clarified interactive vs. fully non-interactive invocation
+  - Added note that positional args without `--no-interactive` still trigger prompts
+
 ## [2.7.1] - 2026-05-12
 
 ### Documentation

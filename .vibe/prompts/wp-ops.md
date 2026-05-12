@@ -45,8 +45,9 @@ You are working in the **wp-ops** repository, a WordPress operations toolkit for
 4. **Push branch** to origin:
    - `git push origin add/feature-name`
 5. **Create Pull Request** using the helper script:
-   - `bash scripts/create-pr.sh --ai=vibe` (interactive mode)
-   - Or `bash scripts/create-pr.sh main "PR title" --ai=claude` (non-interactive)
+   - `bash scripts/create-pr.sh --ai=vibe` (interactive — prompts for branch, title, and AI choice)
+   - `bash scripts/create-pr.sh --no-interactive main "PR title" --ai=claude` (fully non-interactive)
+   - Passing positional args without `--no-interactive` still triggers prompts
    - Script auto-generates AI-powered description and creates PR via GitHub CLI
 
 ### Important Rules
