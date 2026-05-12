@@ -4,10 +4,11 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 16 utility scripts organized into six functional areas:
+This directory contains 18 utility scripts organized into six functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - Plugin and theme release automation, file synchronization
+- **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
 - **Git Utilities** - Quick access to recent commit history
 - **Operations** - Server monitoring and backup infrastructure
@@ -28,6 +29,9 @@ scripts/
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
+├── woocommerce/                # WooCommerce automation
+│   └── create-product-variations.sh  # Bulk-create product variations via WP-CLI
+├── batch-resize.sh            # Batch resize and center-crop images for featured images
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
 ├── find-and-replace-files.sh  # Batch find and replace files across directory trees
@@ -50,6 +54,12 @@ scripts/
 ### Common Operations
 
 ```bash
+# Batch resize screenshots to 1200x630 with custom naming
+./scripts/batch-resize.sh -w 1200 -H 630 -o "my-featured-image" *.png
+
+# Bulk-create WooCommerce product variations
+./scripts/woocommerce/create-product-variations.sh
+
 # Convert JPG to WebP for Facebook OG / featured image (800x419, center crop)
 ./scripts/convert-to-webp.sh image.jpg
 
@@ -84,7 +94,122 @@ ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
 
 ---
 
+## WooCommerce
+
+### create-product-variations.sh (71 lines)
+
+Bulk-create WooCommerce product variations via WP-CLI. Generates all combinations of specified attribute values for a variable product.
+
+#### Features
+
+- **Bulk Variation Creation**: Creates all combinations of attribute values in one run
+- **Configurable via Environment Variables**: Product ID, price, attributes, Trellis VM settings
+- **Trellis VM Compatible**: Uses `trellis vm shell` with configurable workdir and URL
+- **Success/Failure Tracking**: Counts created and failed variations with detailed output
+- **Companion Documentation**: See [`wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md`](wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md) for attribute setup
+
+#### Configuration
+
+Edit the configuration section at the top of the script:
+
+```bash
+TRELLIS_DIR="${TRELLIS_DIR:-/path/to/trellis}"
+WORKDIR="${WORKDIR:-/srv/www/example.com/current}"
+SITE_URL="${SITE_URL:-http://example.test/store}"  # include /store for multisite
+PRODUCT_ID="${PRODUCT_ID:-36}"                      # parent variable product ID
+REGULAR_PRICE="${REGULAR_PRICE:-99}"
+WP_USER="${WP_USER:-admin}"
+WP_PATH="${WP_PATH:-web/wp}"
+
+# Attribute arrays — edit to match your product's registered attributes
+ATTR1_SLUG="pa_leather-colour"
+ATTR1_VALUES=("Tan" "Black" "Cognac" "Chestnut" "Navy")
+
+ATTR2_SLUG="pa_style"
+ATTR2_VALUES=("A4 with Notepad" "A4 Slim" "A5 with Notepad")
+```
+
+#### Usage
+
+```bash
+# Run with default configuration
+./scripts/woocommerce/create-product-variations.sh
+
+# Override product ID inline
+PRODUCT_ID=42 ./scripts/woocommerce/create-product-variations.sh
+
+# Full configuration override
+PRODUCT_ID=42 REGULAR_PRICE=129 ./scripts/woocommerce/create-product-variations.sh
+```
+
+#### Example Output
+
+```
+Creating variations for product ID 36 on http://example.test/store
+Attributes: pa_leather-colour × pa_style
+---
+[OK]   Tan / A4 with Notepad — Success: Variation created (ID: 37)
+[OK]   Tan / A4 Slim — Success: Variation created (ID: 38)
+[OK]   Tan / A5 with Notepad — Success: Variation created (ID: 39)
+[OK]   Black / A4 with Notepad — Success: Variation created (ID: 40)
+...
+---
+Done: 15 created, 0 failed.
+```
+
+#### Notes
+
+- **Multisite**: The `--url` parameter must include the store path (e.g., `http://example.test/store`) for sub-site stores
+- **Prerequisite**: Attribute values must already exist as terms before running this script
+- **Dependencies**: WooCommerce installed and active, WP-CLI with WooCommerce extension
+
+
 ## Image Utilities
+
+### batch-resize.sh
+
+Batch resize one or more images with center-crop. Perfect for creating WordPress featured images from screenshots or other source images. Maintains aspect ratio during resize, then crops to exact dimensions.
+
+#### Requirements
+
+```bash
+brew install imagemagick webp   # macOS
+sudo apt-get install imagemagick webp  # Ubuntu/Debian
+```
+
+#### Usage
+
+```bash
+# Resize all PNGs to 1200x630 (Facebook OG ratio) with auto naming
+./batch-resize.sh -w 1200 -H 630 *.png
+
+# Resize with custom output prefix
+./batch-resize.sh -w 800 -H 419 -o "featured-post" screenshot1.png screenshot2.png
+
+# Convert to WebP format with high quality
+./batch-resize.sh -w 1920 -H 1080 -f webp -q 90 screenshot.png
+
+# Preview changes without modifying files (dry run)
+./batch-resize.sh -w 1200 -H 630 -d *.jpg
+
+# Process and delete originals after conversion (use with caution!)
+./batch-resize.sh -w 800 -H 600 --delete image.png
+```
+
+#### Output
+
+```
+Processing 1/3: screenshot1.png
+  Saved: featured-post-1.jpg (1200x630, q85, 120KB)
+
+Processing 2/3: screenshot2.png
+  Saved: featured-post-2.jpg (1200x630, q85, 115KB)
+
+Processing 3/3: screenshot3.png
+  Saved: featured-post-3.jpg (1200x630, q85, 118KB)
+
+Batch resize complete. Processed 3 file(s).
+```
 
 ### convert-to-webp.sh
 

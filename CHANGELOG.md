@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.7.0] - 2026-05-12
+
+### Added
+
+- **Batch Resize Script** - New [`scripts/batch-resize.sh`](scripts/batch-resize.sh) for processing one or more images:
+  - Batch resize with center-crop (maintains aspect ratio, then crops to exact dimensions)
+  - Perfect for creating WordPress featured images from screenshots
+  - Custom output naming with automatic numbering (`-o`/`--output` prefix)
+  - Configurable dimensions (`-w`/`--width`, `-H`/`--height`), format (`-f`/`--format`: jpg, png, webp), and quality (`-q`/`--quality`)
+  - **Dry-run mode** (`-d`/`--dry-run`) to preview changes safely
+  - **Delete originals** (`--delete`) option for cleanup after conversion
+  - WebP output via `cwebp` pipe (consistent with `convert-to-webp.sh`; validated upfront before processing)
+
+- **WooCommerce Variation Creation Script** - New [`scripts/woocommerce/create-product-variations.sh`](scripts/woocommerce/create-product-variations.sh) for bulk-creating product variations via WP-CLI:
+  - Creates all combinations of attribute values for a variable product
+  - Configurable via environment variables (product ID, price, attributes, etc.)
+  - Trellis VM compatible with `--workdir` and `--url` support
+  - Success/failure tracking with detailed output
+  - See companion snippet [`wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md`](wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md) for attribute setup
+
+### Documentation
+
+- **scripts/README.md** - Updated directory structure and script count (16 → 18)
+  - Added `batch-resize.sh` to root-level scripts list
+  - Added WooCommerce subdirectory with `create-product-variations.sh` to directory structure
+  - Added comprehensive documentation section for batch-resize.sh with usage examples
+
+- **wordpress-utilities/snippets/README.md** - Added WooCommerce product attributes WP-CLI snippet:
+  - New entry for [`woocommerce-product-attributes-wpcli.md`](wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md)
+  - Comprehensive guide for creating and managing WooCommerce attributes and terms via WP-CLI
+
 ## [2.6.0] - 2026-05-05
 
 ### Added
@@ -12,8 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Admin User Creation Snippets** - New snippets in [`wordpress-utilities/snippets/`](wordpress-utilities/snippets/):
   - [`admin-user-creation.php`](wordpress-utilities/snippets/admin-user-creation.php) - Temporary admin user creation for functions.php with placeholder values and safety checks
   - [`admin-user-creation-wpcli.md`](wordpress-utilities/snippets/admin-user-creation-wpcli.md) - Comprehensive WP-CLI guide with secure password generation, emergency recovery, batch creation, and cleanup commands
-
-## [Unreleased]
 
 ## [2.5.15] - 2026-05-01
 
