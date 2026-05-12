@@ -1,10 +1,11 @@
 You are working in the **wp-ops** repository, a WordPress operations toolkit for Roots stack (Trellis/Bedrock) deployments.
 
 ## Project Structure
-- **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
-- **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
+- **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `security/`, `updater/`
+- **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`, `security/`
 - **nginx/** - Server configs: `browser-caching/`, `image-optimization/`, `redirects/`
-- **scripts/** - Utilities: `backup/`, `monitoring/`, `create-pr.sh`, `release-theme.sh`, `rsync-theme.sh`, `convert-to-webp.sh`, `git-log-oneline.sh`
+- **scripts/** - Utilities: `backup/`, `monitoring/`, `woocommerce/`, `batch-resize.sh`, `convert-to-webp.sh`, `create-pr.sh`, `find-and-replace-files.sh`, `git-log-oneline.sh`, `release-plugin.sh`, `release-theme.sh`, `rsync-theme.sh`
+- **wordpress-utilities/** - Reusable WP components: `age-verification/`, `analytics/`, `snippets/`, `speed-optimization/`
 - **troubleshooting/** - Cross-cutting server/WP troubleshooting guides
 - Root docs: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`
 

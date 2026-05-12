@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-05-12
+
+### Documentation
+
+- **CLAUDE.md Structure Update** - Synced repository structure section to match current repo:
+  - Added `trellis/security/` (fail2ban and manual IP blocking guides)
+  - Added `wordpress-utilities/snippets/` (PHP snippets and WP-CLI references)
+  - Added `scripts/woocommerce/`, `batch-resize.sh`, `convert-to-webp.sh`, `find-and-replace-files.sh`, `git-log-oneline.sh`, and `release-plugin.sh` to scripts listing
+
+- **.vibe/prompts/wp-ops.md Structure Update** - Synced project structure to match current repo:
+  - Added `trellis/security/` and `wp-cli/security/` subdirectories
+  - Added `wordpress-utilities/` section (`age-verification/`, `analytics/`, `snippets/`, `speed-optimization/`)
+  - Added `scripts/woocommerce/`, `batch-resize.sh`, `find-and-replace-files.sh`, and `release-plugin.sh` to scripts listing
+
 ## [2.7.0] - 2026-05-12
 
 ### Added
