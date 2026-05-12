@@ -68,6 +68,28 @@ Auto-noindex posts past their expiry date via Yoast SEO, evaluated in the site's
 2. Replace `$expiry_categories = [ 0 ]` with your actual category IDs
 3. Edit any post — the "Noindex After Date" field appears in the sidebar under Post settings
 
+### [woocommerce-product-attributes-wpcli.md](woocommerce-product-attributes-wpcli.md)
+
+Create and manage WooCommerce product attributes (color, size, material, etc.) and their terms via WP-CLI. Includes Trellis VM and production SSH variants.
+
+**Features:**
+- Create global product attributes with correct `pa_` slug convention
+- Add terms (values) individually or in a bash loop
+- List attributes and terms in table format
+- Delete attributes by ID
+- Full end-to-end Trellis VM workflow example
+
+**Quick Start:**
+```bash
+wp wc product_attribute create --name="Color" --slug="pa_color" --type="select" --user=admin --path=web/wp
+```
+
+**Dependencies:**
+- WooCommerce installed and active
+- WP-CLI with WooCommerce REST API support
+
+---
+
 ### [webp-featured-image.md](webp-featured-image.md)
 
 Converts images to WebP format optimized for WordPress featured images and Facebook Open Graph sharing. Uses the command `cwebp -q 82 -resize 800 419 image.jpg -o image.webp` to create 800×419 images that hit Facebook's 1.91:1 ratio requirement while fitting WordPress content columns (typically 645px wide).
