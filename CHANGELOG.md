@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.3] - 2026-05-12
+
+### Added
+
+- **WP Template DB Override WP-CLI Snippet** - New [`wordpress-utilities/snippets/wp-template-db-override-wpcli.md`](wordpress-utilities/snippets/wp-template-db-override-wpcli.md) for managing block theme template overrides:
+  - Detect DB-stored templates (`wp_template` post type) that override theme files
+  - Option A: Delete DB override to restore file-system template control
+  - Option B: Surgically update specific block markup in the DB copy via `wp eval` + `str_replace`
+  - Trellis VM variants for all commands
+  - Prevention guidance with `WP_DEVELOPMENT_MODE=theme`
+
 ## [2.7.2] - 2026-05-12
 
 ### Documentation

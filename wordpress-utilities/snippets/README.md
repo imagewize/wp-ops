@@ -90,6 +90,28 @@ wp wc product_attribute create --name="Color" --slug="pa_color" --type="select" 
 
 ---
 
+### [wp-template-db-override-wpcli.md](wp-template-db-override-wpcli.md)
+
+Fix block theme templates that appear frozen — changes to PHP pattern files or `.html` template files are silently ignored because the Site Editor saved a DB override (`wp_template` post type) that takes precedence over the file on disk.
+
+**Features:**
+- Detect DB overrides by listing `wp_template` posts
+- Option A: delete the DB copy to restore file-system control
+- Option B: surgically update specific block markup in the DB copy using `wp eval` + `str_replace`
+- Trellis VM variants for all commands
+- Prevention guidance (`WP_DEVELOPMENT_MODE=theme`)
+
+**Quick Start:**
+```bash
+# Find the frozen template post
+wp post list --post_type=wp_template --fields=ID,post_name,post_status --path=web/wp --url=https://example.com/
+
+# Delete it (restores file-system template)
+wp post delete <ID> --force --path=web/wp --url=https://example.com/
+```
+
+---
+
 ### [webp-featured-image.md](webp-featured-image.md)
 
 Converts images to WebP format optimized for WordPress featured images and Facebook Open Graph sharing. Uses the command `cwebp -q 82 -resize 800 419 image.jpg -o image.webp` to create 800×419 images that hit Facebook's 1.91:1 ratio requirement while fitting WordPress content columns (typically 645px wide).
