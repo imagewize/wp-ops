@@ -22,6 +22,7 @@ scripts/
 │   ├── db-backup.sh            # Database-only backup with URL replacement
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
 ├── monitoring/                  # Server monitoring and alerting
+│   ├── 404-checker.sh          # Internal broken-link checker (homepage scan or recursive spider)
 │   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
 │   ├── redirect-check.sh       # Mass URL redirect checker using curl
 │   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
@@ -75,6 +76,12 @@ scripts/
 
 # Backup WordPress database
 ./scripts/backup/db-backup.sh example.com production
+
+# Check homepage links for broken URLs (~30s)
+./scripts/monitoring/404-checker.sh https://example.com
+
+# Full spider check (recursive, depth 3, ~5-10 min)
+./scripts/monitoring/404-checker.sh --mode spider https://example.com
 
 # Check a list of URLs for redirects
 ./scripts/monitoring/redirect-check.sh https://example.com/old-path/ https://example.com/another/
@@ -1139,6 +1146,58 @@ Analyzes AI crawler traffic from Nginx logs, with per-bot breakdowns, bandwidth 
 # Syntax
 ./ai-bot-monitor.sh [LOG_FILE] [HOURS] [OUTPUT_FILE]
 ```
+
+---
+
+### 404-checker.sh
+
+Internal broken-link checker for WordPress sites. Scans for pages and links that return 4xx or 5xx responses. Two modes: a fast homepage scan (~30 s) that catches global footer/nav issues, and a recursive wget spider (~5–10 min) that traverses the whole site.
+
+#### Features
+
+- **Global mode** (default): fetches the homepage and checks every internal link found — catches header/footer/nav links that appear on every page
+- **Spider mode**: recursive `wget --spider` crawl to configurable depth — covers the full site including blog posts and service pages
+- **Color-coded output**: green OK, yellow warnings, red broken links
+- **Exit code 1** when broken links are found — suitable for CI/deploy hooks
+- **Optional output file**: append broken links to a file for audit trails
+- **Configurable timeout and spider depth**
+
+#### Usage
+
+```bash
+# Fast homepage scan — covers all global (header/footer/nav) links
+./scripts/monitoring/404-checker.sh https://example.com
+
+# Full recursive spider, depth 3
+./scripts/monitoring/404-checker.sh --mode spider https://example.com
+
+# Save broken links to a file
+./scripts/monitoring/404-checker.sh --output /tmp/broken-links.txt https://example.com
+
+# Spider with custom depth and timeout
+./scripts/monitoring/404-checker.sh --mode spider --level 4 --timeout 15 https://example.com
+```
+
+#### Example Output
+
+```
+[10:05:12] Fetching homepage: https://example.com
+[10:05:13] Found 42 internal links — checking each...
+404  https://example.com/old-page/
+410  https://example.com/?page_id=3330
+[WARN] 2 broken link(s) found.
+```
+
+#### Integration ideas
+
+- **After every page deletion**: `./404-checker.sh https://example.com` to catch stale footer/nav links before Ahrefs does
+- **Post-deploy hook**: add to a Makefile target or Trellis deploy callback
+- **CI pipeline**: exit code 1 on broken links blocks a deploy
+
+#### Requirements
+
+- `curl` (standard on macOS/Linux)
+- `wget` — only required for `--mode spider` (`brew install wget` on macOS)
 
 ---
 

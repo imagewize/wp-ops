@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-05-22
+
+### Added
+
+- **404 Checker Script** - New [`scripts/monitoring/404-checker.sh`](scripts/monitoring/404-checker.sh) for scanning internal links for broken responses:
+  - **Global mode** (default) — fetches homepage, extracts and checks all internal links (~30s)
+  - **Spider mode** — recursive `wget` spider to configurable depth (default: 3, ~5-10 min)
+  - Filters out assets (CSS, JS, images, fonts), feeds, sitemaps, and WordPress admin/API paths to avoid noise
+  - Color-coded output (green OK, yellow warnings, red errors, cyan progress)
+  - `--output FILE` flag to append broken-link results to a file alongside stdout
+  - `--timeout N` flag to control per-request curl max-time (default: 10s)
+  - `--level N` flag to control spider recursion depth
+  - Exit codes: `0` (no broken links), `1` (broken links found), `2` (usage error / missing dependency)
+  - Cross-platform: uses `bash` parameter expansion instead of GNU-specific `sed` flags for macOS/BSD compatibility
+
 ## [2.7.3] - 2026-05-12
 
 ### Added
