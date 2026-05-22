@@ -51,6 +51,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 | Tool | Description | Docs |
 |------|-------------|------|
+| **404 Checker** | Internal broken-link checker — homepage scan or recursive spider | [→](scripts/README.md#404-checkersh) |
 | **PR Creation** | AI-powered GitHub PR descriptions (Claude/Codex) | [→](CREATE-PR.md) |
 | **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release-plugin.sh) |
 | **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release-theme.sh) |
