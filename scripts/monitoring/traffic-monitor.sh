@@ -36,6 +36,9 @@ STATIC_PATTERN='\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|svg|webp|avif|ttf|eot|
 # SEO-relevant bot patterns
 SEO_BOTS='Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp'
 
+# Admin and API paths to exclude from page view analysis
+ADMIN_PATTERN='^/wp/wp-login\.php|^/wp/wp-admin/|^/wp-json/|^/xmlrpc\.php|^/wp-cron\.php'
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -410,6 +413,7 @@ main() {
         | grep -vE "$STATIC_PATTERN" \
         | awk '{print $7}' \
         | cut -d'?' -f1 \
+        | grep -vE "$ADMIN_PATTERN" \
         | sort \
         | uniq -c \
         | sort -rn \

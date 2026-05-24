@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-05-24
+
+### Changed
+
+- **Traffic Monitor Admin Path Filtering** - Updated [`scripts/monitoring/traffic-monitor.sh`](scripts/monitoring/traffic-monitor.sh) to exclude WordPress admin and API paths from page view analysis:
+  - Added `ADMIN_PATTERN` variable filtering `/wp/wp-login.php`, `/wp/wp-admin/`, `/wp-json/`, `/xmlrpc.php`, and `/wp-cron.php`
+  - Prevents admin/API traffic from skewing content page view statistics
+
 ## [2.8.0] - 2026-05-22
 
 ### Added
