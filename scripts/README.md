@@ -4,9 +4,9 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 18 utility scripts organized into six functional areas:
+This directory contains 20 utility scripts organized into six functional areas:
 
-- **GitHub Integration** - AI-powered pull request creation
+- **GitHub Integration** - AI-powered pull request creation and manual GitHub release asset uploads
 - **WordPress Management** - Plugin and theme release automation, file synchronization
 - **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
@@ -35,6 +35,7 @@ scripts/
 ├── batch-resize.sh            # Batch resize and center-crop images for featured images
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
+├── upload-release-asset.sh    # Manual GitHub release zip upload (fallback for failed Actions)
 ├── find-and-replace-files.sh  # Batch find and replace files across directory trees
 ├── git-log-oneline.sh          # Show recent git commits as one-liners
 ├── release-plugin.sh           # WordPress plugin version release automation
@@ -400,6 +401,63 @@ pip install openai-codex
 # Or use Mistral Vibe (optional)
 npm install -g @mistralai/vibe-cli
 ```
+
+---
+
+### upload-release-asset.sh (117 lines)
+
+Manual GitHub Release asset uploader for WordPress plugins and themes. Useful when a GitHub Actions release workflow fails to trigger (e.g., after a repository rename), allowing you to attach a production zip to an existing release without re-running CI.
+
+#### Features
+
+- **Release Verification**: Confirms the target release exists on GitHub before doing any work
+- **JS Build Step**: Runs `npm ci && npx webpack` if `package.json` is present in the working directory
+- **Distignore Support**: Respects `.distignore` to exclude dev files from the zip; warns and zips everything (except `.git`) when absent
+- **Duplicate Detection**: Checks if the asset name already exists on the release and prompts before overwriting
+- **Upload Verification**: Confirms the uploaded asset is visible on the release and prints its size
+- **Automatic Cleanup**: Removes the local zip file after a successful upload
+
+#### Usage
+
+```bash
+# Run from the plugin/theme root directory
+./scripts/upload-release-asset.sh <github-repo> <tag> [zip-name]
+
+# Upload with auto-named zip (uses repo slug)
+./scripts/upload-release-asset.sh imagewize/warder-cookie-consent v1.3.1
+
+# Upload with custom zip name
+./scripts/upload-release-asset.sh imagewize/my-plugin v2.0.0 my-plugin.zip
+```
+
+#### Example Output
+
+```
+=== GitHub Release Asset Upload ===
+Repo:  imagewize/warder-cookie-consent
+Tag:   v1.3.1
+Zip:   warder-cookie-consent.zip
+
+Step 1: Verifying release v1.3.1 exists...
+  ✓ Found release: draft=false prerelease=false
+Step 2: No package.json found, skipping JS build
+Step 3: Creating warder-cookie-consent.zip...
+  ✓ Zipped (excluding .distignore entries)
+  ✓ warder-cookie-consent.zip created (142K)
+Step 4: Checking for existing assets...
+Step 5: Uploading to release v1.3.1...
+  ✓ Uploaded
+
+=== Done ===
+Asset attached: warder-cookie-consent.zip (141KB)
+Release URL: https://github.com/imagewize/warder-cookie-consent/releases/tag/v1.3.1
+```
+
+#### Requirements
+
+- `gh` (GitHub CLI) — authenticated with `gh auth login`
+- `zip` — standard on Linux; `brew install zip` on macOS if missing
+- `npm` — only required when a `package.json` is present in the working directory
 
 ---
 
