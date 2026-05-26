@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-05-26
+
+### Added
+
+- **Upload Release Asset Script** - New [`scripts/upload-release-asset.sh`](scripts/upload-release-asset.sh) for manually attaching a zipped plugin or theme to a GitHub Release when the Actions release event fails to fire (e.g. after a repository rename):
+  - Verifies the target release exists before doing any work
+  - Runs `npm ci && npx webpack` automatically if `package.json` is present
+  - Zips the project respecting `.distignore` exclusions (falls back to excluding only `.git` if no `.distignore`)
+  - Detects and prompts before overwriting an existing asset on the release
+  - Uploads via `gh release upload` and prints the attached asset size and release URL
+  - Cleans up the local zip on completion
+
 ## [2.8.1] - 2026-05-24
 
 ### Changed
