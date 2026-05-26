@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uploads via `gh release upload` and prints the attached asset size and release URL
   - Cleans up the local zip on completion
 
+### Documentation
+
+- **scripts/README.md** - Documented `upload-release-asset.sh` and corrected script count:
+  - Updated script count from 18 → 20 (also fixed a pre-existing off-by-one where `find-and-replace-files.sh` was listed in the directory tree but not counted)
+  - Added `upload-release-asset.sh` to the directory structure tree with inline description
+  - Updated GitHub Integration overview bullet to mention manual release asset uploads
+  - Added full `upload-release-asset.sh` documentation section (features, usage, example output, requirements) after `create-pr.sh`
+
 ## [2.8.1] - 2026-05-24
 
 ### Changed
