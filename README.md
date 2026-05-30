@@ -35,6 +35,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 | Tool | Description | Docs |
 |------|-------------|------|
 | **Local Package Development** | Test an in-development plugin/theme branch in a Bedrock site via a Composer `path` repository, before tagging a release | [→](bedrock/local-package-development/README.md) |
+| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp pattern validate` command for canonicalizing block pattern files | [→](bedrock/wp-cli-config/README.md) |
 
 ## WP-CLI
 
