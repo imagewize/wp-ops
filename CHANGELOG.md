@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-05-30
+
+### Added
+
+- **Bedrock Local Package Development Guide** - New [`bedrock/local-package-development/README.md`](bedrock/local-package-development/README.md) for testing an in-development plugin or theme branch inside a Bedrock site via a Composer `path` repository, before tagging a release:
+  - Covers the `symlink: false` requirement (symlinks break plugin/theme activation because `realpath` resolves outside `web/app`)
+  - Branch-based constraint setup (`dev-<branch>` form) with inline alias support for cross-package semver constraints
+  - Re-sync workflow for keeping the copied mirror up to date during development (`composer update vendor/package`)
+  - VCS repository alternative for pushed branches (no local checkout needed)
+  - Revert and cleanup steps for after the release is tagged
+
+### Documentation
+
+- **README.md** - Added Bedrock section linking to the new local package development guide
+- **CLAUDE.md** - Added `bedrock/local-package-development/` to the repository structure
+
 ## [2.9.0] - 2026-05-26
 
 ### Added
