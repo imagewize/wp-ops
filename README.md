@@ -11,6 +11,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 ## Contents
 
 - [Trellis](#trellis)
+- [Bedrock](#bedrock)
 - [WP-CLI](#wp-cli)
 - [Nginx](#nginx)
 - [Scripts](#scripts)
@@ -28,6 +29,13 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 | **Monitoring** | Nginx log monitoring for traffic analysis and security threat detection | [→](trellis/monitoring/README.md) |
 | **Security** | fail2ban IP blocking and manual deny rules | [→](trellis/security/README.md) |
 | **Troubleshooting** | Diagnose PHP-FPM, MariaDB, and server issues | [→](troubleshooting/README.md) |
+
+## Bedrock
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Local Package Development** | Test an in-development plugin/theme branch in a Bedrock site via a Composer `path` repository, before tagging a release | [→](bedrock/local-package-development/README.md) |
+| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp pattern validate` command for canonicalizing block pattern files | [→](bedrock/wp-cli-config/README.md) |
 
 ## WP-CLI
 

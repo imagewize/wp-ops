@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-05-30
+
+### Added
+
+- **Bedrock Local Package Development Guide** - New [`bedrock/local-package-development/README.md`](bedrock/local-package-development/README.md) for testing an in-development plugin or theme branch inside a Bedrock site via a Composer `path` repository, before tagging a release:
+  - Covers the `symlink: false` requirement (symlinks break plugin/theme activation because `realpath` resolves outside `web/app`)
+  - Branch-based constraint setup (`dev-<branch>` form) with inline alias support for cross-package semver constraints
+  - Re-sync workflow for keeping the copied mirror up to date during development (`composer update vendor/package`)
+  - VCS repository alternative for pushed branches (no local checkout needed)
+  - Revert and cleanup steps for after the release is tagged
+
+### Added
+
+- **Bedrock WP-CLI Config** - New [`bedrock/wp-cli-config/`](bedrock/wp-cli-config/) with a standard `wp-cli.yml` and a `wp pattern validate` WP-CLI command for Bedrock projects:
+  - `wp-cli.yml` sets `path: web/wp` and `server.docroot: web` for Bedrock's directory layout, and auto-requires the validator on every `wp` call
+  - `wp-cli-pattern-validate.php` round-trips block pattern files through WordPress's own `parse_blocks()` / `serialize_blocks()` to produce canonical markup — supports `--fix`, `--diff`, `--log`, and `--log-dir` flags
+  - WooCommerce-bundled patterns automatically skipped; `--compliance` / `--compliance-only` hooks for project-specific static analysis
+  - Exit codes: `0` (all pass / fixed), `1` (issues found in dry-run)
+  - Log output written to `docs/pattern-logs/<date>/` with per-file diffs and a `summary.md`
+
+### Documentation
+
+- **README.md** - Added Bedrock section linking to the new local package development guide; added WP-CLI Config row to the Bedrock table
+- **CLAUDE.md** - Added `bedrock/local-package-development/` and `bedrock/wp-cli-config/` to the repository structure
+- **.vibe/prompts/wp-ops.md** - Added `wp-cli-config/` to the bedrock entry in Project Structure
+
 ## [2.9.0] - 2026-05-26
 
 ### Added
