@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.1] - 2026-05-30
+
+### Documentation
+
+- **bedrock/README.md** - Added top-level README for the `bedrock/` directory with a brief intro and summary links to each subdirectory: `local-package-development/` (Composer path repository workflow) and `wp-cli-config/` (standard `wp-cli.yml` and `wp pattern validate` command)
+
 ## [2.10.0] - 2026-05-30
 
 ### Added
