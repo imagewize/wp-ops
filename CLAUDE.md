@@ -14,6 +14,8 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `trellis/provision/` - Provisioning guides and command reference
   - `trellis/security/` - fail2ban WordPress protection and manual IP blocking guides
   - `trellis/updater/` - Safe Trellis update scripts
+- **bedrock/** - Bedrock/Composer development workflows
+  - `bedrock/local-package-development/` - Test a local plugin/theme branch in a Bedrock site via a Composer `path` repository
 - **wp-cli/** - WordPress command-line operations
   - `wp-cli/content-creation/` - WP-CLI content creation and block patterns
   - `wp-cli/diagnostics/` - WordPress diagnostic tools
