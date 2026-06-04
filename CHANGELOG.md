@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **scripts/deploy-plugin-wporg.sh** - New script to publish a plugin from its Git working tree to the WordPress.org plugin directory via SVN: syncs `trunk/`, creates `tags/<version>/`, and uploads the marketing `assets/` (banners, icon, screenshots) from `.wordpress-org/`. Respects `.distignore` (same filter as the release zip), auto-detects the main plugin file and version, guards against overwriting a published tag, and is safe by default (stages and prints the `svn ci` command; only commits with `--commit`). Documented in [`scripts/README.md`](scripts/README.md).
+
 ## [2.10.1] - 2026-05-30
 
 ### Documentation
