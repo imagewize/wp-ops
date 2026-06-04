@@ -4,10 +4,10 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 20 utility scripts organized into six functional areas:
+This directory contains 21 utility scripts organized into six functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation and manual GitHub release asset uploads
-- **WordPress Management** - Plugin and theme release automation, file synchronization
+- **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
 - **Git Utilities** - Quick access to recent commit history
@@ -35,6 +35,7 @@ scripts/
 ├── batch-resize.sh            # Batch resize and center-crop images for featured images
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
+├── deploy-plugin-wporg.sh      # Publish a plugin to the WordPress.org directory via SVN
 ├── upload-release-asset.sh    # Manual GitHub release zip upload (fallback for failed Actions)
 ├── find-and-replace-files.sh  # Batch find and replace files across directory trees
 ├── git-log-oneline.sh          # Show recent git commits as one-liners
@@ -74,6 +75,10 @@ scripts/
 
 # Release WordPress theme version
 ./scripts/release-theme.sh theme-name 1.2.5
+
+# Publish a plugin to WordPress.org via SVN (stage + review, then commit)
+cd ~/code/my-plugin
+~/code/wp-ops/scripts/deploy-plugin-wporg.sh my-plugin --build "npm ci && npx webpack"
 
 # Backup WordPress database
 ./scripts/backup/db-backup.sh example.com production
@@ -613,6 +618,105 @@ export OPENAI_API_KEY="your-key-here"
 - **With AI**: 500-1,500 tokens depending on diff size
 - **Without AI**: Manual changelog editing required
 - **Cost**: ~$0.01-0.05 per release (Claude Sonnet)
+
+---
+
+### deploy-plugin-wporg.sh
+
+Publishes a plugin from its Git working tree to the **WordPress.org plugin directory (SVN)** — syncs `trunk/`, creates `tags/<version>/`, and uploads the marketing `assets/` (banners, icon, screenshots). Generic: works for any plugin, for both the first publish and later updates. Complements `release-plugin.sh` (version bump) and `upload-release-asset.sh` (GitHub) by handling the WordPress.org side.
+
+#### Features
+
+- **Same filter as the release zip**: respects `.distignore`, so `trunk`/`tags` contain exactly what ships (falls back to "everything except `.git/`" if absent)
+- **Marketing assets convention**: uploads `.wordpress-org/` (banners, icon, screenshots) to SVN `/assets`, kept out of the plugin download
+- **Auto-detection**: finds the main plugin file (`Plugin Name:` header) and reads the version from its `Version:` header (or pass it explicitly)
+- **Safe by default**: stages everything and prints the exact `svn ci` command for review; only commits with `--commit`
+- **Idempotent**: re-running with no source changes produces an empty `svn status` (rsync + `svn add`/`svn rm` reconciliation handles adds, edits, and deletions)
+- **Tag guard**: refuses to overwrite an already-published `tags/<version>` unless `--force`
+- **Optional build**: `--build "npm ci && npx webpack"` runs before packaging
+
+#### Usage
+
+```bash
+# Prepare a release (stage + review), then commit manually
+cd ~/code/warder-cookie-consent
+~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent --build "npm ci && npx webpack"
+
+# One shot: build, stage, and commit (prompts for SVN password)
+~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent 2.1.4 \
+  --build "npm ci && npx webpack" --username Rhand --commit
+
+# Explicit paths / custom checkout location
+~/code/wp-ops/scripts/deploy-plugin-wporg.sh my-plugin 1.0.0 \
+  --plugin-dir ~/code/my-plugin --assets-dir ~/code/my-plugin/.wordpress-org \
+  --svn-dir /tmp/my-plugin-svn --commit
+```
+
+#### Example Output
+
+```
+=== WordPress.org SVN Deploy: warder-cookie-consent ===
+
+  ✓ Main plugin file: warder-cookie-consent.php
+  ✓ Version: 2.1.4
+Checking remote for existing tag 2.1.4 ...
+  ✓ tags/2.1.4 is free
+Checking out https://plugins.svn.wordpress.org/warder-cookie-consent ...
+  ✓ Working copy: /Users/me/code/warder-cookie-consent-svn
+Assembling filtered payload ...
+  ✓ Filtered via .distignore
+Syncing trunk/ ...
+  ✓ trunk/ synced
+Building tags/2.1.4/ ...
+  ✓ tags/2.1.4/ staged
+Syncing assets/ from .wordpress-org/ ...
+  ✓ assets/ synced (10 files)
+
+=== svn status (what will be committed) ===
+  A   trunk/readme.txt
+  ...
+
+=== Staged and ready. Review above, then commit: ===
+  svn ci "/Users/me/code/warder-cookie-consent-svn" -m "Release 2.1.4" --username Rhand
+```
+
+#### Manual SVN equivalent (without the script)
+
+The same publish done by hand — useful for understanding or one-off fixes:
+
+```bash
+# 1. Check out the plugin's SVN repo (on a first publish, trunk/tags/assets are empty)
+svn co https://plugins.svn.wordpress.org/<slug> <slug>-svn
+cd <slug>-svn
+
+# 2. Sync the plugin into trunk/ (source = your .distignore-filtered build, e.g. the release zip contents)
+rsync -a --delete --exclude='.svn' /path/to/plugin-payload/ trunk/
+
+# 3. Freeze a version tag (copy of trunk)
+rsync -a --delete --exclude='.svn' trunk/ tags/<version>/      # or: svn cp trunk tags/<version>
+
+# 4. Upload marketing assets (banners, icon, screenshots) to the top-level /assets — NOT trunk
+rsync -a --delete --exclude='.svn' /path/to/.wordpress-org/ assets/
+
+# 5. Schedule adds, remove anything deleted, review, then commit
+svn add --force trunk tags assets
+svn status | awk '/^!/{print $2}' | xargs -r svn rm      # remove files dropped from the plugin
+svn status                                               # review what will be committed
+svn ci -m "Release <version>" --username Rhand           # prompts for SVN password
+```
+
+Key points: WordPress.org SVN is a **release system, not Git** — only push finished versions. `trunk/` is the current version, `tags/<version>/` are immutable releases users download, and `/assets` (banners/icon/screenshots) is a separate top-level dir that never ships in the plugin download.
+
+#### Notes
+
+- **SVN usernames are case-sensitive** (e.g. `Rhand`, not `rhand`). Find yours at profiles.wordpress.org → Account & Security, where you can also generate a dedicated SVN password (recommended over your account login password).
+- The SVN checkout is kept (default `<plugin-dir>/../<slug>-svn`) and reused/updated on the next run; delete it anytime.
+- Pairs with the `.wordpress-org/` + `.distignore` setup in the plugin repo: the same assets are version-controlled in Git and pushed to SVN here.
+
+#### Requirements
+
+- `svn`, `zip`, `rsync` (standard on macOS/Linux; `brew install subversion` if `svn` is missing)
+- Active WordPress.org plugin SVN commit access
 
 ---
 
