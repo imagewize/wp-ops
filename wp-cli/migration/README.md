@@ -49,6 +49,53 @@ wp search-replace 'http://subsite.example.test' 'https://subsite.example.com' --
 wp search-replace 'http://subsite.example.test' 'https://subsite.example.com' --all-tables --network --url=subsite.example.test
 ```
 
+### Practical Example: HTTPS Migration Across Multiple Subsites
+
+When running search-replace on a multisite network, WP-CLI will process **all subsites** that contain the matching string. Here's a real-world example showing the importance of using `--dry-run` first:
+
+```bash
+# ALWAYS run dry-run first to preview changes
+wp search-replace 'http://example.com/app/themes' 'https://example.com/app/themes' \
+  --all-tables \
+  --precise \
+  --url=https://example.com/spa \
+  --path=web/wp \
+  --dry-run \
+  --report-changed-only
+
+# If dry-run looks correct, execute the actual replacement
+wp search-replace 'http://example.com/app/themes' 'https://example.com/app/themes' \
+  --all-tables \
+  --precise \
+  --url=https://example.com/spa \
+  --path=web/wp \
+  --report-changed-only
+```
+
+**Expected output:**
+```
++-------------+--------------+--------------+------+
+| Table       | Column       | Replacements | Type |
++-------------+--------------+--------------+------+
+| wp_10_posts | post_content | 8            | PHP  |
+| wp_2_posts  | post_content | 10           | PHP  |
+| wp_5_posts  | post_content | 13           | PHP  |
+| wp_6_posts  | post_content | 10           | PHP  |
+| wp_8_posts  | post_content | 11           | PHP  |
+| wp_9_posts  | post_content | 4            | PHP  |
+| wp_posts    | post_content | 25           | PHP  |
++-------------+--------------+--------------+------+
+Success: Made 81 replacements.
+```
+
+**Key observations:**
+- Even with `--url=https://example.com/spa`, WP-CLI found matches across **all subsites** because the search string existed in their content
+- The `--report-changed-only` flag shows exactly which tables were affected
+- Main site (`wp_posts`) had 25 replacements, subsites had varying counts (wp_2_posts, wp_5_posts, etc.)
+- **Total: 81 replacements** across 7 sites
+
+> **Best practice:** Use `--dry-run` first, then verify with `--dry-run` again after execution to confirm 0 remaining matches.
+
 ## Bedrock Path Conversion
 
 When migrating from a standard WordPress installation to a Bedrock-based installation, you'll need to update file paths in your database:
