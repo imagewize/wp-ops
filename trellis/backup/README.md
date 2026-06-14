@@ -208,6 +208,53 @@ echo '=== Database pull complete! ==='
 - Use `wp db query "UPDATE wp_blogs SET domain = REPLACE(domain, 'production.com', 'local.test');"` to update all blog domains
 - Both `wp search-replace` (for content/options) and `wp_blogs` update (for network domains) are required for proper multisite operation
 
+### Practical Example: HTTPS Migration for Theme Assets Across Multiple Subsites
+
+When migrating a multisite from HTTP to HTTPS, you may need to update hardcoded theme asset URLs. This practical example shows the replacement of HTTP theme paths across multiple subsites:
+
+```bash
+# ALWAYS run dry-run first to preview changes
+wp search-replace 'http://example.com/app/themes' 'https://example.com/app/themes' \
+  --all-tables \
+  --precise \
+  --url=https://example.com/spa \
+  --path=web/wp \
+  --dry-run \
+  --report-changed-only
+
+# If dry-run output looks correct, execute the actual replacement
+wp search-replace 'http://example.com/app/themes' 'https://example.com/app/themes' \
+  --all-tables \
+  --precise \
+  --url=https://example.com/spa \
+  --path=web/wp \
+  --report-changed-only
+```
+
+**Expected output shows replacements across main site and subsites:**
+```
++-------------+--------------+--------------+------+
+| Table       | Column       | Replacements | Type |
++-------------+--------------+--------------+------+
+| wp_10_posts | post_content | 8            | PHP  |
+| wp_2_posts  | post_content | 10           | PHP  |
+| wp_5_posts  | post_content | 13           | PHP  |
+| wp_6_posts  | post_content | 10           | PHP  |
+| wp_8_posts  | post_content | 11           | PHP  |
+| wp_9_posts  | post_content | 4            | PHP  |
+| wp_posts    | post_content | 25           | PHP  |
++-------------+--------------+--------------+------+
+Success: Made 81 replacements.
+```
+
+This command will:
+- Search across all tables (`--all-tables`)
+- Only replace exact matches (`--precise`)
+- Target the multisite context (`--url=...`)
+- Show a detailed report of changes (`--report-changed-only`)
+
+> **Critical:** Even when specifying `--url=`, WP-CLI may find matches across multiple subsites if the search string exists in their content. Always use `--dry-run` first!
+
 ### Database Push
 
 Pushes database from development to a remote environment with URL replacement.
