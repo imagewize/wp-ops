@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-06-14
+
+### Added
+
+- **Multisite Search-Replace Practical Example** - Added a real-world HTTPS theme-asset migration example to [`trellis/backup/README.md`](trellis/backup/README.md) and [`wp-cli/migration/README.md`](wp-cli/migration/README.md):
+  - `wp search-replace` invocation with `--all-tables --precise --url=... --path=web/wp --dry-run --report-changed-only`
+  - Sample dry-run output showing replacements across the main site and multiple subsites (81 total replacements across 7 sites)
+  - Highlights that `--url=` does not scope the search to a single subsite — `--dry-run` is essential before running for real
+
 ## [2.11.1] - 2026-06-14
 
 ### Added
