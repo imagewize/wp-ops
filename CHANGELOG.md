@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.1] - 2026-06-14
+
+### Added
+
+- **scripts/monitoring/run-monitoring.sh** - Added an optional `domain` argument (after `hours`) so the script can target a different site's logs on multi-site servers (e.g. `./run-monitoring.sh 24 othersite.com`). When a non-default domain is passed, report filenames get a `-<domain>` suffix to avoid collisions between sites, and the summary report now includes the site name. Documented in [`scripts/README.md`](scripts/README.md).
+
 ## [2.11.0] - 2026-06-04
 
 ### Added
