@@ -1417,18 +1417,22 @@ Orchestrator that runs all three monitoring scripts in sequence and generates a 
   - `security-monitor.sh` — security threat detection
   - `ai-bot-monitor.sh` — AI crawler analysis
 
-- **Timestamped Output Files**:
+- **Timestamped Output Files** (for the default site):
   - `traffic-monitor-YYYY-MM-DD-HHmmss.txt`
   - `security-monitor-YYYY-MM-DD-HHmmss.txt`
   - `ai-bot-monitor-YYYY-MM-DD-HHmmss.txt`
   - `monitoring-summary-YYYY-MM-DD.md` — consolidated markdown report
 
+  When a non-default `domain` argument is passed, each filename gets a
+  `-<domain>` suffix (e.g. `traffic-monitor-othersite.com-YYYY-MM-DD-HHmmss.txt`)
+  so reports for multiple sites on the same server don't collide.
+
 - **Auto-Detects Context**:
-  - Production server (`/srv/www` present): saves to `~/monitoring/`
+  - Production server (`/srv/www/<domain>` present): saves to `~/monitoring/`
   - Local or other context: saves to `./monitoring-reports/`
 
 - **Summary Report Includes**:
-  - Total requests, real user traffic, unique visitors, bandwidth
+  - Site name, total requests, real user traffic, unique visitors, bandwidth
   - Security alert and warning counts with top alerts listed
   - AI crawler share of traffic and bandwidth
   - Top 10 most requested pages (real users)
@@ -1443,8 +1447,12 @@ ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
 # Remote with custom hours window
 ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 48
 
+# Remote, for a different site on the same server
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 24 othersite.com
+
 # Local execution on production server
 ./run-monitoring.sh 24
+./run-monitoring.sh 24 othersite.com
 ```
 
 ---
