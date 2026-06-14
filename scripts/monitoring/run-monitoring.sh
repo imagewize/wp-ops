@@ -6,12 +6,15 @@
 # and saves timestamped reports to an output directory.
 #
 # Usage:
-#   ssh web@example.com 'bash -s' < ./run-monitoring.sh [hours]
+#   ssh web@example.com 'bash -s' < ./run-monitoring.sh [hours] [domain]
 #   ./run-monitoring.sh 24              # Run locally on production server
 #
 # Examples:
 #   # From local machine (recommended):
 #   ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+#
+#   # For a different site on the same server:
+#   ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 24 othersite.com
 #
 #   # On production server:
 #   cd /srv/www/example.com/current
@@ -25,12 +28,13 @@ set -e
 # ============================================================================
 
 HOURS="${1:-24}"
-LOG_FILE="/srv/www/example.com/logs/access.log"
+DOMAIN="${2:-example.com}"
+LOG_FILE="/srv/www/${DOMAIN}/logs/access.log"
 TIMESTAMP=$(date +"%Y-%m-%d-%H%M%S")
 DATESTAMP=$(date +"%Y-%m-%d")
 
 # Output directory (adjust based on execution context)
-if [[ -d "/srv/www/example.com" ]]; then
+if [[ -d "/srv/www/${DOMAIN}" ]]; then
     # Running on production server
     OUTPUT_DIR="${HOME}/monitoring"
     mkdir -p "$OUTPUT_DIR"
@@ -40,10 +44,17 @@ else
     mkdir -p "$OUTPUT_DIR"
 fi
 
-TRAFFIC_REPORT="${OUTPUT_DIR}/traffic-monitor-${TIMESTAMP}.txt"
-SECURITY_REPORT="${OUTPUT_DIR}/security-monitor-${TIMESTAMP}.txt"
-AI_BOT_REPORT="${OUTPUT_DIR}/ai-bot-monitor-${TIMESTAMP}.txt"
-SUMMARY_REPORT="${OUTPUT_DIR}/monitoring-summary-${DATESTAMP}.md"
+# Only suffix filenames with the domain when it's not the default site
+if [[ "$DOMAIN" == "example.com" ]]; then
+    DOMAIN_SUFFIX=""
+else
+    DOMAIN_SUFFIX="-${DOMAIN}"
+fi
+
+TRAFFIC_REPORT="${OUTPUT_DIR}/traffic-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
+SECURITY_REPORT="${OUTPUT_DIR}/security-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
+AI_BOT_REPORT="${OUTPUT_DIR}/ai-bot-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
+SUMMARY_REPORT="${OUTPUT_DIR}/monitoring-summary${DOMAIN_SUFFIX}-${DATESTAMP}.md"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -134,6 +145,7 @@ generate_summary() {
 # Monitoring Summary Report
 
 **Generated:** $(date)
+**Site:** ${DOMAIN}
 **Period:** Last ${HOURS} hours
 **Log File:** ${LOG_FILE}
 
