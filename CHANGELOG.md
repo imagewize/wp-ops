@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-06-20
+
+### Added
+
+- **Trellis Updater Upstream Change Detection** - Extended [trellis/updater/trellis-updater.sh](trellis/updater/trellis-updater.sh) with post-sync diff analysis for excluded files:
+  - Compares each excluded file against the fresh upstream Trellis clone after rsync
+  - Saves per-file diffs to `~/trellis-diff/excluded-file-diffs/` for review
+  - Reports count of excluded files with upstream changes
+  - Detects new upstream files not yet present locally
+  - Suggests reviewing diffs with Claude Code to cherry-pick upstream fixes without losing customizations
+  - Updated summary steps to include excluded file diff review
+
 ## [2.12.0] - 2026-06-14
 
 ### Added

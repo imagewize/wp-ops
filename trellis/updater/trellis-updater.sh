@@ -110,7 +110,65 @@ rsync -av --delete \
 
 echo "✓ Trellis files updated"
 
-# Step 6b: Verify critical files were preserved
+# Step 6b: Diff excluded files against upstream to catch missed updates
+echo ""
+echo "=== Checking excluded files for upstream changes ==="
+EXCLUDED_FILES=(
+  "ansible.cfg"
+  "group_vars/all/main.yml"
+  "group_vars/all/mail.yml"
+  "group_vars/all/security.yml"
+  "group_vars/all/users.yml"
+  "group_vars/production/main.yml"
+  "group_vars/staging/main.yml"
+  "group_vars/development/main.yml"
+  "group_vars/development/wordpress_sites.yml"
+  "group_vars/production/wordpress_sites.yml"
+  "group_vars/staging/wordpress_sites.yml"
+  "roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2"
+)
+
+UPSTREAM_CHANGES_DIR=$DIFF_DIR/excluded-file-diffs
+mkdir -p $UPSTREAM_CHANGES_DIR
+UPSTREAM_CHANGE_COUNT=0
+
+for file in "${EXCLUDED_FILES[@]}"; do
+  UPSTREAM="$TEMP_DIR/trellis/$file"
+  LOCAL="$TRELLIS_DIR/$file"
+
+  # Skip files that don't exist upstream (our custom additions)
+  if [ ! -f "$UPSTREAM" ]; then
+    continue
+  fi
+
+  # Skip files that don't exist locally yet
+  if [ ! -f "$LOCAL" ]; then
+    echo "  NEW upstream: $file (not present locally)"
+    cp "$UPSTREAM" "$UPSTREAM_CHANGES_DIR/$(echo $file | tr '/' '_').new"
+    UPSTREAM_CHANGE_COUNT=$((UPSTREAM_CHANGE_COUNT + 1))
+    continue
+  fi
+
+  # Generate diff if files differ
+  if ! diff -q "$UPSTREAM" "$LOCAL" > /dev/null 2>&1; then
+    diff -u "$LOCAL" "$UPSTREAM" > "$UPSTREAM_CHANGES_DIR/$(echo $file | tr '/' '_').diff" || true
+    echo "  CHANGED upstream: $file"
+    UPSTREAM_CHANGE_COUNT=$((UPSTREAM_CHANGE_COUNT + 1))
+  fi
+done
+
+if [ "$UPSTREAM_CHANGE_COUNT" -eq 0 ]; then
+  echo "✓ No upstream changes in excluded files"
+else
+  echo ""
+  echo "⚠ $UPSTREAM_CHANGE_COUNT excluded file(s) have upstream changes."
+  echo "  Diffs saved to: $UPSTREAM_CHANGES_DIR/"
+  echo "  Review these diffs to cherry-pick upstream fixes without losing customizations."
+  echo "  Tip: ask Claude Code to review the diffs in $UPSTREAM_CHANGES_DIR/"
+fi
+echo ""
+
+# Step 6c: Verify critical files were preserved
 echo ""
 echo "=== Verifying critical files ==="
 if [ ! -f "$TRELLIS_DIR/.vault_pass" ]; then
@@ -147,9 +205,11 @@ echo "=== Update Summary ==="
 echo "Next steps:"
 echo "1. Review changes: cd $PROJECT_DIR && git diff trellis/"
 echo "2. Check diff summary: cat $DIFF_DIR/changes.txt"
-echo "3. Update Galaxy roles: cd $TRELLIS_DIR && ansible-galaxy install -r galaxy.yml --force"
-echo "4. Test in development (if applicable)"
-echo "5. Commit changes: git add trellis/ && git commit -m 'Update Trellis to latest version'"
+echo "3. Review excluded file diffs: ls $DIFF_DIR/excluded-file-diffs/"
+echo "   (or ask Claude Code to review them for upstream fixes you should merge)"
+echo "4. Update Galaxy roles: cd $TRELLIS_DIR && ansible-galaxy install -r galaxy.yml --force"
+echo "5. Test in development (if applicable)"
+echo "6. Commit changes: git add trellis/ && git commit -m 'Update Trellis to latest version'"
 echo ""
 echo "Backup location: $BACKUP_DIR"
 echo "Temp directory: $TEMP_DIR (manually remove when done)"
