@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-06-23
+
+### Added
+
+- **scripts/monitoring/cf7-smoke-test.js** - Playwright-based smoke test that verifies Contact Form 7 submissions still work after deploying Nginx rate limit changes:
+  - Navigates to the contact page, fills form fields, and submits
+  - Captures all CF7 REST API requests and verifies 200 responses (schema, feedback, refill)
+  - Confirms the success message appears on the page
+  - Exits with code 0 on pass, 1 on failure — suitable for CI or post-deploy hooks
+  - Configurable via CLI flags: `--name`, `--email`, `--subject`, `--message`
+  - Usage: `node cf7-smoke-test.js https://yoursite.com/contact/`
+
 ## [2.13.0] - 2026-06-20
 
 ### Added
