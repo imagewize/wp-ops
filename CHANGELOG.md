@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-06-23
+
+### Added
+
+- **scripts/monitoring/cf7-smoke-test.js** - Playwright-based smoke test that verifies Contact Form 7 submissions still work after deploying Nginx rate limit changes:
+  - Navigates to the contact page, fills form fields, and submits
+  - Captures all CF7 REST API requests and verifies 200 responses (schema, feedback, refill)
+  - Confirms the success message appears on the page
+  - Exits with code 0 on pass, 1 on failure — suitable for CI or post-deploy hooks
+  - Configurable via CLI flags: `--name`, `--email`, `--subject`, `--message`
+  - Usage: `node cf7-smoke-test.js https://yoursite.com/contact/`
+
+### Changed
+
+- **Mistral Vibe CLI configuration** - Switched from custom system prompt to built-in `cli` prompt with `AGENTS.md` for repo-specific instructions:
+  - Changed `system_prompt_id` from `"wp-ops"` to `"cli"` in [.vibe/config.toml](.vibe/config.toml) so Vibe uses its default agent prompt
+  - Merged useful content from `.vibe/prompts/wp-ops.md` into [AGENTS.md](AGENTS.md): git workflow (branch naming, CHANGELOG versioning, `create-pr.sh` usage), Mistral Vibe co-author prohibition, and "Context for Tasks" checklist
+  - Deleted `.vibe/prompts/wp-ops.md` and the `prompts/` directory — repo-specific rules now live in `AGENTS.md` where Vibe reads them natively
+
 ## [2.13.0] - 2026-06-20
 
 ### Added

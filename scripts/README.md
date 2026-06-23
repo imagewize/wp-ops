@@ -28,6 +28,7 @@ scripts/
 │   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
+│   ├── cf7-smoke-test.js             # Playwright CF7 form submission smoke test
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
 ├── woocommerce/                # WooCommerce automation
