@@ -54,6 +54,9 @@ declare -a AI_BOTS=(
     "anthropic-ai|Anthropic anthropic-ai"
     "Google-Extended|Google-Extended (Gemini training)"
     "PerplexityBot|PerplexityBot"
+    "MistralAI-User|Mistral MistralAI-User (live fetch)"
+    "MistralAI-Index|Mistral MistralAI-Index (crawler)"
+    "DeepSeekBot|DeepSeek DeepSeekBot"
     "CCBot|Common Crawl CCBot"
     "Bytespider|ByteDance Bytespider"
     "Amazonbot|Amazon Amazonbot"
@@ -70,7 +73,7 @@ declare -a AI_BOTS=(
 )
 
 # Combined pattern for matching any AI bot (used for aggregate queries)
-AI_PATTERN='GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|anthropic-ai|Google-Extended|PerplexityBot|CCBot|Bytespider|Amazonbot|cohere-ai|YouBot|Diffbot|meta-externalagent|Applebot-Extended|ImagesiftBot|omgilibot|AI2Bot|iaskspider|Kangaroo Bot'
+AI_PATTERN='GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|anthropic-ai|Google-Extended|PerplexityBot|MistralAI-User|MistralAI-Index|DeepSeekBot|CCBot|Bytespider|Amazonbot|cohere-ai|YouBot|Diffbot|meta-externalagent|Applebot-Extended|ImagesiftBot|omgilibot|AI2Bot|iaskspider|Kangaroo Bot'
 
 # Static file extensions to exclude from page analysis
 STATIC_PATTERN='\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|svg|webp|avif|ttf|eot|map|txt|xml)($|\?)'
