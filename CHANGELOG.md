@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-06-26
+
+### Changed
+
+- **scripts/monitoring/ai-bot-monitor.sh** - Expanded AI crawler detection to cover three previously untracked bots:
+  - `MistralAI-User` (Mistral's live Le Chat fetcher) and `MistralAI-Index` (Mistral's indexing crawler)
+  - `DeepSeekBot` (DeepSeek's web crawler)
+  - Added all three to both the `AI_BOTS` display array and the aggregate `AI_PATTERN` matcher, so they now appear in per-bot request/bandwidth counts, scraped-page lists, and robots.txt compliance checks. Verified against two months of production logs: DeepSeekBot was actively crawling (and probing for `.env`/build manifests) but went uncounted, while neither Mistral bot has appeared at all.
+
 ## [2.14.0] - 2026-06-23
 
 ### Added
