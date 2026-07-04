@@ -128,7 +128,7 @@ wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
 ./list-posts-count.sh
 
 # Or copy and run directly:
-ssh web@imagewize.com "cd /srv/www/imagewize.com/current && wp post list --post_type=post --post_status=publish --fields=ID,post_title,post_name,post_date --path=web/wp --format=csv" > /tmp/all_posts.csv 2>&1
+ssh web@example.com "cd /srv/www/example.com/current && wp post list --post_type=post --post_status=publish --fields=ID,post_title,post_name,post_date --path=web/wp --format=csv" > /tmp/all_posts.csv 2>&1
 wc -l /tmp/all_posts.csv
 ```
 
