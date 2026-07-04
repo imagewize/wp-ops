@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-07-04
+
+### Added
+
+- **SSH Connection Multiplexing** - Documented `ControlMaster`/`ControlPersist` setup in [trellis/provision/PROJECT-SETUP.md](trellis/provision/PROJECT-SETUP.md) under "Speed Up SSH with Connection Multiplexing": reuses an authenticated SSH socket across repeat connections to production (log checks, WP-CLI, fail2ban lookups) instead of renegotiating each time. Keyed per remote user via `%r`, so `web@` and `admin_user@` get independent sockets.
+
 ## [2.16.0] - 2026-07-04
 
 ### Added
