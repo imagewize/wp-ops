@@ -610,6 +610,27 @@ ssh admin_user@yourproject.com
 
 **Note:** Root SSH access is disabled for security. Use your configured admin user for sudo access.
 
+#### Speed Up SSH with Connection Multiplexing (Recommended)
+
+If you SSH into production frequently (log checks, WP-CLI, fail2ban lookups, deploys), add connection multiplexing to `~/.ssh/config` so repeat connections reuse an already-authenticated socket instead of renegotiating SSH each time:
+
+```
+Host yourproject.com
+  KexAlgorithms curve25519-sha256@libssh.org
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h-%p
+  ControlPersist 600
+```
+
+```bash
+mkdir -p ~/.ssh/sockets && chmod 700 ~/.ssh/sockets
+```
+
+**Notes:**
+- Multiplexing is keyed per remote user (`%r`), so `web@yourproject.com` and `admin_user@yourproject.com` get separate sockets — both benefit independently.
+- `ControlPersist 600` keeps the master connection open for 10 minutes after your last session closes, so a burst of commands (e.g. diagnostics during an incident) only pays the handshake cost once.
+- Verify it's working: run the same SSH command twice in a row — the second should return in well under a second, and `~/.ssh/sockets/` will contain a socket file per user.
+
 #### Troubleshooting
 
 **Problem:** `Permission denied (publickey)` after provisioning
