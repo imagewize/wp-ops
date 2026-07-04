@@ -90,6 +90,9 @@ if [ "$AI_TOOL" != "claude" ] && [ "$AI_TOOL" != "codex" ] && [ "$AI_TOOL" != "v
 fi
 
 # CLI command names can be overridden via environment if needed
+# Availability is checked via `command -v` against the caller's PATH, so a tool
+# installed after the current shell started (e.g. vibe added to ~/.local/bin)
+# won't be detected until PATH is re-sourced (new terminal tab or `source ~/.zshrc`).
 CLAUDE_COMMAND=${CLAUDE_COMMAND:-claude}
 CODEX_COMMAND=${CODEX_COMMAND:-codex}
 VIBE_COMMAND=${VIBE_COMMAND:-vibe}

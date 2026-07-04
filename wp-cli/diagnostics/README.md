@@ -8,6 +8,7 @@ WordPress diagnostic tools for troubleshooting common issues in Trellis/Bedrock 
 - [Installation](#installation)
 - [Available Tools](#available-tools)
   - [Transient Diagnostics](#transient-diagnostics)
+  - [Post Listing Script](#post-listing-script)
 - [Best Practices](#best-practices)
 - [Contributing](#contributing)
 
@@ -114,6 +115,35 @@ wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
 - Need to share diagnostic results with clients or team members
 - Want detailed database performance metrics
 - Testing after server configuration changes
+
+### Post Listing Script
+
+#### 1. List Posts Count (`list-posts-count.sh`)
+
+**Purpose:** List all published WordPress posts via WP-CLI in CSV format and count the results. Useful for content audits, diagnostics, and verifying post counts.
+
+**Usage:**
+```bash
+# Run the script (connects to production server)
+./list-posts-count.sh
+
+# Or copy and run directly:
+ssh web@example.com "cd /srv/www/example.com/current && wp post list --post_type=post --post_status=publish --fields=ID,post_title,post_name,post_date --path=web/wp --format=csv" > /tmp/all_posts.csv 2>&1
+wc -l /tmp/all_posts.csv
+```
+
+**What It Does:**
+- Connects via SSH to a WordPress server
+- Lists all published posts with ID, title, slug, and date fields
+- Outputs results in CSV format to `/tmp/all_posts.csv`
+- Counts the number of posts (lines in the CSV file)
+
+**Output:** CSV file with post data and line count to stdout
+
+**When to Use:**
+- Content audit and verification
+- Quick post count checks
+- Diagnostic investigation of post-related issues
 
 ### Common Issues Diagnosed
 
