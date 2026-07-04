@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-07-04
+
+### Added
+
+- **wp-cli/diagnostics/list-posts-count.sh** - New shell script snippet that lists all published posts via WP-CLI in CSV format and counts the results. Useful for content audits and diagnostics.
+
 ## [2.15.0] - 2026-06-26
 
 ### Changed
