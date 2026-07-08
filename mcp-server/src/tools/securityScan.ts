@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { EnvEntry } from "../registry.js";
-import { hasTrellisVm } from "../registry.js";
+import { hasTrellisVm, resolvePhpBin } from "../registry.js";
+
+function shellQuote(arg: string): string {
+  return `'${arg.replace(/'/g, `'\\''`)}'`;
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCANNER_DIR = path.resolve(__dirname, "../../../wp-cli/security");
@@ -21,9 +25,9 @@ interface ExecResult {
   code: number;
 }
 
-function runLocal(scannerFile: string, scanPath: string): Promise<ExecResult> {
+function runLocal(scannerFile: string, scanPath: string, phpBin: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("php", [scannerFile, scanPath]);
+    const child = spawn(phpBin, [scannerFile, scanPath]);
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
@@ -35,9 +39,9 @@ function runLocal(scannerFile: string, scanPath: string): Promise<ExecResult> {
 
 // Streams the scanner source over SSH stdin so nothing is ever written to disk
 // on the remote host (avoids the scp-to-/tmp-then-remember-to-delete step).
-function runRemote(sshHost: string, scannerSource: string, remotePath: string): Promise<ExecResult> {
+function runRemote(sshHost: string, scannerSource: string, remotePath: string, phpBin: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("ssh", [sshHost, "php", "-", remotePath]);
+    const child = spawn("ssh", [sshHost, `${shellQuote(phpBin)} - ${shellQuote(remotePath)}`]);
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
@@ -55,10 +59,11 @@ function runVm(
   trellisDir: string,
   scannerSource: string,
   workdir: string,
-  scanPath: string
+  scanPath: string,
+  phpBin: string
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("trellis", ["vm", "shell", "--workdir", workdir, "--", "php", "-", scanPath], {
+    const child = spawn("trellis", ["vm", "shell", "--workdir", workdir, "--", phpBin, "-", scanPath], {
       cwd: trellisDir,
     });
     let stdout = "";
@@ -73,6 +78,7 @@ function runVm(
 }
 
 export async function runSecurityScan(entry: EnvEntry, mode: ScanMode): Promise<string> {
+  const phpBin = resolvePhpBin(entry) || "php";
   const modesToRun: Array<keyof typeof SCANNERS> = mode === "both" ? ["targeted", "general"] : [mode];
   const sections: string[] = [];
 
@@ -83,15 +89,15 @@ export async function runSecurityScan(entry: EnvEntry, mode: ScanMode): Promise<
     // Scanners read files (no DB), so prefer host localPath when present — it's the
     // fastest path and needs no VM/SSH round trip. Fall back to SSH, then the dev VM.
     if (entry.localPath) {
-      result = await runLocal(scannerFile, entry.localPath);
+      result = await runLocal(scannerFile, entry.localPath, phpBin);
     } else if (entry.sshHost && entry.remotePath) {
       const scannerSource = readFileSync(scannerFile, "utf-8");
-      result = await runRemote(entry.sshHost, scannerSource, entry.remotePath);
+      result = await runRemote(entry.sshHost, scannerSource, entry.remotePath, phpBin);
     } else if (hasTrellisVm(entry)) {
       const scannerSource = readFileSync(scannerFile, "utf-8");
-      result = await runVm(entry.trellisDir, scannerSource, entry.vmWorkdir, entry.vmPath ?? "web/wp");
+      result = await runVm(entry.trellisDir, scannerSource, entry.vmWorkdir, entry.vmPath ?? "web/wp", phpBin);
     } else {
-      throw new Error("Site/env entry has none of: localPath, sshHost+remotePath, or trellisDir+vmWorkdir.");
+      throw new Error("Site/env entry has none of: localPath, sshHost+remotePath, trellisDir+vmWorkdir, or url.");
     }
 
     sections.push(
