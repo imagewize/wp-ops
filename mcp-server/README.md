@@ -159,6 +159,14 @@ fixed Node/PHP/openssh/wp-cli toolchain regardless of what's installed locally. 
 build-tested with a real `docker build` in this session (no Docker CLI available here) —
 verify the build once you have Docker locally before relying on it.
 
+**Trellis VM sites don't work in this container.** Sites registered with
+`trellisDir`+`vmWorkdir` (a local Trellis dev VM) run their commands via
+`trellis vm shell`, which drives a Vagrant/VirtualBox VM on the host machine. The image
+doesn't include the `trellis` CLI, and even if it did, a container has no access to the
+host's Vagrant state — there's no way to reach that VM from inside Docker. Only sites
+using `localPath` or `sshHost`+`remotePath` work when running containerized; for Trellis
+VM sites, run the server directly on the host (`npm start` / `npm run dev`) instead.
+
 To run the container in HTTP mode instead, publish the port and pass the transport env vars:
 
 ```bash
