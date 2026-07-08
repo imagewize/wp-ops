@@ -8,9 +8,9 @@
 #   spider             — recursive wget spider, depth 3 (~5-10 min)
 #
 # Examples:
-#   ./404-checker.sh https://imagewize.com
-#   ./404-checker.sh --mode spider https://imagewize.com
-#   ./404-checker.sh --output results.txt https://imagewize.com
+#   ./404-checker.sh https://example.com
+#   ./404-checker.sh --mode spider https://example.com
+#   ./404-checker.sh --output results.txt https://example.com
 
 # ── Colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'

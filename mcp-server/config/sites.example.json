@@ -1,0 +1,15 @@
+{
+  "example.com": {
+    "development": {
+      "localPath": "/Users/you/sites/example.com/web/wp"
+    },
+    "staging": {
+      "sshHost": "staging.example.com",
+      "remotePath": "/srv/www/example.com/current/web/wp"
+    },
+    "production": {
+      "sshHost": "production.example.com",
+      "remotePath": "/srv/www/example.com/current/web/wp"
+    }
+  }
+}

@@ -3,13 +3,13 @@
  * PRODUCTION TRANSIENT DEBUGGER
  *
  * Upload this file to wp-content/ on production server
- * Access via: https://robdisbergen.nl/wp-content/transient-debug-browser.php
+ * Access via: https://client.nl/wp-content/transient-debug-browser.php
  *
  * This will help diagnose why transients fail on production
  */
 
 // Security: Add a secret token to prevent public access
-define('DEBUG_SECRET', 'rob2025debug'); // Change this!
+define('DEBUG_SECRET', 'somethingmoeilijk'); // Change this!
 
 if (!isset($_GET['secret']) || $_GET['secret'] !== DEBUG_SECRET) {
     die('Access denied. Add ?secret=rob2025debug to URL');

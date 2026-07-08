@@ -18,7 +18,7 @@ This was **not a failed site creation**, but a **slug change that did not fully 
 * `wp site list` still displayed:
 
   ```
-  https://demo.imagewize.com/fintech/
+  https://demo.example.com/fintech/
   ```
 
   even though the database showed `/kafe/`.
@@ -66,14 +66,14 @@ The fix required synchronizing **all three layers**:
    (Multisite does NOT update these automatically when changing slugs)
 
    ```bash
-   wp --url=https://demo.imagewize.com/kafe option update siteurl https://demo.imagewize.com/kafe --path=web/wp
-   wp --url=https://demo.imagewize.com/kafe option update home https://demo.imagewize.com/kafe --path=web/wp
+   wp --url=https://demo.example.com/kafe option update siteurl https://demo.example.com/kafe --path=web/wp
+   wp --url=https://demo.example.com/kafe option update home https://demo.example.com/kafe --path=web/wp
    ```
 
 2. **Replace lingering references inside the site**
 
    ```bash
-   wp --url=https://demo.imagewize.com/kafe search-replace '/fintech/' '/kafe/' --skip-columns=guid --path=web/wp
+   wp --url=https://demo.example.com/kafe search-replace '/fintech/' '/kafe/' --skip-columns=guid --path=web/wp
    ```
 
 3. **Flush WordPress object cache**
@@ -103,7 +103,7 @@ The fix required synchronizing **all three layers**:
 After these steps, `wp site list` correctly reflected:
 
 ```
-https://demo.imagewize.com/kafe/
+https://demo.example.com/kafe/
 ```
 
 ---

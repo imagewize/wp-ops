@@ -77,11 +77,11 @@ scripts/
 ./scripts/git-log-oneline.sh 25
 
 # Count published blog posts by year (production, over SSH)
-./scripts/post-count.sh --ssh web@imagewize.com
+./scripts/post-count.sh --ssh web@example.com
 
 # Count just this year's blog posts, or a month-by-month breakdown
-./scripts/post-count.sh --ssh web@imagewize.com --year 2026
-./scripts/post-count.sh --ssh web@imagewize.com --months 2026
+./scripts/post-count.sh --ssh web@example.com --year 2026
+./scripts/post-count.sh --ssh web@example.com --months 2026
 
 # Release WordPress theme version
 ./scripts/release-theme.sh theme-name 1.2.5
@@ -338,22 +338,22 @@ Runs `wp db query`, so run it where WP-CLI works: inside the Trellis VM, on the 
 
 ```bash
 # All years, blog posts only (over SSH to production)
-./post-count.sh --ssh web@imagewize.com
+./post-count.sh --ssh web@example.com
 
 # Just 2026's blog-post total
-./post-count.sh --ssh web@imagewize.com --year 2026
+./post-count.sh --ssh web@example.com --year 2026
 
 # Month-by-month for 2026
-./post-count.sh --ssh web@imagewize.com --months 2026
+./post-count.sh --ssh web@example.com --months 2026
 
 # Run locally inside the Trellis VM / on the server (no --ssh needed)
 ./post-count.sh --year 2026
 
 # aseonomics.com on the same server
-./post-count.sh --ssh web@imagewize.com --site /srv/www/aseonomics.com/current
+./post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
 
 # Count published pages instead of posts
-./post-count.sh --ssh web@imagewize.com --type page
+./post-count.sh --ssh web@example.com --type page
 
 # Syntax
 ./post-count.sh [--year YYYY | --months YYYY] [--type TYPE] [--status STATUS] \
@@ -364,7 +364,7 @@ Runs `wp db query`, so run it where WP-CLI works: inside the Trellis VM, on the 
 
 ```
 === Monthly post count (publish) for 2026 ===
-Site: /srv/www/imagewize.com/current (web@imagewize.com)
+Site: /srv/www/example.com/current (web@example.com)
 
 month	posts
 2026-01	2
@@ -381,7 +381,7 @@ Done.
 #### Requirements
 
 - WP-CLI available where the query runs (Trellis VM, production, or reachable via `--ssh`)
-- SSH access to the server when using `--ssh` (e.g. `web@imagewize.com`)
+- SSH access to the server when using `--ssh` (e.g. `web@example.com`)
 
 ---
 

@@ -24,13 +24,13 @@
  * USAGE:
  *
  * Via WP-CLI (recommended):
- *   wp eval-file wp-content/themes/robdisbergen/security-scanner-general.php
+ *   wp eval-file wp-content/themes/client/security-scanner-general.php
  *
  * Via Browser (secure with IP check first):
- *   https://yoursite.com/wp-content/themes/robdisbergen/security-scanner-general.php
+ *   https://yoursite.com/wp-content/themes/client/security-scanner-general.php
  *
  * Via Command Line:
- *   php wp-content/themes/robdisbergen/security-scanner-general.php [/path/to/scan]
+ *   php wp-content/themes/client/security-scanner-general.php [/path/to/scan]
  */
 
 // ============================================================================

@@ -227,8 +227,8 @@ Status for the jail: wordpress_wp_login
 |- Filter
 |  |- Currently failed: 2
 |  |- Total failed:     47
-|  `- File list:        /srv/www/imagewize.com/logs/access.log
-                        /srv/www/demo.imagewize.com/logs/access.log
+|  `- File list:        /srv/www/example.com/logs/access.log
+                        /srv/www/demo.example.com/logs/access.log
 `- Actions
    |- Currently banned: 1
    |- Total banned:     12
@@ -458,7 +458,7 @@ ssh web@yoursite.com "grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.lo
 
 ## Real-World Statistics
 
-### Production Site Analysis (imagewize.com)
+### Production Site Analysis (example.com)
 
 **Period**: November-December 2025 (before fail2ban enabled)
 

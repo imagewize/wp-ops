@@ -9,6 +9,7 @@ This directory contains production-tested WP-CLI utilities for:
 - **Content Creation** - Gutenberg block patterns and page creation workflows
 - **Diagnostics** - WordPress troubleshooting and debugging tools
 - **Migration** - WordPress site migration to Trellis/Bedrock infrastructure
+- **SEO** - SEO audits: page structure, redirect chains, schema markup, blog analysis, orphan pages
 
 ## Directory Structure
 
@@ -16,7 +17,8 @@ This directory contains production-tested WP-CLI utilities for:
 wp-cli/
 ├── content-creation/    # Block patterns, page creation, automation scripts
 ├── diagnostics/         # Troubleshooting and debugging tools
-└── migration/           # Site migration documentation and workflows
+├── migration/           # Site migration documentation and workflows
+└── seo/                # SEO audit tools and scripts
 ```
 
 ## Quick Start
@@ -505,6 +507,106 @@ ssh web@example.com "cd /srv/www/example.com/current && \
 
 ---
 
+## 4. SEO
+
+**Location:** `seo/`
+
+Production-tested SEO audit tools for identifying technical SEO issues, content gaps, and optimization opportunities in WordPress sites.
+
+### Features
+
+- **Page Structure Audit** - Navigation hierarchy, key pages check, duplicate title detection
+- **Redirect Chain Audit** - HTTP→HTTPS, www canonicalization, security headers validation
+- **Schema Markup Audit** - JSON-LD detection and type validation across key pages
+- **Blog Content Audit** - Categorization, featured images, content length analysis
+- **Orphan Pages Audit** - Identify pages not linked from navigation menus
+
+### Available Tools
+
+| Tool | Purpose | Access Method |
+|------|---------|---------------|
+| `page-audit.sh` | Analyze page structure, hierarchy, and key business pages | WP-CLI |
+| `redirect-audit.sh` | Test redirect chains, HTTP→HTTPS, www canonicalization | HTTP/curl |
+| `schema-audit.sh` | Validate JSON-LD schema markup on key pages | HTTP/curl |
+| `blog-audit.sh` | Analyze blog content categorization and quality | WP-CLI |
+| `orphan-pages-audit.sh` | Find pages not in navigation menus | WP-CLI |
+
+### Usage Examples
+
+#### Page Structure Audit
+```bash
+# Run from Bedrock site directory
+cd /srv/www/example.com/current
+./wp-cli/seo/page-audit.sh
+
+# With custom output directory
+./wp-cli/seo/page-audit.sh --output reports/seo
+
+# With custom WordPress path
+./wp-cli/seo/page-audit.sh --path web/wp
+```
+
+#### Redirect Chain Audit
+```bash
+# Test a single site
+./wp-cli/seo/redirect-audit.sh --url https://example.com
+
+# With verbose output
+./wp-cli/seo/redirect-audit.sh --url https://example.com --verbose
+
+# Test specific URLs
+./wp-cli/seo/redirect-audit.sh --url https://example.com/about/ --url https://example.com/contact/
+```
+
+#### Schema Markup Audit
+```bash
+# Audit default pages
+./wp-cli/seo/schema-audit.sh https://example.com
+
+# Audit specific pages
+./wp-cli/seo/schema-audit.sh https://example.com --pages /,/services/,/contact/
+```
+
+#### Blog Content Audit
+```bash
+# Run from site directory
+cd /srv/www/example.com/current
+./wp-cli/seo/blog-audit.sh
+
+# With custom output directory
+./wp-cli/seo/blog-audit.sh --output reports/seo
+```
+
+#### Orphan Pages Audit
+```bash
+cd /srv/www/example.com/current
+./wp-cli/seo/orphan-pages-audit.sh
+```
+
+### Common SEO Issues Identified
+
+- **Missing key business pages** - Home, About, Contact, Services not found
+- **Redirect chains** - Multiple 301/302 hops affecting SEO
+- **Missing schema markup** - No JSON-LD on important pages
+- **Orphaned pages** - Pages not linked from navigation
+- **Thin content** - Blog posts with < 800 words
+- **Missing featured images** - Posts without thumbnails
+- **Duplicate page titles** - Multiple pages with same title
+- **Missing security headers** - HSTS, CSP, X-Frame-Options
+
+### Best Practices
+
+1. **Run audits regularly** - Monthly for redirect/schema, quarterly for content
+2. **Fix redirect chains first** - Every redirect hop loses link equity
+3. **Implement schema markup** - Helps search engines understand your content
+4. **Add internal links** - Connect orphaned pages to navigation structure
+5. **Use descriptive titles** - Avoid duplicate or generic page titles
+6. **Test on staging first** - Run audits on staging before production
+
+**See also:** [seo/README.md](seo/README.md) for complete SEO tools documentation.
+
+---
+
 ## Best Practices
 
 ### Content Creation
@@ -532,6 +634,16 @@ ssh web@example.com "cd /srv/www/example.com/current && \
 5. **Plan rollback strategy** - Keep old site available during migration
 6. **Communicate changes** - Inform users of potential downtime
 7. **Verify after migration** - Check all functionality works correctly
+
+### SEO
+
+1. **Run audits regularly** - Monthly for redirect/schema, quarterly for content/structure
+2. **Fix redirect chains** - Every redirect hop loses link equity (prioritize HTTP→HTTPS and www canonicalization)
+3. **Implement schema markup** - JSON-LD helps search engines understand your content
+4. **Eliminate orphaned pages** - Add internal links or delete unused pages
+5. **Optimize content** - Expand thin content, add featured images, use descriptive titles
+6. **Test on staging first** - Run SEO audits on staging before production changes
+7. **Monitor search performance** - Track rankings and traffic after fixes
 
 ---
 

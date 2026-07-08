@@ -15,6 +15,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 - [WP-CLI](#wp-cli)
 - [Nginx](#nginx)
 - [Scripts](#scripts)
+- [MCP Server](#mcp-server)
 - [WordPress Utilities](#wordpress-utilities)
 - [Troubleshooting](#troubleshooting)
 
@@ -100,6 +101,14 @@ Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for
 | **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/rsync-theme.sh) |
 | **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/find-and-replace-files.sh) |
 | **Git Log Oneline** | Show recent git commits as compact one-liners | [→](scripts/README.md#git-log-onelinesh) |
+
+## MCP Server
+
+Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — one tool implemented so far, more (backups, PR creation, releases, image optimization) planned. See [mcp-server/README.md](mcp-server/README.md) for setup, transports (stdio/Streamable HTTP), and Docker usage.
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **security_scan** | Run the wp-cli security scanners against a registered site/environment (local or over SSH) | [→](mcp-server/README.md) |
 
 ## WordPress Utilities
 

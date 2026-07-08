@@ -277,7 +277,7 @@ ssh admin_user@yoursite.com "sudo grep 'access forbidden' /var/log/nginx/error.l
 **Example log entry:**
 ```
 2026/01/01 12:34:56 [error] 12345#12345: *67890 access forbidden by rule,
-client: 62.60.130.228, server: imagewize.com, request: "POST /wp-login.php HTTP/1.1"
+client: 62.60.130.228, server: example.com, request: "POST /wp-login.php HTTP/1.1"
 ```
 
 ### Count Blocked Requests
@@ -418,7 +418,7 @@ ssh admin_user@yoursite.com "cat /etc/nginx/includes.d/all/deny-ips.conf | grep 
 
 ---
 
-## Reference: Known Attacker IPs (imagewize.com)
+## Reference: Known Attacker IPs (example.com)
 
 From production logs analysis (November-December 2025):
 

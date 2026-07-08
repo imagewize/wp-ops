@@ -95,7 +95,7 @@ git log HEAD..upstream/master | head -20  # Review what's new
 2. **Edit the script to set your project slug**:
 ```bash
 # Open the script and update line 4
-PROJECT="your-site-name"  # e.g., "imagewize.com"
+PROJECT="your-site-name"  # e.g., "example.com"
 ```
 
 3. **Make the script executable** (first time only):

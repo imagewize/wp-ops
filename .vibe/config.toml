@@ -74,11 +74,6 @@ max_files = 1000
 max_dirs_per_level = 20
 timeout_seconds = 2.0
 
-[session_logging]
-save_dir = "/Users/jasperfrumau/.vibe/logs/session"
-session_prefix = "session"
-enabled = true
-
 [tools.bash]
 permission = "ask"
 allowlist = [
@@ -205,15 +200,15 @@ denylist = []
 max_write_bytes = 64000
 create_parent_dirs = true
 
-[tools.read]
-permission = "always"
-allowlist = []
-denylist = []
-max_read_bytes = 64000
-max_state_history = 10
-
 [tools.edit]
 permission = "ask"
 allowlist = []
 denylist = []
 fuzzy_threshold = 0.9
+
+[tools.read_file]
+permission = "always"
+allowlist = []
+denylist = []
+max_read_bytes = 64000
+max_state_history = 10

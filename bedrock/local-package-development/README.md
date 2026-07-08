@@ -159,8 +159,8 @@ When the package release is tagged, undo the local-dev wiring:
 
 ## Worked example
 
-Testing the `issues-30-05-26` branch of `imagewize/warder-cookie-consent` in a
-Bedrock site located at `code/imagewize.com/demo`, with the plugin checked out at
+Testing the `issues-30-05-26` branch of `example/warder-cookie-consent` in a
+Bedrock site located at `code/example.com/demo`, with the plugin checked out at
 `code/warder-cookie-consent`:
 
 ```json
@@ -172,13 +172,13 @@ Bedrock site located at `code/imagewize.com/demo`, with the plugin checked out a
   }
 ],
 "require": {
-  "imagewize/warder-cookie-consent": "dev-issues-30-05-26"
+  "example/warder-cookie-consent": "dev-issues-30-05-26"
 }
 ```
 
 ```bash
-cd code/imagewize.com/demo
-composer update imagewize/warder-cookie-consent
-# - Installing imagewize/warder-cookie-consent (dev-issues-30-05-26 7290d6d):
+cd code/example.com/demo
+composer update example/warder-cookie-consent
+# - Installing example/warder-cookie-consent (dev-issues-30-05-26 7290d6d):
 #   Mirroring from ../../warder-cookie-consent
 ```
