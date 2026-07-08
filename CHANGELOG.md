@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-07-08
+
+### Added
+
+- **mcp-server/** - New [MCP](https://modelcontextprotocol.io) server exposing wp-ops operations as tools Claude (and other MCP-compatible clients) can call directly instead of running the underlying scripts by hand. First tool implemented:
+  - **`security_scan`** - runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php` against a registered site/environment. Remote environments stream the scanner source over SSH stdin (`php - <path>`) rather than writing it to disk on the remote host.
+  - Site/environment lookup via a gitignored `config/sites.json` (mapping site → env → local path or SSH host/remote path), resolved against `config/sites.example.json`.
+  - Two transports, both verified end-to-end: **stdio** (default, for Claude Code/Desktop) and **Streamable HTTP** for remote/non-Claude clients, gated behind a required `WP_OPS_MCP_TOKEN` bearer token since HTTP mode can reach staging/production over SSH.
+  - `Dockerfile` for running the server in a container with a fixed Node/PHP/openssh toolchain, built from the repo root so the image can include `wp-cli/security/`.
+  - Documented in [`mcp-server/README.md`](mcp-server/README.md).
+
+This is a major version bump: it's the first release to ship an executable service (not just scripts/docs) as part of the repo, and more tools (backups, PR creation, releases, image optimization) are planned to follow the same pattern.
+
 ## [2.18.0] - 2026-07-08
 
 ### Added
