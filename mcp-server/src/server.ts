@@ -112,12 +112,15 @@ export function createServer(): McpServer {
     "Run a comprehensive redirect chain audit for one or more URLs. Tests HTTPS pages for 200 status " +
       "with 0 redirects (optimal), verifies HTTP→HTTPS 301 redirects, checks www→non-www canonicalization, " +
       "and validates security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Returns color-coded " +
-      "status for each test with detailed recommendations.",
+      "status for each test with detailed recommendations. Pass either `urls` or `site`+`env` (to use the site's registered URL).",
     {
       urls: z
         .array(z.string().url())
         .min(1)
+        .optional()
         .describe('URL(s) to audit, e.g. ["https://example.com", "https://example.com/about/"]'),
+      site: z.string().optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: z.string().optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
       checkWww: z
         .boolean()
         .default(true)
@@ -127,9 +130,25 @@ export function createServer(): McpServer {
         .default(true)
         .describe('Whether to check for security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)'),
     },
-    async ({ urls, checkWww, checkSecurityHeaders }) => {
+    async ({ urls, site, env, checkWww, checkSecurityHeaders }) => {
       try {
-        const result = await runRedirectAudit(urls, checkWww, checkSecurityHeaders);
+        // Resolve URLs from site/env if provided
+        let targetUrls = urls;
+        if (site && env) {
+          const registry = loadRegistry();
+          const entry = resolveSiteEnv(registry, site, env);
+          if (entry.url) {
+            targetUrls = [entry.url];
+          } else {
+            throw new Error(`Site entry for "${site}"/"${env}" has no URL field. Use the "urls" parameter instead.`);
+          }
+        }
+        
+        if (!targetUrls || targetUrls.length === 0) {
+          throw new Error("Either provide 'urls' or 'site' + 'env' parameters.");
+        }
+        
+        const result = await runRedirectAudit(targetUrls, checkWww, checkSecurityHeaders);
         const lines: string[] = [
           `Redirect Audit: ${result.overallStatus === "PASS" ? "✅ PASS" : "❌ FAIL"}`,
           `Total Tests: ${result.totalTests} | Passed: ${result.passedTests} | Failed: ${result.failedTests}`,
@@ -172,9 +191,11 @@ export function createServer(): McpServer {
     "schema_audit",
     "Audit schema markup (JSON-LD) across key pages of a site. Checks for Organization, LocalBusiness, " +
       "Service, Product, WebSite, BreadcrumbList, Article, FAQPage, HowTo, and Person schema types. " +
-      "Returns count of pages with/without schema and which schema types are present.",
+      "Returns count of pages with/without schema and which schema types are present. Pass either `siteUrl` or `site`+`env`.",
     {
-      siteUrl: z.string().describe('Site URL to audit, e.g. "https://example.com"'),
+      siteUrl: z.string().optional().describe('Site URL to audit, e.g. "https://example.com"'),
+      site: z.string().optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: z.string().optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
       pages: z
         .array(z.string())
         .optional()
@@ -183,9 +204,25 @@ export function createServer(): McpServer {
             'Defaults to common pages (homepage, services, about, contact, portfolio, shop, blog, etc.)'
         ),
     },
-    async ({ siteUrl, pages }) => {
+    async ({ siteUrl, site, env, pages }) => {
       try {
-        const result = await runSchemaAudit(siteUrl, pages);
+        // Resolve siteUrl from site/env if provided
+        let targetUrl = siteUrl;
+        if (site && env) {
+          const registry = loadRegistry();
+          const entry = resolveSiteEnv(registry, site, env);
+          if (entry.url) {
+            targetUrl = entry.url;
+          } else {
+            throw new Error(`Site entry for "${site}"/"${env}" has no URL field. Use the "siteUrl" parameter instead.`);
+          }
+        }
+        
+        if (!targetUrl) {
+          throw new Error("Either provide 'siteUrl' or 'site' + 'env' parameters.");
+        }
+        
+        const result = await runSchemaAudit(targetUrl, pages);
         const lines: string[] = [
           `Schema Audit: ${result.pagesWithSchema}/${result.totalPages} pages have schema markup`,
           "",
