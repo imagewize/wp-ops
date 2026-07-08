@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **mcp-server** - New `db_backup` tool: runs `wp db export` against a registered site/environment, gzips the result, and saves it locally to `~/wp-ops-backups/<site>/<env>/` (override with `WP_OPS_BACKUP_DIR`). Remote environments stream the export over SSH stdout, so nothing is written to disk on the remote host, matching `security_scan`'s pattern. `Dockerfile` now also installs WP-CLI so the tool works inside the container.
+- **mcp-server** - New `wp_cli` tool: runs an arbitrary WP-CLI command (passed as an argv array, not a shell string) against a registered site/environment. Read-only verbs (list/get/exists/status/info/version/search/check-update/doctor/export) run immediately; everything else requires `confirm: true`. Remote args are individually shell-quoted before being sent over SSH, since SSH otherwise concatenates trailing args into one string for the remote shell to re-parse — a real command-injection vector for a passthrough tool taking arbitrary arguments.
 
 ## [3.0.0] - 2026-07-08
 

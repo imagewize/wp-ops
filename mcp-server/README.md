@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — two tools implemented so far:
+Scaffold — three tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -18,10 +18,19 @@ Scaffold — two tools implemented so far:
   again nothing is written to disk on the remote host. Requires `wp` (WP-CLI) on the
   machine running the export — locally that's your host; remotely it's already on any
   Trellis server.
+- **`wp_cli`** — runs an arbitrary WP-CLI command (`args` as separate tokens, e.g.
+  `["post", "list", "--format=json"]`) against a registered site/environment. `--path`
+  is added automatically and rejected if passed explicitly. Read-only verbs
+  (`list`/`get`/`exists`/`status`/`info`/`version`/`search`/`check-update`/`doctor`/
+  `export`) run immediately; anything else — updates, deletes, `search-replace`,
+  `eval`, installs, etc. — requires `confirm: true`, meant to be set only after the
+  user has explicitly approved that specific command in conversation. For remote sites,
+  each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
+  joins trailing args into one string for the remote shell to (re-)interpret.
 
-More tools (PR creation, releases, image optimization) will follow the same pattern.
-See the parent repo's `CLAUDE.md` and the relevant README in each directory for the
-operations these will eventually wrap.
+More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
+same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
+directory for the operations these will eventually wrap.
 
 Two transports are implemented, both verified end-to-end (real MCP `initialize` +
 `tools/call` round trip against the real scanner):
