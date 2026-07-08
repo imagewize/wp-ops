@@ -5,6 +5,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { gzip as gzipCallback } from "node:zlib";
 import type { EnvEntry } from "../registry.js";
+import { hasTrellisVm } from "../registry.js";
 
 const gzip = promisify(gzipCallback);
 
@@ -28,9 +29,9 @@ function timestamp(): string {
 }
 
 // Exports as a Buffer (not text) since a SQL dump isn't guaranteed valid UTF-8.
-function exportSql(command: string, args: string[]): Promise<Buffer> {
+function exportSql(command: string, args: string[], cwd?: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args);
+    const child = spawn(command, args, cwd ? { cwd } : {});
     const chunks: Buffer[] = [];
     let stderr = "";
     child.stdout.on("data", (d) => chunks.push(d));
@@ -48,14 +49,23 @@ function exportSql(command: string, args: string[]): Promise<Buffer> {
 
 export async function runDbBackup(entry: EnvEntry, site: string, env: string): Promise<BackupResult> {
   let sql: Buffer;
-  if (entry.localPath) {
-    sql = await exportSql("wp", ["db", "export", "-", `--path=${entry.localPath}`]);
+  // VM-first: a Trellis dev box keeps the DB in the VM, so `wp db export` must run there.
+  if (hasTrellisVm(entry)) {
+    const wpPath = entry.vmPath ?? "web/wp";
+    // Export streams over the VM shell's stdout; nothing is written to disk in the VM.
+    sql = await exportSql(
+      "trellis",
+      ["vm", "shell", "--workdir", entry.vmWorkdir, "--", "wp", "db", "export", "-", `--path=${wpPath}`],
+      entry.trellisDir
+    );
   } else if (entry.sshHost && entry.remotePath) {
     // Streams the export over SSH stdout so nothing is ever written to disk on the
     // remote host (same rationale as securityScan's remote path).
     sql = await exportSql("ssh", [entry.sshHost, "wp", "db", "export", "-", `--path=${entry.remotePath}`]);
+  } else if (entry.localPath) {
+    sql = await exportSql("wp", ["db", "export", "-", `--path=${entry.localPath}`]);
   } else {
-    throw new Error("Site/env entry has neither localPath nor (sshHost + remotePath) configured.");
+    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, or localPath.");
   }
 
   const compressed = await gzip(sql);

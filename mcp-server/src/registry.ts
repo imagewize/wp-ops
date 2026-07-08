@@ -9,6 +9,16 @@ export interface EnvEntry {
   localPath?: string;
   sshHost?: string;
   remotePath?: string;
+  // Trellis VM (local development): run commands inside the dev VM via
+  // `trellis vm shell`, since a Trellis dev box keeps the database in the VM,
+  // not on the host — so plain `wp` against localPath can't reach the DB.
+  trellisDir?: string; // dir to run `trellis` from (the Trellis project root, holds trellis.cli.yml)
+  vmWorkdir?: string; // --workdir inside the VM, e.g. /srv/www/example.com/current
+  vmPath?: string; // wp --path relative to vmWorkdir; defaults to "web/wp"
+}
+
+export function hasTrellisVm(entry: EnvEntry): entry is EnvEntry & { trellisDir: string; vmWorkdir: string } {
+  return Boolean(entry.trellisDir && entry.vmWorkdir);
 }
 
 export type SiteRegistry = Record<string, Record<string, EnvEntry>>;

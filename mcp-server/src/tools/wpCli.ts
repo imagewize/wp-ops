@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import type { EnvEntry } from "../registry.js";
+import { hasTrellisVm } from "../registry.js";
 
 interface ExecResult {
   stdout: string;
@@ -60,14 +61,38 @@ function runRemote(sshHost: string, args: string[], remotePath: string): Promise
   });
 }
 
+// Runs wp inside the Trellis dev VM via `trellis vm shell --workdir <dir> -- wp ...`.
+// `trellis` must run from the Trellis project dir (it locates the project from cwd), so
+// we set cwd rather than relying on the caller's working directory. Tokens are passed as
+// separate argv after `--` (matching `trellis vm shell -- wp post list --path=web/wp`).
+function runVm(trellisDir: string, workdir: string, wpPath: string, args: string[]): Promise<ExecResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      "trellis",
+      ["vm", "shell", "--workdir", workdir, "--", "wp", ...args, `--path=${wpPath}`],
+      { cwd: trellisDir }
+    );
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d));
+    child.stderr.on("data", (d) => (stderr += d));
+    child.on("error", reject);
+    child.on("close", (code) => resolve({ stdout, stderr, code: code ?? 1 }));
+  });
+}
+
 export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string> {
   let result: ExecResult;
-  if (entry.localPath) {
-    result = await runLocal(args, entry.localPath);
+  // Order matters: a Trellis dev VM keeps the DB in the VM, so prefer the VM over
+  // localPath when both are set — plain `wp` against the host can't reach the database.
+  if (hasTrellisVm(entry)) {
+    result = await runVm(entry.trellisDir, entry.vmWorkdir, entry.vmPath ?? "web/wp", args);
   } else if (entry.sshHost && entry.remotePath) {
     result = await runRemote(entry.sshHost, args, entry.remotePath);
+  } else if (entry.localPath) {
+    result = await runLocal(args, entry.localPath);
   } else {
-    throw new Error("Site/env entry has neither localPath nor (sshHost + remotePath) configured.");
+    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, or localPath.");
   }
 
   // Nonzero exit isn't necessarily failure (e.g. `plugin is-active` returns 1 for
