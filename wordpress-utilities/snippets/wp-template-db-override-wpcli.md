@@ -69,15 +69,15 @@ wp cache flush --path=web/wp --url=https://example.com/store/
 Prefix all `wp` commands with the Trellis shell wrapper:
 
 ```bash
-trellis vm shell --workdir /srv/www/demo.imagewize.com/current -- \
+trellis vm shell --workdir /srv/www/demo.example.com/current -- \
   wp post list --post_type=wp_template --fields=ID,post_name,post_status \
-  --path=web/wp --url=http://demo.imagewize.test/store/
+  --path=web/wp --url=http://demo.example.test/store/
 
-trellis vm shell --workdir /srv/www/demo.imagewize.com/current -- \
-  wp post delete <ID> --force --path=web/wp --url=http://demo.imagewize.test/store/
+trellis vm shell --workdir /srv/www/demo.example.com/current -- \
+  wp post delete <ID> --force --path=web/wp --url=http://demo.example.test/store/
 
-trellis vm shell --workdir /srv/www/demo.imagewize.com/current -- \
-  wp cache flush --path=web/wp --url=http://demo.imagewize.test/store/
+trellis vm shell --workdir /srv/www/demo.example.com/current -- \
+  wp cache flush --path=web/wp --url=http://demo.example.test/store/
 ```
 
 ## Preventing re-freeze

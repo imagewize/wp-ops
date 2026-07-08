@@ -10,7 +10,7 @@
  *   node cf7-smoke-test.js <contact-page-url> [--name "Test"] [--email "test@example.com"]
  *
  * Examples:
- *   node cf7-smoke-test.js https://imagewize.com/contact/
+ *   node cf7-smoke-test.js https://example.com/contact/
  *   node cf7-smoke-test.js https://yoursite.com/contact/ --name "QA Bot" --email "qa@yoursite.com"
  */
 

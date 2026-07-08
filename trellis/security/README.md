@@ -211,7 +211,7 @@ ssh web@yoursite.com "tail -1000 /srv/www/yoursite.com/logs/access.log | grep -v
 
 ## Real-World Examples
 
-### Case Study: imagewize.com
+### Case Study: example.com
 
 **Before fail2ban** (November-December 2025):
 - 1,420 wp-login attempts from single IP (62.60.130.228)

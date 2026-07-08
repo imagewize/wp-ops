@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated **wp-cli/README.md** with new SEO section documenting all tools and best practices
 
+- **docs/mcp-server-recommendations.md** - Usage recommendations and roadmap for the new MCP server: setup gaps (project- vs user-scoped registration, single-site registry), config-only quick wins, server changes needed for non-Bedrock/non-WordPress sites (`wpBin`/`phpBin` override, per-site `url` field), token/time-saving improvements (enum-typed site keys, wider read-only allowlist, output capping), and a proposed `url_audit` tool for the dev-URL-hardcoding problem.
+
+### Changed
+
+- Replaced remaining hardcoded `imagewize.com` references with the `example.com` placeholder domain across docs and scripts, continuing the [2.3.1] sanitization pass: `bedrock/local-package-development/README.md`, `scripts/README.md`, `scripts/monitoring/404-checker.sh`, `scripts/monitoring/cf7-smoke-test.js`, `scripts/post-count.sh`, `trellis/security/FAIL2BAN.md`, `trellis/security/MANUAL-IP-BLOCKING.md`, `trellis/security/README.md`, `trellis/updater/README.md`, `troubleshooting/MULTI-SITE-ADDITION.md`, `wordpress-utilities/snippets/wp-template-db-override-wpcli.md`. Real-world production statistics and case studies in the security docs keep their factual content, with only the domain genericized.
+
 This is a major version bump: it's the first release to ship an executable service (not just scripts/docs) as part of the repo, and more tools (backups, PR creation, releases, image optimization) are planned to follow the same pattern.
 
 ## [2.18.0] - 2026-07-08

@@ -17,9 +17,9 @@
 #   --type TYPE       post_type to count (default: post)
 #   --status STATUS   post_status to count (default: publish)
 #   --path PATH       WordPress path passed to WP-CLI (default: web/wp)
-#   --ssh HOST        Run remotely over ssh, e.g. web@imagewize.com
+#   --ssh HOST        Run remotely over ssh, e.g. web@example.com
 #   --site DIR        Remote site dir to cd into with --ssh
-#                     (default: /srv/www/imagewize.com/current)
+#                     (default: /srv/www/example.com/current)
 #   -h, --help        Show this help
 #
 # Examples:
@@ -27,16 +27,16 @@
 #   ./post-count.sh
 #
 #   # From your host, hit production over SSH
-#   ./post-count.sh --ssh web@imagewize.com
+#   ./post-count.sh --ssh web@example.com
 #
 #   # Just 2026's blog-post total
-#   ./post-count.sh --ssh web@imagewize.com --year 2026
+#   ./post-count.sh --ssh web@example.com --year 2026
 #
 #   # Month-by-month for 2026
-#   ./post-count.sh --ssh web@imagewize.com --months 2026
+#   ./post-count.sh --ssh web@example.com --months 2026
 #
 #   # aseonomics.com on the same server
-#   ./post-count.sh --ssh web@imagewize.com --site /srv/www/aseonomics.com/current
+#   ./post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
 
 set -euo pipefail
 
@@ -54,7 +54,7 @@ PTYPE="post"
 PSTATUS="publish"
 WP_PATH="web/wp"
 SSH_HOST=""
-SITE_DIR="/srv/www/imagewize.com/current"
+SITE_DIR="/srv/www/example.com/current"
 
 usage() {
   # Print the leading comment block (from line 2 until the first non-comment line)
