@@ -2,7 +2,7 @@
 /**
  * WordPress Security & Malware Scanner
  *
- * Enhanced scanner specifically tailored for Rob Disbergen WordPress site.
+ * Enhanced scanner specifically tailored for Client WordPress site.
  * Includes checks for common malware patterns plus specific concerns from
  * the November 2025 security investigation.
  *

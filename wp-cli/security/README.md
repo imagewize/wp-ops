@@ -678,7 +678,7 @@ MIT License - Part of the wp-ops project
 
 - Based on malware detection patterns from WordPress Security Best Practices
 - Inspired by [lookforbadguys.php](https://gist.github.com/jasperf/3191259)
-- Originally built for Rob Disbergen WordPress site security investigation (November 2025)
+- Originally built for Client WordPress site security investigation (November 2025)
 - Integrated into wp-ops toolkit (December 2025)
 
 ---

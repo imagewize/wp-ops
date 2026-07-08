@@ -11,7 +11,7 @@
 
 ## Overview
 
-This security scanner suite provides **dual-layer protection** for the Rob Disbergen WordPress site:
+This security scanner suite provides **dual-layer protection** for the Client WordPress site:
 
 ### Two-Scanner Strategy
 
@@ -570,7 +570,7 @@ If you find an actual security vulnerability:
 
 ## License
 
-This scanner is part of the Rob Disbergen WordPress theme.
+This scanner is part of the Client WordPress theme.
 Copyright © 2025. All rights reserved.
 
 Based on malware detection patterns from:

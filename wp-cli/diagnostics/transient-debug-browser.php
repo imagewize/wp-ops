@@ -12,7 +12,7 @@
 define('DEBUG_SECRET', 'somethingmoeilijk'); // Change this!
 
 if (!isset($_GET['secret']) || $_GET['secret'] !== DEBUG_SECRET) {
-    die('Access denied. Add ?secret=rob2025debug to URL');
+    die('Access denied. Add ?secret=somethingmoeilijk to URL');
 }
 
 require_once('../wp-load.php');
