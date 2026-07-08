@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.0] - 2026-07-08
+
+### Added
+
+- **scripts/post-count.sh** - New script to count published WordPress blog posts by year or month via `wp db query`:
+  - Defaults to `post_type=post` / `post_status=publish` only — pages, CPTs, and drafts excluded unless overridden with `--type` / `--status`
+  - Three modes: all-years breakdown (default), single-year total (`--year YYYY`), or monthly breakdown (`--months YYYY`)
+  - Runs locally (Trellis VM / server) or remotely via `--ssh HOST`, with `--site DIR` to target other web roots on a shared server
+  - Documented in [`scripts/README.md`](scripts/README.md#post-countsh)
+
+### Changed
+
+- **README.md** - Reorganized the Scripts section into four categorized tables (Releases & GitHub, Monitoring & Security, Content & Backups, Images/WooCommerce & Files) covering previously-undocumented scripts, and moved Troubleshooting out of the Trellis table into its own top-level section
+- **scripts/README.md** - Updated script count (21 → 22) and added a Content Reporting functional area for `post-count.sh`
+
 ## [2.17.0] - 2026-07-04
 
 ### Added
