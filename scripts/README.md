@@ -4,13 +4,14 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 21 utility scripts organized into six functional areas:
+This directory contains 22 utility scripts organized into seven functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation and manual GitHub release asset uploads
 - **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
 - **Git Utilities** - Quick access to recent commit history
+- **Content Reporting** - Published-post counts by year and month (blog posts only)
 - **Operations** - Server monitoring and backup infrastructure
 - **Webhook Integration** - Updown.io downtime alert handling
 
@@ -40,6 +41,7 @@ scripts/
 ├── upload-release-asset.sh    # Manual GitHub release zip upload (fallback for failed Actions)
 ├── find-and-replace-files.sh  # Batch find and replace files across directory trees
 ├── git-log-oneline.sh          # Show recent git commits as one-liners
+├── post-count.sh               # Count published blog posts by year/month (blog posts only)
 ├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation
 └── rsync-theme.sh             # Theme file synchronization utility
@@ -73,6 +75,13 @@ scripts/
 # Show recent git commits as one-liners
 ./scripts/git-log-oneline.sh
 ./scripts/git-log-oneline.sh 25
+
+# Count published blog posts by year (production, over SSH)
+./scripts/post-count.sh --ssh web@imagewize.com
+
+# Count just this year's blog posts, or a month-by-month breakdown
+./scripts/post-count.sh --ssh web@imagewize.com --year 2026
+./scripts/post-count.sh --ssh web@imagewize.com --months 2026
 
 # Release WordPress theme version
 ./scripts/release-theme.sh theme-name 1.2.5
@@ -304,6 +313,75 @@ Shows recent git commits as compact one-liners with short hash and commit messag
 - Review recent commits before creating a PR
 - Verify the last deployment included the right changes
 - Check if a specific fix has been committed
+
+---
+
+## Content Reporting
+
+### post-count.sh
+
+Counts published WordPress **blog posts** grouped by the year of `post_date`. Answers "how many posts have we published this year?" without pulling in pages, nav menu items, attachments, revisions, custom post types, or drafts.
+
+By default it counts `post_type=post` and `post_status=publish` only — so custom post types (e.g. an `iw_audit` CPT) and pages are **not** included. Override `--type` / `--status` if you need a different slice.
+
+Runs `wp db query`, so run it where WP-CLI works: inside the Trellis VM, on the production server, or from your host with `--ssh` (which wraps the query in an `ssh` call to the server).
+
+#### Features
+
+- **Blog posts only by default** — `post_type=post`, `post_status=publish`; CPTs, pages, menus, attachments, revisions, and drafts excluded
+- **Three modes**: all-years breakdown (default), single-year total (`--year`), or monthly breakdown (`--months`)
+- **Remote or local**: `--ssh HOST` runs against production over SSH; without it, runs against the current WP install
+- **Multi-site**: point `--site` at any web root on the server (e.g. aseonomics.com)
+- **Overridable slice**: `--type` / `--status` for pages, drafts, or a custom post type
+
+#### Usage
+
+```bash
+# All years, blog posts only (over SSH to production)
+./post-count.sh --ssh web@imagewize.com
+
+# Just 2026's blog-post total
+./post-count.sh --ssh web@imagewize.com --year 2026
+
+# Month-by-month for 2026
+./post-count.sh --ssh web@imagewize.com --months 2026
+
+# Run locally inside the Trellis VM / on the server (no --ssh needed)
+./post-count.sh --year 2026
+
+# aseonomics.com on the same server
+./post-count.sh --ssh web@imagewize.com --site /srv/www/aseonomics.com/current
+
+# Count published pages instead of posts
+./post-count.sh --ssh web@imagewize.com --type page
+
+# Syntax
+./post-count.sh [--year YYYY | --months YYYY] [--type TYPE] [--status STATUS] \
+                [--path WP_PATH] [--ssh HOST] [--site DIR]
+```
+
+#### Example Output
+
+```
+=== Monthly post count (publish) for 2026 ===
+Site: /srv/www/imagewize.com/current (web@imagewize.com)
+
+month	posts
+2026-01	2
+2026-02	13
+2026-03	3
+2026-04	12
+2026-05	16
+2026-06	12
+2026-07	4
+
+Done.
+```
+
+#### Requirements
+
+- WP-CLI available where the query runs (Trellis VM, production, or reachable via `--ssh`)
+- SSH access to the server when using `--ssh` (e.g. `web@imagewize.com`)
 
 ---
 
