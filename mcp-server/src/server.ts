@@ -4,6 +4,8 @@ import { loadRegistry, resolveSiteEnv } from "./registry.js";
 import { runDbBackup } from "./tools/dbBackup.js";
 import { runSecurityScan } from "./tools/securityScan.js";
 import { isReadOnlyWpCommand, runWpCli } from "./tools/wpCli.js";
+import { runRedirectAudit } from "./tools/redirectAudit.js";
+import { runSchemaAudit } from "./tools/schemaAudit.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -98,6 +100,123 @@ export function createServer(): McpServer {
         const entry = resolveSiteEnv(registry, site, env);
         const output = await runWpCli(entry, args);
         return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "redirect_audit",
+    "Run a comprehensive redirect chain audit for one or more URLs. Tests HTTPS pages for 200 status " +
+      "with 0 redirects (optimal), verifies HTTP→HTTPS 301 redirects, checks www→non-www canonicalization, " +
+      "and validates security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Returns color-coded " +
+      "status for each test with detailed recommendations.",
+    {
+      urls: z
+        .array(z.string().url())
+        .min(1)
+        .describe('URL(s) to audit, e.g. ["https://example.com", "https://example.com/about/"]'),
+      checkWww: z
+        .boolean()
+        .default(true)
+        .describe('Whether to test www canonicalization (http://www.domain.com → https://domain.com)'),
+      checkSecurityHeaders: z
+        .boolean()
+        .default(true)
+        .describe('Whether to check for security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)'),
+    },
+    async ({ urls, checkWww, checkSecurityHeaders }) => {
+      try {
+        const result = await runRedirectAudit(urls, checkWww, checkSecurityHeaders);
+        const lines: string[] = [
+          `Redirect Audit: ${result.overallStatus === "PASS" ? "✅ PASS" : "❌ FAIL"}`,
+          `Total Tests: ${result.totalTests} | Passed: ${result.passedTests} | Failed: ${result.failedTests}`,
+          "",
+          "Results:",
+        ];
+        for (const page of result.pages) {
+          lines.push(`  ${page.url}:`);
+          lines.push(`    HTTPS: ${page.status} (redirects: ${page.redirects})`);
+          lines.push(`    HTTP→HTTPS: ${page.httpRedirect ? "✅" : "❌"} ${page.httpRedirectTarget || "N/A"}`);
+          if (page.wwwRedirectTarget) {
+            lines.push(`    WWW→non-WWW: ${page.wwwRedirect ? "✅" : "❌"} → ${page.wwwRedirectTarget}`);
+          }
+          lines.push(
+            `    Security Headers: HSTS:${page.securityHeaders.hsts ? "✅" : "❌"} CSP:${
+              page.securityHeaders.csp ? "✅" : "❌"
+            } X-Frame:${
+              page.securityHeaders.xFrameOptions ? "✅" : "❌"
+            } X-Content-Type:${
+              page.securityHeaders.xContentTypeOptions ? "✅" : "❌"
+            }`
+          );
+        }
+        lines.push("");
+        lines.push(
+          `Overall Status: ${result.overallStatus === "PASS" ? "✅ ALL TESTS PASSED" : "❌ SOME TESTS FAILED"}`
+        );
+        if (result.overallStatus === "FAIL") {
+          lines.push("Review the output above for redirect chain issues.");
+        }
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "schema_audit",
+    "Audit schema markup (JSON-LD) across key pages of a site. Checks for Organization, LocalBusiness, " +
+      "Service, Product, WebSite, BreadcrumbList, Article, FAQPage, HowTo, and Person schema types. " +
+      "Returns count of pages with/without schema and which schema types are present.",
+    {
+      siteUrl: z.string().describe('Site URL to audit, e.g. "https://example.com"'),
+      pages: z
+        .array(z.string())
+        .optional()
+        .describe(
+          'Specific pages to check as "name|url" pairs, e.g. ["Homepage|/", "Contact|/contact/"]. ' +
+            'Defaults to common pages (homepage, services, about, contact, portfolio, shop, blog, etc.)'
+        ),
+    },
+    async ({ siteUrl, pages }) => {
+      try {
+        const result = await runSchemaAudit(siteUrl, pages);
+        const lines: string[] = [
+          `Schema Audit: ${result.pagesWithSchema}/${result.totalPages} pages have schema markup`,
+          "",
+          "Schema Types Found:",
+        ];
+        for (const [type, count] of Object.entries(result.schemaTypesFound)) {
+          if (count > 0) {
+            lines.push(`  ${type}: ${count} page(s)`);
+          }
+        }
+        lines.push("");
+        lines.push("Page Details:");
+        for (const page of result.pages) {
+          const status = page.exists ? (page.hasSchema ? "✅ Has Schema" : "❌ No Schema") : "⚠️  Not Found";
+          lines.push(`  ${page.pageName} (${page.url}): ${status}`);
+          if (page.hasSchema) {
+            const foundTypes = page.schemaTypes.filter((t) => t.found).map((t) => t.type);
+            if (foundTypes.length > 0) {
+              lines.push(`    Types: ${foundTypes.join(", ")}`);
+            }
+          }
+        }
+        lines.push("");
+        if (result.pagesWithoutSchema > 0) {
+          lines.push(
+            `Recommendation: Add schema markup to ${result.pagesWithoutSchema} pages without it.`
+          );
+        } else if (result.totalPages > 0) {
+          lines.push("✅ All pages have schema markup!");
+        }
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };

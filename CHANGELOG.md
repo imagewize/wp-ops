@@ -5,23 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-- **mcp-server** - New `db_backup` tool: runs `wp db export` against a registered site/environment, gzips the result, and saves it locally to `~/wp-ops-backups/<site>/<env>/` (override with `WP_OPS_BACKUP_DIR`). Remote environments stream the export over SSH stdout, so nothing is written to disk on the remote host, matching `security_scan`'s pattern. `Dockerfile` now also installs WP-CLI so the tool works inside the container.
-- **mcp-server** - New `wp_cli` tool: runs an arbitrary WP-CLI command (passed as an argv array, not a shell string) against a registered site/environment. Read-only verbs (list/get/exists/status/info/version/search/check-update/doctor/export) run immediately; everything else requires `confirm: true`. Remote args are individually shell-quoted before being sent over SSH, since SSH otherwise concatenates trailing args into one string for the remote shell to re-parse — a real command-injection vector for a passthrough tool taking arbitrary arguments.
-
 ## [3.0.0] - 2026-07-08
 
 ### Added
 
-- **mcp-server/** - New [MCP](https://modelcontextprotocol.io) server exposing wp-ops operations as tools Claude (and other MCP-compatible clients) can call directly instead of running the underlying scripts by hand. First tool implemented:
+- **mcp-server/** - New [MCP](https://modelcontextprotocol.io) server exposing wp-ops operations as tools Claude (and other MCP-compatible clients) can call directly instead of running the underlying scripts by hand. Tools implemented:
   - **`security_scan`** - runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php` against a registered site/environment. Remote environments stream the scanner source over SSH stdin (`php - <path>`) rather than writing it to disk on the remote host.
-  - Site/environment lookup via a gitignored `config/sites.json` (mapping site → env → local path or SSH host/remote path), resolved against `config/sites.example.json`.
-  - Two transports, both verified end-to-end: **stdio** (default, for Claude Code/Desktop) and **Streamable HTTP** for remote/non-Claude clients, gated behind a required `WP_OPS_MCP_TOKEN` bearer token since HTTP mode can reach staging/production over SSH.
+  - **`db_backup`** - runs `wp db export` against a registered site/environment, gzips the result, and saves it locally to `~/wp-ops-backups/<site>/<env>/` (override with `WP_OPS_BACKUP_DIR`). Remote environments stream the export over SSH stdout, so nothing is written to disk on the remote host, matching `security_scan`'s pattern. `Dockerfile` now also installs WP-CLI so the tool works inside the container.
+  - **`wp_cli`** - runs an arbitrary WP-CLI command (passed as an argv array, not a shell string) against a registered site/environment. Read-only verbs (list/get/exists/status/info/version/search/check-update/doctor/export) run immediately; everything else requires `confirm: true`. Remote args are individually shell-quoted before being sent over SSH, since SSH otherwise concatenates trailing args into one string for the remote shell to re-parse — a real command-injection vector for a passthrough tool taking arbitrary arguments.
+  - **`redirect_audit`** - runs a comprehensive redirect chain audit for one or more URLs. Tests HTTPS pages for 200 status with 0 redirects (optimal for SEO), verifies HTTP→HTTPS 301 redirects, checks www→non-www canonicalization, and validates security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Uses `curl` for HTTP requests.
+  - **`schema_audit`** - audits JSON-LD schema markup across key pages of a site. Checks for Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article, FAQPage, HowTo, and Person schema types. Uses `curl` to fetch pages and extract schema.
+  - Site/environment lookup via a gitignored `config/sites.json` (mapping site → env → local path or SSH host/remote path), resolved against `config/sites.example.json` and validated against a Zod schema.
+  - Two transports, both verified end-to-end: **stdio** (default, for Claude Code/Desktop) and **Streamable HTTP** for remote/non-Claude clients, gated behind a required `WP_OPS_MCP_TOKEN` bearer token since HTTP mode can reach staging/production over SSH. Trellis VM transport is also supported.
   - `Dockerfile` for running the server in a container with a fixed Node/PHP/openssh toolchain, built from the repo root so the image can include `wp-cli/security/`.
   - Documented in [`mcp-server/README.md`](mcp-server/README.md).
+
+- **wp-cli/seo/** - New SEO audit tools directory with comprehensive SEO analysis scripts ported from seo-strategy:
+  - **`page-audit.sh`** - Analyzes WordPress page structure including hierarchy, navigation menus, key business pages, duplicate titles, and basic orphaned page detection
+  - **`redirect-audit.sh`** - Comprehensive redirect chain testing (HTTPS pages, HTTP→HTTPS, www canonicalization) with security header validation
+  - **`schema-audit.sh`** - Validates JSON-LD schema markup presence and types across key pages
+  - **`blog-audit.sh`** - Analyzes blog content: categorization, featured images, content length, thin content detection
+  - **`orphan-pages-audit.sh`** - Identifies pages not linked from navigation menus (basic detection)
+  - All scripts are generic (not hardcoded to specific domains), support WP-CLI path configuration, and generate detailed reports
+  - Documented in [`wp-cli/seo/README.md`](wp-cli/seo/README.md)
+
+- Updated **wp-cli/README.md** with new SEO section documenting all tools and best practices
 
 This is a major version bump: it's the first release to ship an executable service (not just scripts/docs) as part of the repo, and more tools (backups, PR creation, releases, image optimization) are planned to follow the same pattern.
 

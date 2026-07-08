@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — three tools implemented so far:
+Scaffold — five tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -27,6 +27,14 @@ Scaffold — three tools implemented so far:
   user has explicitly approved that specific command in conversation. For remote sites,
   each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
   joins trailing args into one string for the remote shell to (re-)interpret.
+- **`redirect_audit`** — runs a comprehensive redirect chain audit for one or more URLs. Tests
+  HTTPS pages for 200 status with 0 redirects (optimal for SEO), verifies HTTP→HTTPS 301
+  redirects, checks www→non-www canonicalization, and validates security headers (HSTS,
+  CSP, X-Frame-Options, X-Content-Type-Options). Uses `curl` for HTTP requests.
+- **`schema_audit`** — audits JSON-LD schema markup across key pages of a site. Checks for
+  Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article,
+  FAQPage, HowTo, and Person schema types. Returns count of pages with/without schema
+  and which schema types are present. Uses `curl` to fetch pages and extract schema.
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
