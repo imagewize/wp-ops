@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-07-08
+
+### Documentation
+
+- **README.md** - Added missing **SEO** entry to WP-CLI section, linking to [`wp-cli/seo/README.md`](wp-cli/seo/README.md) which documents the page structure, redirect, schema markup, blog content, and orphan pages audit tools
+
 ## [3.1.0] - 2026-07-08
 
 ### Added
