@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import type { EnvEntry } from "../registry.js";
-import { hasTrellisVm } from "../registry.js";
+import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
 
 interface ExecResult {
   stdout: string;
@@ -28,9 +28,10 @@ export function isReadOnlyWpCommand(args: string[]): boolean {
   return verb !== undefined && SAFE_READ_VERBS.has(verb);
 }
 
-function runLocal(args: string[], localPath: string): Promise<ExecResult> {
+function runLocal(args: string[], localPath: string, wpBin: string, phpBin?: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("wp", [...args, `--path=${localPath}`]);
+    const command = phpBin ? [phpBin, wpBin] : [wpBin];
+    const child = spawn(command[0], [...command.slice(1), ...args, `--path=${localPath}`]);
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
@@ -48,9 +49,10 @@ function shellQuote(arg: string): string {
   return `'${arg.replace(/'/g, `'\\''`)}'`;
 }
 
-function runRemote(sshHost: string, args: string[], remotePath: string): Promise<ExecResult> {
+function runRemote(sshHost: string, args: string[], remotePath: string, wpBin: string, phpBin?: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const remoteCommand = ["wp", ...args, `--path=${remotePath}`].map(shellQuote).join(" ");
+    const wpCommand = phpBin ? [phpBin, wpBin] : [wpBin];
+    const remoteCommand = [...wpCommand, ...args, `--path=${remotePath}`].map(shellQuote).join(" ");
     const child = spawn("ssh", [sshHost, remoteCommand]);
     let stdout = "";
     let stderr = "";
@@ -65,11 +67,12 @@ function runRemote(sshHost: string, args: string[], remotePath: string): Promise
 // `trellis` must run from the Trellis project dir (it locates the project from cwd), so
 // we set cwd rather than relying on the caller's working directory. Tokens are passed as
 // separate argv after `--` (matching `trellis vm shell -- wp post list --path=web/wp`).
-function runVm(trellisDir: string, workdir: string, wpPath: string, args: string[]): Promise<ExecResult> {
+function runVm(trellisDir: string, workdir: string, wpPath: string, args: string[], wpBin: string, phpBin?: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
+    const wpCommand = phpBin ? [phpBin, wpBin] : [wpBin];
     const child = spawn(
       "trellis",
-      ["vm", "shell", "--workdir", workdir, "--", "wp", ...args, `--path=${wpPath}`],
+      ["vm", "shell", "--workdir", workdir, "--", ...wpCommand, ...args, `--path=${wpPath}`],
       { cwd: trellisDir }
     );
     let stdout = "";
@@ -82,17 +85,19 @@ function runVm(trellisDir: string, workdir: string, wpPath: string, args: string
 }
 
 export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string> {
+  const wpBin = resolveWpBin(entry);
+  const phpBin = resolvePhpBin(entry);
   let result: ExecResult;
   // Order matters: a Trellis dev VM keeps the DB in the VM, so prefer the VM over
   // localPath when both are set — plain `wp` against the host can't reach the database.
   if (hasTrellisVm(entry)) {
-    result = await runVm(entry.trellisDir, entry.vmWorkdir, entry.vmPath ?? "web/wp", args);
+    result = await runVm(entry.trellisDir, entry.vmWorkdir, entry.vmPath ?? "web/wp", args, wpBin, phpBin);
   } else if (entry.sshHost && entry.remotePath) {
-    result = await runRemote(entry.sshHost, args, entry.remotePath);
+    result = await runRemote(entry.sshHost, args, entry.remotePath, wpBin, phpBin);
   } else if (entry.localPath) {
-    result = await runLocal(args, entry.localPath);
+    result = await runLocal(args, entry.localPath, wpBin, phpBin);
   } else {
-    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, or localPath.");
+    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, localPath, or url.");
   }
 
   // Nonzero exit isn't necessarily failure (e.g. `plugin is-active` returns 1 for

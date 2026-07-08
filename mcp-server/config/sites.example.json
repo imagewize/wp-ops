@@ -5,11 +5,27 @@
     },
     "staging": {
       "sshHost": "staging.example.com",
-      "remotePath": "/srv/www/example.com/current/web/wp"
+      "remotePath": "/srv/www/example.com/current/web/wp",
+      "url": "https://staging.example.com"
     },
     "production": {
       "sshHost": "production.example.com",
-      "remotePath": "/srv/www/example.com/current/web/wp"
+      "remotePath": "/srv/www/example.com/current/web/wp",
+      "url": "https://example.com"
+    }
+  },
+  "client.nl": {
+    "production": {
+      "sshHost": "client@client.nl",
+      "remotePath": "/home/client/public_html",
+      "wpBin": "~/wp-cli.phar",
+      "phpBin": "/opt/plesk/php/8.2/bin/php",
+      "url": "https://client.nl"
+    }
+  },
+  "static-site": {
+    "production": {
+      "url": "https://static-site.com"
     }
   }
 }

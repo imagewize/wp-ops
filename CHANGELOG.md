@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-07-08
+
+### Added
+
+- **mcp-server/** - Enhanced site registry schema with support for custom `wpBin` and `phpBin` paths (enables cPanel/Plesk shared hosting sites with non-standard WP-CLI/PHP locations) and optional `url` field per environment (enables static sites and simplifies audit tool usage). Updated `redirect_audit` and `schema_audit` tools to accept either raw URLs or `site`+`env` parameters to look up URLs from the registry.
+
 ## [3.0.0] - 2026-07-08
 
 ### Added

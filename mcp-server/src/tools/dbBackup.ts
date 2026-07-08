@@ -5,7 +5,11 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { gzip as gzipCallback } from "node:zlib";
 import type { EnvEntry } from "../registry.js";
-import { hasTrellisVm } from "../registry.js";
+import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
+
+function shellQuote(arg: string): string {
+  return `'${arg.replace(/'/g, `'\\''`)}'`;
+}
 
 const gzip = promisify(gzipCallback);
 
@@ -48,6 +52,10 @@ function exportSql(command: string, args: string[], cwd?: string): Promise<Buffe
 }
 
 export async function runDbBackup(entry: EnvEntry, site: string, env: string): Promise<BackupResult> {
+  const wpBin = resolveWpBin(entry);
+  const phpBin = resolvePhpBin(entry);
+  const wpCommand = phpBin ? [phpBin, wpBin] : [wpBin];
+  
   let sql: Buffer;
   // VM-first: a Trellis dev box keeps the DB in the VM, so `wp db export` must run there.
   if (hasTrellisVm(entry)) {
@@ -55,17 +63,18 @@ export async function runDbBackup(entry: EnvEntry, site: string, env: string): P
     // Export streams over the VM shell's stdout; nothing is written to disk in the VM.
     sql = await exportSql(
       "trellis",
-      ["vm", "shell", "--workdir", entry.vmWorkdir, "--", "wp", "db", "export", "-", `--path=${wpPath}`],
+      ["vm", "shell", "--workdir", entry.vmWorkdir, "--", ...wpCommand, "db", "export", "-", `--path=${wpPath}`],
       entry.trellisDir
     );
   } else if (entry.sshHost && entry.remotePath) {
     // Streams the export over SSH stdout so nothing is ever written to disk on the
     // remote host (same rationale as securityScan's remote path).
-    sql = await exportSql("ssh", [entry.sshHost, "wp", "db", "export", "-", `--path=${entry.remotePath}`]);
+    const remoteCommand = [...wpCommand, "db", "export", "-", `--path=${entry.remotePath}`].map(shellQuote).join(" ");
+    sql = await exportSql("ssh", [entry.sshHost, remoteCommand]);
   } else if (entry.localPath) {
-    sql = await exportSql("wp", ["db", "export", "-", `--path=${entry.localPath}`]);
+    sql = await exportSql(wpCommand[0], [...wpCommand.slice(1), "db", "export", "-", `--path=${entry.localPath}`]);
   } else {
-    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, or localPath.");
+    throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, localPath, or url.");
   }
 
   const compressed = await gzip(sql);
