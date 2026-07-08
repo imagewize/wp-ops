@@ -6,16 +6,22 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — one tool implemented so far:
+Scaffold — two tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
   source over SSH stdin (`php - <path>`), so nothing is ever written to disk on the
   remote host — no `scp` + forget-to-delete step.
+- **`db_backup`** — runs `wp db export` against a registered site/environment, gzips the
+  result, and saves it locally to `~/wp-ops-backups/<site>/<env>/` (override with
+  `WP_OPS_BACKUP_DIR`). For remote environments the export streams over SSH stdout, so
+  again nothing is written to disk on the remote host. Requires `wp` (WP-CLI) on the
+  machine running the export — locally that's your host; remotely it's already on any
+  Trellis server.
 
-More tools (backups, PR creation, releases, image optimization) will follow the same
-pattern. See the parent repo's `CLAUDE.md` and the relevant README in each directory
-for the operations these will eventually wrap.
+More tools (PR creation, releases, image optimization) will follow the same pattern.
+See the parent repo's `CLAUDE.md` and the relevant README in each directory for the
+operations these will eventually wrap.
 
 Two transports are implemented, both verified end-to-end (real MCP `initialize` +
 `tools/call` round trip against the real scanner):
@@ -99,12 +105,15 @@ Build from the **repo root** (the image needs `wp-cli/security/` alongside `mcp-
 docker build -f mcp-server/Dockerfile -t wp-ops-mcp-server .
 ```
 
-Run it, mounting your site registry and SSH identity (needed for staging/production scans):
+Run it, mounting your site registry, SSH identity (needed for staging/production
+scans/backups), and a backups directory (needed for `db_backup` — without this mount,
+backups are written inside the container and lost when it exits with `--rm`):
 
 ```bash
 docker run -i --rm \
   -v ~/code/wp-ops/mcp-server/config/sites.json:/config/sites.json:ro \
   -v ~/.ssh:/root/.ssh:ro \
+  -v ~/wp-ops-backups:/root/wp-ops-backups \
   wp-ops-mcp-server
 ```
 
@@ -119,6 +128,7 @@ Point Claude Code / Claude Desktop at the container instead of a local `node` bi
         "run", "-i", "--rm",
         "-v", "/Users/you/code/wp-ops/mcp-server/config/sites.json:/config/sites.json:ro",
         "-v", "/Users/you/.ssh:/root/.ssh:ro",
+        "-v", "/Users/you/wp-ops-backups:/root/wp-ops-backups",
         "wp-ops-mcp-server"
       ]
     }
@@ -128,7 +138,7 @@ Point Claude Code / Claude Desktop at the container instead of a local `node` bi
 
 This transport is still stdio (`-i` keeps stdin open, the client pipes JSON-RPC through
 it) — it just runs inside a container instead of directly on your host, so you get a
-fixed Node/PHP/openssh toolchain regardless of what's installed locally. Not yet
+fixed Node/PHP/openssh/wp-cli toolchain regardless of what's installed locally. Not yet
 build-tested with a real `docker build` in this session (no Docker CLI available here) —
 verify the build once you have Docker locally before relying on it.
 
@@ -141,6 +151,7 @@ docker run --rm \
   -e WP_OPS_MCP_TOKEN="$(openssl rand -hex 32)" \
   -v ~/code/wp-ops/mcp-server/config/sites.json:/config/sites.json:ro \
   -v ~/.ssh:/root/.ssh:ro \
+  -v ~/wp-ops-backups:/root/wp-ops-backups \
   wp-ops-mcp-server
 ```
 
