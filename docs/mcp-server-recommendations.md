@@ -31,7 +31,7 @@ Observed setup gaps:
    can then run audits or WP-CLI against any registered site.
 
 2. **Add more sites to `sites.json`.**
-   Plain WordPress installs (e.g. `robdisbergen`) work today via `localPath` —
+   Plain WordPress installs (e.g. `client`) work today via `localPath` —
    nothing in `wpCli.ts` assumes Bedrock; `--path` is arbitrary. Remote non-Trellis
    hosts work too as long as `wp` is on the remote PATH.
 
@@ -59,8 +59,8 @@ Observed setup gaps:
 6. **Add a `url` field per site/env; let audits accept `site`/`env`.**
    `redirect_audit` and `schema_audit` are platform-agnostic (pure curl), making
    them the entry point for Jekyll and static sites — but today full URLs must be
-   retyped. With `"url": "https://robdisbergen.nl"` in the registry, "run a
-   redirect audit on robdisbergen production" becomes one unambiguous call. Static
+   retyped. With `"url": "https://client.nl"` in the registry, "run a
+   redirect audit on client production" becomes one unambiguous call. Static
    sites would register with *only* a `url` (the schema's refine currently requires
    a path/host — relax it for URL-only entries).
 

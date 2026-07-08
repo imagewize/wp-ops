@@ -8,7 +8,7 @@
 ## 📁 Files Created
 
 ```
-wp-content/themes/robdisbergen/
+wp-content/themes/client/
 ├── security-scanner.php            # Wrapper (runs both scanners)
 ├── security-scanner-targeted.php   # Site-specific threats
 ├── security-scanner-general.php    # Broad malware detection
@@ -37,22 +37,22 @@ wp-content/themes/robdisbergen/
 **Run both scanners (comprehensive):**
 ```bash
 cd /path/to/wordpress
-php wp-content/themes/robdisbergen/security-scanner.php
+php wp-content/themes/client/security-scanner.php
 ```
 
 **Run targeted scanner only (quick check):**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner-targeted.php
+php wp-content/themes/client/security-scanner-targeted.php
 ```
 
 **Run general scanner only (malware check):**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner-general.php
+php wp-content/themes/client/security-scanner-general.php
 ```
 
 **Scan different directory:**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner.php ~/code/robdisbergen.nl
+php wp-content/themes/client/security-scanner.php ~/code/client.nl
 ```
 
 ---
@@ -86,7 +86,7 @@ php wp-content/themes/robdisbergen/security-scanner.php ~/code/robdisbergen.nl
 
 ## 📊 Test Results (November 5, 2025)
 
-### Development Site (`~/code/robdisbergen/`)
+### Development Site (`~/code/client/`)
 **Targeted Scanner:**
 - Files scanned: 6,638
 - Threats found: 0 ✅
@@ -97,7 +97,7 @@ php wp-content/themes/robdisbergen/security-scanner.php ~/code/robdisbergen.nl
 - Suspicious filenames: 21 (mostly false positives)
 - Real threats: 0 ✅
 
-### Staging Site (`~/code/robdisbergen.nl/`)
+### Staging Site (`~/code/client.nl/`)
 **Targeted Scanner:**
 - Files scanned: 6,623
 - Threats found: 0 ✅

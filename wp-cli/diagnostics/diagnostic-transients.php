@@ -3,7 +3,7 @@
  * TRANSIENT DIAGNOSTIC SCRIPT
  *
  * Run this via WP-CLI to diagnose transient storage issues
- * Usage: wp eval-file wp-content/themes/robdisbergen/diagnostic-transients.php
+ * Usage: wp eval-file wp-content/themes/client/diagnostic-transients.php
  */
 
 echo "=== TRANSIENT DIAGNOSTIC REPORT ===\n";

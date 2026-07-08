@@ -64,7 +64,7 @@ This security scanner suite provides **dual-layer protection** for the Rob Disbe
 The scanner suite is already included in the theme:
 
 ```
-wp-content/themes/robdisbergen/
+wp-content/themes/client/
 ├── security-scanner.php            # Wrapper (runs both)
 ├── security-scanner-targeted.php   # Site-specific threats
 └── security-scanner-general.php    # Broad malware detection
@@ -105,44 +105,44 @@ php security-scanner.php
 **Run both scanners (complete coverage):**
 ```bash
 cd /path/to/wordpress
-php wp-content/themes/robdisbergen/security-scanner.php
+php wp-content/themes/client/security-scanner.php
 ```
 
 **Run targeted scanner only (weekly):**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner-targeted.php
+php wp-content/themes/client/security-scanner-targeted.php
 ```
 
 **Run general scanner only (monthly):**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner-general.php
+php wp-content/themes/client/security-scanner-general.php
 ```
 
 **Scan a specific directory:**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner.php /path/to/directory
+php wp-content/themes/client/security-scanner.php /path/to/directory
 ```
 
 **Scan with home directory shortcut:**
 ```bash
-php wp-content/themes/robdisbergen/security-scanner-targeted.php ~/code/robdisbergen.nl
+php wp-content/themes/client/security-scanner-targeted.php ~/code/client.nl
 ```
 
 ### Method 2: WP-CLI (Production Safe)
 
 **Run both scanners:**
 ```bash
-wp eval-file wp-content/themes/robdisbergen/security-scanner.php
+wp eval-file wp-content/themes/client/security-scanner.php
 ```
 
 **Run targeted scanner only:**
 ```bash
-wp eval-file wp-content/themes/robdisbergen/security-scanner-targeted.php
+wp eval-file wp-content/themes/client/security-scanner-targeted.php
 ```
 
 **Run general scanner only:**
 ```bash
-wp eval-file wp-content/themes/robdisbergen/security-scanner-general.php
+wp eval-file wp-content/themes/client/security-scanner-general.php
 ```
 
 ### Method 3: Browser Access (Requires IP Whitelist)
@@ -157,9 +157,9 @@ wp eval-file wp-content/themes/robdisbergen/security-scanner-general.php
 
 2. Navigate to one of:
    ```
-   https://yoursite.com/wp-content/themes/robdisbergen/security-scanner.php
-   https://yoursite.com/wp-content/themes/robdisbergen/security-scanner-targeted.php
-   https://yoursite.com/wp-content/themes/robdisbergen/security-scanner-general.php
+   https://yoursite.com/wp-content/themes/client/security-scanner.php
+   https://yoursite.com/wp-content/themes/client/security-scanner-targeted.php
+   https://yoursite.com/wp-content/themes/client/security-scanner-general.php
    ```
 
 3. **AFTER SCANNING**: Delete the files or remove them from the web root!
@@ -291,7 +291,7 @@ These are **LEGITIMATE** encoding patterns:
 
 ### Production Site Scan
 
-**Location:** `~/code/robdisbergen/` (Development)
+**Location:** `~/code/client/` (Development)
 **Result:** ✅ **NO MALWARE DETECTED**
 
 ```
@@ -305,7 +305,7 @@ Actual threats: 0
 
 ### Staging Site Scan
 
-**Location:** `~/code/robdisbergen.nl/` (Staging)
+**Location:** `~/code/client.nl/` (Staging)
 **Result:** ✅ **NO MALWARE DETECTED**
 
 ```
@@ -325,7 +325,7 @@ Actual threats: 0
 
 ```bash
 # Via SFTP/FTP
-# Upload: wp-content/themes/robdisbergen/security-scanner.php
+# Upload: wp-content/themes/client/security-scanner.php
 
 # Via WP-CLI SSH
 wp @production eval-file security-scanner.php
@@ -337,7 +337,7 @@ wp @production eval-file security-scanner.php
 ```bash
 ssh user@your-server.com
 cd /path/to/wordpress
-wp eval-file wp-content/themes/robdisbergen/security-scanner.php > scan-results.txt
+wp eval-file wp-content/themes/client/security-scanner.php > scan-results.txt
 cat scan-results.txt
 ```
 
@@ -353,7 +353,7 @@ cat scan-results.txt
 # /usr/local/bin/weekly-scan.sh
 
 cd /path/to/wordpress
-php wp-content/themes/robdisbergen/security-scanner.php > /tmp/scan-$(date +%Y%m%d).txt
+php wp-content/themes/client/security-scanner.php > /tmp/scan-$(date +%Y%m%d).txt
 
 # Email results
 mail -s "Security Scan Results" admin@yoursite.com < /tmp/scan-$(date +%Y%m%d).txt

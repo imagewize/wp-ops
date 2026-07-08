@@ -18,13 +18,13 @@
  * USAGE:
  *
  * Via WP-CLI (recommended):
- *   wp eval-file wp-content/themes/robdisbergen/security-scanner.php
+ *   wp eval-file wp-content/themes/client/security-scanner.php
  *
  * Via Browser (secure with IP check first):
- *   https://yoursite.com/wp-content/themes/robdisbergen/security-scanner.php
+ *   https://yoursite.com/wp-content/themes/client/security-scanner.php
  *
  * Via Command Line:
- *   php wp-content/themes/robdisbergen/security-scanner.php
+ *   php wp-content/themes/client/security-scanner.php
  */
 
 // ============================================================================
