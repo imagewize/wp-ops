@@ -1,0 +1,26 @@
+{
+  "name": "wp-ops-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server exposing wp-ops WordPress operations (security scanning, backups, and more) as tools for Claude and other MCP-compatible clients.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "wp-ops-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "express": "^4.21.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
