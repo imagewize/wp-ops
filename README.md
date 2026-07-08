@@ -16,6 +16,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 - [Nginx](#nginx)
 - [Scripts](#scripts)
 - [WordPress Utilities](#wordpress-utilities)
+- [Troubleshooting](#troubleshooting)
 
 ## Trellis
 
@@ -28,7 +29,6 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 | **Project Setup** | Clone and configure an existing Trellis/Bedrock project | [→](trellis/provision/PROJECT-SETUP.md) |
 | **Monitoring** | Nginx log monitoring for traffic analysis and security threat detection | [→](trellis/monitoring/README.md) |
 | **Security** | fail2ban IP blocking and manual deny rules | [→](trellis/security/README.md) |
-| **Troubleshooting** | Diagnose PHP-FPM, MariaDB, and server issues | [→](troubleshooting/README.md) |
 
 ## Bedrock
 
@@ -57,13 +57,49 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 ## Scripts
 
+Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for full docs, flags, and examples.
+
+### Releases & GitHub
+
 | Tool | Description | Docs |
 |------|-------------|------|
-| **404 Checker** | Internal broken-link checker — homepage scan or recursive spider | [→](scripts/README.md#404-checkersh) |
 | **PR Creation** | AI-powered GitHub PR descriptions (Claude/Codex) | [→](CREATE-PR.md) |
 | **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release-plugin.sh) |
 | **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release-theme.sh) |
-| **Theme Sync** | Rsync script for theme synchronization | [→](scripts/rsync-theme.sh) |
+| **WordPress.org Deploy** | Publish a plugin to the WordPress.org SVN directory | [→](scripts/README.md#deploy-plugin-wporgsh) |
+| **Release Asset Upload** | Manually attach a zip to an existing GitHub release | [→](scripts/upload-release-asset.sh) |
+
+### Monitoring & Security
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Run Monitoring** | Orchestrator: runs all monitors and generates a markdown summary | [→](scripts/monitoring/run-monitoring.sh) |
+| **Traffic Monitor** | Nginx traffic analysis with bot filtering and reporting | [→](scripts/monitoring/traffic-monitor.sh) |
+| **Security Monitor** | Nginx threat detection with IP block recommendations | [→](scripts/monitoring/security-monitor.sh) |
+| **AI Bot Monitor** | AI crawler traffic analysis (GPTBot, ClaudeBot, etc.) | [→](scripts/monitoring/ai-bot-monitor.sh) |
+| **404 Checker** | Internal broken-link checker — homepage scan or recursive spider | [→](scripts/README.md#404-checkersh) |
+| **Redirect Check** | Mass URL redirect checker using curl | [→](scripts/README.md#redirect-checksh) |
+| **CF7 Smoke Test** | Playwright post-deploy contact-form submission check | [→](scripts/monitoring/cf7-smoke-test.js) |
+| **Updown Webhook** | updown.io downtime alert handler + PHP receiver | [→](scripts/monitoring/updown-webhook-handler.sh) |
+
+### Content & Backups
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Post Count** | Count published blog posts by year/month (blog posts only, CPTs excluded) | [→](scripts/README.md#post-countsh) |
+| **DB Backup** | Trellis-aware database backup with optional URL replacement | [→](scripts/backup/db-backup.sh) |
+| **Site Backup** | Full site backup (database + uploads + config + content) | [→](scripts/backup/site-backup.sh) |
+
+### Images, WooCommerce & Files
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Batch Resize** | Batch resize + center-crop images for featured images | [→](scripts/README.md#batch-resizesh) |
+| **WebP Convert** | JPG→WebP at the Facebook OG ratio with center crop | [→](scripts/README.md#convert-to-webpsh) |
+| **Product Variations** | Bulk-create WooCommerce product variations via WP-CLI | [→](scripts/woocommerce/create-product-variations.sh) |
+| **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/rsync-theme.sh) |
+| **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/find-and-replace-files.sh) |
+| **Git Log Oneline** | Show recent git commits as compact one-liners | [→](scripts/README.md#git-log-onelinesh) |
 
 ## WordPress Utilities
 
@@ -73,6 +109,12 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 | **Age Verification** | Cookie-based age verification with modal interface and ACF integration | [→](wordpress-utilities/age-verification/README.md) |
 | **Analytics** | Google Analytics, Matomo implementation and detection | [→](wordpress-utilities/analytics/README.md) |
 | **Speed Optimization** | Performance testing and TTFB analysis with curl/wget | [→](wordpress-utilities/speed-optimization/README.md) |
+
+## Troubleshooting
+
+| Tool | Description | Docs |
+|------|-------------|------|
+| **Server Diagnostics** | Diagnose PHP-FPM, MariaDB, and server issues | [→](troubleshooting/README.md) |
 
 ## Requirements
 
