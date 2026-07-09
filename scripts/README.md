@@ -4,9 +4,9 @@ Production-ready Bash and PHP scripts for WordPress operations, GitHub integrati
 
 ## Overview
 
-This directory contains 22 utility scripts organized into seven functional areas:
+This directory contains 23 utility scripts organized into seven functional areas:
 
-- **GitHub Integration** - AI-powered pull request creation and manual GitHub release asset uploads
+- **GitHub Integration** - AI-powered pull request creation, manual GitHub release asset uploads, and repository traffic analytics
 - **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
@@ -38,6 +38,7 @@ scripts/
 ├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 ├── create-pr.sh                # AI-powered GitHub PR creation
 ├── deploy-plugin-wporg.sh      # Publish a plugin to the WordPress.org directory via SVN
+├── gh-traffic.sh              # Fetch and display GitHub repository traffic statistics
 ├── upload-release-asset.sh    # Manual GitHub release zip upload (fallback for failed Actions)
 ├── find-and-replace-files.sh  # Batch find and replace files across directory trees
 ├── git-log-oneline.sh          # Show recent git commits as one-liners
@@ -71,6 +72,9 @@ scripts/
 
 # Create GitHub PR with AI description
 ./scripts/create-pr.sh main "Add feature name"
+
+# Show GitHub repository traffic statistics
+./scripts/gh-traffic.sh imagewize/nynaeve
 
 # Show recent git commits as one-liners
 ./scripts/git-log-oneline.sh
