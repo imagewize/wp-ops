@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-07-09
+
+### Added
+
+- **scripts/gh-traffic.sh** - New script to fetch and display GitHub repository traffic statistics (views and unique visitors) in a formatted table. Features include: configurable output (table with headers, quiet mode without headers, raw JSON), repository format validation, and dependency checking for `gh` CLI and `column` command. Uses GitHub's traffic API which retains 14 days of data. Documented in [`scripts/README.md`](scripts/README.md).
+
+### Changed
+
+- **scripts/README.md** - Updated to include `gh-traffic.sh`: incremented script count from 22 to 23, added to directory structure, added GitHub Integration description update, and added usage example in Common Operations section.
+
 ## [3.1.1] - 2026-07-08
 
 ### Documentation
