@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.1] - 2026-07-10
+
+### Changed
+
+- **scripts/create-pr.sh** - Reworked version detection so PR descriptions report the correct version reliably (previously AI backends, notably Mistral Vibe, frequently got the version wrong):
+  - `detect_version` is now **diff-based** - it inspects added lines in the branch diff rather than the current file contents, so it only reports a version that was genuinely introduced and always returns the new value. Editing `package.json`/`composer.json` for unrelated reasons no longer produces a false "bump" signal. A shared `added_version_line` helper replaces four near-duplicate extraction blocks.
+  - The detected version is now **injected into the PR body deterministically** (prepended as `**Version:** \`x.y.z\``) after the AI step, guaranteeing the correct version appears regardless of which AI backend generated the prose. The version is still passed to the prompt as narrative context.
+  - Generalized the WordPress plugin/theme header check from a hardcoded `min.php` filename to any changed `.php` file or a theme's `style.css`, matching an added `Version: x.y.z` header line - filename-agnostic and usable in any repo.
+  - Detection order is CHANGELOG → package.json → plugin/theme header → composer.json, all diff-based.
+
 ## [3.2.0] - 2026-07-09
 
 ### Added
