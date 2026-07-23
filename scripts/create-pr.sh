@@ -10,6 +10,7 @@
 #   --no-ai              Skip AI-powered description generation (faster but less detailed)
 #   --no-interactive     Skip all prompts, use defaults/arguments
 #   --update             Update existing PR description for current branch
+#   --dry-run            Print the generated body and exit without touching GitHub
 
 set -e
 
@@ -27,6 +28,7 @@ Options:
   --no-ai              Skip AI description generation
   --no-interactive     Skip all interactive prompts
   --update             Update existing PR for current branch
+  --dry-run            Print the generated body and exit without touching GitHub
 
 Arguments:
   [base-branch]        Target branch for PR (default: main)
@@ -36,6 +38,7 @@ Examples:
   ./create-pr.sh --ai=vibe
   ./create-pr.sh main "Add new feature" --no-ai
   ./create-pr.sh --update --ai=claude
+  ./create-pr.sh --dry-run
 EOF
     exit 0
 }
@@ -44,6 +47,7 @@ EOF
 USE_AI=""
 INTERACTIVE=true
 UPDATE_MODE=false
+DRY_RUN=false
 AI_TOOL="claude"
 AI_TOOL_SPECIFIED=false
 ARGS=()
@@ -60,6 +64,9 @@ while [ $# -gt 0 ]; do
         ;;
     --update)
         UPDATE_MODE=true
+        ;;
+    --dry-run)
+        DRY_RUN=true
         ;;
     --ai=*)
         AI_TOOL="${1#--ai=}"
@@ -226,11 +233,44 @@ if [ "$CURRENT_BRANCH" == "$BASE_BRANCH" ]; then
     exit 1
 fi
 
-# Check if branch is pushed to remote
-if ! git ls-remote --exit-code --heads origin "$CURRENT_BRANCH" > /dev/null 2>&1; then
+# Warn about work that won't be in the PR. The description is generated from
+# commits, so uncommitted changes produce a PR that describes more than it ships.
+DIRTY=false
+git diff --quiet || DIRTY=true
+git diff --cached --quiet || DIRTY=true
+if [ "$DIRTY" = true ]; then
+    echo "⚠️  You have uncommitted changes. They will not be part of this PR:"
+    git status --short
+    echo ""
+    if [ "$INTERACTIVE" = true ]; then
+        read -p "Continue anyway? (y/N): " confirm_dirty
+        if [[ ! "$confirm_dirty" =~ ^[Yy]$ ]]; then
+            echo "Cancelled."
+            exit 0
+        fi
+        echo ""
+    fi
+fi
+
+# Push the branch. Checking only whether the remote branch *exists* isn't enough:
+# on a branch that was pushed earlier, later commits would stay local and the
+# generated description would cover work GitHub doesn't have. This matters most
+# in --update mode, which is exactly the "I added commits" case.
+#
+# A dry run touches nothing remote, so it skips this entirely.
+if [ "$DRY_RUN" = true ]; then
+    :
+elif ! git ls-remote --exit-code --heads origin "$CURRENT_BRANCH" > /dev/null 2>&1; then
     echo "Branch '$CURRENT_BRANCH' is not pushed to remote."
     echo "Pushing to origin..."
     git push -u origin "$CURRENT_BRANCH"
+else
+    AHEAD=$(git rev-list --count "@{upstream}..HEAD" 2>/dev/null || echo "0")
+    if [ "$AHEAD" -gt 0 ]; then
+        echo "Branch '$CURRENT_BRANCH' is $AHEAD commit(s) ahead of its remote."
+        echo "Pushing to origin..."
+        git push origin "$CURRENT_BRANCH"
+    fi
 fi
 
 # Get the GitHub repository URL for file links
@@ -553,6 +593,8 @@ REQUIREMENTS:
 - Use professional technical writing - NO emoticons, NO casual language
 - Focus on the most important changes first
 - Keep each bullet point to 1-2 sentences maximum
+- Describe the change, never the tooling: do NOT mention Claude, Codex, AI or any
+  assistant, and do NOT append a generated-by / co-authored-by footer of any kind
 
 CHANGED FILES (excluding lock files):
 $CHANGED_FILES_NO_LOCKS
@@ -686,6 +728,21 @@ if [ -n "$VERSION_BUMP" ]; then
     PR_BODY="**Version:** \`$VERSION_BUMP\`
 
 $PR_BODY"
+fi
+
+# A dry run stops here: the body is the thing worth reviewing, and generating it
+# is the expensive part, so print it and leave GitHub alone.
+if [ "$DRY_RUN" = true ]; then
+    echo ""
+    echo "🔍 Dry run — nothing was pushed or sent to GitHub."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Title: ${PR_TITLE:-<unchanged>}"
+    echo "Base:  $BASE_BRANCH"
+    echo "Head:  $CURRENT_BRANCH"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "$PR_BODY"
+    exit 0
 fi
 
 # Create or update PR
