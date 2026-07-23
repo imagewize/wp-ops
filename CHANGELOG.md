@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 2026-07-23
+
+### Added
+
+- **scripts/create-pr.sh** - Added `--dry-run` flag that generates the PR description and prints it without pushing to GitHub or touching the remote repository.
+
+### Changed
+
+- **scripts/create-pr.sh** - Added safety checks before PR creation:
+  - Warns when there are uncommitted changes (local modifications or staged but uncommitted changes) that won't be included in the PR
+  - Interactive prompt to continue or cancel when uncommitted changes are detected
+  - Enhanced branch push logic: now checks if branch exists remotely AND if there are new commits to push, then pushes accordingly
+- **scripts/create-pr.sh** - Updated AI prompt requirements to explicitly prohibit mentioning AI assistants or adding generated-by/co-authored-by footers in PR descriptions.
+
 ## [3.3.1] - 2026-07-23
 
 ### Added
