@@ -915,7 +915,7 @@ export OPENAI_API_KEY="your-key-here"
 
 ---
 
-### rsync-theme.sh (28 lines)
+### rsync-theme.sh
 
 Simple rsync wrapper for theme synchronization between Trellis and standalone repositories.
 
@@ -923,6 +923,8 @@ Simple rsync wrapper for theme synchronization between Trellis and standalone re
 
 - **Archive Mode**: Preserves timestamps, permissions, ownership
 - **Selective Deletion**: Removes destination files not in source
+- **Dry Run**: `--dry-run` previews the transfer — including deletions — without
+  writing anything
 - **Exclude Filters**:
   - `node_modules/`, `vendor/` (dependencies)
   - `.git/`, `.github/` (version control)
@@ -930,24 +932,36 @@ Simple rsync wrapper for theme synchronization between Trellis and standalone re
 
 #### Configuration
 
-Edit script with your paths:
+Edit the defaults at the top of the script, or override them per invocation:
 
 ```bash
 SOURCE="$HOME/code/example.com/demo/web/app/themes/elayne/"
-DESTINATION="$HOME/code/elayne/"
+DEST="$HOME/code/elayne/"
 ```
 
 #### Usage
 
 ```bash
+# Preview first — --delete means anything at the destination that is not in the
+# source is removed
+./rsync-theme.sh --dry-run
+
 # Run synchronization
 ./rsync-theme.sh
+
+# One-off paths
+SOURCE=~/code/example.com/site/web/app/themes/my-theme/ \
+  DEST=~/code/my-theme/ ./rsync-theme.sh -n
 
 # Output shows:
 # - Files sent/received
 # - Total size transferred
 # - Speedup achieved
 ```
+
+Unknown options are rejected rather than ignored — the script previously passed
+over any argument it did not recognize, so a mistyped `--dry-run` ran the sync
+for real.
 
 #### Use Cases
 
@@ -973,6 +987,8 @@ rejects a theme that ships a `.sh` file at all.
 
 - **Dist-faithful**: reads the package's own `.distignore` when present, so a file
   excluded from the release zip never reaches the site — what you test is what ships
+- **Dry Run**: `--dry-run` previews the transfer — including deletions — without
+  writing anything
 - **`--delete-excluded`**: a file that used to ship and is now excluded is removed
   at the destination too, rather than lingering and being tested after it is gone
 - **Version echo**: prints the version that landed (theme `style.css` header, or the
@@ -993,6 +1009,9 @@ export SITE_ROOT="$HOME/code/example.com/demo/web/app"
 #### Usage
 
 ```bash
+# Preview first — the sync runs with --delete --delete-excluded
+./rsync-package-to-site.sh --dry-run plugin my-plugin
+
 # From inside the package repo
 ./rsync-package-to-site.sh plugin my-plugin
 

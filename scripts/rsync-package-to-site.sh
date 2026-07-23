@@ -18,12 +18,16 @@
 # The rsync mirrors .distignore when the package has one, so what you test is
 # what ships — a file excluded from the release zip never reaches the site.
 #
+# The sync runs with --delete --delete-excluded, so it can remove files at the
+# destination. Pass --dry-run to see exactly what would change without writing.
+#
 # Usage:
-#   rsync-package-to-site.sh <plugin|theme> <package-slug> [source-dir]
+#   rsync-package-to-site.sh [-n|--dry-run] <plugin|theme> <package-slug> [source-dir]
 #
 # Examples:
 #   rsync-package-to-site.sh plugin my-plugin              # cwd is the package repo
 #   rsync-package-to-site.sh theme  my-theme ~/code/my-theme
+#   rsync-package-to-site.sh -n theme my-theme             # preview only
 #
 # Configure the destination once, in your shell profile or per invocation:
 #   SITE_ROOT=~/code/example.com/demo/web/app rsync-package-to-site.sh theme my-theme
@@ -34,12 +38,23 @@
 set -euo pipefail
 
 usage() {
-	sed -n '2,32p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
+	sed -n '2,36p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
 	exit "${1:-1}"
 }
 
+# Flags first, so the positional arguments below keep their existing meaning.
+dry_run=false
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-n|--dry-run) dry_run=true; shift ;;
+		-h|--help) usage 0 ;;
+		--) shift; break ;;
+		-*) echo "✗ unknown option '$1'" >&2; echo >&2; usage 1 ;;
+		*) break ;;
+	esac
+done
+
 [ $# -ge 2 ] || usage 1
-case "$1" in -h|--help) usage 0 ;; esac
 
 kind="$1"
 slug="$2"
@@ -92,7 +107,19 @@ fi
 # --delete-excluded matters: without it, a file that used to ship and is now
 # excluded lingers at the destination and you test something that no longer
 # exists in the release.
-rsync -a --delete --delete-excluded "${excludes[@]}" "$src/" "$dest/"
+rsync_args=(-a --delete --delete-excluded)
+if [ "$dry_run" = true ]; then
+	# -v as well: a silent dry run would print nothing at all.
+	rsync_args+=(--dry-run -v)
+fi
+
+rsync "${rsync_args[@]}" "${excludes[@]}" "$src/" "$dest/"
+
+if [ "$dry_run" = true ]; then
+	echo
+	echo "Dry run — nothing was written. Re-run without --dry-run to apply."
+	exit 0
+fi
 
 # Report the version that landed, so it is obvious when a sync silently no-ops.
 if [ "$kind" = "theme" ] && [ -f "$dest/style.css" ]; then
