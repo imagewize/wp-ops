@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.1] - 2026-07-23
+
+### Added
+
+- **scripts/rsync-theme.sh**, **scripts/rsync-package-to-site.sh** - Added `-n` / `--dry-run` to both sync scripts. Both run rsync with `--delete` (plus `--delete-excluded` in `rsync-package-to-site.sh`), so a mistaken invocation can remove files at the destination; `--dry-run` prints the full transfer, deletions included, and writes nothing.
+
+### Fixed
+
+- **scripts/rsync-theme.sh** - Unknown arguments are now rejected instead of silently ignored. The script previously hardcoded its rsync invocation and dropped anything passed to it, so `./rsync-theme.sh --dry-run` looked like a preview but performed a real sync — which is what prompted adding the flag.
+
+### Changed
+
+- **scripts/rsync-theme.sh** - Source and destination are now `SOURCE` / `DEST` variables overridable per invocation (`SOURCE=… DEST=… ./rsync-theme.sh -n`) rather than requiring an edit to the script. Added `-h` / `--help`, and switched to `#!/usr/bin/env bash` with `set -euo pipefail` to match `rsync-package-to-site.sh`. Corrected the README's stale `DESTINATION` variable name and its `(28 lines)` heading.
+
 ## [3.3.0] - 2026-07-23
 
 ### Added
