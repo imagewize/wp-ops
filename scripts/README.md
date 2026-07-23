@@ -45,6 +45,7 @@ scripts/
 ├── post-count.sh               # Count published blog posts by year/month (blog posts only)
 ├── release-plugin.sh           # WordPress plugin version release automation
 ├── release-theme.sh            # WordPress theme version release automation
+├── rsync-package-to-site.sh   # Push a plugin/theme working copy into a Bedrock site
 └── rsync-theme.sh             # Theme file synchronization utility
 ```
 
@@ -954,6 +955,69 @@ DESTINATION="$HOME/code/elayne/"
 - Prepare theme for WordPress.org submission
 - Backup theme to separate repository
 - Development workflow: edit in Trellis, sync to standalone for distribution
+
+---
+
+### rsync-package-to-site.sh
+
+The **reverse direction** of `rsync-theme.sh`: pushes a plugin or theme working
+copy *into* a Bedrock site, so unreleased changes can be tested on a real site
+without cutting a release. Use it when the package repo is the source of truth
+and the site is disposable.
+
+Keep this script here rather than committing a copy into each package repo — the
+paths are personal configuration, and WordPress Theme Check's `File_Check`
+rejects a theme that ships a `.sh` file at all.
+
+#### Features
+
+- **Dist-faithful**: reads the package's own `.distignore` when present, so a file
+  excluded from the release zip never reaches the site — what you test is what ships
+- **`--delete-excluded`**: a file that used to ship and is now excluded is removed
+  at the destination too, rather than lingering and being tested after it is gone
+- **Version echo**: prints the version that landed (theme `style.css` header, or the
+  plugin's main-file header), making a no-op sync obvious
+- **Fallback excludes** for packages without a `.distignore` (`node_modules/`,
+  `vendor/`, `.git/`, `.github/`, `docs/`, `tests/`, `bin/`, `*.sh`, editor cruft)
+
+#### Configuration
+
+`SITE_ROOT` is the Bedrock content directory — the one holding `plugins/` and
+`themes/` (`web/app` in a stock Bedrock install). Set it per invocation or in your
+shell profile:
+
+```bash
+export SITE_ROOT="$HOME/code/example.com/demo/web/app"
+```
+
+#### Usage
+
+```bash
+# From inside the package repo
+./rsync-package-to-site.sh plugin my-plugin
+
+# Or point at it explicitly
+./rsync-package-to-site.sh theme my-theme ~/code/my-theme
+
+# One-off destination
+SITE_ROOT=~/code/example.com/staging/web/app \
+  ./rsync-package-to-site.sh theme my-theme
+```
+
+#### Use Cases
+
+- Test a plugin/theme branch on a real site before tagging a release
+- Verify a release zip's contents in situ, since the sync honours `.distignore`
+- Refresh a demo site after every local change, without touching its `composer.json`
+
+#### Alternative
+
+A Composer `path` repository (see
+[bedrock/local-package-development](../bedrock/local-package-development/README.md))
+is the better fit when you want Composer itself to resolve the package and you are
+happy editing the site's `composer.json`. This script suits a *pinned* dependency
+you would rather leave alone. Either way, `composer update vendor/package` on the
+site restores the released code.
 
 ---
 

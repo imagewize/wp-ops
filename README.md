@@ -100,6 +100,7 @@ Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for
 | **WebP Convert** | JPG→WebP at the Facebook OG ratio with center crop | [→](scripts/README.md#convert-to-webpsh) |
 | **Product Variations** | Bulk-create WooCommerce product variations via WP-CLI | [→](scripts/woocommerce/create-product-variations.sh) |
 | **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/rsync-theme.sh) |
+| **Package → Site Sync** | Push a plugin/theme working copy into a Bedrock site to test unreleased changes | [→](scripts/README.md#rsync-package-to-sitesh) |
 | **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/find-and-replace-files.sh) |
 | **Git Log Oneline** | Show recent git commits as compact one-liners | [→](scripts/README.md#git-log-onelinesh) |
 
