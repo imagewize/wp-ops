@@ -59,6 +59,7 @@ The updater script specifically preserves the following files/directories:
 
 ### Custom Nginx Configurations
 - `nginx-includes/` - Custom Nginx configs (SEO redirects, asset expiry, security rules)
+- `roles/nginx/templates/nginx.conf.j2` - Custom Nginx main config (rate limiting, etc.)
 
 ### Custom Documentation
 - `docs/` - Project-specific documentation
@@ -72,6 +73,7 @@ After upgrading, you should manually review and potentially merge changes from t
 1. **Role template changes** - Check if upstream changed any templates you've customized:
    - `roles/mariadb/templates/` - If you added custom MariaDB settings
    - `roles/wordpress-setup/templates/` - If you modified PHP-FPM pool templates
+   - `roles/nginx/templates/nginx.conf.j2` - If you customized rate limiting or other Nginx settings
 
 2. **New variables** - Check upstream `main.yml` files for new useful variables you may want to adopt
 

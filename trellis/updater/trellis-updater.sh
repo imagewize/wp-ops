@@ -71,6 +71,7 @@ echo "=== Syncing Trellis updates while preserving custom configurations ==="
 #   - Custom Nginx configs (nginx-includes/)
 #   - Custom documentation (docs/, CHANGELOG.md)
 #   - Custom role templates (php-fpm-pool with request_terminate_timeout)
+#   - Custom Nginx config (nginx.conf.j2 with rate limiting zone)
 rsync -av --delete \
   --exclude=".vault_pass" \
   --exclude="ansible.cfg" \
@@ -106,6 +107,7 @@ rsync -av --delete \
   --exclude="CHANGELOG.md" \
   --exclude="CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md" \
   --exclude="roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2" \
+  --exclude="roles/nginx/templates/nginx.conf.j2" \
   $TEMP_DIR/trellis/ $TRELLIS_DIR/
 
 echo "✓ Trellis files updated"
@@ -126,6 +128,7 @@ EXCLUDED_FILES=(
   "group_vars/production/wordpress_sites.yml"
   "group_vars/staging/wordpress_sites.yml"
   "roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2"
+  "roles/nginx/templates/nginx.conf.j2"
 )
 
 UPSTREAM_CHANGES_DIR=$DIFF_DIR/excluded-file-diffs
