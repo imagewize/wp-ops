@@ -302,10 +302,40 @@ if [ -z "$CHANGELOG_JSON" ]; then
     exit 1
 fi
 
-# Extract changelog entries using simple text processing (no jq needed)
-# Use awk to properly handle escaped quotes and backslashes in JSON values
-CHANGELOG_MD=$(echo "$CHANGELOG_JSON" | awk -F'"changelog_md"[[:space:]]*:[[:space:]]*"' '{if (NF>1) {gsub(/","readme_txt".*/, "", $2); gsub(/\\n/, "\n", $2); gsub(/\\"/, "\"", $2); print $2}}')
-README_TXT=$(echo "$CHANGELOG_JSON" | awk -F'"readme_txt"[[:space:]]*:[[:space:]]*"' '{if (NF>1) {gsub(/"}$/, "", $2); gsub(/\\n/, "\n", $2); gsub(/\\"/, "\"", $2); print $2}}')
+# Extract changelog entries from the AI's JSON response.
+#
+# Prefer jq: it's already part of this toolchain (create-pr.sh depends on it) and
+# parses the object correctly no matter how the model formats it. The previous
+# awk-only approach assumed both keys sat on a single line; when the model
+# pretty-prints the JSON (one key per line), each value's closing quote lands at
+# the end of its own line and the greedy `","readme_txt".*` / `"}$` patterns
+# never matched — leaving a trailing `",` or `"` artifact in the changelog.
+CHANGELOG_MD=""
+README_TXT=""
+if command -v jq > /dev/null 2>&1; then
+    CHANGELOG_MD=$(printf '%s' "$CHANGELOG_JSON" | jq -r '.changelog_md // empty' 2>/dev/null)
+    README_TXT=$(printf '%s' "$CHANGELOG_JSON" | jq -r '.readme_txt // empty' 2>/dev/null)
+fi
+
+# Fallback for when jq is unavailable (or the response wasn't strictly valid
+# JSON). Locate the key on its line, then strip a closing quote that may be
+# followed by `,` or `}` and trailing whitespace at end of line — covering both
+# compact and pretty-printed shapes.
+extract_json_string() {
+    awk -v key="$1" '
+        BEGIN { sep = "\"" key "\"[[:space:]]*:[[:space:]]*\"" }
+        match($0, sep) {
+            val = substr($0, RSTART + RLENGTH)
+            sub(/","(changelog_md|readme_txt)".*/, "", val)   # another key on the same line
+            sub(/"[[:space:]]*[},]?[[:space:]]*$/, "", val)   # closing quote at end of line
+            gsub(/\\n/, "\n", val)
+            gsub(/\\"/, "\"", val)
+            print val
+        }
+    ' <<< "$CHANGELOG_JSON"
+}
+[ -z "$CHANGELOG_MD" ] && CHANGELOG_MD=$(extract_json_string "changelog_md")
+[ -z "$README_TXT" ] && README_TXT=$(extract_json_string "readme_txt")
 
 if [ -z "$CHANGELOG_MD" ] || [ -z "$README_TXT" ]; then
     echo -e "${RED}  ✗ Failed to extract changelog entries${NC}"
