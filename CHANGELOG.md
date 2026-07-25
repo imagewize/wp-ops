@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.3] - 2026-07-25
+
+### Fixed
+
+- **scripts/release-theme.sh**, **scripts/release-plugin.sh** - Fixed changelog extraction leaving a trailing `",` (or `"`) artifact appended to every generated entry. The awk parser assumed both JSON keys sat on a single line; when the AI pretty-prints its response (one key per line), each value's closing quote lands at the end of its own line and the greedy `","readme_txt".*` / `"}$` patterns never matched. Both scripts now parse the response with `jq` (already required by `create-pr.sh`) and fall back to a hardened awk extractor that strips a closing quote optionally followed by `,` or `}` at end of line.
+
 ## [3.3.2] - 2026-07-23
 
 ### Added
