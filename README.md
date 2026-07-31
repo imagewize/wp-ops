@@ -1,8 +1,7 @@
 <div align="center">
   <img src="assets/logo.svg" alt="WordPress Operations Logo" width="128" height="128">
-    <h1>WP OPS</h1> 
+  <h1>WP OPS</h1>
 </div>
-
 
 <div align="center">
 Tools, scripts, and guides for modern WordPress development & devops—optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
@@ -32,27 +31,23 @@ wp-ops trellis --help        # list commands in one category
 wp-ops <category> <command> [args...]
 ```
 
-Ansible playbook commands (`wp-ops trellis <playbook>`, covering `trellis/backup/` and `trellis/monitoring/`) run against a real Trellis project's `ansible.cfg`, inventory, and `group_vars/`, so set `TRELLIS_DIR` first:
+Two categories need environment variables pointing at a real project before their commands work:
 
 ```bash
+# Ansible playbooks (wp-ops trellis <playbook>) need a Trellis project's ansible.cfg/inventory/group_vars
 export TRELLIS_DIR=/path/to/your/trellis
 wp-ops trellis database-backup -e site=example.com -e env=production
-```
 
-Likewise, WP-CLI script commands (`wp-ops wp-cli <script>`, `wp-ops bedrock <script>` — the security scanners, transient diagnostics, and the pattern-validate command) run against a real WordPress/Bedrock install via `wp`, so set `WP_SITE_DIR` first:
-
-```bash
+# WP-CLI scripts (wp-ops wp-cli|bedrock <script>) need a real WordPress/Bedrock install
 export WP_SITE_DIR=/path/to/your/bedrock-site
 wp-ops wp-cli scanner-wrapper
 wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 ```
 
-`wordpress-utilities/` is different again — those files are copy-paste-into-a-theme reference snippets (PHP includes, CSS, browser JS), not scripts with meaningful "run" behavior. `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead of executing them:
+`wordpress-utilities/` is different: those are copy-paste-into-a-theme snippets, not runnable scripts, so `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead:
 
 ```bash
-wp-ops wordpress-utilities footer            # print to stdout
-wp-ops wordpress-utilities footer --copy      # copy to clipboard
-wp-ops wordpress-utilities footer --path      # print just the file path
+wp-ops wordpress-utilities footer --copy     # copy to clipboard
 wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 ```
 
@@ -96,58 +91,19 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 ## Scripts
 
-Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for full docs, flags, and examples.
+23 standalone Bash/PHP utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
-### Releases & GitHub
-
-| Tool | Description | Docs |
+| Category | Includes | Docs |
 |------|-------------|------|
-| **PR Creation** | AI-powered GitHub PR descriptions (Claude/Codex) | [→](CREATE-PR.md) |
-| **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release/release-plugin.sh) |
-| **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release/release-theme.sh) |
-| **WordPress.org Deploy** | Publish a plugin to the WordPress.org SVN directory | [→](scripts/README.md#deploy-plugin-wporgsh) |
-| **Release Asset Upload** | Manually attach a zip to an existing GitHub release | [→](scripts/release/upload-release-asset.sh) |
-
-### Monitoring & Security
-
-| Tool | Description | Docs |
-|------|-------------|------|
-| **Run Monitoring** | Orchestrator: runs all monitors and generates a markdown summary | [→](scripts/monitoring/run-monitoring.sh) |
-| **Traffic Monitor** | Nginx traffic analysis with bot filtering and reporting | [→](scripts/monitoring/traffic-monitor.sh) |
-| **Security Monitor** | Nginx threat detection with IP block recommendations | [→](scripts/monitoring/security-monitor.sh) |
-| **AI Bot Monitor** | AI crawler traffic analysis (GPTBot, ClaudeBot, etc.) | [→](scripts/monitoring/ai-bot-monitor.sh) |
-| **404 Checker** | Internal broken-link checker — homepage scan or recursive spider | [→](scripts/README.md#404-checkersh) |
-| **Redirect Check** | Mass URL redirect checker using curl | [→](scripts/README.md#redirect-checksh) |
-| **CF7 Smoke Test** | Playwright post-deploy contact-form submission check | [→](scripts/monitoring/cf7-smoke-test.js) |
-| **Updown Webhook** | updown.io downtime alert handler + PHP receiver | [→](scripts/monitoring/updown-webhook-handler.sh) |
-
-### Content & Backups
-
-| Tool | Description | Docs |
-|------|-------------|------|
-| **Post Count** | Count published blog posts by year/month (blog posts only, CPTs excluded) | [→](scripts/README.md#post-countsh) |
-| **DB Backup** | Trellis-aware database backup with optional URL replacement | [→](scripts/backup/db-backup.sh) |
-| **Site Backup** | Full site backup (database + uploads + config + content) | [→](scripts/backup/site-backup.sh) |
-
-### Images, WooCommerce & Files
-
-| Tool | Description | Docs |
-|------|-------------|------|
-| **Batch Resize** | Batch resize + center-crop images for featured images | [→](scripts/README.md#batch-resizesh) |
-| **WebP Convert** | JPG→WebP at the Facebook OG ratio with center crop | [→](scripts/README.md#convert-to-webpsh) |
-| **Product Variations** | Bulk-create WooCommerce product variations via WP-CLI | [→](scripts/woocommerce/create-product-variations.sh) |
-| **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/sync/rsync-theme.sh) |
-| **Package → Site Sync** | Push a plugin/theme working copy into a Bedrock site to test unreleased changes | [→](scripts/README.md#rsync-package-to-sitesh) |
-| **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/misc/find-and-replace-files.sh) |
-| **Git Log Oneline** | Show recent git commits as compact one-liners | [→](scripts/README.md#git-log-onelinesh) |
+| **Releases & GitHub** | PR creation, plugin/theme release automation, WordPress.org SVN deploy, release asset upload, GitHub traffic stats | [→](scripts/README.md#github-integration) |
+| **Monitoring & Security** | Traffic/security/AI-bot monitoring, 404 & redirect checking, CF7 smoke test, updown.io webhooks | [→](scripts/README.md#monitoring-scripts) |
+| **Backups** | Trellis-aware database and full-site backups | [→](scripts/README.md#backup-scripts) |
+| **Images, WooCommerce & Files** | Batch resize, WebP conversion, WooCommerce product variations, theme/package sync, find & replace | [→](scripts/README.md#image-utilities) |
+| **Content Reporting** | Published-post counts by year/month | [→](scripts/README.md#content-reporting) |
 
 ## MCP Server
 
-Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — one tool implemented so far, more (backups, PR creation, releases, image optimization) planned. See [mcp-server/README.md](mcp-server/README.md) for setup, transports (stdio/Streamable HTTP), and Docker usage.
-
-| Tool | Description | Docs |
-|------|-------------|------|
-| **security_scan** | Run the wp-cli security scanners against a registered site/environment (local or over SSH) | [→](mcp-server/README.md) |
+Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — five tools so far (`security_scan`, `db_backup`, `wp_cli`, `redirect_audit`, `schema_audit`), more planned. See [mcp-server/README.md](mcp-server/README.md) for tool details, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 
