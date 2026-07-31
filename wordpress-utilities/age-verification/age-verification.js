@@ -1,3 +1,9 @@
+/**
+ * Age Verification
+ *
+ * Cookie-based age verification modal that toggles casino/advertisement
+ * content blocks based on the visitor's declared age.
+ */
 jQuery(document).ready(function () {
 
   const setCookie = (name, value, days) => {

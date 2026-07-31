@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 ##############################################################################
-# redirect-audit.sh
-#
 # Comprehensive redirect chain audit for WordPress sites
 # Tests HTTPS pages, HTTP->HTTPS redirects, and www canonicalization
 #
