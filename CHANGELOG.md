@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.13.0] - 2026-07-31
+
+### Added
+
+- **wp-ops CLI** - Guided argument prompting (per `docs/cli-ux-plan.md`, M2): the fzf picker and the fallback `select`-based interactive menu now prompt once per `@arg`/`@flag` declared on a command, instead of a single blank `Arguments (leave blank for none):` box. Each prompt shows the directive's description, offers its `|`-separated choices or default inline, and — for a required field — reprompts rather than silently passing nothing. Boolean flags (`@flag` with an empty `{}`) get a `y/N` prompt instead of a value box. Commands with no manifest, or a manifest with no `@arg`/`@flag` at all (the `wordpress-utilities` snippets), keep the original free-text prompt unchanged. Every guided run ends with an "Additional arguments" catch-all, since a manifest line is only prompted once and can't express a repeatable flag (e.g. `redirect-audit`'s `--url`, shown passed twice in its own `@example`).
+
+### Fixed
+
+- **wp-ops CLI** - The guided prompt's per-line loop originally iterated with `while read line; do prompt_one_manifest_param ...; done <<< "$args"`, which rebinds stdin to the heredoc for the loop's entire body — so the nested `read -p` inside `prompt_one_manifest_param` silently consumed the *next manifest line* instead of the user's typed answer, and the real answer ended up satisfying a later, unrelated prompt. Fixed by collecting lines into a plain array first and walking that with a `for` loop, which never touches stdin.
+
 ## [3.12.0] - 2026-07-31
 
 ### Added

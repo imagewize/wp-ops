@@ -313,26 +313,39 @@ manifest_get_all() {
     grep "^${command_key}|${directive}|" "$MANIFEST_FILE" 2>/dev/null | cut -d'|' -f3-
 }
 
+# Parses one "@arg"/"@flag" value ("name required|optional {choices-or-default}
+# description") into the _MP_* globals. No bash-4 namerefs (macOS ships 3.2),
+# so this is the shared parse step for both manifest_print_param_line and the
+# guided prompt in prompt_manifest_args — each interprets _MP_BRACES its own
+# way (raw for display, choices-vs-default split for prompting).
+manifest_parse_param_line() {
+    local line="$1"
+    local rest
+
+    _MP_NAME=$(awk '{print $1}' <<< "$line")
+    _MP_REQUIRED=$(awk '{print $2}' <<< "$line")
+    rest=$(sed -E 's/^[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]*//' <<< "$line")
+
+    _MP_BRACES=""
+    _MP_DESC=""
+
+    if [[ "$rest" =~ ^\{([^}]*)\}[[:space:]]*(.*)$ ]]; then
+        _MP_BRACES="${BASH_REMATCH[1]}"
+        _MP_DESC="${BASH_REMATCH[2]}"
+    else
+        _MP_DESC="$rest"
+    fi
+}
+
 # Renders one "@arg"/"@flag" value ("name required|optional {choices-or-default} description")
 manifest_print_param_line() {
     local line="$1"
-    local name required rest choices="" description
+    manifest_parse_param_line "$line"
 
-    name=$(awk '{print $1}' <<< "$line")
-    required=$(awk '{print $2}' <<< "$line")
-    rest=$(sed -E 's/^[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]*//' <<< "$line")
-
-    if [[ "$rest" =~ ^\{([^}]*)\}[[:space:]]*(.*)$ ]]; then
-        choices="${BASH_REMATCH[1]}"
-        description="${BASH_REMATCH[2]}"
+    if [[ -n "$_MP_BRACES" ]]; then
+        printf "  %-18s %-9s {%s}  %s\n" "$_MP_NAME" "$_MP_REQUIRED" "$_MP_BRACES" "$_MP_DESC"
     else
-        description="$rest"
-    fi
-
-    if [[ -n "$choices" ]]; then
-        printf "  %-18s %-9s {%s}  %s\n" "$name" "$required" "$choices" "$description"
-    else
-        printf "  %-18s %-9s %s\n" "$name" "$required" "$description"
+        printf "  %-18s %-9s %s\n" "$_MP_NAME" "$_MP_REQUIRED" "$_MP_DESC"
     fi
 }
 
@@ -392,6 +405,128 @@ print_manifest_help() {
 
     [[ -n "$doc" ]] && echo "Docs: $doc"
     echo "Script: $script_path"
+}
+
+# Prompts for a single @arg/@flag line, appending the answer to the global
+# PROMPTED_ARGS array. $2 is "arg" or "flag": a flag with no {value} (or an
+# empty {}) is a boolean and contributes just its own name; a flag with a
+# value contributes its name and the typed value as two tokens (matching how
+# every annotated script's own parser expects them — see @example lines,
+# always space-separated, never `--flag=value`); an arg contributes only the
+# typed value. Bracketed content is choices when it's `|`-separated; a single
+# bracketed value is a real default for an optional field but only an
+# illustrative example for a required one (required fields can't have a
+# usable default), so the hint text and blank handling differ accordingly.
+prompt_one_manifest_param() {
+    local line="$1" kind="$2"
+    manifest_parse_param_line "$line"
+
+    local is_boolean=false choices="" bracket_value="" hint=""
+    if [[ "$kind" == "flag" && -z "$_MP_BRACES" ]]; then
+        is_boolean=true
+    elif [[ "$_MP_BRACES" == *"|"* ]]; then
+        choices="$_MP_BRACES"
+    else
+        bracket_value="$_MP_BRACES"
+    fi
+
+    [[ -n "$_MP_DESC" ]] && echo "  ${DIM}${_MP_DESC}${RESET}"
+
+    if [[ "$is_boolean" == true ]]; then
+        local answer
+        read -r -p "  ${_MP_NAME}? [y/N] " answer
+        [[ "$answer" =~ ^[Yy] ]] && PROMPTED_ARGS+=("$_MP_NAME")
+        return 0
+    fi
+
+    if [[ -n "$choices" ]]; then
+        hint=" [${choices}]"
+    elif [[ -n "$bracket_value" ]]; then
+        if [[ "$_MP_REQUIRED" == "required" ]]; then
+            hint=" (e.g. ${bracket_value})"
+        else
+            hint=" [default: ${bracket_value}]"
+        fi
+    fi
+
+    local value
+    while true; do
+        read -r -p "  ${_MP_NAME}${hint}: " value
+        if [[ -z "$value" ]]; then
+            if [[ "$_MP_REQUIRED" == "required" ]]; then
+                echo "  ${YELLOW}${_MP_NAME} is required.${RESET}"
+                continue
+            fi
+            return 0
+        fi
+        if [[ -n "$choices" && "|${choices}|" != *"|${value}|"* ]]; then
+            echo "  ${YELLOW}Note: \"${value}\" isn't one of ${choices} — using it anyway.${RESET}"
+        fi
+        break
+    done
+
+    if [[ "$kind" == "flag" ]]; then
+        PROMPTED_ARGS+=("$_MP_NAME" "$value")
+    else
+        PROMPTED_ARGS+=("$value")
+    fi
+}
+
+# Prompts once per @arg/@flag declared for cmd_key, populating the global
+# PROMPTED_ARGS array in source order (args first, then flags). Falls back to
+# the original single free-text prompt when the command has no manifest, or a
+# manifest with no @arg/@flag at all. Always ends with a catch-all free-text
+# prompt, since guided prompting only asks once per declared line — it can't
+# express a repeatable flag (e.g. redirect-audit's `--url`, which the
+# @example shows passed twice) — and it's a safety net if a line's bracketed
+# content doesn't fit the choices-or-default heuristic above.
+PROMPTED_ARGS=()
+prompt_manifest_args() {
+    local cmd_key="$1"
+    PROMPTED_ARGS=()
+
+    local args="" flags=""
+    if has_manifest "$cmd_key"; then
+        args=$(manifest_get_all "$cmd_key" "arg")
+        flags=$(manifest_get_all "$cmd_key" "flag")
+    fi
+
+    if [[ -z "$args" && -z "$flags" ]]; then
+        read -r -p "Arguments (leave blank for none, --help for usage): " -a PROMPTED_ARGS
+        return 0
+    fi
+
+    echo "${DIM}Enter to accept a default or skip an optional field.${RESET}"
+    echo ""
+
+    # Collected into arrays first, then walked with a plain `for` — a `while
+    # read <<< ...` loop rebinds stdin to the heredoc for its whole body, so
+    # the nested `read -p` inside prompt_one_manifest_param would consume the
+    # *next manifest line* instead of the user's answer.
+    local line args_lines=() flags_lines=()
+    if [[ -n "$args" ]]; then
+        while IFS= read -r line; do
+            args_lines+=("$line")
+        done <<< "$args"
+    fi
+    if [[ -n "$flags" ]]; then
+        while IFS= read -r line; do
+            flags_lines+=("$line")
+        done <<< "$flags"
+    fi
+
+    for line in "${args_lines[@]+"${args_lines[@]}"}"; do
+        prompt_one_manifest_param "$line" "arg"
+    done
+
+    for line in "${flags_lines[@]+"${flags_lines[@]}"}"; do
+        prompt_one_manifest_param "$line" "flag"
+    done
+
+    echo ""
+    local more=()
+    read -r -p "Additional arguments (leave blank for none): " -a more
+    PROMPTED_ARGS+=("${more[@]+"${more[@]}"}")
 }
 
 discover_commands() {
@@ -1855,12 +1990,11 @@ fzf_menu() {
     printf "  ${DIM}%s${RESET}\n" "$(get_description "$cmd_key")"
     echo ""
 
-    local extra_args=()
-    read -r -p "Arguments (leave blank for none, --help for usage): " -a extra_args
+    prompt_manifest_args "$cmd_key"
 
     echo ""
     # Guard against set -e: a failing command shouldn't abort the picker loop.
-    execute_command "$cmd_key" "${extra_args[@]+"${extra_args[@]}"}" || true
+    execute_command "$cmd_key" "${PROMPTED_ARGS[@]+"${PROMPTED_ARGS[@]}"}" || true
     return 0
 }
 
@@ -1947,13 +2081,12 @@ interactive_command_menu() {
         echo "${DIM}${description}${RESET}"
         echo ""
 
-        local extra_args=()
-        read -r -p "Arguments (leave blank for none): " -a extra_args
+        prompt_manifest_args "$full_command_key"
 
         echo ""
         # Guard against set -e: a failed command must return control to the
         # interactive menu, not abort the whole wp-ops session.
-        execute_command "$full_command_key" "${extra_args[@]+"${extra_args[@]}"}" || true
+        execute_command "$full_command_key" "${PROMPTED_ARGS[@]+"${PROMPTED_ARGS[@]}"}" || true
         break
     done
 }
