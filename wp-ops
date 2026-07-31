@@ -87,6 +87,35 @@ CHECK="✓"
 CROSS="✗"
 WARN="!"
 
+# Commands that execute on the server rather than on this machine. They read
+# /srv/www/<site>/logs/ as local files and use GNU `date -d`, and are invoked by
+# streaming them to the host: ssh web@host 'bash -s' < run-monitoring.sh. Running
+# them here fails on a missing log path, which reads as a broken command rather
+# than as "wrong machine" — so wp-ops says so up front instead.
+SERVER_SIDE_COMMANDS="
+scripts/monitoring/traffic-monitor
+scripts/monitoring/security-monitor
+scripts/monitoring/ai-bot-monitor
+scripts/monitoring/run-monitoring
+"
+
+is_server_side_command() {
+    local command_key="$1"
+    case "$SERVER_SIDE_COMMANDS" in
+        *"
+${command_key}
+"*) return 0 ;;
+    esac
+    return 1
+}
+
+# Those scripts date-filter with `date -d "N hours ago"`, which is GNU-only —
+# macOS's BSD date rejects -d outright. So "just point it at a local log file"
+# is only true where GNU date is the `date` on PATH.
+has_gnu_date() {
+    date -d "1 hour ago" +%s >/dev/null 2>&1
+}
+
 # The toolkit's version lives in CHANGELOG.md (Keep a Changelog format), so read
 # it from there instead of maintaining a second copy that silently drifts.
 get_version() {
@@ -427,9 +456,10 @@ print_category_commands() {
         # The subgroup heading above already carries the "category/subgroup/"
         # prefix, so repeating it per row only overflows the column. The bare
         # name is also what you'd type: `wp-ops trellis database-backup`.
-        local description
+        local description tag=""
         description=$(get_description "$cmd_key")
-        printf "    ${CYAN}%-32s${RESET} ${DIM}%s${RESET}\n" "$(basename "$cmd_key")" "$description"
+        is_server_side_command "$cmd_key" && tag="${YELLOW}(server)${RESET} "
+        printf "    ${CYAN}%-32s${RESET} %s${DIM}%s${RESET}\n" "$(basename "$cmd_key")" "$tag" "$description"
     done
     echo ""
 }
@@ -458,9 +488,12 @@ print_json() {
             fi
             
             description=$(echo "$description" | sed 's/\\/\\\\/g; s/"/\\"/g')
-            
-            printf '  {"category": "%s", "command": "%s", "description": "%s", "path": "%s"}' \
-                "$category" "$cmd_key" "$description" "$cmd_key"
+
+            local runs_on="local"
+            is_server_side_command "$cmd_key" && runs_on="server"
+
+            printf '  {"category": "%s", "command": "%s", "description": "%s", "path": "%s", "runs_on": "%s"}' \
+                "$category" "$cmd_key" "$description" "$cmd_key" "$runs_on"
         done
     done
     
@@ -850,6 +883,58 @@ execute_snippet() {
     return 0
 }
 
+print_server_side_guidance() {
+    local command_key="$1"
+    local script_path="$2"
+    local relative_path="${script_path#${REPO_ROOT}/}"
+
+    echo "${YELLOW}${WARN} ${command_key} runs on the server, not here.${RESET}"
+    echo ""
+    echo "It reads /srv/www/<site>/logs/access.log directly and uses GNU 'date -d',"
+    echo "so it has to execute on the Trellis host. Stream it over SSH — nothing"
+    echo "needs to be installed there:"
+    echo ""
+    echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path}${RESET}"
+    echo ""
+    echo "Arguments go after the redirect, e.g. a different log and time window:"
+    echo ""
+    echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path} \\"
+    echo "      /srv/www/example.com/logs/access.log 24${RESET}"
+    echo ""
+    echo "${DIM}Accurate time filtering needs gawk on the server (Ubuntu ships mawk;${RESET}"
+    echo "${DIM}apt install gawk). Without it the script falls back to a line estimate.${RESET}"
+    echo ""
+    if has_gnu_date; then
+        echo "${DIM}Already have a log file on this machine? Pass its path and it runs here:${RESET}"
+        echo "${DIM}  wp-ops ${command_key} /path/to/access.log${RESET}"
+    else
+        echo "${DIM}Running it against a log file copied here needs GNU date, which this${RESET}"
+        echo "${DIM}machine doesn't have — see 'wp-ops ${command_key} <file>' for how to get it.${RESET}"
+    fi
+}
+
+print_gnu_date_required() {
+    local command_key="$1"
+    local script_path="$2"
+    local relative_path="${script_path#${REPO_ROOT}/}"
+
+    echo "${RED}${CROSS} ${command_key} needs GNU date, which isn't the 'date' on this PATH.${RESET}"
+    echo ""
+    echo "It filters log lines by time with \`date -d \"N hours ago\"\`. macOS ships"
+    echo "BSD date, which rejects -d, so the run would fail partway through."
+    echo ""
+    echo "Either run it on the server, where date is GNU already:"
+    echo ""
+    echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path}${RESET}"
+    echo ""
+    echo "or put GNU coreutils ahead of the BSD tools on this machine:"
+    echo ""
+    echo "  ${BOLD}brew install coreutils${RESET}"
+    echo "  ${BOLD}export PATH=\"\$(brew --prefix coreutils)/libexec/gnubin:\$PATH\"${RESET}"
+    echo ""
+    echo "${DIM}gnubin puts GNU versions under their plain names, so 'date' becomes GNU date.${RESET}"
+}
+
 execute_command() {
     local command_key="$1"
     shift
@@ -870,6 +955,29 @@ execute_command() {
     if [[ "${1:-}" == "--where" ]]; then
         echo "$script_path"
         return 0
+    fi
+
+    if is_server_side_command "$command_key"; then
+        case "${1:-}" in
+            --help|-h) ;;
+            *)
+                # /srv/www is the Trellis web root: present when we're actually
+                # on the server (run it), absent on a workstation. An explicit
+                # readable file argument is an intentional "I have the log here"
+                # — honoured, but only where GNU date exists to run it, since
+                # otherwise it dies several screens in on `date: illegal option`.
+                if [[ ! -d /srv/www ]]; then
+                    if [[ ! -f "${1:-}" ]]; then
+                        print_server_side_guidance "$command_key" "$script_path"
+                        return 1
+                    fi
+                    if ! has_gnu_date; then
+                        print_gnu_date_required "$command_key" "$script_path"
+                        return 1
+                    fi
+                fi
+                ;;
+        esac
     fi
 
     if [[ "$command_key" == wordpress-utilities/* ]]; then
@@ -1025,11 +1133,13 @@ print_search_results() {
     echo "${BOLD}${count} ${noun} for '${term}':${RESET}"
     echo ""
 
-    local line cmd_key description
+    local line cmd_key description tag
     while IFS= read -r line; do
         cmd_key="${line%%|*}"
         description="${line#*|}"
-        printf "  ${CYAN}%-40s${RESET} ${DIM}%s${RESET}\n" "$cmd_key" "$description"
+        tag=""
+        is_server_side_command "$cmd_key" && tag="${YELLOW}(server)${RESET} "
+        printf "  ${CYAN}%-40s${RESET} %s${DIM}%s${RESET}\n" "$cmd_key" "$tag" "$description"
     done <<< "$matches"
     echo ""
 }
@@ -1172,7 +1282,13 @@ fzf_menu() {
     local selection
     selection=$(
         while IFS='|' read -r cmd_key description; do
-            printf "%s\t%s\n" "$cmd_key" "$description"
+            # Plain text, not colour: fzf matches against what it's given, so a
+            # tagged row stays searchable by typing "server".
+            if is_server_side_command "$cmd_key"; then
+                printf "%s\t(server) %s\n" "$cmd_key" "$description"
+            else
+                printf "%s\t%s\n" "$cmd_key" "$description"
+            fi
         done < "$COMMAND_FILE" | sort | fzf \
             --delimiter='\t' \
             --with-nth=1,2 \

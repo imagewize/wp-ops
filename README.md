@@ -56,6 +56,14 @@ If either variable is unset, wp-ops looks for the project by walking up from you
 
 `nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts; `wp-ops nginx` lists those documents instead of commands.
 
+Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the Nginx log monitors, which read `/srv/www/<site>/logs/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
+
+```bash
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+```
+
+Nothing needs to be installed on the server for that — the script is streamed to its stdin. It does want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it the monitors fall back to a line-count estimate. `wp-ops --json` reports this as a `runs_on` field (`local` or `server`).
+
 `wordpress-utilities/` is different: those are copy-paste-into-a-theme snippets, not runnable scripts, so `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead:
 
 ```bash
