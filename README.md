@@ -66,10 +66,10 @@ Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for
 | Tool | Description | Docs |
 |------|-------------|------|
 | **PR Creation** | AI-powered GitHub PR descriptions (Claude/Codex) | [→](CREATE-PR.md) |
-| **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release-plugin.sh) |
-| **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release-theme.sh) |
+| **Plugin Release** | AI-powered version bumping and changelog generation for plugins | [→](scripts/release/release-plugin.sh) |
+| **Theme Release** | AI-powered version bumping and changelog generation for themes | [→](scripts/release/release-theme.sh) |
 | **WordPress.org Deploy** | Publish a plugin to the WordPress.org SVN directory | [→](scripts/README.md#deploy-plugin-wporgsh) |
-| **Release Asset Upload** | Manually attach a zip to an existing GitHub release | [→](scripts/upload-release-asset.sh) |
+| **Release Asset Upload** | Manually attach a zip to an existing GitHub release | [→](scripts/release/upload-release-asset.sh) |
 
 ### Monitoring & Security
 
@@ -99,9 +99,9 @@ Standalone Bash/PHP utilities — see [scripts/README.md](scripts/README.md) for
 | **Batch Resize** | Batch resize + center-crop images for featured images | [→](scripts/README.md#batch-resizesh) |
 | **WebP Convert** | JPG→WebP at the Facebook OG ratio with center crop | [→](scripts/README.md#convert-to-webpsh) |
 | **Product Variations** | Bulk-create WooCommerce product variations via WP-CLI | [→](scripts/woocommerce/create-product-variations.sh) |
-| **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/rsync-theme.sh) |
+| **Theme Sync** | Rsync a theme between Trellis and a standalone repo | [→](scripts/sync/rsync-theme.sh) |
 | **Package → Site Sync** | Push a plugin/theme working copy into a Bedrock site to test unreleased changes | [→](scripts/README.md#rsync-package-to-sitesh) |
-| **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/find-and-replace-files.sh) |
+| **Find & Replace** | Batch find and replace files across directory trees | [→](scripts/misc/find-and-replace-files.sh) |
 | **Git Log Oneline** | Show recent git commits as compact one-liners | [→](scripts/README.md#git-log-onelinesh) |
 
 ## MCP Server

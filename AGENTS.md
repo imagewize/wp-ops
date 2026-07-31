@@ -4,14 +4,14 @@
 - **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
 - **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
 - **nginx/** - Server configs: `browser-caching/`, `image-optimization/`, `redirects/`
-- **scripts/** - Utilities: `backup/`, `monitoring/`, `create-pr.sh`, `release-theme.sh`, `rsync-theme.sh`
+- **scripts/** - Utilities: `backup/`, `monitoring/`, `git/create-pr.sh`, `release/release-theme.sh`, `sync/rsync-theme.sh`
 - **troubleshooting/** - Cross-cutting server/WP troubleshooting guides
 - **Root docs**: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`, `LICENSE.md`
 - Keep new tools self-contained: add to appropriate category with a concise `README.md` and example configs.
 
 ## Build, Test, and Development Commands
 - Run updater: `bash trellis/updater/trellis-updater.sh` (clone latest Trellis, diff, rsync updates); use a throwaway project dir before touching production.
-- Run PR helper: `bash scripts/create-pr.sh` (generates PR text via configured AI backends).
+- Run PR helper: `bash scripts/git/create-pr.sh` (generates PR text via configured AI backends).
 - Most guides describe ad-hoc commands (e.g., `ansible-playbook`, `wp`, `rsync`); mirror the documented invocations inside each tool's `README.md` when adding or updating steps.
 
 ## Coding Style & Naming Conventions
@@ -39,8 +39,8 @@
   - Include `[Unreleased]` section below versioned section for ongoing changes
 - Push branch to origin: `git push origin add/feature-name`
 - Create Pull Request using the helper script:
-  - `bash scripts/create-pr.sh --ai=vibe` (interactive — prompts for branch, title, and AI choice)
-  - `bash scripts/create-pr.sh --no-interactive main "PR title" --ai=claude` (fully non-interactive)
+  - `bash scripts/git/create-pr.sh --ai=vibe` (interactive — prompts for branch, title, and AI choice)
+  - `bash scripts/git/create-pr.sh --no-interactive main "PR title" --ai=claude` (fully non-interactive)
   - Passing positional args without `--no-interactive` still triggers prompts
   - Script auto-generates AI-powered description and creates PR via GitHub CLI
 - PRs: include a short description of scope, commands run/outputs (or screenshots for doc-only visual changes), and linked issues if applicable. Note any risk areas (data migration, remote writes).

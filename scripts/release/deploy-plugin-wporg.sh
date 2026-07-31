@@ -32,10 +32,10 @@
 # Examples:
 #   # Prepare a release (stage + review), then commit manually:
 #   cd ~/code/warder-cookie-consent
-#   ~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent --build "npm ci && npx webpack"
+#   ~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh warder-cookie-consent --build "npm ci && npx webpack"
 #
 #   # One shot, build + commit:
-#   ~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent 2.1.4 \
+#   ~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh warder-cookie-consent 2.1.4 \
 #     --build "npm ci && npx webpack" --username Rhand --commit
 #
 # Requirements: svn, zip, rsync, and (if --build is used) the build toolchain.

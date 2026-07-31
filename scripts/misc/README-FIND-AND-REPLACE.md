@@ -4,7 +4,7 @@ A utility script for finding and replacing multiple copies of a file across dire
 
 ## Script Location
 
-`scripts/find-and-replace-files.sh`
+`scripts/misc/find-and-replace-files.sh`
 
 ## Features
 
@@ -22,36 +22,36 @@ A utility script for finding and replacing multiple copies of a file across dire
 
 ```bash
 # List all instances of a file
-./scripts/find-and-replace-files.sh create-pr.sh
+./scripts/misc/find-and-replace-files.sh create-pr.sh
 
 # List with file sizes and line counts
-./scripts/find-and-replace-files.sh -l -s create-pr.sh
+./scripts/misc/find-and-replace-files.sh -l -s create-pr.sh
 
 # List in a specific directory
-./scripts/find-and-replace-files.sh -d ~/code -l create-pr.sh
+./scripts/misc/find-and-replace-files.sh -d ~/code -l create-pr.sh
 ```
 
 ### Replace Files
 
 ```bash
 # Replace all create-pr.sh files with updated version
-./scripts/find-and-replace-files.sh create-pr.sh /path/to/updated/create-pr.sh
+./scripts/misc/find-and-replace-files.sh create-pr.sh /path/to/updated/create-pr.sh
 
 # Dry run first to see what would be replaced
-./scripts/find-and-replace-files.sh -n -d ~/code create-pr.sh /path/to/updated/create-pr.sh
+./scripts/misc/find-and-replace-files.sh -n -d ~/code create-pr.sh /path/to/updated/create-pr.sh
 
 # Then run for real
-./scripts/find-and-replace-files.sh -d ~/code create-pr.sh /path/to/updated/create-pr.sh
+./scripts/misc/find-and-replace-files.sh -d ~/code create-pr.sh /path/to/updated/create-pr.sh
 ```
 
 ### Control Search Depth
 
 ```bash
 # Search only immediate subdirectories (depth 2)
-./scripts/find-and-replace-files.sh -m 2 -d ~/code create-pr.sh
+./scripts/misc/find-and-replace-files.sh -m 2 -d ~/code create-pr.sh
 
 # Search deeper (depth 10)
-./scripts/find-and-replace-files.sh -m 10 -d /path/to/search create-pr.sh
+./scripts/misc/find-and-replace-files.sh -m 10 -d /path/to/search create-pr.sh
 ```
 
 ## Options
@@ -70,14 +70,14 @@ A utility script for finding and replacing multiple copies of a file across dire
 ### Example 1: Find all create-pr.sh files in ~/code
 
 ```bash
-./scripts/find-and-replace-files.sh -d ~/code -l -s create-pr.sh
+./scripts/misc/find-and-replace-files.sh -d ~/code -l -s create-pr.sh
 ```
 
 Output:
 ```
 Searching for 'create-pr.sh' in /Users/jasperfrumau/code (max depth: 5)...
 
-    670 lines |    21 KB | /Users/jasperfrumau/code/wp-ops/scripts/create-pr.sh
+    670 lines |    21 KB | /Users/jasperfrumau/code/wp-ops/scripts/git/create-pr.sh
     670 lines |    21 KB | /Users/jasperfrumau/code/elayne/create-pr.sh
     639 lines |    21 KB | /Users/jasperfrumau/code/mistral-agents/create-pr.sh
     ...
@@ -89,7 +89,7 @@ Found 26 file(s).
 
 ```bash
 # First, dry run to see what would change
-./scripts/find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/create-pr.sh
+./scripts/misc/find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 
 # Output shows all files that would be replaced
 # [DRY RUN] Would copy: /path/to/source -> /path/to/destination
@@ -98,7 +98,7 @@ Found 26 file(s).
 # Dry run complete. No files were modified.
 
 # Then run for real
-./scripts/find-and-replace-files.sh -d ~/code create-pr.sh ~/wp-ops/scripts/create-pr.sh
+./scripts/misc/find-and-replace-files.sh -d ~/code create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 
 # Output shows actual copies
 # /path/to/source -> /path/to/destination
@@ -111,7 +111,7 @@ Found 26 file(s).
 
 ```bash
 # See which files are outdated (different sizes)
-./scripts/find-and-replace-files.sh -d ~/code -m 4 -s create-pr.sh | grep -v " 670 lines"
+./scripts/misc/find-and-replace-files.sh -d ~/code -m 4 -s create-pr.sh | grep -v " 670 lines"
 ```
 
 ## Use Cases
