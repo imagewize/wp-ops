@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.15.0] - 2026-08-01
+
+### Added
+
+- **go** - M3 (Go CLI skeleton, per `docs/cli-ux-plan.md` Phase C / `docs/m3-go-skeleton.md`): a new `go/` module (`github.com/imagewize/wp-ops/go`, Cobra-based) that reads the same manifest-annotated scripts as the bash CLI and builds a working `wp-ops` binary alongside it. The bash `wp-ops` script is untouched — this is a second, independent implementation, not a replacement yet. `internal/manifest` ports the directive parser and linter (`parse_manifest`/`manifest_parse_param_line`/`lint_manifest_command`), unit-tested against fixture blocks pulled from real annotated scripts.
+- **go** - `internal/catalog`: a build-time generator (`go generate`, `internal/catalog/gen`) walks the repo the same way bash's `discover_commands()` does — same category directories, same file-type filters, manifest-first with a header-scrape fallback for the two still-unannotated `mcp-server/*` commands — and emits `catalog.json`, embedded into the binary via `go:embed`. Matches bash's 66-command set field-for-field; a malformed manifest fails the build rather than degrading the catalog. `catalog.json` is committed rather than gitignored, since `go:embed` needs it to exist for the package to even compile on a fresh clone.
+- **go** - `internal/detect` and `internal/exec`: ports of `detect_trellis_dir`/`detect_wp_site_dir`/`confirm_detected_dir` (unit-tested, including the sibling-checkout false-positive bash's own comments call out), and executors for direct-exec (`.sh`/`.js`/`.py`) and `ansible-playbook` (`.yml`) commands, with manifest-driven `--help` rendering that's never subject to the has-manifest-blind short-circuit bug bash fixed piecemeal across 3.11.0-3.12.0 (it's manifest-first by construction here).
+- **go** - Cobra command wiring (`go/cmd`): full-key (`wp-ops <category>/<command>`) and category-short (`wp-ops <category> <command>`) dispatch, `list`, `search`, `doctor`, `--json`, `--where`, ambiguous-basename resolution and did-you-mean, all reading the embedded catalog. Per-entry commands use `DisableFlagParsing` so a script's own flags (including ones not declared via `@flag`) pass through unparsed rather than risk Cobra rejecting them — commands still get real generated `--help` text from their manifest, not a blank arguments box. `wp-cli/*.php` and `wordpress-utilities/*` commands are cataloged but not yet runnable through this binary (their executors are M4); they print a clear message pointing at the bash CLI instead of failing silently.
+- **go** - `go/scripts/parity-check.sh`: an acceptance script diffing both CLIs' `--json list` (strict, field-for-field), `search <term>` (a fixed term set), and `doctor` output — 8/8 checks passing. `.github/workflows/go-build.yml` runs `go build`/`vet`/`test` plus a catalog-drift check (`go generate` then `git diff --exit-code`) on push/PR to `main`, scoped to `go/**` and independent of `manifest-lint.yml`.
+
 ## [3.14.1] - 2026-08-01
 
 ### Added
