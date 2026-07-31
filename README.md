@@ -61,7 +61,7 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 | **New Machine Setup** | Set up macOS for Trellis development | [→](trellis/provision/NEW-MACHINE.md) |
 | **Project Setup** | Clone and configure an existing Trellis/Bedrock project | [→](trellis/provision/PROJECT-SETUP.md) |
 | **Monitoring** | Nginx log monitoring for traffic analysis and security threat detection | [→](trellis/monitoring/README.md) |
-| **Security** | fail2ban IP blocking and manual deny rules | [→](trellis/security/README.md) |
+| **Security** | fail2ban IP blocking, manual deny rules, and AbuseIPDB reputation lookup | [→](trellis/security/README.md) |
 
 ## Bedrock
 
@@ -91,14 +91,14 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 ## Scripts
 
-23 standalone Bash/PHP utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
+27 standalone Bash/PHP/Python utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
 | Category | Includes | Docs |
 |------|-------------|------|
 | **Releases & GitHub** | PR creation, plugin/theme release automation, WordPress.org SVN deploy, release asset upload, GitHub traffic stats | [→](scripts/README.md#github-integration) |
 | **Monitoring & Security** | Traffic/security/AI-bot monitoring, 404 & redirect checking, CF7 smoke test, updown.io webhooks | [→](scripts/README.md#monitoring-scripts) |
 | **Backups** | Trellis-aware database and full-site backups | [→](scripts/README.md#backup-scripts) |
-| **Images, WooCommerce & Files** | Batch resize, WebP conversion, WooCommerce product variations, theme/package sync, find & replace | [→](scripts/README.md#image-utilities) |
+| **Images, WooCommerce & Files** | Batch resize, WebP conversion, square-canvas padding, Openverse image search/download, WooCommerce product variations, theme/package sync, find & replace | [→](scripts/README.md#image-utilities) |
 | **Content Reporting** | Published-post counts by year/month | [→](scripts/README.md#content-reporting) |
 
 ## MCP Server

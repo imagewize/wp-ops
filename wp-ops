@@ -128,6 +128,12 @@ discover_commands() {
         if [[ "$category" == "trellis" ]]; then
             name_matchers+=(-o -name "*.yml")
         fi
+        # scripts/ is the only category with standalone Python utilities
+        # (e.g. scripts/images/openverse_search.py) — elsewhere *.py would
+        # collide with WordPress/Bedrock reference code that isn't runnable.
+        if [[ "$category" == "scripts" ]]; then
+            name_matchers+=(-o -name "*.py")
+        fi
         # wp-cli and bedrock are the only categories whose *.php files are
         # standalone WP-CLI scripts (wp eval-file / a registered wp command).
         # Elsewhere (e.g. wordpress-utilities snippets) *.php is reference
@@ -154,6 +160,7 @@ discover_commands() {
             command_key="${command_key%.yml}"
             command_key="${command_key%.php}"
             command_key="${command_key%.css}"
+            command_key="${command_key%.py}"
 
             description=""
             if [[ -f "$script_path" ]]; then
@@ -166,6 +173,11 @@ discover_commands() {
                         if [[ -z "$description" ]]; then
                             description=$(head -20 "$script_path" | grep -m1 -E '^\s*//\s*\S' | sed -E 's#^[[:space:]]*//[[:space:]]*##')
                         fi
+                        ;;
+                    *.py)
+                        # Python files document themselves with a single-line
+                        # module docstring ("""text"""), not shell "#" comments.
+                        description=$(head -5 "$script_path" | grep -m1 -E '^"""[^"]+"""$' | sed -E 's/^"""(.*)"""$/\1/')
                         ;;
                     *)
                         description=$(head -20 "$script_path" | grep -m1 -E '^#\s' | sed 's/^#\s*//')
@@ -387,6 +399,11 @@ get_script_path() {
 
     if [[ -f "${REPO_ROOT}/${command_key}.css" ]]; then
         echo "${REPO_ROOT}/${command_key}.css"
+        return 0
+    fi
+
+    if [[ -f "${REPO_ROOT}/${command_key}.py" ]]; then
+        echo "${REPO_ROOT}/${command_key}.py"
         return 0
     fi
 

@@ -44,6 +44,7 @@ This directory contains documentation and configurations for securing WordPress 
 |------|---------|-------------|------|
 | **fail2ban** | Automatic IP blocking for brute force attacks | Zero (once configured) | [FAIL2BAN.md](./FAIL2BAN.md) |
 | **Manual IP blocks** | Permanent Nginx-level IP blocking | Manual updates required | [MANUAL-IP-BLOCKING.md](./MANUAL-IP-BLOCKING.md) |
+| **IP reputation lookup** | Verify an IP is actually malicious before blocking it | Run as needed | [check-ips.sh](#ip-reputation-checking) |
 | **Security scanners** | Malware detection for WordPress | Run weekly/monthly | [wp-cli/security](../../wp-cli/security/) |
 
 ---
@@ -151,6 +152,64 @@ Use manual Nginx IP blocks **only** when:
 - ❌ Regular brute force attempts (fail2ban handles this)
 - ❌ One-time attackers (fail2ban temporary ban is sufficient)
 - ❌ IPs that might be shared (VPNs, corporate networks, etc.)
+
+Before adding a manual block, run [`check-ips.sh`](#ip-reputation-checking) on the IP —
+it's easy to mistake a search-engine crawler or a monitoring service's IP for an
+attacker, especially in a distributed attack pattern.
+
+---
+
+## IP Reputation Checking
+
+`check-ips.sh` looks up one or more IPs against [AbuseIPDB](https://www.abuseipdb.com/)'s
+threat intelligence database, so you can confirm an IP is actually malicious before
+adding it to a manual block list or investigating further.
+
+### Setup
+
+```bash
+# Get a free API key (1,000 checks/day): https://www.abuseipdb.com/register
+echo 'ABUSEIPDB_KEY=your_key_here' > trellis/security/.env
+```
+
+### Usage
+
+```bash
+# Look up one or more IPs
+./trellis/security/check-ips.sh 203.0.113.50 198.51.100.25
+
+# Via wp-ops
+wp-ops trellis/security/check-ips 203.0.113.50
+```
+
+### Requirements
+
+```bash
+brew install jq curl   # macOS
+```
+
+### Example Output
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  203.0.113.50
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+  "score": 92,
+  "reports": 187,
+  "lastSeen": "2026-07-30T14:22:11+00:00",
+  "country": "CN",
+  "isp": "Example ISP",
+  "usageType": "Data Center/Web Hosting/Transit",
+  "domain": "example.net",
+  "tor": false
+}
+```
+
+A high `score` (AbuseIPDB's 0-100 confidence rating) with recent, numerous
+`reports` supports a manual block. A `score` of 0 with no reports is a strong
+signal the IP is not actually malicious (a shared NAT gateway, a legitimate
+crawler, etc.) — don't block it.
 
 ---
 
@@ -507,6 +566,12 @@ nano trellis/nginx-includes/all/deny-ips.conf.j2
 
 # 3. Deploy
 cd trellis && trellis provision --tags nginx production
+```
+
+### Check IP Reputation
+
+```bash
+./trellis/security/check-ips.sh 203.0.113.50 198.51.100.25
 ```
 
 ### Run Security Scan

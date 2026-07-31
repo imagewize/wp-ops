@@ -1,3 +1,4 @@
 .DS_Store
 backup/.DS_Store
 create-pr.sh
+trellis/security/.env

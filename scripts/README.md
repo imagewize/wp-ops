@@ -1,15 +1,15 @@
 # Automation Scripts
 
-Production-ready Bash and PHP scripts for WordPress operations, GitHub integration, server monitoring, and backup automation.
+Production-ready Bash, PHP, and Python scripts for WordPress operations, GitHub integration, server monitoring, and backup automation.
 
 ## Overview
 
-This directory contains 23 utility scripts organized into seven functional areas:
+This directory contains 27 utility scripts organized into seven functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation, manual GitHub release asset uploads, and repository traffic analytics
 - **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
-- **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images
+- **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images, square-canvas padding, and Openverse (CC-licensed) image search/download
 - **Git Utilities** - Quick access to recent commit history
 - **Content Reporting** - Published-post counts by year and month (blog posts only)
 - **Operations** - Server monitoring and backup infrastructure
@@ -28,8 +28,12 @@ scripts/
 │   └── git-log-oneline.sh      # Show recent git commits as one-liners
 ├── images/                      # Image resizing and conversion
 │   ├── batch-resize.sh         # Batch resize and center-crop images for featured images
-│   └── convert-to-webp.sh      # JPG to WebP conversion with center-crop (Facebook OG)
+│   ├── convert-to-webp.sh      # JPG to WebP conversion with center-crop (Facebook OG)
+│   ├── make-square-webp.sh     # Pad an image onto a square canvas and export as WebP
+│   ├── openverse_search.py     # Search Openverse for CC-licensed images
+│   └── openverse_download.py   # Download Openverse image URLs, optionally converting to WebP
 ├── misc/                        # Miscellaneous utilities
+│   ├── convert-screenshot-for-claude.sh  # Convert PNG screenshots to JPEG for Claude Code compatibility
 │   ├── find-and-replace-files.sh     # Batch find and replace files across directory trees
 │   ├── post-count.sh                 # Count published blog posts by year/month (blog posts only)
 │   └── README-FIND-AND-REPLACE.md    # Docs for find-and-replace-files.sh
@@ -64,6 +68,7 @@ scripts/
 - WP-CLI (for WordPress backup/release scripts)
 - Claude CLI, Codex, or Mistral Vibe (optional, for AI features)
 - PHP (for webhook receiver)
+- Python 3 (for `openverse_search.py`/`openverse_download.py` — stdlib only, no pip installs needed)
 
 ### Common Operations
 
@@ -76,6 +81,15 @@ scripts/
 
 # Convert JPG to WebP for Facebook OG / featured image (800x419, center crop)
 ./scripts/images/convert-to-webp.sh image.jpg
+
+# Pad an image onto a square canvas and export as WebP
+./scripts/images/make-square-webp.sh logo.png logo-square.webp
+
+# Search Openverse for CC0-licensed images
+./scripts/images/openverse_search.py "wordpress hosting" --limit 3
+
+# Download Openverse image URLs and convert to WebP
+./scripts/images/openverse_download.py --url https://example.com/photo.jpg --convert-webp
 
 # Create GitHub PR with AI description
 ./scripts/git/create-pr.sh main "Add feature name"
@@ -276,6 +290,114 @@ Saved: featured.webp (800x419, q82)
 ```
 
 See also: `wordpress-utilities/snippets/webp-featured-image.md` for batch conversion commands.
+
+### make-square-webp.sh
+
+Pads an image onto a square canvas (letterboxing rather than cropping) and exports it as WebP — useful for logos, icons, or artwork that shouldn't be cropped to fit a square slot. Supports an optional left-margin offset for off-center source art.
+
+#### Requirements
+
+```bash
+brew install imagemagick webp   # macOS
+sudo apt-get install imagemagick webp  # Ubuntu/Debian
+```
+
+#### Usage
+
+```bash
+# Square canvas sized to the image's longest side, white background
+./scripts/images/make-square-webp.sh logo.png logo-square.webp
+
+# Fixed 2000px canvas, custom quality and background
+./scripts/images/make-square-webp.sh logo.png logo-square.webp --size 2000 --quality 90 --background transparent
+
+# Right-align the source art with a 200px left margin (asymmetric artwork)
+./scripts/images/make-square-webp.sh logo.png logo-square.webp --left-pad 200 --size 2000
+```
+
+#### Output
+
+```
+Saved: logo-square.webp
+```
+
+### openverse_search.py / openverse_download.py
+
+A pair of scripts for sourcing openly-licensed (CC0/CC-BY, etc.) images from [Openverse](https://openverse.org/) — useful for placeholder or production imagery on client sites without a licensed stock photo budget. `openverse_search.py` queries the API and prints candidates; `openverse_download.py` downloads chosen URLs (individually or from a manifest file) and can convert them to WebP in the same pass. Both are stdlib-only Python — no `pip install` required.
+
+#### Requirements
+
+```bash
+brew install webp   # macOS, only needed for --convert-webp
+```
+
+#### Usage
+
+```bash
+# Search for CC0 images (default), print top 5
+./scripts/images/openverse_search.py "wordpress hosting"
+
+# Narrow by license, provider, and result count
+./scripts/images/openverse_search.py "coffee shop" --license by --provider flickr --limit 10
+
+# Raw JSON output (for piping into another tool)
+./scripts/images/openverse_search.py "coffee shop" --json
+
+# Download a single URL, converting to WebP and discarding the original
+./scripts/images/openverse_download.py --url https://example.com/photo.jpg \
+  --out-dir ./downloads --convert-webp
+
+# Download a batch from a manifest file ("<url> <optional-filename>" per line, # for comments)
+./scripts/images/openverse_download.py --manifest images.txt --out-dir ./downloads --convert-webp --resize 1200
+```
+
+#### Example Output
+
+```
+$ ./scripts/images/openverse_search.py "wordpress hosting" --limit 2
+1. title='Server room'
+   creator='Jane Doe'
+   creator_url='https://openverse.org/user/janedoe'
+   source='flickr'
+   license='cc0' '1.0'
+   url='https://live.staticflickr.com/.../server-room.jpg'
+   landing='https://openverse.org/image/.../server-room'
+```
+
+#### Notes
+
+- Always double-check the license and attribution requirements on the `landing` page before using an image commercially — Openverse aggregates metadata from multiple sources and it isn't always perfectly accurate.
+- `openverse_download.py` skips (and warns on, not aborts) any URL that fails to download or convert, so a bad link in a large manifest doesn't kill the whole batch.
+
+---
+
+## Misc Utilities
+
+### convert-screenshot-for-claude.sh
+
+Converts a PNG screenshot to JPEG, working around a Claude Code VSCode extension bug that mislabels PNG screenshots as `image/jpeg`, causing API errors when the screenshot is shared with Claude. Handy after a Playwright screenshot run.
+
+#### Requirements
+
+```bash
+brew install imagemagick   # macOS
+sudo apt-get install imagemagick  # Ubuntu/Debian
+```
+
+#### Usage
+
+```bash
+./scripts/misc/convert-screenshot-for-claude.sh .playwright/screenshots/test.png
+
+# Custom JPEG quality (default: 90)
+./scripts/misc/convert-screenshot-for-claude.sh .playwright/screenshots/test.png --quality=95
+```
+
+#### Output
+
+```
+JPEG file created: .playwright/screenshots/test-for-claude.jpg
+```
 
 ---
 
