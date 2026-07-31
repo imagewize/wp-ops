@@ -93,6 +93,18 @@ Each utility is self-contained and can be integrated independently:
 3. Copy the necessary files to your WordPress theme or plugin
 4. Follow the installation and configuration instructions
 
+### Via wp-ops
+
+These files are reference snippets, not runnable scripts, so the [`wp-ops`](../README.md) CLI prints or copies them instead of executing them:
+
+```bash
+wp-ops wordpress-utilities --help     # list all snippets
+wp-ops wordpress-utilities footer     # print a snippet to stdout
+wp-ops wordpress-utilities footer --copy   # copy it to the clipboard
+wp-ops wordpress-utilities footer --path   # print just the file path
+wp-ops wordpress-utilities footer > footer.php   # redirect straight into your theme
+```
+
 ### General Prerequisites
 
 Most utilities may require one or more of:

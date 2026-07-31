@@ -166,6 +166,16 @@ php wp-cli/security/scanner-general.php
 php wp-cli/security/scanner-targeted.php /path/to/wordpress
 ```
 
+### Via wp-ops
+
+These scanners are also runnable through the [`wp-ops`](../../README.md) CLI (`wp-ops wp-cli --help` to list them). Set `WP_SITE_DIR` to the WordPress/Bedrock project to scan:
+
+```bash
+export WP_SITE_DIR=/path/to/your/bedrock-site
+wp-ops wp-cli scanner-wrapper
+wp-ops wp-cli scanner-targeted /custom/path/to/scan
+```
+
 ---
 
 ## 📁 What's Included

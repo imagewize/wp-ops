@@ -113,14 +113,36 @@ discover_commands() {
     for i in "${!CATEGORIES[@]}"; do
         category="${CATEGORIES[$i]}"
         category_dir="${REPO_ROOT}/${category}"
-        
+
         if [[ ! -d "$category_dir" ]]; then
             continue
         fi
 
         # Collect all commands for this category first
         local category_commands=""
-        
+
+        # Only the trellis category holds Ansible playbooks (trellis/backup,
+        # trellis/monitoring). Other categories' *.yml files are config data
+        # (e.g. bedrock/wp-cli-config/wp-cli.yml), not runnable commands.
+        local name_matchers=(-name "*.sh" -o -name "*.js")
+        if [[ "$category" == "trellis" ]]; then
+            name_matchers+=(-o -name "*.yml")
+        fi
+        # wp-cli and bedrock are the only categories whose *.php files are
+        # standalone WP-CLI scripts (wp eval-file / a registered wp command).
+        # Elsewhere (e.g. wordpress-utilities snippets) *.php is reference
+        # code meant to be copied into a theme, not run directly.
+        if [[ "$category" == "wp-cli" || "$category" == "bedrock" ]]; then
+            name_matchers+=(-o -name "*.php")
+        fi
+        # wordpress-utilities holds copy-paste-into-a-theme reference snippets
+        # (PHP includes, CSS, JS) rather than runnable scripts, so its *.php
+        # and *.css files are discovered too (*.js already matches above),
+        # all handled by the "snippet" mode below instead of being executed.
+        if [[ "$category" == "wordpress-utilities" ]]; then
+            name_matchers+=(-o -name "*.php" -o -name "*.css")
+        fi
+
         while IFS= read -r -d '' script_path; do
             if [[ "$script_path" == "${REPO_ROOT}/wp-ops" ]]; then
                 continue
@@ -129,13 +151,17 @@ discover_commands() {
             relative_path="${script_path#${REPO_ROOT}/}"
             command_key="${relative_path%.sh}"
             command_key="${command_key%.js}"
-            
+            command_key="${command_key%.yml}"
+            command_key="${command_key%.php}"
+            command_key="${command_key%.css}"
+
             description=""
             if [[ -f "$script_path" ]]; then
                 case "$script_path" in
-                    *.js)
-                        # JS files document themselves with JSDoc ("* text")
-                        # or line comments ("// text"), not shell "#" comments.
+                    *.js|*.php|*.css)
+                        # JS/PHP/CSS files document themselves with a docblock
+                        # ("* text") or line comments ("// text"), not shell
+                        # "#" comments.
                         description=$(head -20 "$script_path" | grep -m1 -E '^\s*\*\s+\S' | sed -E 's/^[[:space:]]*\*[[:space:]]*//')
                         if [[ -z "$description" ]]; then
                             description=$(head -20 "$script_path" | grep -m1 -E '^\s*//\s*\S' | sed -E 's#^[[:space:]]*//[[:space:]]*##')
@@ -145,22 +171,22 @@ discover_commands() {
                         description=$(head -20 "$script_path" | grep -m1 -E '^#\s' | sed 's/^#\s*//')
                         ;;
                 esac
-                description=$(echo "$description" | xargs)
+                description=$(echo "$description" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
                 if [[ -z "$description" ]]; then
                     description=$(basename "$command_key")
                 fi
             fi
-            
+
             echo "${command_key}|${description}" >> "$COMMAND_FILE"
-            
+
             # Add to category commands
             if [[ -z "$category_commands" ]]; then
                 category_commands="$command_key"
             else
                 category_commands="${category_commands},${command_key}"
             fi
-            
-        done < <(find "$category_dir" -type f \( -name "*.sh" -o -name "*.js" \) ! -name "wp-ops" -print0)
+
+        done < <(find "$category_dir" -type f \( "${name_matchers[@]}" \) ! -name "wp-ops" ! -name "variable-check.yml" ! -name "transient-debug-browser.php" -print0)
         
         # Write category line
         if [[ -n "$category_commands" ]]; then
@@ -348,17 +374,259 @@ get_script_path() {
         echo "${REPO_ROOT}/${command_key}.js"
         return 0
     fi
-    
+
+    if [[ -f "${REPO_ROOT}/${command_key}.yml" ]]; then
+        echo "${REPO_ROOT}/${command_key}.yml"
+        return 0
+    fi
+
+    if [[ -f "${REPO_ROOT}/${command_key}.php" ]]; then
+        echo "${REPO_ROOT}/${command_key}.php"
+        return 0
+    fi
+
+    if [[ -f "${REPO_ROOT}/${command_key}.css" ]]; then
+        echo "${REPO_ROOT}/${command_key}.css"
+        return 0
+    fi
+
     return 1
+}
+
+# Ansible playbooks (trellis/backup, trellis/monitoring) run against a real
+# Trellis project's ansible.cfg/inventory/group_vars, not against this repo,
+# so they need to know where that project lives.
+require_trellis_dir() {
+    if [[ -z "${TRELLIS_DIR:-}" ]]; then
+        echo "${RED}${CROSS} TRELLIS_DIR is not set.${RESET}"
+        echo ""
+        echo "Ansible playbook commands run against a real Trellis project (they read"
+        echo "its ansible.cfg, inventory, and group_vars/), so wp-ops needs to know"
+        echo "where that project lives:"
+        echo ""
+        echo "  export TRELLIS_DIR=/path/to/your/trellis"
+        echo ""
+        return 1
+    fi
+
+    if [[ ! -f "${TRELLIS_DIR}/ansible.cfg" ]]; then
+        echo "${RED}${CROSS} TRELLIS_DIR (${TRELLIS_DIR}) doesn't look like a Trellis project (no ansible.cfg found).${RESET}"
+        return 1
+    fi
+
+    return 0
+}
+
+execute_playbook() {
+    local command_key="$1"
+    local script_path="$2"
+    shift 2
+
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        local description
+        description=$(get_description "$command_key")
+        echo "Usage: wp-ops $command_key -e site=<site> -e env=<development|staging|production> [-e key=value ...]"
+        echo ""
+        echo "Description: $description"
+        echo ""
+        echo "Playbook: $script_path"
+        echo "Runs via ansible-playbook against the Trellis project at \$TRELLIS_DIR"
+        echo "(currently: ${TRELLIS_DIR:-not set})"
+        return 0
+    fi
+
+    if ! command -v ansible-playbook >/dev/null 2>&1; then
+        echo "${RED}${CROSS} ansible-playbook not found on PATH. Install Ansible first.${RESET}"
+        return 1
+    fi
+
+    require_trellis_dir || return 1
+
+    local exit_code=0
+    (cd "$TRELLIS_DIR" && ansible-playbook "$script_path" "$@") || exit_code=$?
+
+    if [[ -t 1 ]]; then
+        echo ""
+        if [[ $exit_code -eq 0 ]]; then
+            echo "${GREEN}${CHECK} ${command_key} completed${RESET}"
+        else
+            echo "${RED}${CROSS} ${command_key} exited with code ${exit_code}${RESET}"
+        fi
+    fi
+
+    return "$exit_code"
+}
+
+# PHP scripts under wp-cli/ and bedrock/ run through WP-CLI against a real
+# WordPress/Bedrock install, not against this repo, so (like TRELLIS_DIR for
+# Ansible) wp-ops needs to know where that site lives.
+require_wp_site_dir() {
+    if [[ -z "${WP_SITE_DIR:-}" ]]; then
+        echo "${RED}${CROSS} WP_SITE_DIR is not set.${RESET}"
+        echo ""
+        echo "WP-CLI script commands run against a real WordPress/Bedrock site, so"
+        echo "wp-ops needs to know where that project lives (the directory you'd"
+        echo "normally cd into before running 'wp ...'):"
+        echo ""
+        echo "  export WP_SITE_DIR=/path/to/your/bedrock-site"
+        echo ""
+        return 1
+    fi
+
+    if [[ ! -d "$WP_SITE_DIR" ]]; then
+        echo "${RED}${CROSS} WP_SITE_DIR (${WP_SITE_DIR}) is not a directory.${RESET}"
+        return 1
+    fi
+
+    return 0
+}
+
+# Command name a WP-CLI command file registers with WP_CLI::add_command(),
+# e.g. "pattern validate" from `WP_CLI::add_command( 'pattern validate', ... )`.
+get_registered_wp_command() {
+    local script_path="$1"
+    grep -m1 -oE "add_command\([[:space:]]*['\"][^'\"]+['\"]" "$script_path" \
+        | sed -E "s/add_command\([[:space:]]*['\"]//" | sed -E "s/['\"]$//"
+}
+
+execute_php_command() {
+    local command_key="$1"
+    local script_path="$2"
+    shift 2
+
+    # A file that registers a WP_CLI_Command class (e.g.
+    # wp-cli-pattern-validate.php) must be loaded with --require and invoked
+    # by its registered command name; everything else is a plain script run
+    # top-to-bottom via `wp eval-file`.
+    local wp_command=""
+    if grep -q "extends WP_CLI_Command" "$script_path" 2>/dev/null; then
+        wp_command=$(get_registered_wp_command "$script_path")
+    fi
+
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        local description
+        description=$(get_description "$command_key")
+        echo "Description: $description"
+        echo ""
+        echo "Script: $script_path"
+        echo "Runs via WP-CLI against the site at \$WP_SITE_DIR (currently: ${WP_SITE_DIR:-not set})"
+        echo ""
+        if [[ -n "$wp_command" ]]; then
+            echo "Usage: wp-ops $command_key [${wp_command} args...]"
+            echo "Runs as: wp --require=$(basename "$script_path") ${wp_command} [args...]"
+        else
+            echo "Usage: wp-ops $command_key [args...]"
+            echo "Runs as: wp eval-file $(basename "$script_path") [args...]"
+        fi
+        return 0
+    fi
+
+    if ! command -v wp >/dev/null 2>&1; then
+        echo "${RED}${CROSS} wp (WP-CLI) not found on PATH. Install WP-CLI first.${RESET}"
+        return 1
+    fi
+
+    require_wp_site_dir || return 1
+
+    local exit_code=0
+    if [[ -n "$wp_command" ]]; then
+        # $wp_command intentionally unquoted: registered names like "pattern
+        # validate" are two CLI words, not one argument.
+        (cd "$WP_SITE_DIR" && wp --require="$script_path" $wp_command "$@") || exit_code=$?
+    else
+        (cd "$WP_SITE_DIR" && wp eval-file "$script_path" "$@") || exit_code=$?
+    fi
+
+    if [[ -t 1 ]]; then
+        echo ""
+        if [[ $exit_code -eq 0 ]]; then
+            echo "${GREEN}${CHECK} ${command_key} completed${RESET}"
+        else
+            echo "${RED}${CROSS} ${command_key} exited with code ${exit_code}${RESET}"
+        fi
+    fi
+
+    return "$exit_code"
+}
+
+# wordpress-utilities files are copy-paste-into-a-theme reference snippets
+# (PHP includes, CSS, browser JS) with no meaningful "run" behavior of their
+# own, so instead of executing them, wp-ops prints or clipboard-copies them.
+find_clipboard_cmd() {
+    if command -v pbcopy >/dev/null 2>&1; then
+        echo "pbcopy"
+    elif command -v xclip >/dev/null 2>&1; then
+        echo "xclip -selection clipboard"
+    elif command -v xsel >/dev/null 2>&1; then
+        echo "xsel --clipboard --input"
+    elif command -v clip.exe >/dev/null 2>&1; then
+        echo "clip.exe"
+    fi
+}
+
+execute_snippet() {
+    local command_key="$1"
+    local script_path="$2"
+    shift 2
+
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        local description
+        description=$(get_description "$command_key")
+        echo "Description: $description"
+        echo ""
+        echo "File: $script_path"
+        echo ""
+        echo "This is a reference snippet meant to be copied into a WordPress"
+        echo "theme or plugin, not run directly — wp-ops just prints it."
+        echo ""
+        echo "Usage: wp-ops $command_key            Print the snippet"
+        echo "       wp-ops $command_key --copy      Copy it to the clipboard"
+        echo "       wp-ops $command_key --path      Print only the file path"
+        return 0
+    fi
+
+    if [[ "${1:-}" == "--path" ]]; then
+        echo "$script_path"
+        return 0
+    fi
+
+    if [[ "${1:-}" == "--copy" ]]; then
+        local clip_cmd
+        clip_cmd=$(find_clipboard_cmd)
+
+        if [[ -z "$clip_cmd" ]]; then
+            echo "${RED}${CROSS} No clipboard tool found (tried pbcopy, xclip, xsel, clip.exe).${RESET}"
+            echo "Use 'wp-ops $command_key --path' to get the file path instead."
+            return 1
+        fi
+
+        $clip_cmd < "$script_path"
+        if [[ -t 1 ]]; then
+            echo "${GREEN}${CHECK} Copied $(basename "$script_path") to clipboard${RESET}"
+        fi
+        return 0
+    fi
+
+    if [[ -t 1 ]]; then
+        echo "${DIM}# ${script_path}${RESET}"
+        echo ""
+        cat "$script_path"
+        echo ""
+        echo "${DIM}Reference snippet — copy it into your project (wp-ops does not run it). Try --copy or --path.${RESET}"
+    else
+        # Piped/redirected: raw content only, so `wp-ops ... > footer.php` works.
+        cat "$script_path"
+    fi
+    return 0
 }
 
 execute_command() {
     local command_key="$1"
     shift
-    
+
     local script_path
     script_path=$(get_script_path "$command_key")
-    
+
     if [[ -z "$script_path" ]]; then
         echo "${RED}${CROSS} Command not found: $command_key${RESET}"
         echo ""
@@ -366,7 +634,22 @@ execute_command() {
         suggest_similar "$command_key"
         return 1
     fi
-    
+
+    if [[ "$command_key" == wordpress-utilities/* ]]; then
+        execute_snippet "$command_key" "$script_path" "$@"
+        return $?
+    fi
+
+    if [[ "$script_path" == *.yml ]]; then
+        execute_playbook "$command_key" "$script_path" "$@"
+        return $?
+    fi
+
+    if [[ "$script_path" == *.php ]]; then
+        execute_php_command "$command_key" "$script_path" "$@"
+        return $?
+    fi
+
     if [[ ! -x "$script_path" ]]; then
         chmod +x "$script_path"
     fi

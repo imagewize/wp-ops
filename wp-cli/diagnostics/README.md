@@ -66,6 +66,8 @@ cd /srv/www/example.com/current
 wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
 ```
 
+**Via wp-ops:** also runnable from the wp-ops checkout without copying the file first — set `WP_SITE_DIR` to your Bedrock site root: `WP_SITE_DIR=/path/to/site wp-ops wp-cli diagnostic-transients --path=web/wp`. See [`wp-ops`](../../README.md).
+
 **What It Tests:**
 1. **Transient Storage** - Verifies set/get operations work correctly
 2. **API Cache Status** - Checks specific cache (api_properties_list) existence and expiration

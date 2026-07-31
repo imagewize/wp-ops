@@ -1,4 +1,5 @@
 ---
+# Install cron jobs for daily traffic reports and periodic security scans.
 - import_playbook: variable-check.yml
   vars:
     playbook: setup-monitoring.yml
@@ -43,7 +44,7 @@
 
     - name: Copy traffic monitoring script
       copy:
-        src: "../scripts/traffic-monitor.sh"
+        src: "../../scripts/monitoring/traffic-monitor.sh"
         dest: "{{ monitoring_dir }}/traffic-monitor.sh"
         owner: "{{ web_user }}"
         group: "{{ web_user }}"
@@ -51,7 +52,7 @@
 
     - name: Copy security monitoring script
       copy:
-        src: "../scripts/security-monitor.sh"
+        src: "../../scripts/monitoring/security-monitor.sh"
         dest: "{{ monitoring_dir }}/security-monitor.sh"
         owner: "{{ web_user }}"
         group: "{{ web_user }}"

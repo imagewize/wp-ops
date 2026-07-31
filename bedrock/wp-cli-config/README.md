@@ -73,6 +73,8 @@ If `wp-cli-pattern-validate.php` is **not** auto-loaded via `wp-cli.yml`, pass i
 wp --require=wp-cli-pattern-validate.php pattern validate web/app/themes/your-theme/patterns/
 ```
 
+**Via wp-ops:** runnable straight from the wp-ops checkout (no copying required) — set `WP_SITE_DIR` to your Bedrock site root: `WP_SITE_DIR=/path/to/site wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix`. See [`wp-ops`](../../README.md).
+
 ### Options
 
 | Flag | Description |
