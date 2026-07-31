@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-07-31
+
+### Added
+
+- **wp-ops** - `scripts/*.py` files are now discovered and runnable through the CLI, alongside the existing `.sh`/`.js`/`.yml`/`.php` support. Descriptions are scraped from a single-line module docstring (`"""text"""`) rather than a shell `#` comment, matching how the JS/PHP/CSS branch already reads its own doc style.
+- **trellis/security** - New `check-ips.sh`: looks up one or more IPs against AbuseIPDB threat intelligence, so a manual Nginx deny rule is backed by an actual reputation score instead of a guess. Documented as a companion step in the "When to Add Manual IP Blocks" workflow, with its own setup/usage section and a `trellis/security/.env` (gitignored) for the API key.
+- **scripts/images** - New `make-square-webp.sh` (pads an image onto a square canvas and exports it as WebP, with an optional left-margin offset for off-center artwork) and `openverse_search.py`/`openverse_download.py` (search and download CC-licensed images from Openverse, with optional WebP conversion in the same pass). The Openverse pair is stdlib-only Python — no `pip install` required.
+- **scripts/misc** - New `convert-screenshot-for-claude.sh`: converts a PNG screenshot to JPEG, working around a Claude Code VSCode extension bug that mislabels PNG screenshots as `image/jpeg` and causes API errors when they're shared with Claude.
+
+These five scripts were migrated out of a client project's local `scripts/` directory, where they'd accumulated with no project-specific paths or config — pure duplication risk with no benefit to living outside wp-ops. First pass of a broader audit to pull generic, reusable tooling into wp-ops and keep client repos thin; a few thin site-specific wrappers (database backup/pull, Trellis updater) and a larger Playwright-based pattern-screenshot pipeline are candidates for a follow-up pass.
+
 ## [3.5.0] - 2026-07-31
 
 ### Added
