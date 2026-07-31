@@ -23,6 +23,10 @@
  *
  * Better alternative:
  *   Use WP-CLI: wp user create USERNAME EMAIL --role=administrator --user_pass=PASSWORD
+ *
+ * @desc     Temporary admin user creation snippet for functions.php (remove after use)
+ * @category snippets
+ * @doc      wordpress-utilities/snippets/admin-user-creation-wpcli.md
  */
 
 // =============================================================================

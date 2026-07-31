@@ -3,6 +3,10 @@
  *
  * Cookie-based age verification modal that toggles casino/advertisement
  * content blocks based on the visitor's declared age.
+ *
+ * @desc     Cookie-based age verification modal script (jQuery)
+ * @category age-verification
+ * @doc      wordpress-utilities/age-verification/README.md
  */
 jQuery(document).ready(function () {
 

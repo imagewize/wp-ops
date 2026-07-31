@@ -1100,12 +1100,17 @@ execute_snippet() {
     shift 2
 
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-        local description
-        description=$(get_description "$command_key")
-        echo "Description: $description"
-        echo ""
-        echo "File: $script_path"
-        echo ""
+        if has_manifest "$command_key"; then
+            print_manifest_help "$command_key" "$script_path"
+            echo ""
+        else
+            local description
+            description=$(get_description "$command_key")
+            echo "Description: $description"
+            echo ""
+            echo "File: $script_path"
+            echo ""
+        fi
         echo "This is a reference snippet meant to be copied into a WordPress"
         echo "theme or plugin, not run directly — wp-ops just prints it."
         echo ""

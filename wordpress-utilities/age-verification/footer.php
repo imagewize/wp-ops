@@ -9,6 +9,10 @@
  * IMPORTANT: Make sure to include modal.css in your theme or copy its styles to your main stylesheet.
  * You can enqueue it in your functions.php:
  * wp_enqueue_style('age-verification-modal', get_template_directory_uri() . '/age-verification/modal.css');
+ *
+ * @desc     Age verification modal HTML template (ACF-driven button content)
+ * @category age-verification
+ * @doc      wordpress-utilities/age-verification/README.md
  */
 
 // Ensure ACF is loaded

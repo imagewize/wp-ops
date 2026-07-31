@@ -17,6 +17,10 @@
  *   - WordPress 5.3+ (wp_timezone() added in 5.3)
  *
  * Meta key: _post_expiry_date (stored as YYYY-MM-DD via HTML date input)
+ *
+ * @desc     Auto-noindex posts past their expiry date via Yoast's wpseo_robots filter
+ * @category snippets
+ * @doc      wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md
  */
 
 // ---------------------------------------------------------------------------
