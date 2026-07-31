@@ -908,8 +908,9 @@ print_server_side_guidance() {
         echo "${DIM}Already have a log file on this machine? Pass its path and it runs here:${RESET}"
         echo "${DIM}  wp-ops ${command_key} /path/to/access.log${RESET}"
     else
-        echo "${DIM}Running it against a log file copied here needs GNU date, which this${RESET}"
-        echo "${DIM}machine doesn't have — see 'wp-ops ${command_key} <file>' for how to get it.${RESET}"
+        echo "${DIM}The SSH route above is unaffected by what's installed here — date and${RESET}"
+        echo "${DIM}gawk both resolve on the server. Only running it against a log copied${RESET}"
+        echo "${DIM}to this machine would need GNU date locally, which this machine lacks.${RESET}"
     fi
 }
 
