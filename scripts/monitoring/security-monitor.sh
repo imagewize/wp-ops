@@ -10,6 +10,17 @@
 #   ./security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50     # Demo site, 1 hour, alert > 50
 #   ./security-monitor.sh /var/log/nginx/access.log 24 100                     # Global logs, 24h, alert > 100
 #
+# @desc     Detect malicious activity (wp-login/xmlrpc abuse, high-volume IPs) in an Nginx access log
+# @category monitoring
+# @runs     server
+# @requires gawk
+# @arg      log_file        optional  {/srv/www/example.com/logs/access.log}  Nginx access log path
+# @arg      hours           optional  {24}  How many hours back to analyze
+# @arg      alert_threshold optional  {100}  Flag a single IP once it exceeds this many requests
+# @arg      output_file     optional  Path to save the report instead of printing it
+# @example  ssh web@example.com 'bash -s' < security-monitor.sh
+# @example  ssh web@example.com 'bash -s' < security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50
+# @doc      trellis/monitoring/README.md
 
 set -e
 

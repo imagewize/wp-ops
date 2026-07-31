@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.10.0] - 2026-07-31
+
+### Added
+
+- **wp-ops CLI** - Command manifest: scripts can now declare `@desc`, `@category`, `@runs`, `@requires`, `@arg`, `@flag`, `@example`, and `@doc` directives in their header comment, parsed by a new `parse_manifest`/`load_manifest` pair in `wp-ops` (see `docs/cli-ux-plan.md`). Every element of the CLI's UI used to be scraped from source at runtime — a description grepped from the first `#` comment, `--help` output probed from the script itself with a generic stub on failure, and a hand-maintained `SERVER_SIDE_COMMANDS` list covering 5 of 66 commands. A manifest replaces the scrape/probe for the commands that have one: `get_description()` prefers `@desc`, `--help` renders directly from the declaration instead of risking a probe that runs the script with `--help` as a stray positional argument, and `is_server_side_command()` checks `@runs` before falling back to the hardcoded list. Annotation is incremental — unannotated scripts keep working exactly as before.
+- **wp-ops CLI** - `wp-ops manifest lint`: validates every annotated command's directives (missing `@desc`, an `@runs` value other than `local`/`server`/`either`, a malformed `@arg`/`@flag` line, or an `@doc` path that doesn't exist) and exits non-zero on the first problem found, so a manifest can't silently drift from the script it describes.
+- **scripts/backup**, **scripts/monitoring** - The first two command groups are annotated: `db-backup`, `site-backup`, and all 8 monitoring scripts (`traffic-monitor`, `security-monitor`, `ai-bot-monitor`, `error-monitor`, `run-monitoring`, `404-checker`, `redirect-check`, `server-monitor`). `--help` on any of them now lists arguments, flags, requirements, and examples straight from the manifest — including the ones that never implemented `--help` themselves.
+
 ## [3.9.1] - 2026-07-31
 
 ### Fixed

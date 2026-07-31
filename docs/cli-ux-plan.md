@@ -1,5 +1,10 @@
 # CLI UX Plan: Command Manifest + Go Rewrite
 
+> **Status (2026-07-31):** M1 is implemented on `feature/cli-manifest-phase-a`
+> — manifest spec, bash parser, `wp-ops manifest lint`, and the first two
+> command groups (`scripts/backup/*`, `scripts/monitoring/*`, 10 commands)
+> annotated. Not yet merged. See "Progress" under Phase A below for details.
+
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
 [trellis-cli](https://github.com/roots/trellis-cli).
@@ -52,6 +57,11 @@ isn't in `SERVER_SIDE_COMMANDS`, so the guard at `wp-ops:1012-1036` never
 fires and nothing says so.
 
 There is no way to reach that conclusion from the UI.
+
+**Status:** this specific failure was patched directly in 3.9.1 (`--help` text
+added to both backup scripts, both registered in `SERVER_SIDE_COMMANDS`) and
+then superseded in 3.10.0 by the manifest doing the same job generically — see
+"Immediate fixes" below and "Progress" under Phase A.
 
 ### Related: the CLI and MCP server have forked
 
@@ -152,7 +162,7 @@ readable in the source file.
 Annotate in dependency order, most-confusing-first:
 
 1. `scripts/backup/*` (2), `scripts/monitoring/*` (8) — the commands in the
-   worked example above.
+   worked example above. **Done, on `feature/cli-manifest-phase-a`.**
 2. `trellis/**/*.yml` (12) — every one needs `site` and `env`; today that's
    only discoverable by reading `variable-check.yml`.
 3. `wp-cli/**` (11) and `bedrock/**` (1).
@@ -162,16 +172,37 @@ Annotate in dependency order, most-confusing-first:
 ## Phase A implementation
 
 - `parse_manifest()` — extract directives from a file into a tab-delimited
-  record.
+  record. **Done** — `manifest_directive_lines()` + `load_manifest()`,
+  storing `command_key|directive|value` rows in a temp file per run
+  (`get_all_commands`'s sibling: `manifest_get`/`manifest_get_all`/
+  `has_manifest`).
 - Extend `discover_commands()` (`wp-ops:214`) to prefer manifest data, falling
   back to the current scrape for un-annotated scripts. **Annotation can be
-  incremental** — nothing breaks mid-rollout.
+  incremental** — nothing breaks mid-rollout. **Done** — a manifest `@desc`
+  is written straight into `COMMAND_FILE`, so `search`, category listings,
+  and `--json` all pick it up for free.
 - Replace `is_server_side_command()` (`wp-ops:104`) with a `@runs` lookup.
+  **Mechanism done**, coverage partial: it checks the manifest first and
+  falls back to the hardcoded `SERVER_SIDE_COMMANDS` list, so only the 10
+  annotated commands are manifest-driven so far. The list itself is only
+  fully redundant — and removable — once rollout group 2–5 land (M2).
 - Rewrite the `--help` path (`wp-ops:1068`) to render from the manifest.
+  **Done** — `print_manifest_help()` short-circuits the script-probe entirely
+  when a manifest exists, so commands with no `--help` handling of their own
+  (6 of the 8 annotated monitoring scripts) get real usage output for the
+  first time.
 - Add guided prompting to `fzf_menu()` (`wp-ops:1477`) and
-  `interactive_command_menu()` (`wp-ops:1563`).
+  `interactive_command_menu()` (`wp-ops:1563`). **Not started** — deferred to
+  M2, once enough commands have `@arg` data for per-argument prompts to be
+  worth the UI change everywhere, not just for 10 commands.
 - Add `wp-ops manifest lint` — fails on missing or malformed directives. Wire
-  into CI so new scripts can't regress.
+  into CI so new scripts can't regress. **Parser and command done**
+  (`wp-ops manifest lint`, checks `@desc` presence, `@runs` enum, `@arg`/
+  `@flag` requiredness, and `@doc` file existence). **CI wiring not done.**
+- `--json`'s existing `runs_on` field is now manifest-derived where a
+  manifest exists; `requires` and `doc` fields were added alongside it
+  (empty string when unset, so the schema stays stable across annotated and
+  un-annotated commands).
 
 Ships as **3.10.0** (parser + first two groups) and **3.11.0** (full coverage
 plus guided prompts). No breaking changes.
@@ -286,23 +317,24 @@ purely additive distribution.
 
 # Milestones
 
-| # | Scope | Version |
-|---|---|---|
-| M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 |
-| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 |
-| M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta |
-| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 |
-| M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 |
-| M6 | `trellis-wpops` symlink | 4.1.0 |
+| # | Scope | Version | Status |
+|---|---|---|---|
+| M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done** (`feature/cli-manifest-phase-a`, not merged) |
+| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | Not started |
+| M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | Not started |
+| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | Not started |
+| M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
+| M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
 
 ## Immediate fixes (do now, independent of the plan)
 
-Both are ~10 minutes and fix the exact reported failure:
+Both shipped in 3.9.1, ahead of and independent of this plan:
 
-1. Add a real `--help` / usage block to `scripts/backup/db-backup.sh` and
-   `scripts/backup/site-backup.sh`.
-2. Add both to `SERVER_SIDE_COMMANDS` (`wp-ops:88-102`) so the existing
-   server-side guidance fires.
+1. ~~Add a real `--help` / usage block to `scripts/backup/db-backup.sh` and
+   `scripts/backup/site-backup.sh`.~~ **Done** (3.9.1).
+2. ~~Add both to `SERVER_SIDE_COMMANDS` (`wp-ops:88-102`) so the existing
+   server-side guidance fires.~~ **Done** (3.9.1), then superseded in 3.10.0
+   by the `@runs server` manifest directive on both scripts.
 
 # Risks
 

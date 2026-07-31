@@ -11,6 +11,18 @@
 #   ./404-checker.sh https://example.com
 #   ./404-checker.sh --mode spider https://example.com
 #   ./404-checker.sh --output results.txt https://example.com
+#
+# @desc     Check a site's internal links for broken (4xx/5xx) responses
+# @category monitoring
+# @runs     local
+# @requires curl
+# @arg      site-url  required  {https://example.com}  Site to check
+# @flag     --mode     optional  {global|spider}  global checks homepage links (~30s); spider recursively crawls (~5-10 min)
+# @flag     --output   optional  Append broken-link results to this file
+# @flag     --timeout  optional  {10}  curl max-time per request, in seconds
+# @flag     --level    optional  {3}  Spider depth for --mode spider
+# @example  wp-ops scripts/monitoring/404-checker https://example.com
+# @example  wp-ops scripts/monitoring/404-checker --mode spider https://example.com
 
 # ── Colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'

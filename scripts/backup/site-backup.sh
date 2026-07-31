@@ -13,6 +13,14 @@
 # Usage:
 #   ssh web@example.com 'bash -s' < ./site-backup.sh [site-name]
 #   ./site-backup.sh example.com      # on the server itself
+#
+# @desc     Full backup of a Trellis site: database, uploads, config, and plugins/themes
+# @category backup
+# @runs     server
+# @requires wp
+# @arg      site-name  optional  {example.com}  Site directory under /srv/www
+# @example  ssh web@example.com 'bash -s' < site-backup.sh example.com
+# @doc      trellis/backup/README.md
 
 set -euo pipefail
 
