@@ -1,0 +1,724 @@
+#!/usr/bin/env bash
+# wp-ops - Unified CLI wrapper for all wp-ops tools
+#
+# A single entry point for all WordPress operations tools, scripts, and utilities.
+# Auto-discovers executable scripts and provides categorized help.
+#
+# Usage: wp-ops [category] [command] [args...]
+#        wp-ops --help
+#        wp-ops --json list
+#        wp-ops scripts backup db example.com production
+#
+# Categories: scripts, trellis, wp-cli, bedrock, nginx, wordpress-utilities, troubleshooting
+#
+# Install: ./install.sh (symlinks this file onto your PATH)
+
+# Use compat mode for older bash versions (macOS ships 3.2)
+set -e
+
+# =============================================================================
+# Configuration
+# =============================================================================
+
+# Resolve symlinks (e.g. /opt/homebrew/bin/wp-ops -> this file) so REPO_ROOT
+# points at the actual wp-ops checkout, not the symlink's own directory.
+WP_OPS_SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$WP_OPS_SOURCE" ]]; do
+    WP_OPS_SOURCE_DIR="$(cd "$(dirname "$WP_OPS_SOURCE")" && pwd)"
+    WP_OPS_SOURCE="$(readlink "$WP_OPS_SOURCE")"
+    [[ "$WP_OPS_SOURCE" != /* ]] && WP_OPS_SOURCE="${WP_OPS_SOURCE_DIR}/${WP_OPS_SOURCE}"
+done
+REPO_ROOT="$(cd "$(dirname "$WP_OPS_SOURCE")" && pwd)"
+
+# Categories to scan, in order of priority
+CATEGORIES=(
+    "scripts"
+    "trellis"
+    "wp-cli"
+    "bedrock"
+    "nginx"
+    "wordpress-utilities"
+    "troubleshooting"
+    "mcp-server"
+)
+
+# Category display names (parallel array to CATEGORIES)
+CATEGORY_DISPLAY_NAMES=(
+    "Scripts"
+    "Trellis"
+    "WP-CLI"
+    "Bedrock"
+    "Nginx"
+    "WordPress Utilities"
+    "Troubleshooting"
+    "MCP Server"
+)
+
+# =============================================================================
+# Colors & Symbols
+# =============================================================================
+
+# Only colorize when writing to a real terminal, colors weren't explicitly
+# disabled (NO_COLOR), and the terminal actually supports color.
+if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]] && command -v tput >/dev/null 2>&1 \
+    && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
+    BOLD=$(tput bold)
+    DIM=$(tput dim)
+    RESET=$(tput sgr0)
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    CYAN=$(tput setaf 6)
+    MAGENTA=$(tput setaf 5)
+else
+    BOLD=""
+    DIM=""
+    RESET=""
+    RED=""
+    GREEN=""
+    YELLOW=""
+    CYAN=""
+    MAGENTA=""
+fi
+
+CHECK="✓"
+CROSS="✗"
+
+# =============================================================================
+# Data Structures
+# =============================================================================
+
+# We'll use files to store the discovered commands
+# This avoids associative array issues with bash 3.2
+COMMAND_FILE=$(mktemp /tmp/wp-ops-commands.XXXXXX)
+CATEGORY_FILE=$(mktemp /tmp/wp-ops-categories.XXXXXX)
+
+# Cleanup on exit
+trap "rm -f '$COMMAND_FILE' '$CATEGORY_FILE'" EXIT
+
+# =============================================================================
+# Command Discovery
+# =============================================================================
+
+# File format for COMMAND_FILE:
+# command_key|description
+
+# File format for CATEGORY_FILE:
+# category|command_key1,command_key2,...
+
+discover_commands() {
+    > "$COMMAND_FILE"
+    > "$CATEGORY_FILE"
+    
+    for i in "${!CATEGORIES[@]}"; do
+        category="${CATEGORIES[$i]}"
+        category_dir="${REPO_ROOT}/${category}"
+        
+        if [[ ! -d "$category_dir" ]]; then
+            continue
+        fi
+
+        # Collect all commands for this category first
+        local category_commands=""
+        
+        while IFS= read -r -d '' script_path; do
+            if [[ "$script_path" == "${REPO_ROOT}/wp-ops" ]]; then
+                continue
+            fi
+
+            relative_path="${script_path#${REPO_ROOT}/}"
+            command_key="${relative_path%.sh}"
+            command_key="${command_key%.js}"
+            
+            description=""
+            if [[ -f "$script_path" ]]; then
+                case "$script_path" in
+                    *.js)
+                        # JS files document themselves with JSDoc ("* text")
+                        # or line comments ("// text"), not shell "#" comments.
+                        description=$(head -20 "$script_path" | grep -m1 -E '^\s*\*\s+\S' | sed -E 's/^[[:space:]]*\*[[:space:]]*//')
+                        if [[ -z "$description" ]]; then
+                            description=$(head -20 "$script_path" | grep -m1 -E '^\s*//\s*\S' | sed -E 's#^[[:space:]]*//[[:space:]]*##')
+                        fi
+                        ;;
+                    *)
+                        description=$(head -20 "$script_path" | grep -m1 -E '^#\s' | sed 's/^#\s*//')
+                        ;;
+                esac
+                description=$(echo "$description" | xargs)
+                if [[ -z "$description" ]]; then
+                    description=$(basename "$command_key")
+                fi
+            fi
+            
+            echo "${command_key}|${description}" >> "$COMMAND_FILE"
+            
+            # Add to category commands
+            if [[ -z "$category_commands" ]]; then
+                category_commands="$command_key"
+            else
+                category_commands="${category_commands},${command_key}"
+            fi
+            
+        done < <(find "$category_dir" -type f \( -name "*.sh" -o -name "*.js" \) ! -name "wp-ops" -print0)
+        
+        # Write category line
+        if [[ -n "$category_commands" ]]; then
+            echo "${category}|${category_commands}" >> "$CATEGORY_FILE"
+        fi
+    done
+}
+
+get_description() {
+    local command_key="$1"
+    grep "^${command_key}|" "$COMMAND_FILE" 2>/dev/null | head -1 | cut -d'|' -f2-
+}
+
+get_category_commands() {
+    local category="$1"
+    grep "^${category}|" "$CATEGORY_FILE" 2>/dev/null | head -1 | cut -d'|' -f2-
+}
+
+get_active_categories() {
+    cut -d'|' -f1 "$CATEGORY_FILE" 2>/dev/null | sort -u
+}
+
+get_all_commands() {
+    cut -d'|' -f1 "$COMMAND_FILE" 2>/dev/null | sort
+}
+
+# Subdirectory a command lives in below its category, e.g. for category
+# "scripts" and command_key "scripts/release/release-plugin" this returns
+# "release". Returns "" for commands directly in the category root.
+get_command_subgroup() {
+    local category="$1"
+    local command_key="$2"
+    local remainder="${command_key#${category}/}"
+
+    if [[ "$remainder" == */* ]]; then
+        echo "${remainder%/*}"
+    fi
+}
+
+# =============================================================================
+# Help Output
+# =============================================================================
+
+print_header() {
+    echo ""
+    echo "${BOLD}${CYAN}__        ______        ___  ____  ____  "
+    echo "\ \      / /  _ \      / _ \|  _ \/ ___| "
+    echo " \ \ /\ / /| |_) |____| | | | |_) \___ \ "
+    echo "  \ V  V / |  __/_____| |_| |  __/ ___) |"
+    echo "   \_/\_/  |_|         \___/|_|   |____/ ${RESET}"
+    echo ""
+    echo "  ${BOLD}WordPress Operations Tools${RESET}"
+    echo "  ${DIM}A unified CLI for modern WordPress development & devops${RESET}"
+    echo ""
+}
+
+print_usage() {
+    echo "Usage:"
+    echo "  wp-ops                           Show all available commands"
+    echo "  wp-ops --help, -h                Show this help message"
+    echo "  wp-ops --version, -v             Show version"
+    echo "  wp-ops --json                    Output command list as JSON"
+    echo "  wp-ops --completion              Show bash completion script"
+    echo "  wp-ops [category] --help         Show commands in a category"
+    echo "  wp-ops [category] [command]      Run a command"
+    echo ""
+}
+
+print_categories() {
+    echo "${BOLD}Available Categories:${RESET}"
+    echo ""
+
+    for category in $(get_active_categories); do
+        for i in "${!CATEGORIES[@]}"; do
+            if [[ "${CATEGORIES[$i]}" == "$category" ]]; then
+                category_display="${CATEGORY_DISPLAY_NAMES[$i]}"
+                break
+            fi
+        done
+
+        cmd_list=$(get_category_commands "$category")
+        command_count=$(echo "$cmd_list" | tr ',' '\n' | wc -l)
+        printf "  ${CYAN}%-25s${RESET} ${DIM}%-20s (%d commands)${RESET}\n" "$category_display" "$category" "$command_count"
+    done
+    echo ""
+}
+
+print_category_commands() {
+    local category="$1"
+    
+    local category_display="$category"
+    for i in "${!CATEGORIES[@]}"; do
+        if [[ "${CATEGORIES[$i]}" == "$category" ]]; then
+            category_display="${CATEGORY_DISPLAY_NAMES[$i]}"
+            break
+        fi
+    done
+    
+    local cmd_list=$(get_category_commands "$category")
+    
+    if [[ -z "$cmd_list" ]]; then
+        echo "${YELLOW}No commands found in category: $category_display${RESET}"
+        return 1
+    fi
+
+    echo "${BOLD}${category_display} Commands:${RESET}"
+    echo ""
+
+    local sorted_commands
+    sorted_commands=$(echo "$cmd_list" | tr ',' '\n' | sort)
+
+    # Sorting the full command_key naturally clusters commands that share a
+    # "category/subgroup/" prefix, so a subgroup change only needs a simple
+    # comparison against the previous iteration, not a second pass.
+    local last_subgroup="__unset__"
+    for cmd_key in $sorted_commands; do
+        local subgroup
+        subgroup=$(get_command_subgroup "$category" "$cmd_key")
+
+        if [[ "$subgroup" != "$last_subgroup" ]]; then
+            [[ "$last_subgroup" != "__unset__" ]] && echo ""
+            [[ -n "$subgroup" ]] && echo "  ${BOLD}${MAGENTA}${subgroup}${RESET}"
+            last_subgroup="$subgroup"
+        fi
+
+        local description
+        description=$(get_description "$cmd_key")
+        printf "  ${CYAN}%-30s${RESET} ${DIM}%s${RESET}\n" "$cmd_key" "$description"
+    done
+    echo ""
+}
+
+print_all_commands() {
+    for category in $(get_active_categories | sort); do
+        print_category_commands "$category"
+    done
+}
+
+print_json() {
+    local first=true
+    echo "["
+    
+    for category in $(get_active_categories | sort); do
+        local cmd_list=$(get_category_commands "$category")
+        
+        for cmd_key in $(echo "$cmd_list" | tr ',' '\n' | sort); do
+            local description
+            description=$(get_description "$cmd_key")
+            
+            if [[ "$first" == true ]]; then
+                first=false
+            else
+                echo ","
+            fi
+            
+            description=$(echo "$description" | sed 's/\\/\\\\/g; s/"/\\"/g')
+            
+            printf '  {"category": "%s", "command": "%s", "description": "%s", "path": "%s"}' \
+                "$category" "$cmd_key" "$description" "$cmd_key"
+        done
+    done
+    
+    echo ""
+    echo "]"
+}
+
+# =============================================================================
+# Command Execution
+# =============================================================================
+
+get_script_path() {
+    local command_key="$1"
+    
+    if [[ -f "${REPO_ROOT}/${command_key}.sh" ]]; then
+        echo "${REPO_ROOT}/${command_key}.sh"
+        return 0
+    fi
+    
+    if [[ -f "${REPO_ROOT}/${command_key}" ]]; then
+        echo "${REPO_ROOT}/${command_key}"
+        return 0
+    fi
+    
+    if [[ -f "${REPO_ROOT}/${command_key}.js" ]]; then
+        echo "${REPO_ROOT}/${command_key}.js"
+        return 0
+    fi
+    
+    return 1
+}
+
+execute_command() {
+    local command_key="$1"
+    shift
+    
+    local script_path
+    script_path=$(get_script_path "$command_key")
+    
+    if [[ -z "$script_path" ]]; then
+        echo "${RED}${CROSS} Command not found: $command_key${RESET}"
+        echo ""
+        echo "${YELLOW}Did you mean:${RESET}"
+        suggest_similar "$command_key"
+        return 1
+    fi
+    
+    if [[ ! -x "$script_path" ]]; then
+        chmod +x "$script_path"
+    fi
+    
+    if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        # Buffer output so a failed probe (e.g. a script that treats --help as
+        # a positional file argument and errors on stdout) never leaks to the
+        # user; only a successful probe's output gets printed.
+        local help_output
+        if help_output=$("$script_path" --help 2>&1); then
+            echo "$help_output"
+            return 0
+        elif help_output=$("$script_path" -h 2>&1); then
+            echo "$help_output"
+            return 0
+        else
+            local description
+            description=$(get_description "$command_key")
+            echo "Usage: wp-ops $command_key [args...]"
+            echo ""
+            echo "Description: $description"
+            echo ""
+            echo "Script: $script_path"
+            echo ""
+            echo "Run '$(basename "$script_path") --help' for script-specific options"
+            return 0
+        fi
+    fi
+    
+    local exit_code=0
+    "$script_path" "$@" || exit_code=$?
+
+    if [[ -t 1 ]]; then
+        echo ""
+        if [[ $exit_code -eq 0 ]]; then
+            echo "${GREEN}${CHECK} ${command_key} completed${RESET}"
+        else
+            echo "${RED}${CROSS} ${command_key} exited with code ${exit_code}${RESET}"
+        fi
+    fi
+
+    return "$exit_code"
+}
+
+suggest_similar() {
+    local input="$1"
+    local best_match=""
+    local best_score=0
+    
+    for cmd_key in $(get_all_commands); do
+        local score=0
+        local cmd_name
+        cmd_name=$(basename "$cmd_key")
+        
+        if [[ "$cmd_name" == *"$input"* ]]; then
+            score=$(( ${#cmd_name} - ${#input} + 5 ))
+        fi
+        
+        if [[ "$cmd_name" == "$input"* ]]; then
+            score=$(( score + 10 ))
+        fi
+        
+        if [[ $score -gt $best_score ]]; then
+            best_score=$score
+            best_match="$cmd_key"
+        fi
+    done
+    
+    if [[ -n "$best_match" && $best_score -gt 0 ]]; then
+        echo "  wp-ops $best_match"
+    fi
+}
+
+# =============================================================================
+# Interactive Menu
+# =============================================================================
+
+interactive_menu() {
+    local categories=()
+    local category
+
+    for category in $(get_active_categories | sort); do
+        categories+=("$category")
+    done
+    categories+=("Quit")
+
+    while true; do
+        echo "${BOLD}Select a category:${RESET}"
+        echo ""
+
+        local PS3="${CYAN}#? ${RESET}"
+        local category_choice
+        select category_choice in "${categories[@]}"; do
+            if [[ -z "$category_choice" ]]; then
+                echo "${YELLOW}Invalid selection.${RESET}"
+                break
+            fi
+
+            if [[ "$category_choice" == "Quit" ]]; then
+                return 0
+            fi
+
+            echo ""
+            interactive_command_menu "$category_choice" || true
+            break
+        done
+        echo ""
+    done
+}
+
+interactive_command_menu() {
+    local category="$1"
+
+    print_category_commands "$category" || return 0
+
+    local cmd_list
+    cmd_list=$(get_category_commands "$category")
+
+    # Select choices use the path relative to the category (e.g.
+    # "release/release-plugin") instead of the full command_key, since the
+    # catalog above already grouped/labeled everything by subdirectory.
+    local commands=()
+    local cmd_key
+    for cmd_key in $(echo "$cmd_list" | tr ',' '\n' | sort); do
+        commands+=("${cmd_key#${category}/}")
+    done
+    commands+=("Back")
+
+    local PS3="${CYAN}#? ${RESET}"
+    local command_choice
+    select command_choice in "${commands[@]}"; do
+        if [[ -z "$command_choice" ]]; then
+            echo "${YELLOW}Invalid selection.${RESET}"
+            break
+        fi
+
+        if [[ "$command_choice" == "Back" ]]; then
+            return 0
+        fi
+
+        local full_command_key="${category}/${command_choice}"
+        local description
+        description=$(get_description "$full_command_key")
+        echo ""
+        echo "${DIM}${description}${RESET}"
+        echo ""
+
+        local extra_args=()
+        read -r -p "Arguments (leave blank for none): " -a extra_args
+
+        echo ""
+        # Guard against set -e: a failed command must return control to the
+        # interactive menu, not abort the whole wp-ops session.
+        execute_command "$full_command_key" "${extra_args[@]+"${extra_args[@]}"}" || true
+        break
+    done
+}
+
+# =============================================================================
+# Completion
+# =============================================================================
+
+print_completion() {
+    local categories_list
+    categories_list=$(get_active_categories | sort | tr '\n' ' ')
+    
+    cat <<EOF
+# Bash completion for wp-ops
+_wp_ops_completion() {
+    local cur prev words cword
+    _init_completion || return
+    
+    local categories="$categories_list"
+
+    if [[ \${cword} -eq 1 ]]; then
+        COMPREPLY=(\$(compgen -W "--help --version --json --completion \$categories" -- "\${cur}"))
+    elif [[ \${cword} -eq 2 ]]; then
+        local category="\${words[1]}"
+        local commands=""
+        case "\$category" in
+EOF
+    
+    for cat in $(get_active_categories | sort); do
+        cmd_list=$(get_category_commands "$cat" | tr ',' '\n')
+        echo "            $cat)"
+        echo -n '                commands="'
+        for cmd in $cmd_list; do
+            echo -n "$(basename "$cmd") "
+        done
+        echo '"'
+        echo "                ;;"
+    done
+    
+    cat <<'EOF'
+            *)
+                commands=""
+                ;;
+        esac
+        COMPREPLY=($(compgen -W "$commands" -- "${cur}"))
+    else
+        COMPREPLY=()
+    fi
+}
+
+complete -F _wp_ops_completion wp-ops
+EOF
+}
+
+# =============================================================================
+# Main
+# =============================================================================
+
+main() {
+    discover_commands
+    
+    if [[ $# -eq 0 ]]; then
+        print_header
+
+        if [[ -t 0 && -t 1 ]]; then
+            interactive_menu
+            return $?
+        fi
+
+        print_usage
+        print_categories
+        echo "Run 'wp-ops --json' for machine-readable command list"
+        echo "Run 'wp-ops [category] --help' to see commands in a category"
+        return 0
+    fi
+    
+    case "${1:-}" in
+        --help|-h)
+            print_header
+            print_usage
+            print_categories
+            echo "Run 'wp-ops --json' for machine-readable command list"
+            return 0
+            ;;
+        --version|-v)
+            echo "wp-ops CLI v1.0.0"
+            echo "Part of wp-ops toolkit"
+            return 0
+            ;;
+        --json)
+            print_json
+            return 0
+            ;;
+        --completion)
+            print_completion
+            return 0
+            ;;
+    esac
+    
+    local category=""
+    local command=""
+    local remaining_args=("$@")
+    
+    is_category=false
+    for cat in "${CATEGORIES[@]}"; do
+        if [[ "${remaining_args[0]}" == "$cat" ]]; then
+            category="$cat"
+            is_category=true
+            remaining_args=("${remaining_args[@]:1}")
+            break
+        fi
+    done
+    
+    if [[ ${#remaining_args[@]} -gt 0 ]]; then
+        if [[ "$is_category" == false ]]; then
+            for cat in "${CATEGORIES[@]}"; do
+                if [[ "${remaining_args[0]}" == "$cat" ]]; then
+                    category="$cat"
+                    remaining_args=("${remaining_args[@]:1}")
+                    is_category=true
+                    break
+                fi
+            done
+        fi
+        
+        if [[ ${#remaining_args[@]} -gt 0 ]]; then
+            local all_commands
+            all_commands=$(get_all_commands)
+            for cmd_key in $all_commands; do
+                if [[ "${remaining_args[0]}" == "$cmd_key" ]]; then
+                    command="$cmd_key"
+                    remaining_args=("${remaining_args[@]:1}")
+                    break
+                fi
+            done
+            
+            if [[ -z "$command" && -n "$category" ]]; then
+                local cmd_list
+                cmd_list=$(get_category_commands "$category")
+                for cmd_key in $(echo "$cmd_list" | tr ',' '\n'); do
+                    local cmd_name
+                    cmd_name=$(basename "$cmd_key")
+                    if [[ "$cmd_name" == "${remaining_args[0]}" ]]; then
+                        command="$cmd_key"
+                        remaining_args=("${remaining_args[@]:1}")
+                        break
+                    fi
+                done
+            fi
+            
+            if [[ -z "$command" ]]; then
+                local all_commands_list
+                all_commands_list=$(get_all_commands)
+                for cmd_key in $all_commands_list; do
+                    local cmd_name
+                    cmd_name=$(basename "$cmd_key")
+                    if [[ "$cmd_name" == "${remaining_args[0]}" ]]; then
+                        for cat in "${CATEGORIES[@]}"; do
+                            local cat_cmds
+                            cat_cmds=$(get_category_commands "$cat")
+                            if echo "$cat_cmds" | grep -q "$cmd_key"; then
+                                category="$cat"
+                                break
+                            fi
+                        done
+                        command="$cmd_key"
+                        remaining_args=("${remaining_args[@]:1}")
+                        break
+                    fi
+                done
+            fi
+        fi
+    fi
+    
+    if [[ -n "$category" && -z "$command" ]]; then
+        print_category_commands "$category"
+        echo "Usage: wp-ops $category <command> [args...]"
+        return 0
+    fi
+    
+    if [[ -n "$command" ]]; then
+        execute_command "$command" "${remaining_args[@]+"${remaining_args[@]}"}"
+        return $?
+    fi
+    
+    if [[ ${#remaining_args[@]} -gt 0 ]]; then
+        local first_arg="${remaining_args[0]}"
+        local rest_args=("${remaining_args[@]:1}")
+        if execute_command "$first_arg" "${rest_args[@]+"${rest_args[@]}"}"; then
+            return 0
+        fi
+    fi
+    
+    echo "Error: Unknown command or category"
+    echo ""
+    print_usage
+    print_categories
+    return 1
+}
+
+main "$@"
