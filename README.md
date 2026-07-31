@@ -25,11 +25,19 @@ A single entry point for everything in this repo. Auto-discovers commands across
 
 ```bash
 ./install.sh                 # add wp-ops to your PATH (one-time)
-wp-ops                       # interactive category → command picker
+wp-ops                       # interactive picker (fuzzy, if fzf is installed)
 wp-ops --help                # list all categories
 wp-ops trellis --help        # list commands in one category
 wp-ops <category> <command> [args...]
+
+wp-ops search webp           # find a command by name or description
+wp-ops doctor                # check dependencies and environment
+wp-ops <command> --where     # print the path to a command's script
 ```
+
+`wp-ops` with no arguments opens an interactive picker. Install [fzf](https://github.com/junegunn/fzf) (`brew install fzf`) and it becomes a fuzzy search over every command with the script's header as a live preview; without fzf it falls back to a numbered category → command menu.
+
+Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
 
 Two categories need environment variables pointing at a real project before their commands work:
 
@@ -43,6 +51,18 @@ export WP_SITE_DIR=/path/to/your/bedrock-site
 wp-ops wp-cli scanner-wrapper
 wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 ```
+
+If either variable is unset, wp-ops looks for the project by walking up from your current directory and asks before using what it finds — it never guesses silently, and non-interactive runs require the variable to be set explicitly. Detection deliberately only matches a project you're actually standing inside, so an unrelated Trellis checkout sitting next to your current repo won't be picked up.
+
+`nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts; `wp-ops nginx` lists those documents instead of commands.
+
+Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the Nginx log monitors, which read `/srv/www/<site>/logs/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
+
+```bash
+ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+```
+
+Nothing needs to be installed on the server for that — the script is streamed to its stdin. It does want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it the monitors fall back to a line-count estimate. `wp-ops --json` reports this as a `runs_on` field (`local` or `server`).
 
 `wordpress-utilities/` is different: those are copy-paste-into-a-theme snippets, not runnable scripts, so `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead:
 

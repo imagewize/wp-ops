@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.8.0] - 2026-07-31
+
+### Added
+
+- **wp-ops CLI** - `wp-ops doctor`: preflight check for the external tools the scripts shell out to (WP-CLI, Ansible, ImageMagick, `cwebp`, Node, `gh`, `svn`, `jq`, `gawk`, `fzf`) plus `TRELLIS_DIR`/`WP_SITE_DIR`, so a missing dependency surfaces up front instead of partway through an operation.
+- **wp-ops CLI** - `wp-ops search <term>`: search commands by name or description, for when you know what you want to do but not where it lives among 65 commands.
+- **wp-ops CLI** - `wp-ops <command> --where`: print the resolved path to any command's script. Previously only `wordpress-utilities` snippets could report their path (`--path`).
+- **wp-ops CLI** - Fuzzy command picker. Running `wp-ops` with no arguments now fuzzy-searches the whole catalog with the script's header comment as a live preview when [fzf](https://github.com/junegunn/fzf) is installed, falling back to the existing numbered category → command menu when it isn't.
+- **wp-ops CLI** - Server-side commands are marked as such. The Nginx log monitors (`traffic-monitor`, `security-monitor`, `ai-bot-monitor`, `run-monitoring`) execute on the host rather than on your machine, so they're tagged `(server)` in listings, search, and the fuzzy picker, exposed as a `runs_on` field in `--json`, and invoking one locally now prints the `ssh host 'bash -s' < script` invocation instead of failing on a missing `/srv/www` log path. `--help`, `--where`, and passing an existing log file explicitly all still work as before — and since those scripts date-filter with GNU-only `date -d "N hours ago"`, pointing one at a local log on a machine without GNU date now explains that up front (with the `coreutils`/`gnubin` fix) instead of dying several screens in on `date: illegal option -- d`.
+- **wp-ops CLI** - `TRELLIS_DIR` and `WP_SITE_DIR` are detected by walking up from the current directory when unset. Detection only matches a project you're genuinely inside (the Trellis directory itself, or a Bedrock site next to it) so an unrelated Trellis checkout sitting beside your current repo isn't picked up, and the result is always confirmed interactively before use — non-interactive runs still require the variable to be set explicitly, since these commands back up, overwrite, and push databases.
+
+### Fixed
+
+- **wp-ops CLI / scripts/monitoring** - `wp-ops doctor` checked for `gawk` locally, but the Nginx log monitors (`traffic-monitor.sh`, `security-monitor.sh`, `ai-bot-monitor.sh`) read `/srv/www/<site>/logs/` directly and use GNU `date -d`, and `run-monitoring.sh` is invoked as `ssh host 'bash -s' < run-monitoring.sh` — they execute on the server, so a missing local `gawk` meant nothing. `gawk` moved to a "Server-side" note, and `ssh`/`rsync` (genuinely needed locally, by the remote monitors, theme sync, and pattern screenshots) added to the local checks. The scripts' own comment claiming gawk is "available by default on Ubuntu" was wrong — Ubuntu ships mawk as its default awk — and now points at `apt install gawk`.
+- **wp-ops CLI** - A command that exited non-zero was reported as "Unknown command or category" and its exit code replaced with a generic failure. Command resolution and command execution are now separate, so a failing command's own output and exit code reach the caller intact.
+- **wp-ops CLI** - `wp-ops nginx` and `wp-ops troubleshooting` dead-ended on "No commands found in category". Both hold guides and Nginx config templates rather than runnable scripts, so they're now marked `(docs only)` in the category list and list their documents when selected.
+- **wp-ops CLI** - An unknown command printed its "Did you mean" suggestion and then buried it under a full reprint of the usage text and category list. Unknown input now produces a single error with the suggestion and a pointer to `wp-ops search`.
+- **wp-ops CLI** - A bare command name matching more than one command (`convert-to-webp` exists in both `scripts/images/` and `scripts/patterns/`) silently ran whichever sorted first. Ambiguous names now list every match and ask for the full name.
+- **wp-ops CLI** - `--version` reported a hardcoded `v1.0.0`. It now reads the current version from `CHANGELOG.md`.
+- **wp-ops CLI** - Categories were listed alphabetically, discarding the curated priority order in the script. Command listings also overflowed their column with the full `category/subgroup/name` key already shown in the subgroup heading above, and descriptions kept redundant `script.sh - ` prefixes or cut off mid-clause. Listings now show the bare command name under its subgroup, with descriptions trimmed to their first sentence.
+
 ## [3.7.0] - 2026-07-31
 
 ### Added
