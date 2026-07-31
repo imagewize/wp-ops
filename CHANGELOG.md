@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.14.1] - 2026-08-01
+
+### Added
+
+- **docs** - Scoped out M3 (Go CLI skeleton, per `docs/cli-ux-plan.md` Phase C) into a new tracker doc, `docs/m3-go-skeleton.md`: an ordered, checkable task breakdown (module scaffold, manifest parser port, catalog generator, `detect`/`exec` ports, Cobra command wiring, parity verification, CI), three flagged open decisions (Go module location, `mcp-server/*` catalog parity, `docs` command deferral to M4), and explicit M3 done criteria — written so the multi-session implementation work can be picked up cold. `cli-ux-plan.md`'s M3 milestone row and Phase C intro now point at it. No code changes.
+
 ## [3.14.0] - 2026-08-01
 
 ### Added
