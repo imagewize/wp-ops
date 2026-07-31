@@ -2,6 +2,13 @@
 # redirect-check.sh - Mass check URLs for redirects using curl
 # Usage: bash redirect-check.sh [url1] [url2] ...
 #   or edit the URLs array below
+#
+# @desc     Mass-check a list of URLs for redirects with curl
+# @category monitoring
+# @runs     local
+# @requires curl
+# @arg      urls  optional  One or more URLs to check; falls back to the hardcoded list in the script when omitted
+# @example  wp-ops scripts/monitoring/redirect-check https://example.com/old-page/
 
 # Check if URLs are provided as arguments, otherwise use defaults
 if [ $# -gt 0 ]; then

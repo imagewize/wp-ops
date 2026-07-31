@@ -20,6 +20,15 @@
 #   cd /srv/www/example.com/current
 #   ./run-monitoring.sh 24
 #
+# @desc     Run traffic, security, AI-bot, and error monitoring together and save timestamped reports
+# @category monitoring
+# @runs     server
+# @requires gawk
+# @arg      hours   optional  {24}  How many hours back to analyze
+# @arg      domain  optional  {example.com}  Site domain
+# @example  ssh web@example.com 'bash -s' < run-monitoring.sh
+# @example  ssh web@example.com 'bash -s' < run-monitoring.sh 24 othersite.com
+# @doc      trellis/monitoring/README.md
 
 set -e
 

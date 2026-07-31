@@ -125,6 +125,13 @@ ${command_key}
 
 is_server_side_command() {
     local command_key="$1"
+    local manifest_runs
+    manifest_runs=$(manifest_get "$command_key" "runs")
+    if [[ -n "$manifest_runs" ]]; then
+        [[ "$manifest_runs" == "server" ]]
+        return $?
+    fi
+
     case "$SERVER_SIDE_COMMANDS" in
         *"
 ${command_key}
@@ -191,9 +198,10 @@ get_version() {
 # This avoids associative array issues with bash 3.2
 COMMAND_FILE=$(mktemp /tmp/wp-ops-commands.XXXXXX)
 CATEGORY_FILE=$(mktemp /tmp/wp-ops-categories.XXXXXX)
+MANIFEST_FILE=$(mktemp /tmp/wp-ops-manifest.XXXXXX)
 
 # Cleanup on exit
-trap "rm -f '$COMMAND_FILE' '$CATEGORY_FILE'" EXIT
+trap "rm -f '$COMMAND_FILE' '$CATEGORY_FILE' '$MANIFEST_FILE'" EXIT
 
 # =============================================================================
 # Command Discovery
@@ -235,9 +243,161 @@ clean_description() {
     echo "$description"
 }
 
+# =============================================================================
+# Command Manifest
+# =============================================================================
+#
+# A block of "@directive value" lines in a script's header comment, e.g.:
+#
+#   # @desc     Back up a Trellis site database with WP-CLI
+#   # @category backup
+#   # @runs     server
+#   # @requires wp
+#   # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
+#   # @flag     --retention-days  optional  {30}  Days of backups to keep
+#   # @example  wp-ops backup db example.com production
+#   # @doc      trellis/backup/README.md
+#
+# Annotation is optional and incremental: unannotated scripts keep working via
+# the existing header-scrape/probe fallbacks. See docs/cli-ux-plan.md.
+#
+# Stored as command_key|directive|value in MANIFEST_FILE, one line per
+# directive occurrence — @arg/@flag/@example can repeat per command. Storing
+# rather than parsing on demand means "does this command have a manifest at
+# all" and "give me every @arg" are both a single grep, not a re-read of the
+# source file.
+
+# Strips the leading comment marker (#, //, or *) from a script's header block
+# so "@directive value" is recognizable regardless of the file's language.
+manifest_directive_lines() {
+    local script_path="$1"
+    head -80 "$script_path" 2>/dev/null \
+        | sed -E 's/^[[:space:]]*(#|\/\/|\*)[[:space:]]?//' \
+        | grep -E '^@[a-zA-Z]+([[:space:]]|$)'
+}
+
+load_manifest() {
+    local command_key="$1"
+    local script_path="$2"
+    local line directive value
+
+    while IFS= read -r line; do
+        # read's last variable absorbs the remainder of the line as-is (minus
+        # the leading whitespace that separated it from $directive), which is
+        # exactly "first token, then the rest verbatim" — unlike a manual
+        # glob-based split, it isn't tripped up by multiple spaces or tabs.
+        read -r directive value <<< "$line"
+
+        case "$directive" in
+            @desc|@category|@runs|@requires|@doc|@example|@arg|@flag)
+                echo "${command_key}|${directive#@}|${value}" >> "$MANIFEST_FILE"
+                ;;
+        esac
+    done < <(manifest_directive_lines "$script_path")
+}
+
+has_manifest() {
+    grep -q "^${1}|" "$MANIFEST_FILE" 2>/dev/null
+}
+
+# First value for a single-valued directive (desc, category, runs, requires, doc).
+manifest_get() {
+    local command_key="$1" directive="$2"
+    grep "^${command_key}|${directive}|" "$MANIFEST_FILE" 2>/dev/null | head -1 | cut -d'|' -f3-
+}
+
+# All values for a repeatable directive (arg, flag, example), one per line, in
+# source order.
+manifest_get_all() {
+    local command_key="$1" directive="$2"
+    grep "^${command_key}|${directive}|" "$MANIFEST_FILE" 2>/dev/null | cut -d'|' -f3-
+}
+
+# Renders one "@arg"/"@flag" value ("name required|optional {choices-or-default} description")
+manifest_print_param_line() {
+    local line="$1"
+    local name required rest choices="" description
+
+    name=$(awk '{print $1}' <<< "$line")
+    required=$(awk '{print $2}' <<< "$line")
+    rest=$(sed -E 's/^[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]*//' <<< "$line")
+
+    if [[ "$rest" =~ ^\{([^}]*)\}[[:space:]]*(.*)$ ]]; then
+        choices="${BASH_REMATCH[1]}"
+        description="${BASH_REMATCH[2]}"
+    else
+        description="$rest"
+    fi
+
+    if [[ -n "$choices" ]]; then
+        printf "  %-18s %-9s {%s}  %s\n" "$name" "$required" "$choices" "$description"
+    else
+        printf "  %-18s %-9s %s\n" "$name" "$required" "$description"
+    fi
+}
+
+print_manifest_help() {
+    local command_key="$1"
+    local script_path="$2"
+    local desc runs doc requires
+
+    desc=$(manifest_get "$command_key" "desc")
+    runs=$(manifest_get "$command_key" "runs")
+    doc=$(manifest_get "$command_key" "doc")
+    requires=$(manifest_get "$command_key" "requires")
+
+    echo "Usage: wp-ops $command_key [args...]"
+    echo ""
+    [[ -n "$desc" ]] && { echo "$desc"; echo ""; }
+
+    local args
+    args=$(manifest_get_all "$command_key" "arg")
+    if [[ -n "$args" ]]; then
+        echo "Arguments:"
+        local line
+        while IFS= read -r line; do
+            manifest_print_param_line "$line"
+        done <<< "$args"
+        echo ""
+    fi
+
+    local flags
+    flags=$(manifest_get_all "$command_key" "flag")
+    if [[ -n "$flags" ]]; then
+        echo "Flags:"
+        local line
+        while IFS= read -r line; do
+            manifest_print_param_line "$line"
+        done <<< "$flags"
+        echo ""
+    fi
+
+    [[ -n "$requires" ]] && { echo "Requires: $requires"; echo ""; }
+
+    if [[ "$runs" == "server" ]]; then
+        echo "Runs on the server — run without --help for SSH instructions."
+        echo ""
+    fi
+
+    local examples
+    examples=$(manifest_get_all "$command_key" "example")
+    if [[ -n "$examples" ]]; then
+        echo "Examples:"
+        local line
+        while IFS= read -r line; do
+            echo "  $line"
+        done <<< "$examples"
+        echo ""
+    fi
+
+    [[ -n "$doc" ]] && echo "Docs: $doc"
+    echo "Script: $script_path"
+}
+
 discover_commands() {
     > "$COMMAND_FILE"
     > "$CATEGORY_FILE"
+    > "$MANIFEST_FILE"
 
     for i in "${!CATEGORIES[@]}"; do
         category="${CATEGORIES[$i]}"
@@ -291,6 +451,25 @@ discover_commands() {
             command_key="${command_key%.css}"
             command_key="${command_key%.py}"
 
+            load_manifest "$command_key" "$script_path"
+
+            # A manifest @desc is authoritative — written straight into
+            # COMMAND_FILE so every reader of it (search, category listings,
+            # --json) sees the same description get_description() would return,
+            # without every call site having to know to prefer the manifest.
+            description=$(manifest_get "$command_key" "desc")
+            if [[ -n "$description" ]]; then
+                echo "${command_key}|${description}" >> "$COMMAND_FILE"
+
+                if [[ -z "$category_commands" ]]; then
+                    category_commands="$command_key"
+                else
+                    category_commands="${category_commands},${command_key}"
+                fi
+
+                continue
+            fi
+
             description=""
             if [[ -f "$script_path" ]]; then
                 case "$script_path" in
@@ -338,6 +517,12 @@ discover_commands() {
 
 get_description() {
     local command_key="$1"
+    local manifest_desc
+    manifest_desc=$(manifest_get "$command_key" "desc")
+    if [[ -n "$manifest_desc" ]]; then
+        echo "$manifest_desc"
+        return 0
+    fi
     grep "^${command_key}|" "$COMMAND_FILE" 2>/dev/null | head -1 | cut -d'|' -f2-
 }
 
@@ -442,6 +627,7 @@ print_usage() {
     echo "  wp-ops search <term>             Search commands by name or description"
     echo "  wp-ops docs [term] [-l]          Search the guides (no term lists them)"
     echo "  wp-ops doctor                    Check dependencies and environment"
+    echo "  wp-ops manifest lint             Validate annotated commands' @directives"
     echo "  wp-ops --help, -h                Show this help message"
     echo "  wp-ops --version, -v             Show version"
     echo "  wp-ops --json                    Output command list as JSON"
@@ -551,8 +737,12 @@ print_json() {
             local runs_on="local"
             is_server_side_command "$cmd_key" && runs_on="server"
 
-            printf '  {"category": "%s", "command": "%s", "description": "%s", "path": "%s", "runs_on": "%s"}' \
-                "$category" "$cmd_key" "$description" "$cmd_key" "$runs_on"
+            local requires doc
+            requires=$(manifest_get "$cmd_key" "requires" | sed 's/\\/\\\\/g; s/"/\\"/g')
+            doc=$(manifest_get "$cmd_key" "doc" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+            printf '  {"category": "%s", "command": "%s", "description": "%s", "path": "%s", "runs_on": "%s", "requires": "%s", "doc": "%s"}' \
+                "$category" "$cmd_key" "$description" "$cmd_key" "$runs_on" "$requires" "$doc"
         done
     done
     
@@ -1100,6 +1290,14 @@ execute_command() {
     fi
     
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+        # A manifest is authoritative and doesn't require probing the script
+        # (which, for scripts with no --help handling of their own, risks
+        # actually running with "--help" as a positional argument).
+        if has_manifest "$command_key"; then
+            print_manifest_help "$command_key" "$script_path"
+            return 0
+        fi
+
         # Buffer output so a failed probe (e.g. a script that treats --help as
         # a positional file argument and errors on stdout) never leaks to the
         # user; only a successful probe's output gets printed.
@@ -1508,6 +1706,94 @@ run_doctor() {
 }
 
 # =============================================================================
+# Manifest Lint
+# =============================================================================
+
+# Validates one annotated command's directives; prints one line per problem
+# found and returns the count as its exit status (bash caps that at 255, which
+# a real script isn't going to hit).
+lint_manifest_command() {
+    local command_key="$1"
+    local errors=0
+
+    if [[ -z "$(manifest_get "$command_key" "desc")" ]]; then
+        echo "  ${RED}${CROSS}${RESET} ${command_key}: missing @desc"
+        errors=$((errors + 1))
+    fi
+
+    local runs
+    runs=$(manifest_get "$command_key" "runs")
+    if [[ -n "$runs" ]]; then
+        case "$runs" in
+            local|server|either) ;;
+            *)
+                echo "  ${RED}${CROSS}${RESET} ${command_key}: @runs '${runs}' must be local, server, or either"
+                errors=$((errors + 1))
+                ;;
+        esac
+    fi
+
+    local line name required
+    while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        name=$(awk '{print $1}' <<< "$line")
+        required=$(awk '{print $2}' <<< "$line")
+        if [[ -z "$name" || -z "$required" ]]; then
+            echo "  ${RED}${CROSS}${RESET} ${command_key}: malformed '${line}' (expected: name required|optional {choices-or-default} description)"
+            errors=$((errors + 1))
+            continue
+        fi
+        case "$required" in
+            required|optional) ;;
+            *)
+                echo "  ${RED}${CROSS}${RESET} ${command_key}: '${name}' requiredness must be 'required' or 'optional', got '${required}'"
+                errors=$((errors + 1))
+                ;;
+        esac
+    done < <(manifest_get_all "$command_key" "arg"; manifest_get_all "$command_key" "flag")
+
+    local doc
+    doc=$(manifest_get "$command_key" "doc")
+    if [[ -n "$doc" && ! -f "${REPO_ROOT}/${doc}" ]]; then
+        echo "  ${RED}${CROSS}${RESET} ${command_key}: @doc points at a missing file '${doc}'"
+        errors=$((errors + 1))
+    fi
+
+    return "$errors"
+}
+
+run_manifest_lint() {
+    local total_errors=0
+    local total_checked=0
+    local command_key cmd_errors
+
+    echo "${BOLD}wp-ops manifest lint${RESET}"
+    echo ""
+
+    for command_key in $(get_all_commands); do
+        has_manifest "$command_key" || continue
+        total_checked=$((total_checked + 1))
+        cmd_errors=0
+        lint_manifest_command "$command_key" || cmd_errors=$?
+        total_errors=$((total_errors + cmd_errors))
+    done
+
+    if [[ $total_checked -eq 0 ]]; then
+        echo "${YELLOW}${WARN} No annotated commands found.${RESET}"
+        return 0
+    fi
+
+    if [[ $total_errors -gt 0 ]]; then
+        echo ""
+        echo "${RED}${CROSS} ${total_errors} problem(s) across ${total_checked} annotated command(s).${RESET}"
+        return 1
+    fi
+
+    echo "${GREEN}${CHECK} ${total_checked} annotated command(s), no problems found.${RESET}"
+    return 0
+}
+
+# =============================================================================
 # Interactive Menu
 # =============================================================================
 
@@ -1666,7 +1952,7 @@ _wp_ops_completion() {
     local categories="$categories_list"
 
     if [[ \${cword} -eq 1 ]]; then
-        COMPREPLY=(\$(compgen -W "--help --version --json --completion search docs doctor \$categories" -- "\${cur}"))
+        COMPREPLY=(\$(compgen -W "--help --version --json --completion search docs doctor manifest \$categories" -- "\${cur}"))
     elif [[ \${cword} -eq 2 ]]; then
         local category="\${words[1]}"
         local commands=""
@@ -1770,6 +2056,19 @@ main() {
         doctor|--doctor)
             run_doctor
             return $?
+            ;;
+        manifest|--manifest)
+            case "${2:-lint}" in
+                lint)
+                    run_manifest_lint
+                    return $?
+                    ;;
+                *)
+                    echo "${RED}${CROSS} Unknown manifest subcommand: ${2}${RESET}"
+                    echo "Usage: wp-ops manifest lint"
+                    return 1
+                    ;;
+            esac
             ;;
     esac
     

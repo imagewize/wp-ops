@@ -10,6 +10,16 @@
 #   ./traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6  # Demo site, last 6 hours
 #   ./traffic-monitor.sh /var/log/nginx/access.log 24             # Global logs, last 24 hours
 #
+# @desc     Analyze legitimate traffic from an Nginx access log
+# @category monitoring
+# @runs     server
+# @requires gawk
+# @arg      log_file     optional  {/srv/www/example.com/logs/access.log}  Nginx access log path
+# @arg      hours        optional  {24}  How many hours back to analyze
+# @arg      output_file  optional  Path to save the report instead of printing it
+# @example  ssh web@example.com 'bash -s' < traffic-monitor.sh
+# @example  ssh web@example.com 'bash -s' < traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6
+# @doc      trellis/monitoring/README.md
 
 set -e
 

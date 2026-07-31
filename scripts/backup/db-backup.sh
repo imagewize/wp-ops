@@ -16,6 +16,15 @@
 #
 # staging and development additionally produce a second dump with the site URL
 # rewritten for that environment; production produces the plain dump only.
+#
+# @desc     Back up a Trellis site database with WP-CLI, gzip it, and prune backups older than 30 days
+# @category backup
+# @runs     server
+# @requires wp
+# @arg      site-name    optional  {example.com}  Site directory under /srv/www
+# @arg      backup-type  optional  {production|staging|development}  Backup type
+# @example  ssh web@example.com 'bash -s' < db-backup.sh example.com production
+# @doc      trellis/backup/README.md
 
 set -euo pipefail
 
