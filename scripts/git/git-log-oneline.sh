@@ -22,6 +22,13 @@
 #
 # Author: wp-ops
 # Created: 2025-05-06
+#
+# @desc     Show the last N git commits as compact one-liners
+# @category git
+# @runs     local
+# @requires git
+# @arg      n  optional  {10}  Number of commits to show
+# @example  wp-ops scripts/git/git-log-oneline 20
 
 set -euo pipefail
 

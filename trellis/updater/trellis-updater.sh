@@ -9,6 +9,13 @@
 # files so you don't miss fixes worth cherry-picking.
 #
 # Edit the PROJECT variable below before running.
+#
+# @desc     Safely update a Trellis installation to the latest upstream while preserving vault/config customizations
+# @category updater
+# @runs     local
+# @requires git
+# @example  wp-ops trellis/updater/trellis-updater
+# @doc      trellis/updater/README.md
 
 set -e  # Exit on error
 

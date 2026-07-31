@@ -18,6 +18,14 @@
 #   Creates a JPEG file with the same name + '-for-claude.jpg' suffix
 #   Example: test-screenshot.png -> test-screenshot-for-claude.jpg
 #
+# @desc     Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)
+# @category misc
+# @runs     local
+# @requires convert
+# @arg      png-file  required  {test-screenshot.png}  PNG file to convert
+# @flag     --quality optional  {90}  JPEG quality (1-100)
+# @example  wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png
+#
 
 set -e  # Exit on error
 

@@ -31,6 +31,14 @@
  *
  * Via Command Line:
  *   php wp-content/themes/client/security-scanner-general.php [/path/to/scan]
+ *
+ * @desc     Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)
+ * @category security
+ * @runs     local
+ * @requires wp
+ * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
+ * @example  wp-ops wp-cli/security/scanner-general
+ * @doc      wp-cli/security/README.md
  */
 
 // ============================================================================

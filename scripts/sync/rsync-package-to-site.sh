@@ -35,6 +35,18 @@
 # SITE_ROOT is the Bedrock content directory — the one holding plugins/ and
 # themes/ (web/app in a stock Bedrock install, wp-content elsewhere).
 
+# The usage() function below prints lines 2-36 of this file verbatim, so this
+# manifest block is placed after that range to avoid altering its output.
+# @desc     Rsync a plugin/theme working copy into a Bedrock site for testing unreleased changes
+# @category sync
+# @runs     local
+# @requires rsync
+# @arg      kind          required  {plugin|theme}  Package type
+# @arg      package-slug  required  {my-plugin}  Plugin/theme directory slug at the destination
+# @arg      source-dir    optional  {.}  Package working tree (default: current directory)
+# @flag     --dry-run     optional  {}  Preview the sync without writing anything
+# @example  wp-ops scripts/sync/rsync-package-to-site theme my-theme
+# @doc      bedrock/local-package-development/README.md
 set -euo pipefail
 
 usage() {

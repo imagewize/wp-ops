@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.0] - 2026-07-31
+
+### Added
+
+- **wp-cli**, **bedrock** - Manifest rollout group 3 (per `docs/cli-ux-plan.md`): all 12 `wp-cli/**` and `bedrock/**` commands annotated — content-creation's `page-creation`, diagnostics' `diagnostic-transients` and `list-posts-count`, the three security scanners (`scanner-general`, `scanner-targeted`, `scanner-wrapper`), the five SEO audits (`blog-audit`, `orphan-pages-audit`, `page-audit`, `redirect-audit`, `schema-audit`), and bedrock's `wp pattern validate` WP-CLI command.
+- **wordpress-utilities** - Manifest rollout group 4: the age-verification modal's JS/PHP/CSS trio and the two `functions.php` snippets (`admin-user-creation`, `post-expiry-noindex`) now declare `@desc`/`@category`/`@doc`. These are copy-paste reference snippets, not runnable commands, so there's no `@runs`/`@arg`/`@flag` to declare.
+- **scripts** - Manifest rollout group 5: the remaining 25 `scripts/**` commands across `git`, `images`, `misc`, `monitoring` (the two stragglers added after group 1 shipped), `patterns`, `release`, `sync`, and `woocommerce`.
+- **trellis/security**, **trellis/updater** - `check-ips` and `trellis-updater` — two commands `discover_commands()` already matched but that were never inventoried into any of the 5 rollout groups — are now annotated too. 64 of 66 commands now have a manifest; only `mcp-server/*` (2, out of Phase A's scope) remain.
+
+### Fixed
+
+- **wp-ops CLI** - `execute_php_command()` and `execute_snippet()` had the same `has_manifest`-blind `--help` short-circuit `execute_playbook()` had before the 3.11.0 fix: both always rendered a hardcoded description/usage stub instead of `print_manifest_help()`, so annotating a `.php` command or a `wordpress-utilities` snippet had no visible effect on `--help` until corrected here.
+
 ## [3.11.0] - 2026-07-31
 
 ### Added

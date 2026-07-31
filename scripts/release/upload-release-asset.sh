@@ -11,6 +11,15 @@
 # Run from the plugin/theme root directory.
 # Requires: gh (GitHub CLI), zip, npm (if package.json is present)
 # Respects .distignore if present to exclude dev files from the zip.
+#
+# @desc     Upload a zipped plugin/theme as a GitHub Release asset (for when the release workflow didn't trigger)
+# @category release
+# @runs     local
+# @requires gh
+# @arg      github-repo  required  {imagewize/warder-cookie-consent}  GitHub repo in owner/repo form
+# @arg      tag          required  {v1.3.1}  Release tag to attach the asset to
+# @arg      zip-name     optional  {warder-cookie-consent.zip}  Output zip filename (default: derived from repo slug)
+# @example  wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1
 
 set -e
 

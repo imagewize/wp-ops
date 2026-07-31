@@ -13,6 +13,15 @@
 #
 # Requires: curl, grep
 #
+# @desc     Check key pages for schema markup and validate implementation
+# @category seo
+# @runs     local
+# @requires curl
+# @arg      site-url  required  {https://example.com}  Site URL to check
+# @flag     --output  optional  {audits}  Output directory
+# @flag     --pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check
+# @example  wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/
+# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

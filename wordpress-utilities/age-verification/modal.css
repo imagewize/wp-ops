@@ -1,8 +1,12 @@
 /**
  * Age Verification Modal Styles
- * 
+ *
  * Custom CSS for the age verification modal component.
  * Include this file in your WordPress theme or copy styles to your main stylesheet.
+ *
+ * @desc     CSS styles for the age verification modal
+ * @category age-verification
+ * @doc      wordpress-utilities/age-verification/README.md
  */
 
 .text-center {

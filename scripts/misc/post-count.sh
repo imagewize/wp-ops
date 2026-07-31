@@ -38,6 +38,19 @@
 #   # aseonomics.com on the same server
 #   ./post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
 
+# @desc     Count published WordPress posts by year (or month), locally or over SSH
+# @category misc
+# @runs     local
+# @requires wp
+# @flag     --year     optional  {2026}  Only this year — prints a single total
+# @flag     --months   optional  {2026}  Monthly breakdown (YYYY-MM) for the given year
+# @flag     --type     optional  {post}  post_type to count
+# @flag     --status   optional  {publish}  post_status to count
+# @flag     --path     optional  {web/wp}  WordPress path passed to WP-CLI
+# @flag     --ssh      optional  {web@example.com}  Run remotely over ssh
+# @flag     --site     optional  {/srv/www/example.com/current}  Remote site dir to cd into with --ssh
+# @example  wp-ops scripts/misc/post-count --ssh web@example.com --year 2026
+
 set -euo pipefail
 
 # ── Colours ──────────────────────────────────────────────────────────────────

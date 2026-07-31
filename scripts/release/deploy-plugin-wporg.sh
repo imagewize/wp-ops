@@ -46,6 +46,23 @@ set -e
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
 
 err()  { echo -e "${RED}✗ $1${NC}" >&2; }
+# The --help handler above prints lines 3-46 of this file verbatim, so this
+# manifest block is placed after that range to avoid altering its output.
+# @desc     Publish a plugin from its git working tree to the WordPress.org SVN repository
+# @category release
+# @runs     local
+# @requires svn
+# @arg      slug     required  {warder-cookie-consent}  WordPress.org plugin slug
+# @arg      version  optional  {2.1.4}  Release version (default: read from the plugin file's Version: header)
+# @flag     --plugin-dir  optional  {.}  Plugin git working tree (default: current directory)
+# @flag     --assets-dir  optional  {.wordpress-org}  Marketing assets directory
+# @flag     --build       optional  {"npm ci && npx webpack"}  Build command to run first
+# @flag     --svn-dir     optional  {../<slug>-svn}  SVN checkout location
+# @flag     --username    optional  {Rhand}  WordPress.org SVN username
+# @flag     --message     optional  {"Release <version>"}  Commit message
+# @flag     --commit      optional  {}  Actually run svn ci (prompts for SVN password)
+# @flag     --force       optional  {}  Allow re-deploying a tag that already exists
+# @example  wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build "npm ci && npx webpack"
 ok()   { echo -e "${GREEN}  ✓ $1${NC}"; }
 info() { echo -e "${BLUE}$1${NC}"; }
 warn() { echo -e "${YELLOW}⚠ $1${NC}"; }

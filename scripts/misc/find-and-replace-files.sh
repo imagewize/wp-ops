@@ -20,6 +20,20 @@
 #
 #   # Dry run to see what would be replaced
 #   ./find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
+#
+# @desc     Find (and optionally replace) multiple copies of a file across projects
+# @category misc
+# @runs     local
+# @requires find
+# @arg      filename     required  {create-pr.sh}  Name of file to search for
+# @arg      source-file  optional  {~/wp-ops/scripts/git/create-pr.sh}  Replacement file (enables replace mode)
+# @flag     --directory  optional  {~/code}  Search directory (default: current directory)
+# @flag     --maxdepth   optional  {5}  Maximum search depth
+# @flag     --dry-run    optional  {}  Show what would be done without making changes
+# @flag     --list       optional  {}  List found files without replacing
+# @flag     --size       optional  {}  Also show file sizes in listing
+# @example  wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh
+# @doc      scripts/misc/README-FIND-AND-REPLACE.md
 
 set -euo pipefail
 
