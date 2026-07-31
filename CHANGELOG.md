@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0] - 2026-07-31
+
+### Added
+
+- **scripts/patterns** - New Playwright/sharp toolkit for screenshotting WordPress block patterns and converting them to WebP: `screenshot-patterns.sh` orchestrates the full pipeline (create a temp WP page via a fully configurable `WP_CLI_CMD`, screenshot it, delete the page, batch-convert to WebP); `screenshot-url.js` is the underlying generic Playwright capture primitive (any URL, element selector or full page); `convert-to-webp.js` is a standalone sharp-based converter; `trim-screenshots.sh`/`center-screenshots.sh` post-process a directory of screenshots with ImageMagick (whitespace trim, or trim + center on a fixed canvas), backing up originals and safe to re-run. `WP_CLI_CMD` supports a local site, a Trellis VM, or a remote server over SSH, so no client-specific paths are baked in. Rebuilt from scratch rather than ported, since the source project's Playwright scripts were hardcoded to one theme's paths and one site's Trellis VM location.
+- **scripts/monitoring** - New `server-monitor.sh`: live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH, plus recent OOM killer events and swap usage. Complements the existing log-based monitors (`traffic-monitor.sh`, `security-monitor.sh`, `ai-bot-monitor.sh`) with a point-in-time view of what the server itself is doing. SSH target and PHP-FPM pool name are arguments, not hardcoded.
+
+Second pass of the client-project audit flagged in 3.6.0. `check-carousel.sh` and the ~50 one-off debug scripts in the source project's `.playwright/scripts/` were deliberately left out — too coupled to one theme's custom carousel block and that project's dev history to generalize usefully.
+
 ## [3.6.0] - 2026-07-31
 
 ### Added

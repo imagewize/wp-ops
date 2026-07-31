@@ -41,6 +41,8 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `scripts/images/` - Image resizing and conversion
     - `scripts/images/batch-resize.sh` - Batch image resize with center-crop
     - `scripts/images/convert-to-webp.sh` - Convert JPG images to WebP format
+  - `scripts/patterns/` - WordPress block pattern screenshot toolkit (Playwright + sharp)
+    - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities
     - `scripts/misc/find-and-replace-files.sh` - Batch find-and-replace files across projects
 - **wordpress-utilities/** - Reusable WordPress components and utilities

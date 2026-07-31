@@ -4,15 +4,16 @@ Production-ready Bash, PHP, and Python scripts for WordPress operations, GitHub 
 
 ## Overview
 
-This directory contains 27 utility scripts organized into seven functional areas:
+This directory contains utility scripts organized into functional areas:
 
 - **GitHub Integration** - AI-powered pull request creation, manual GitHub release asset uploads, and repository traffic analytics
 - **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images, square-canvas padding, and Openverse (CC-licensed) image search/download
+- **Pattern Screenshots** - Playwright/sharp toolkit for screenshotting WordPress block patterns and converting them to WebP
 - **Git Utilities** - Quick access to recent commit history
 - **Content Reporting** - Published-post counts by year and month (blog posts only)
-- **Operations** - Server monitoring and backup infrastructure
+- **Operations** - Server resource/traffic/security monitoring and backup infrastructure
 - **Webhook Integration** - Updown.io downtime alert handling
 
 ## Directory Structure
@@ -43,10 +44,18 @@ scripts/
 │   ├── redirect-check.sh       # Mass URL redirect checker using curl
 │   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
+│   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── cf7-smoke-test.js             # Playwright CF7 form submission smoke test
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
+├── patterns/                    # WordPress block pattern screenshot toolkit
+│   ├── screenshot-patterns.sh  # End-to-end: create temp WP page, screenshot, delete, convert to WebP
+│   ├── screenshot-url.js       # Generic Playwright URL/element screenshot primitive
+│   ├── convert-to-webp.js      # Sharp-based PNG to WebP converter
+│   ├── trim-screenshots.sh     # Trim whitespace from a directory of pattern screenshots (ImageMagick)
+│   ├── center-screenshots.sh   # Center screenshots on a fixed canvas (ImageMagick)
+│   └── README.md               # Setup and usage docs
 ├── release/                     # Release automation
 │   ├── deploy-plugin-wporg.sh  # Publish a plugin to the WordPress.org directory via SVN
 │   ├── release-plugin.sh       # WordPress plugin version release automation
@@ -136,8 +145,16 @@ cd ~/code/my-plugin
 # Analyze AI crawler traffic
 ./scripts/monitoring/ai-bot-monitor.sh /srv/www/example.com/logs/access.log 24
 
+# Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot
+./scripts/monitoring/server-monitor.sh web@example.com
+
 # Run all monitors and save timestamped reports
 ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+
+# Screenshot WordPress block patterns and convert to WebP
+cd scripts/patterns && npm install && npx playwright install chromium
+PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test WP_CLI_CMD="wp --path=web/wp" \
+  ./screenshot-patterns.sh hero-dark testimonials-and-logos
 ```
 
 ---
@@ -368,6 +385,68 @@ $ ./scripts/images/openverse_search.py "wordpress hosting" --limit 2
 
 - Always double-check the license and attribution requirements on the `landing` page before using an image commercially — Openverse aggregates metadata from multiple sources and it isn't always perfectly accurate.
 - `openverse_download.py` skips (and warns on, not aborts) any URL that fails to download or convert, so a bad link in a large manifest doesn't kill the whole batch.
+
+---
+
+## Pattern Screenshots
+
+### patterns/ toolkit
+
+Playwright/sharp toolkit for screenshotting WordPress block patterns (or any URL) and
+converting them to WebP — for pattern-library preview images, documentation
+screenshots, or visual diffs during theme development. Full docs in
+[`patterns/README.md`](patterns/README.md); summary here.
+
+#### Setup
+
+```bash
+cd scripts/patterns
+npm install
+npx playwright install chromium
+brew install imagemagick   # only needed for trim-screenshots.sh / center-screenshots.sh
+```
+
+#### Scripts
+
+- **`screenshot-patterns.sh`** — end-to-end pipeline: creates a temporary WordPress
+  page containing the pattern, screenshots it, deletes the page, converts every
+  capture to WebP. Configured entirely via environment variables (`WP_CLI_CMD`,
+  `SITE_URL`, `PATTERN_NAMESPACE`, `OUTPUT_DIR`) so it works against a local site, a
+  Trellis VM, or a remote server over SSH.
+- **`screenshot-url.js`** — the generic Playwright capture primitive underneath it;
+  screenshots any URL (element selector or full page), independent of WordPress.
+- **`convert-to-webp.js`** — standalone sharp-based PNG → WebP converter, single file
+  or `--all` batch mode.
+- **`trim-screenshots.sh`** / **`center-screenshots.sh`** — ImageMagick post-processing
+  for a directory of `pattern-*.webp` files (trim whitespace, or trim + center on a
+  fixed canvas). Both back up originals and are safe to re-run.
+
+#### Usage
+
+```bash
+PATTERN_NAMESPACE=mytheme \
+SITE_URL=http://example.test \
+WP_CLI_CMD="wp --path=web/wp" \
+./scripts/patterns/screenshot-patterns.sh hero-dark testimonials-and-logos
+
+# Then, optionally, center on a fixed canvas
+./scripts/patterns/center-screenshots.sh ./scripts/patterns/screenshots 900 600
+```
+
+`WP_CLI_CMD` is whatever actually invokes WP-CLI for the target site:
+
+```bash
+WP_CLI_CMD="wp --path=web/wp"                                                  # local Bedrock site
+WP_CLI_CMD="trellis vm shell --workdir /srv/www/example.com/current -- wp"     # Trellis VM
+WP_CLI_CMD="ssh web@example.com -- wp --path=/srv/www/example.com/current/web/wp"  # remote over SSH
+```
+
+#### Not included
+
+Site-specific QA checks (e.g. verifying a custom carousel block's JS state) are too
+coupled to a particular block/theme to generalize usefully — write those as one-off
+Playwright scripts in the project itself, using `screenshot-url.js` as a starting
+point.
 
 ---
 
@@ -1507,6 +1586,60 @@ Analyzes AI crawler traffic from Nginx logs, with per-bot breakdowns, bandwidth 
 # Syntax
 ./ai-bot-monitor.sh [LOG_FILE] [HOURS] [OUTPUT_FILE]
 ```
+
+---
+
+### server-monitor.sh
+
+Live resource-usage snapshot over SSH — complements the log-based monitors above
+(traffic/security/AI-bot) with a point-in-time view of what the server itself is
+doing right now.
+
+#### Features
+
+- System uptime and load average
+- Memory usage (absolute and percentage)
+- Disk usage (absolute and percentage)
+- Top 15 memory-consuming processes
+- PHP-FPM pool statistics (worker count, total and average RSS memory)
+- MySQL/MariaDB and Nginx memory/CPU usage
+- Process summary (total, running, sleeping)
+- Recent OOM killer events (last 7 days, via `journalctl`)
+- Swap usage warning
+
+#### Usage
+
+```bash
+./server-monitor.sh <ssh-target> [php-fpm-pool-pattern]
+
+# Examples
+./server-monitor.sh web@example.com
+./server-monitor.sh root@example.com "php-fpm: pool wordpress"
+```
+
+The optional second argument narrows the PHP-FPM `ps aux` grep to a specific pool
+name — useful on a multi-site server where several pools are running and you only
+want one site's numbers. Defaults to matching any `php-fpm: pool` process.
+
+#### Example Output
+
+```
+━━━ Memory Usage (Percentage) ━━━
+Memory: 5.1G/7.5G (68.42% used)
+
+━━━ PHP-FPM Pool Statistics ━━━
+PHP-FPM workers: 13
+Total RSS memory: 1950.23 MB
+Average per worker: 150.02 MB
+
+━━━ Recent OOM Killer Events (Last 7 Days) ━━━
+✓ No OOM killer events in last 7 days
+```
+
+#### Requirements
+
+- SSH access to the target server
+- `journalctl` on the remote host (systemd-based Linux; standard on Trellis/Ubuntu servers)
 
 ---
 
