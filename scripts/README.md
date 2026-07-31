@@ -22,6 +22,17 @@ scripts/
 ├── backup/                      # Backup automation scripts
 │   ├── db-backup.sh            # Database-only backup with URL replacement
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
+├── git/                         # Git/GitHub utilities
+│   ├── create-pr.sh            # AI-powered GitHub PR creation
+│   ├── gh-traffic.sh           # Fetch and display GitHub repository traffic statistics
+│   └── git-log-oneline.sh      # Show recent git commits as one-liners
+├── images/                      # Image resizing and conversion
+│   ├── batch-resize.sh         # Batch resize and center-crop images for featured images
+│   └── convert-to-webp.sh      # JPG to WebP conversion with center-crop (Facebook OG)
+├── misc/                        # Miscellaneous utilities
+│   ├── find-and-replace-files.sh     # Batch find and replace files across directory trees
+│   ├── post-count.sh                 # Count published blog posts by year/month (blog posts only)
+│   └── README-FIND-AND-REPLACE.md    # Docs for find-and-replace-files.sh
 ├── monitoring/                  # Server monitoring and alerting
 │   ├── 404-checker.sh          # Internal broken-link checker (homepage scan or recursive spider)
 │   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
@@ -32,21 +43,16 @@ scripts/
 │   ├── cf7-smoke-test.js             # Playwright CF7 form submission smoke test
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
-├── woocommerce/                # WooCommerce automation
-│   └── create-product-variations.sh  # Bulk-create product variations via WP-CLI
-├── batch-resize.sh            # Batch resize and center-crop images for featured images
-├── convert-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
-├── create-pr.sh                # AI-powered GitHub PR creation
-├── deploy-plugin-wporg.sh      # Publish a plugin to the WordPress.org directory via SVN
-├── gh-traffic.sh              # Fetch and display GitHub repository traffic statistics
-├── upload-release-asset.sh    # Manual GitHub release zip upload (fallback for failed Actions)
-├── find-and-replace-files.sh  # Batch find and replace files across directory trees
-├── git-log-oneline.sh          # Show recent git commits as one-liners
-├── post-count.sh               # Count published blog posts by year/month (blog posts only)
-├── release-plugin.sh           # WordPress plugin version release automation
-├── release-theme.sh            # WordPress theme version release automation
-├── rsync-package-to-site.sh   # Push a plugin/theme working copy into a Bedrock site
-└── rsync-theme.sh             # Theme file synchronization utility
+├── release/                     # Release automation
+│   ├── deploy-plugin-wporg.sh  # Publish a plugin to the WordPress.org directory via SVN
+│   ├── release-plugin.sh       # WordPress plugin version release automation
+│   ├── release-theme.sh        # WordPress theme version release automation
+│   └── upload-release-asset.sh # Manual GitHub release zip upload (fallback for failed Actions)
+├── sync/                        # File synchronization
+│   ├── rsync-package-to-site.sh  # Push a plugin/theme working copy into a Bedrock site
+│   └── rsync-theme.sh            # Theme file synchronization utility
+└── woocommerce/                # WooCommerce automation
+    └── create-product-variations.sh  # Bulk-create product variations via WP-CLI
 ```
 
 ## Quick Start
@@ -63,37 +69,37 @@ scripts/
 
 ```bash
 # Batch resize screenshots to 1200x630 with custom naming
-./scripts/batch-resize.sh -w 1200 -H 630 -o "my-featured-image" *.png
+./scripts/images/batch-resize.sh -w 1200 -H 630 -o "my-featured-image" *.png
 
 # Bulk-create WooCommerce product variations
 ./scripts/woocommerce/create-product-variations.sh
 
 # Convert JPG to WebP for Facebook OG / featured image (800x419, center crop)
-./scripts/convert-to-webp.sh image.jpg
+./scripts/images/convert-to-webp.sh image.jpg
 
 # Create GitHub PR with AI description
-./scripts/create-pr.sh main "Add feature name"
+./scripts/git/create-pr.sh main "Add feature name"
 
 # Show GitHub repository traffic statistics
-./scripts/gh-traffic.sh imagewize/nynaeve
+./scripts/git/gh-traffic.sh imagewize/nynaeve
 
 # Show recent git commits as one-liners
-./scripts/git-log-oneline.sh
-./scripts/git-log-oneline.sh 25
+./scripts/git/git-log-oneline.sh
+./scripts/git/git-log-oneline.sh 25
 
 # Count published blog posts by year (production, over SSH)
-./scripts/post-count.sh --ssh web@example.com
+./scripts/misc/post-count.sh --ssh web@example.com
 
 # Count just this year's blog posts, or a month-by-month breakdown
-./scripts/post-count.sh --ssh web@example.com --year 2026
-./scripts/post-count.sh --ssh web@example.com --months 2026
+./scripts/misc/post-count.sh --ssh web@example.com --year 2026
+./scripts/misc/post-count.sh --ssh web@example.com --months 2026
 
 # Release WordPress theme version
-./scripts/release-theme.sh theme-name 1.2.5
+./scripts/release/release-theme.sh theme-name 1.2.5
 
 # Publish a plugin to WordPress.org via SVN (stage + review, then commit)
 cd ~/code/my-plugin
-~/code/wp-ops/scripts/deploy-plugin-wporg.sh my-plugin --build "npm ci && npx webpack"
+~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh my-plugin --build "npm ci && npx webpack"
 
 # Backup WordPress database
 ./scripts/backup/db-backup.sh example.com production
@@ -209,19 +215,19 @@ sudo apt-get install imagemagick webp  # Ubuntu/Debian
 
 ```bash
 # Resize all PNGs to 1200x630 (Facebook OG ratio) with auto naming
-./batch-resize.sh -w 1200 -H 630 *.png
+./scripts/images/batch-resize.sh -w 1200 -H 630 *.png
 
 # Resize with custom output prefix
-./batch-resize.sh -w 800 -H 419 -o "featured-post" screenshot1.png screenshot2.png
+./scripts/images/batch-resize.sh -w 800 -H 419 -o "featured-post" screenshot1.png screenshot2.png
 
 # Convert to WebP format with high quality
-./batch-resize.sh -w 1920 -H 1080 -f webp -q 90 screenshot.png
+./scripts/images/batch-resize.sh -w 1920 -H 1080 -f webp -q 90 screenshot.png
 
 # Preview changes without modifying files (dry run)
-./batch-resize.sh -w 1200 -H 630 -d *.jpg
+./scripts/images/batch-resize.sh -w 1200 -H 630 -d *.jpg
 
 # Process and delete originals after conversion (use with caution!)
-./batch-resize.sh -w 800 -H 600 --delete image.png
+./scripts/images/batch-resize.sh -w 800 -H 600 --delete image.png
 ```
 
 #### Output
@@ -254,13 +260,13 @@ sudo apt-get install imagemagick webp  # Ubuntu/Debian
 
 ```bash
 # Defaults: 800x419, quality 82
-./convert-to-webp.sh featured.jpg
+./scripts/images/convert-to-webp.sh featured.jpg
 
 # Custom output filename
-./convert-to-webp.sh featured.jpg hero.webp
+./scripts/images/convert-to-webp.sh featured.jpg hero.webp
 
 # Custom quality and dimensions
-./convert-to-webp.sh featured.jpg hero.webp 90 1200 630
+./scripts/images/convert-to-webp.sh featured.jpg hero.webp 90 1200 630
 ```
 
 #### Output
@@ -290,16 +296,16 @@ Shows recent git commits as compact one-liners with short hash and commit messag
 
 ```bash
 # Show last 10 commits (default)
-./git-log-oneline.sh
+./scripts/git/git-log-oneline.sh
 
 # Show last 20 commits
-./git-log-oneline.sh 20
+./scripts/git/git-log-oneline.sh 20
 
 # Show last 5 commits
-./git-log-oneline.sh 5
+./scripts/git/git-log-oneline.sh 5
 
 # Show last 100 commits, but only display first 25
-./git-log-oneline.sh 100 | head -n 25
+./scripts/git/git-log-oneline.sh 100 | head -n 25
 ```
 
 #### Example Output
@@ -343,25 +349,25 @@ Runs `wp db query`, so run it where WP-CLI works: inside the Trellis VM, on the 
 
 ```bash
 # All years, blog posts only (over SSH to production)
-./post-count.sh --ssh web@example.com
+./scripts/misc/post-count.sh --ssh web@example.com
 
 # Just 2026's blog-post total
-./post-count.sh --ssh web@example.com --year 2026
+./scripts/misc/post-count.sh --ssh web@example.com --year 2026
 
 # Month-by-month for 2026
-./post-count.sh --ssh web@example.com --months 2026
+./scripts/misc/post-count.sh --ssh web@example.com --months 2026
 
 # Run locally inside the Trellis VM / on the server (no --ssh needed)
-./post-count.sh --year 2026
+./scripts/misc/post-count.sh --year 2026
 
 # aseonomics.com on the same server
-./post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
+./scripts/misc/post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
 
 # Count published pages instead of posts
-./post-count.sh --ssh web@example.com --type page
+./scripts/misc/post-count.sh --ssh web@example.com --type page
 
 # Syntax
-./post-count.sh [--year YYYY | --months YYYY] [--type TYPE] [--status STATUS] \
+./scripts/misc/post-count.sh [--year YYYY | --months YYYY] [--type TYPE] [--status STATUS] \
                 [--path WP_PATH] [--ssh HOST] [--site DIR]
 ```
 
@@ -431,20 +437,20 @@ Intelligent GitHub pull request creation with AI-powered descriptions using Clau
 
 ```bash
 # Interactive mode with AI description
-./create-pr.sh
+./scripts/git/create-pr.sh
 
 # Non-interactive with arguments
-./create-pr.sh main "Add feature name"
+./scripts/git/create-pr.sh main "Add feature name"
 
 # Skip AI generation (saves tokens)
-./create-pr.sh --no-ai
+./scripts/git/create-pr.sh --no-ai
 
 # Update existing PR
-./create-pr.sh --update
+./scripts/git/create-pr.sh --update
 
 # Specific AI provider
-./create-pr.sh --ai=codex main "Fix bug"
-./create-pr.sh --ai=vibe main "Add feature"
+./scripts/git/create-pr.sh --ai=codex main "Fix bug"
+./scripts/git/create-pr.sh --ai=vibe main "Add feature"
 ```
 
 #### Example Output
@@ -510,13 +516,13 @@ Manual GitHub Release asset uploader for WordPress plugins and themes. Useful wh
 
 ```bash
 # Run from the plugin/theme root directory
-./scripts/upload-release-asset.sh <github-repo> <tag> [zip-name]
+./scripts/release/upload-release-asset.sh <github-repo> <tag> [zip-name]
 
 # Upload with auto-named zip (uses repo slug)
-./scripts/upload-release-asset.sh imagewize/warder-cookie-consent v1.3.1
+./scripts/release/upload-release-asset.sh imagewize/warder-cookie-consent v1.3.1
 
 # Upload with custom zip name
-./scripts/upload-release-asset.sh imagewize/my-plugin v2.0.0 my-plugin.zip
+./scripts/release/upload-release-asset.sh imagewize/my-plugin v2.0.0 my-plugin.zip
 ```
 
 #### Example Output
@@ -591,17 +597,17 @@ Automates WordPress plugin version releases with AI-generated changelogs using C
 
 ```bash
 # Generate changelog with AI (manual commit)
-./release-plugin.sh 2.5.3
+./scripts/release/release-plugin.sh 2.5.3
 
 # Generate changelog and auto-commit
-./release-plugin.sh 2.5.3 --commit
+./scripts/release/release-plugin.sh 2.5.3 --commit
 
 # Specify AI tool
-./release-plugin.sh 2.5.3 --ai=codex
-./release-plugin.sh 2.5.3 --commit --ai=claude
+./scripts/release/release-plugin.sh 2.5.3 --ai=codex
+./scripts/release/release-plugin.sh 2.5.3 --commit --ai=claude
 
 # Interactive AI tool selection (if both installed)
-./release-plugin.sh 2.5.3
+./scripts/release/release-plugin.sh 2.5.3
 # Prompts: "Choose AI tool [default: claude]:"
 ```
 
@@ -610,7 +616,7 @@ Automates WordPress plugin version releases with AI-generated changelogs using C
 1. Create feature branch and make changes
 2. Run release script:
    ```bash
-   ./release-plugin.sh 2.5.3
+   ./scripts/release/release-plugin.sh 2.5.3
    ```
 3. Script analyzes `git diff main..HEAD`
 4. AI generates professional changelog
@@ -620,7 +626,7 @@ Automates WordPress plugin version releases with AI-generated changelogs using C
 8. Push and create PR:
    ```bash
    git push origin feature-branch
-   ./create-pr.sh main "Elayne Blocks Version 2.5.3"
+   ./scripts/git/create-pr.sh main "Elayne Blocks Version 2.5.3"
    ```
 
 #### Example Changelog Output
@@ -668,8 +674,8 @@ The script automatically detects the plugin's main PHP file and version constant
 
 **Manual selection:**
 ```bash
-./release-plugin.sh 2.5.3 --ai=claude
-./release-plugin.sh 2.5.3 --ai=codex
+./scripts/release/release-plugin.sh 2.5.3 --ai=claude
+./scripts/release/release-plugin.sh 2.5.3 --ai=codex
 ```
 
 **Environment variables:**
@@ -724,14 +730,14 @@ Publishes a plugin from its Git working tree to the **WordPress.org plugin direc
 ```bash
 # Prepare a release (stage + review), then commit manually
 cd ~/code/warder-cookie-consent
-~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent --build "npm ci && npx webpack"
+~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh warder-cookie-consent --build "npm ci && npx webpack"
 
 # One shot: build, stage, and commit (prompts for SVN password)
-~/code/wp-ops/scripts/deploy-plugin-wporg.sh warder-cookie-consent 2.1.4 \
+~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh warder-cookie-consent 2.1.4 \
   --build "npm ci && npx webpack" --username Rhand --commit
 
 # Explicit paths / custom checkout location
-~/code/wp-ops/scripts/deploy-plugin-wporg.sh my-plugin 1.0.0 \
+~/code/wp-ops/scripts/release/deploy-plugin-wporg.sh my-plugin 1.0.0 \
   --plugin-dir ~/code/my-plugin --assets-dir ~/code/my-plugin/.wordpress-org \
   --svn-dir /tmp/my-plugin-svn --commit
 ```
@@ -844,18 +850,18 @@ Automates WordPress theme version releases with AI-generated changelogs (Claude 
 
 ```bash
 # Release version (manual commit)
-./release-theme.sh theme-name 1.2.5
+./scripts/release/release-theme.sh theme-name 1.2.5
 
 # Release with automatic commit
-./release-theme.sh theme-name 1.0.0 --commit
+./scripts/release/release-theme.sh theme-name 1.0.0 --commit
 
 # Specify AI tool
-./release-theme.sh theme-name 1.2.5 --ai=codex
-./release-theme.sh theme-name 1.0.0 --commit --ai=claude
+./scripts/release/release-theme.sh theme-name 1.2.5 --ai=codex
+./scripts/release/release-theme.sh theme-name 1.0.0 --commit --ai=claude
 
 # Examples
-./release-theme.sh elayne 1.2.5
-./release-theme.sh nynaeve 2.0.0 --commit
+./scripts/release/release-theme.sh elayne 1.2.5
+./scripts/release/release-theme.sh nynaeve 2.0.0 --commit
 ```
 
 #### Configuration
@@ -944,14 +950,14 @@ DEST="$HOME/code/elayne/"
 ```bash
 # Preview first — --delete means anything at the destination that is not in the
 # source is removed
-./rsync-theme.sh --dry-run
+./scripts/sync/rsync-theme.sh --dry-run
 
 # Run synchronization
-./rsync-theme.sh
+./scripts/sync/rsync-theme.sh
 
 # One-off paths
 SOURCE=~/code/example.com/site/web/app/themes/my-theme/ \
-  DEST=~/code/my-theme/ ./rsync-theme.sh -n
+  DEST=~/code/my-theme/ ./scripts/sync/rsync-theme.sh -n
 
 # Output shows:
 # - Files sent/received
@@ -1010,17 +1016,17 @@ export SITE_ROOT="$HOME/code/example.com/demo/web/app"
 
 ```bash
 # Preview first — the sync runs with --delete --delete-excluded
-./rsync-package-to-site.sh --dry-run plugin my-plugin
+./scripts/sync/rsync-package-to-site.sh --dry-run plugin my-plugin
 
 # From inside the package repo
-./rsync-package-to-site.sh plugin my-plugin
+./scripts/sync/rsync-package-to-site.sh plugin my-plugin
 
 # Or point at it explicitly
-./rsync-package-to-site.sh theme my-theme ~/code/my-theme
+./scripts/sync/rsync-package-to-site.sh theme my-theme ~/code/my-theme
 
 # One-off destination
 SITE_ROOT=~/code/example.com/staging/web/app \
-  ./rsync-package-to-site.sh theme my-theme
+  ./scripts/sync/rsync-package-to-site.sh theme my-theme
 ```
 
 #### Use Cases

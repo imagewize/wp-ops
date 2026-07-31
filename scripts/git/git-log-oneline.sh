@@ -12,13 +12,13 @@
 #
 # Examples:
 #   # Check what you've been working on
-#   ./scripts/git-log-oneline.sh
+#   ./scripts/git/git-log-oneline.sh
 #
 #   # See a longer history
-#   ./scripts/git-log-oneline.sh 50
+#   ./scripts/git/git-log-oneline.sh 50
 #
 #   # Use with head to limit output further
-#   ./scripts/git-log-oneline.sh 100 | head -n 25
+#   ./scripts/git/git-log-oneline.sh 100 | head -n 25
 #
 # Author: wp-ops
 # Created: 2025-05-06

@@ -1,4 +1,6 @@
 #!/bin/bash
+# JPG to WebP conversion with center-crop, for Facebook OG-ratio featured images
+#
 # Usage: ./convert-to-webp.sh <input.jpg> [output.webp] [quality] [width] [height]
 set -e
 

@@ -3,7 +3,7 @@
 # Sync a plugin/theme working copy INTO a Bedrock site, so unreleased changes can
 # be tested on a real site without cutting a release.
 #
-# This is the reverse direction of scripts/rsync-theme.sh, which pulls a theme
+# This is the reverse direction of scripts/sync/rsync-theme.sh, which pulls a theme
 # out of a Trellis site back into its standalone repo. Use this one when the
 # package repo is the source of truth and the site is disposable.
 #

@@ -226,17 +226,17 @@ This approach:
 
 ### Using the convert-to-webp.sh Script
 
-For convenience, use the [`scripts/convert-to-webp.sh`](../../scripts/convert-to-webp.sh) script which wraps this workflow:
+For convenience, use the [`scripts/images/convert-to-webp.sh`](../../scripts/images/convert-to-webp.sh) script which wraps this workflow:
 
 ```bash
 # Basic usage (800x419 default, 1.91:1 aspect ratio for Facebook OG)
-./scripts/convert-to-webp.sh input.jpg
+./scripts/images/convert-to-webp.sh input.jpg
 
 # Custom output filename
-./scripts/convert-to-webp.sh input.jpg featured-image.webp
+./scripts/images/convert-to-webp.sh input.jpg featured-image.webp
 
 # Custom dimensions and quality
-./scripts/convert-to-webp.sh input.jpg featured-image.webp 90 1200 630
+./scripts/images/convert-to-webp.sh input.jpg featured-image.webp 90 1200 630
 ```
 
 See the [scripts README](../../scripts/README.md#convert-to-webpsh) for full documentation.

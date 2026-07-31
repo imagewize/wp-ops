@@ -35,13 +35,13 @@ Arguments:
 
 Examples:
   # Show traffic for a specific repository
-  ./scripts/gh-traffic.sh imagewize/nynaeve
+  ./scripts/git/gh-traffic.sh imagewize/nynaeve
 
   # Show traffic without header row
-  ./scripts/gh-traffic.sh imagewize/nynaeve --quiet
+  ./scripts/git/gh-traffic.sh imagewize/nynaeve --quiet
 
   # Output as JSON
-  ./scripts/gh-traffic.sh imagewize/nynaeve --json
+  ./scripts/git/gh-traffic.sh imagewize/nynaeve --json
 
 Requirements:
   - GitHub CLI (gh) installed and authenticated

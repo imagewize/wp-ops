@@ -16,10 +16,10 @@
 #   ./find-and-replace-files.sh -l -s create-pr.sh
 #
 #   # Find and replace all create-pr.sh files with updated version
-#   ./find-and-replace-files.sh create-pr.sh ~/wp-ops/scripts/create-pr.sh
+#   ./find-and-replace-files.sh create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 #
 #   # Dry run to see what would be replaced
-#   ./find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/create-pr.sh
+#   ./find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 
 set -euo pipefail
 
@@ -54,10 +54,10 @@ Examples:
   ./find-and-replace-files.sh -l -s create-pr.sh
 
   # Find and replace all create-pr.sh files with updated version
-  ./find-and-replace-files.sh create-pr.sh ~/wp-ops/scripts/create-pr.sh
+  ./find-and-replace-files.sh create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 
   # Dry run to see what would be replaced
-  ./find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/create-pr.sh
+  ./find-and-replace-files.sh -n -d ~/code create-pr.sh ~/wp-ops/scripts/git/create-pr.sh
 
   # Search with different depth
   ./find-and-replace-files.sh -m 3 -d /path/to/search create-pr.sh

@@ -1,4 +1,15 @@
 #!/bin/bash
+#
+# Safely update a Roots Trellis installation to the latest upstream version
+# while preserving vault files, site configs, and other local customizations.
+#
+# Backs up the current trellis/ directory, clones the latest Trellis from
+# GitHub, diffs it against your copy, then rsyncs the update in with excludes
+# for secrets and custom config. Also flags upstream changes to excluded
+# files so you don't miss fixes worth cherry-picking.
+#
+# Edit the PROJECT variable below before running.
+
 set -e  # Exit on error
 
 # Set your project slug here like example.com

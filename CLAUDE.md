@@ -30,14 +30,19 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `scripts/backup/` - Standalone backup shell scripts
   - `scripts/monitoring/` - Monitoring helper scripts
   - `scripts/woocommerce/` - WooCommerce automation scripts (product variation creation)
-  - `scripts/batch-resize.sh` - Batch image resize with center-crop
-  - `scripts/convert-to-webp.sh` - Convert JPG images to WebP format
-  - `scripts/create-pr.sh` - AI-powered GitHub PR creation
-  - `scripts/find-and-replace-files.sh` - Batch find-and-replace files across projects
-  - `scripts/git-log-oneline.sh` - Compact git log output utility
-  - `scripts/release-plugin.sh` - WordPress plugin release automation
-  - `scripts/release-theme.sh` - WordPress theme release automation
-  - `scripts/rsync-theme.sh` - Theme synchronization
+  - `scripts/release/` - Release automation
+    - `scripts/release/release-plugin.sh` - WordPress plugin release automation
+    - `scripts/release/release-theme.sh` - WordPress theme release automation
+  - `scripts/git/` - Git/GitHub utilities
+    - `scripts/git/create-pr.sh` - AI-powered GitHub PR creation
+    - `scripts/git/git-log-oneline.sh` - Compact git log output utility
+  - `scripts/sync/` - File synchronization
+    - `scripts/sync/rsync-theme.sh` - Theme synchronization
+  - `scripts/images/` - Image resizing and conversion
+    - `scripts/images/batch-resize.sh` - Batch image resize with center-crop
+    - `scripts/images/convert-to-webp.sh` - Convert JPG images to WebP format
+  - `scripts/misc/` - Miscellaneous utilities
+    - `scripts/misc/find-and-replace-files.sh` - Batch find-and-replace files across projects
 - **wordpress-utilities/** - Reusable WordPress components and utilities
   - `wordpress-utilities/age-verification/` - Cookie-based age verification system with modal and ACF integration
   - `wordpress-utilities/analytics/` - Analytics implementation and detection (Google Analytics, Matomo)
@@ -153,16 +158,16 @@ The create-pr.sh script uses Claude CLI to generate AI-powered PR descriptions:
 
 ```bash
 # Interactive mode (prompts for base branch, title, and AI choice)
-./scripts/create-pr.sh
+./scripts/git/create-pr.sh
 
 # Non-interactive: must pass --no-interactive to suppress all prompts
-./scripts/create-pr.sh --no-interactive main "Add feature name" --ai=claude
+./scripts/git/create-pr.sh --no-interactive main "Add feature name" --ai=claude
 
 # Skip AI generation entirely
-./scripts/create-pr.sh --no-interactive main "Add feature name" --no-ai
+./scripts/git/create-pr.sh --no-interactive main "Add feature name" --no-ai
 
 # Update existing PR description
-./scripts/create-pr.sh --update --no-interactive --ai=claude
+./scripts/git/create-pr.sh --update --no-interactive --ai=claude
 ```
 
 **Important:** Passing positional arguments alone (`main "title"`) does NOT disable prompts. Always use `--no-interactive` for scripted or automated invocations.
