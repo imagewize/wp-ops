@@ -11,6 +11,20 @@
 #   --no-interactive     Skip all prompts, use defaults/arguments
 #   --update             Update existing PR description for current branch
 #   --dry-run            Print the generated body and exit without touching GitHub
+#
+# @desc     Create a GitHub PR with an AI-generated description
+# @category git
+# @runs     local
+# @requires gh
+# @arg      base-branch  optional  {main}  Target branch for the PR
+# @arg      pr-title     optional  {"Add new feature"}  PR title (prompted if omitted)
+# @flag     --ai              optional  {claude|codex|vibe}  Choose AI backend (default: auto-detect)
+# @flag     --no-ai           optional  {}  Skip AI-powered description generation
+# @flag     --no-interactive  optional  {}  Skip all prompts, use defaults/arguments
+# @flag     --update          optional  {}  Update existing PR description for current branch
+# @flag     --dry-run         optional  {}  Print the generated body and exit without touching GitHub
+# @example  wp-ops scripts/git/create-pr --ai=claude
+# @example  wp-ops scripts/git/create-pr main "Add new feature" --no-ai
 
 set -e
 

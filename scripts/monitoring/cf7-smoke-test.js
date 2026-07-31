@@ -12,6 +12,17 @@
  * Examples:
  *   node cf7-smoke-test.js https://example.com/contact/
  *   node cf7-smoke-test.js https://yoursite.com/contact/ --name "QA Bot" --email "qa@yoursite.com"
+ *
+ * @desc     Playwright smoke test verifying CF7 submissions still work after an Nginx rate-limit deploy
+ * @category monitoring
+ * @runs     local
+ * @requires node
+ * @arg      contact-page-url  required  {https://example.com/contact/}  Contact page URL to test
+ * @flag     --name     optional  {"QA Bot"}  Test submitter name
+ * @flag     --email    optional  {qa@example.com}  Test submitter email
+ * @flag     --subject  optional  {"Rate limit smoke test"}  Test subject
+ * @flag     --message  optional  {"..."}  Test message body
+ * @example  wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name "QA Bot"
  */
 
 const { chromium } = require('playwright');

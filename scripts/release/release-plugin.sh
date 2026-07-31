@@ -19,6 +19,15 @@
 # Requirements:
 # - claude or codex CLI installed and authenticated
 # - git repository with main branch
+#
+# @desc     Bump plugin version and generate an AI changelog entry (Claude or Codex)
+# @category release
+# @runs     local
+# @requires claude
+# @arg      version    required  {2.5.3}  New plugin version
+# @flag     --commit   optional  {}  Auto-commit the version bump and changelog
+# @flag     --ai       optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)
+# @example  wp-ops scripts/release/release-plugin 2.5.3 --commit
 
 set -e  # Exit on error
 

@@ -20,6 +20,16 @@
 # Requirements:
 # - claude or codex CLI installed and authenticated
 # - git repository with main branch
+#
+# @desc     Bump theme version and generate an AI changelog entry (Claude or Codex)
+# @category release
+# @runs     local
+# @requires claude
+# @arg      theme-name  required  {elayne}  Theme slug (demo/ or site/ Bedrock installation)
+# @arg      version     required  {1.2.5}  New theme version
+# @flag     --commit    optional  {}  Auto-commit the version bump and changelog
+# @flag     --ai        optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)
+# @example  wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit
 
 set -e  # Exit on error
 

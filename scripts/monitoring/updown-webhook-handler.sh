@@ -16,6 +16,15 @@
 # Example:
 #   ./updown-webhook-handler.sh example.com down
 #
+# @desc     Analyze Nginx logs on the server when updown.io reports downtime via webhook
+# @category monitoring
+# @runs     server
+# @requires grep
+# @arg      site_url    optional  {example.com}  Site domain (used to locate per-site logs)
+# @arg      event_type  optional  {down}  Event type from the updown.io webhook payload
+# @example  ssh web@example.com 'bash -s' < updown-webhook-handler.sh example.com down
+# @doc      trellis/monitoring/README.md
+#
 
 set -e
 

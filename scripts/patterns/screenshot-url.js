@@ -22,6 +22,20 @@
  *   node screenshot-url.js http://example.test/my-page/ --out=pattern.png
  *   node screenshot-url.js http://example.test/my-page/ --out=pattern.png --selector=".entry-content > *:first-child"
  *   node screenshot-url.js http://example.test/ --out=full.png --full-page --width=1920 --height=1080
+ *
+ * @desc     Screenshot a URL with Playwright, targeting a CSS selector or the full page
+ * @category patterns
+ * @runs     local
+ * @requires node
+ * @arg      url         required  {http://example.test/my-page/}  URL to screenshot
+ * @flag     --out       required  {pattern.png}  Output PNG path
+ * @flag     --width     optional  {1400}  Viewport width
+ * @flag     --height    optional  {900}  Viewport height
+ * @flag     --wait      optional  {3000}  Milliseconds to wait after load, for JS-rendered content
+ * @flag     --selector  optional  {".entry-content > *:first-child"}  Comma-separated CSS selectors, tried in order
+ * @flag     --full-page optional  {}  Skip selector matching and screenshot the entire page
+ * @example  wp-ops scripts/patterns/screenshot-url http://example.test/my-page/ --out=pattern.png
+ * @doc      scripts/patterns/README.md
  */
 
 const { chromium } = require('playwright');

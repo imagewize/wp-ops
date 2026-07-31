@@ -26,6 +26,14 @@
 #
 # Example theme name used: 'elayne' - replace with your actual theme name
 
+# The usage() function below prints lines 2-27 of this file verbatim, so this
+# manifest block is placed after that range to avoid altering its output.
+# @desc     Rsync theme files from a Trellis site back to its standalone theme repository
+# @category sync
+# @runs     local
+# @requires rsync
+# @flag     --dry-run  optional  {}  Preview the sync without writing anything
+# @example  wp-ops scripts/sync/rsync-theme --dry-run
 set -euo pipefail
 
 # Trailing slashes matter to rsync: "src/" copies the *contents* of src.

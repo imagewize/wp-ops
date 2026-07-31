@@ -5,6 +5,16 @@
 #
 # Author: wp-ops
 # Created: 2026-07-09
+#
+# @desc     Fetch and display GitHub repository traffic statistics (14-day window)
+# @category git
+# @runs     local
+# @requires gh
+# @arg      owner/repo  required  {imagewize/nynaeve}  GitHub repository
+# @flag     --days   optional  {14}  Number of days to fetch (max: 14)
+# @flag     --json   optional  {}  Output raw JSON instead of formatted table
+# @flag     --quiet  optional  {}  Suppress header row in table output
+# @example  wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet
 
 set -euo pipefail
 

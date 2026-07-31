@@ -9,6 +9,16 @@
 #
 # Example:
 #   ./center-screenshots.sh ./screenshots 900 600
+#
+# @desc     Center pattern screenshots on a fixed canvas in place (backs up originals first)
+# @category patterns
+# @runs     local
+# @requires magick
+# @arg      screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots
+# @arg      width            optional  {900}  Target canvas width
+# @arg      height           optional  {600}  Target canvas height
+# @example  wp-ops scripts/patterns/center-screenshots ./screenshots 900 600
+# @doc      scripts/patterns/README.md
 
 set -euo pipefail
 

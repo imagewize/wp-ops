@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
 """Query Openverse image API and print results."""
+#
+# @desc     Search the Openverse image API and print matching results
+# @category images
+# @runs     local
+# @requires python3
+# @arg      query            required  {sunset}  Search query
+# @flag     --license        optional  {cc0}  License filter
+# @flag     --license-type   optional  {all}  License type
+# @flag     --page-size      optional  {5}  Results per page
+# @flag     --limit          optional  {5}  Max results to print
+# @flag     --mature         optional  {}  Include mature results
+# @flag     --provider       optional  {flickr}  Source provider filter
+# @flag     --json           optional  {}  Output raw JSON results
+# @example  wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10
 
 import argparse
 import json

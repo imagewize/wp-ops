@@ -21,6 +21,19 @@
  *   node convert-to-webp.js pattern-hero-dark.png
  *   node convert-to-webp.js --all --dir=./screenshots --output-dir=./webp
  *   node convert-to-webp.js --all --dir=./screenshots --quality=90
+ *
+ * @desc     Convert PNG pattern screenshots to WebP using sharp
+ * @category patterns
+ * @runs     local
+ * @requires node
+ * @arg      input-file     optional  {pattern-hero-dark.png}  Single PNG to convert (omit when using --all)
+ * @flag     --all          optional  {}  Convert every pattern-*.png file in --dir
+ * @flag     --dir          optional  {./screenshots}  Source directory for --all
+ * @flag     --output-dir   optional  {./webp}  Output directory (default: same as source)
+ * @flag     --quality      optional  {85}  WebP quality 1-100
+ * @flag     --dry-run      optional  {}  Show what would be done without writing files
+ * @example  wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90
+ * @doc      scripts/patterns/README.md
  */
 
 const sharp = require('sharp');

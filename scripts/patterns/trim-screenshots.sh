@@ -8,6 +8,15 @@
 #
 # Example:
 #   ./trim-screenshots.sh ./screenshots 900
+#
+# @desc     Trim whitespace from pattern screenshots in place, keeping aspect ratio (backs up originals first)
+# @category patterns
+# @runs     local
+# @requires magick
+# @arg      screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots
+# @arg      width            optional  {900}  Resize width after trimming
+# @example  wp-ops scripts/patterns/trim-screenshots ./screenshots 900
+# @doc      scripts/patterns/README.md
 
 set -euo pipefail
 

@@ -28,6 +28,14 @@
 # Requirements:
 #   npm install   (from this directory, installs playwright + sharp)
 #   npx playwright install chromium
+#
+# @desc     Screenshot WordPress block patterns end-to-end (temp page, Playwright capture, WebP convert)
+# @category patterns
+# @runs     local
+# @requires node
+# @arg      pattern-slug  required  {hero-dark}  Pattern slug(s) to screenshot (repeatable)
+# @example  PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark
+# @doc      scripts/patterns/README.md
 
 set -euo pipefail
 

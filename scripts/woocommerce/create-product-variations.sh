@@ -15,6 +15,13 @@
 #   - Attribute values must already exist as terms before running this script.
 #     See: wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
+# @desc     Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell
+# @category woocommerce
+# @runs     local
+# @requires trellis
+# @example  wp-ops scripts/woocommerce/create-product-variations
+# @doc      wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
+#
 
 set -euo pipefail
 

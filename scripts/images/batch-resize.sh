@@ -25,6 +25,20 @@
 #
 #   # Dry run to preview changes
 #   ./batch-resize.sh -w 1200 -H 630 -d *.jpg
+#
+# @desc     Batch resize and center-crop images for featured images
+# @category images
+# @runs     local
+# @requires magick
+# @arg      files      required  {*.png}  One or more input image files
+# @flag     --width    required  {1200}  Output width in pixels
+# @flag     --height   required  {630}  Output height in pixels
+# @flag     --output   optional  {featured-post}  Output filename prefix
+# @flag     --format   optional  {jpg|png|webp}  Output format (default: jpg)
+# @flag     --quality  optional  {85}  Quality for jpg/webp, 1-100
+# @flag     --dry-run  optional  {}  Show what would be done without processing
+# @flag     --delete   optional  {}  Delete original files after successful conversion
+# @example  wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png
 
 set -euo pipefail
 
