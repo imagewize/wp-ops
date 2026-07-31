@@ -12,9 +12,11 @@
 > surfaced) are now all annotated too, on `feature/cli-manifest-m2-group3` —
 > 64/66 total — see "Progress" under Phase A below for details. The only
 > holdouts are `mcp-server/*` (2), always out of Phase A's scope — see Phase D.
-> Guided per-argument prompting in `fzf_menu()`/`interactive_command_menu()`,
-> M2's last item besides CI lint wiring, shipped in 3.13.0 — see "Phase A
-> implementation" below.
+> Guided per-argument prompting in `fzf_menu()`/`interactive_command_menu()`
+> shipped in 3.13.0, and CI lint wiring (`.github/workflows/manifest-lint.yml`,
+> running `wp-ops manifest lint` on push/PR to `main`) landed right after —
+> M2 is now fully done bar the 2 out-of-scope `mcp-server/*` commands. See
+> "Phase A implementation" below.
 
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
@@ -260,9 +262,11 @@ unannotated, which is why the total sits at 64/66 rather than 66/66.
   the user's answer — fixed by collecting lines into an array first and
   walking that with a plain `for`.
 - Add `wp-ops manifest lint` — fails on missing or malformed directives. Wire
-  into CI so new scripts can't regress. **Parser and command done**
-  (`wp-ops manifest lint`, checks `@desc` presence, `@runs` enum, `@arg`/
-  `@flag` requiredness, and `@doc` file existence). **CI wiring not done.**
+  into CI so new scripts can't regress. **Done** — `wp-ops manifest lint`
+  checks `@desc` presence, `@runs` enum, `@arg`/`@flag` requiredness, and
+  `@doc` file existence; wired into
+  `.github/workflows/manifest-lint.yml`, which runs it on every push and PR
+  to `main`.
 - `--json`'s existing `runs_on` field is now manifest-derived where a
   manifest exists; `requires` and `doc` fields were added alongside it
   (empty string when unset, so the schema stays stable across annotated and
@@ -384,7 +388,7 @@ purely additive distribution.
 | # | Scope | Version | Status |
 |---|---|---|---|
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
-| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **In progress** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; only `mcp-server/*` (2, out of scope) and CI lint wiring remain |
+| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **Done** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; CI lint wiring landed after. Only `mcp-server/*` (2, out of scope) remains unannotated |
 | M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | Not started |
 | M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | Not started |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
