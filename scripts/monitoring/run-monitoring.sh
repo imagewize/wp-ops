@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# Run Monitoring - Combined traffic, security, and AI bot monitoring
+# Run Monitoring - Combined traffic, security, AI bot, and error monitoring
 #
-# This script runs traffic-monitor.sh, security-monitor.sh, and ai-bot-monitor.sh
-# and saves timestamped reports to an output directory.
+# This script runs traffic-monitor.sh, security-monitor.sh, ai-bot-monitor.sh,
+# and error-monitor.sh, and saves timestamped reports to an output directory.
 #
 # Usage:
 #   ssh web@example.com 'bash -s' < ./run-monitoring.sh [hours] [domain]
@@ -54,6 +54,7 @@ fi
 TRAFFIC_REPORT="${OUTPUT_DIR}/traffic-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
 SECURITY_REPORT="${OUTPUT_DIR}/security-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
 AI_BOT_REPORT="${OUTPUT_DIR}/ai-bot-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
+ERROR_REPORT="${OUTPUT_DIR}/error-monitor${DOMAIN_SUFFIX}-${TIMESTAMP}.txt"
 SUMMARY_REPORT="${OUTPUT_DIR}/monitoring-summary${DOMAIN_SUFFIX}-${DATESTAMP}.md"
 
 # Colors for output
@@ -123,6 +124,18 @@ main() {
 
     echo ""
 
+    # Run error monitor. Unlike the three above it reads the *error* logs rather
+    # than the access log, so it takes the domain instead of a log file path.
+    print_info "Running error log analysis..."
+    if [[ -f "${SCRIPT_DIR}/error-monitor.sh" ]]; then
+        bash "${SCRIPT_DIR}/error-monitor.sh" "$DOMAIN" "$HOURS" "$ERROR_REPORT"
+        print_success "Error report saved: $ERROR_REPORT"
+    else
+        echo "Warning: error-monitor.sh not found in ${SCRIPT_DIR}"
+    fi
+
+    echo ""
+
     # Generate summary report
     print_info "Generating markdown summary..."
     generate_summary
@@ -133,6 +146,7 @@ main() {
     echo "  - Traffic:  $TRAFFIC_REPORT"
     echo "  - Security: $SECURITY_REPORT"
     echo "  - AI Bots:  $AI_BOT_REPORT"
+    echo "  - Errors:   $ERROR_REPORT"
     echo "  - Summary:  $SUMMARY_REPORT"
 }
 
@@ -202,12 +216,40 @@ EOF
         fi
     fi
 
+    # Extract error counts from the error report if it exists
+    if [[ -f "$ERROR_REPORT" ]]; then
+        echo "### Error Overview" >> "$SUMMARY_REPORT"
+        echo "" >> "$SUMMARY_REPORT"
+
+        # The summary line reads "N log entries in the last H hours", or
+        # "No log entries ..." when the window was clean.
+        error_total=$(sed 's/\x1b\[[0-9;]*m//g' "$ERROR_REPORT" \
+            | grep -oE '^[0-9]+ log entr(y|ies) in the last' | awk '{print $1}' | head -1)
+        echo "- **Log Entries (all sources):** ${error_total:-0}" >> "$SUMMARY_REPORT"
+
+        segfaults=$(sed 's/\x1b\[[0-9;]*m//g' "$ERROR_REPORT" \
+            | grep -oE '^  - PHP segfaults: +[0-9]+' | awk '{print $NF}' | head -1)
+        ooms=$(sed 's/\x1b\[[0-9;]*m//g' "$ERROR_REPORT" \
+            | grep -oE '^  - OOM kills: +[0-9]+' | awk '{print $NF}' | head -1)
+        echo "- **PHP Segfaults:** ${segfaults:-0}" >> "$SUMMARY_REPORT"
+        echo "- **OOM Kills:** ${ooms:-0}" >> "$SUMMARY_REPORT"
+
+        echo "" >> "$SUMMARY_REPORT"
+
+        if [[ "${segfaults:-0}" -gt 0 || "${ooms:-0}" -gt 0 ]]; then
+            echo "> ⚠️ Segfaults or OOM kills occurred — these drop requests mid-flight" >> "$SUMMARY_REPORT"
+            echo "> and do not show up in the access log. See troubleshooting/OOM.md." >> "$SUMMARY_REPORT"
+            echo "" >> "$SUMMARY_REPORT"
+        fi
+    fi
+
     cat >> "$SUMMARY_REPORT" <<EOF
 ## Report Files
 
 - [Traffic Analysis Report]($(basename "$TRAFFIC_REPORT"))
 - [Security Analysis Report]($(basename "$SECURITY_REPORT"))
 - [AI Crawler Report]($(basename "$AI_BOT_REPORT"))
+- [Error Log Report]($(basename "$ERROR_REPORT"))
 
 ## SEO Traffic Insights
 
