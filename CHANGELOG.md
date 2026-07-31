@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.1] - 2026-07-31
+
+### Fixed
+
+- **scripts/backup** - `db-backup.sh` and `site-backup.sh` had no `--help` handling, so `wp-ops scripts/backup/db-backup --help` fell through to the generic stub whose only advice was to run `db-backup.sh --help` — the thing that had just failed. Both now document their positional arguments, their defaults, and the fact that they write to `/srv/backups/` on the server.
+- **wp-ops CLI** - Both backup scripts are now registered as server-side commands. They hardcode `/srv/www/<site>` and `/srv/backups/`, so running one from a workstation failed with `Site directory not found: /srv/www/example.com` — indistinguishable from a broken command. Invoking one locally now prints the `ssh host 'bash -s' < script` form with correct example arguments, and points at `trellis/backup/database-pull` / `files-pull` for the common case of wanting the archive on *this* machine rather than left on the server. `runs_on` in `--json` reports them accordingly.
+
 ## [3.9.0] - 2026-07-31
 
 ### Added

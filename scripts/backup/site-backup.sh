@@ -3,10 +3,40 @@
 # Trellis Site Backup Script
 # Complete backup solution for WordPress sites running on Trellis
 #
-# Usage: ./site-backup.sh [site-name]
-# Example: ./site-backup.sh example.com
+# Backs up database, uploads, config files and plugins/themes in one pass.
+#
+# Runs on the server: it reads /srv/www/<site-name> and writes to
+# /srv/backups/<site-name>, so both paths have to be the host's own. Stream it
+# over SSH the same way as the monitoring scripts — nothing needs to be
+# installed on the server.
+#
+# Usage:
+#   ssh web@example.com 'bash -s' < ./site-backup.sh [site-name]
+#   ./site-backup.sh example.com      # on the server itself
 
 set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    echo "Usage: $(basename "$0") [site-name]"
+    echo ""
+    echo "Full backup of a Trellis site: database, uploads, config files, and"
+    echo "plugins/themes/mu-plugins. Writes a manifest and prunes backups older"
+    echo "than 30 days."
+    echo ""
+    echo "Arguments:"
+    echo "  site-name    Site directory under /srv/www (default: example.com)"
+    echo ""
+    echo "Runs on the server — /srv/www and /srv/backups are the host's paths."
+    echo "From your machine:"
+    echo "  ssh web@example.com 'bash -s' < $(basename "$0") example.com"
+    echo ""
+    echo "Writes to /srv/backups/<site-name>/{database,files,config}/ on the"
+    echo "server. To pull copies down to your machine instead, use the Ansible"
+    echo "playbooks:"
+    echo "  wp-ops trellis/backup/database-pull -e site=example.com -e env=production"
+    echo "  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production"
+    exit 0
+fi
 
 # Configuration - Update these variables for your setup
 SITE_NAME="${1:-example.com}"

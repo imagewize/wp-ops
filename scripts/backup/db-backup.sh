@@ -3,11 +3,41 @@
 # Trellis Database Backup Script
 # Focused database backup using WP-CLI for WordPress sites on Trellis
 #
-# Usage: ./db-backup.sh [site-name] [backup-type]
-# Example: ./db-backup.sh example.com production
+# Runs on the server: it reads /srv/www/<site-name> and writes to
+# /srv/backups/<site-name>/database, so both paths have to be the host's own.
+# Stream it over SSH the same way as the monitoring scripts — nothing needs to
+# be installed on the server.
+#
+# Usage:
+#   ssh web@example.com 'bash -s' < ./db-backup.sh [site-name] [backup-type]
+#   ./db-backup.sh example.com production     # on the server itself
+#
 # Backup types: production, staging, development
+#
+# staging and development additionally produce a second dump with the site URL
+# rewritten for that environment; production produces the plain dump only.
 
 set -euo pipefail
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    echo "Usage: $(basename "$0") [site-name] [backup-type]"
+    echo ""
+    echo "Back up a Trellis site database with WP-CLI, gzip it, write a summary"
+    echo "file alongside it, and prune backups older than 30 days."
+    echo ""
+    echo "Arguments:"
+    echo "  site-name    Site directory under /srv/www (default: example.com)"
+    echo "  backup-type  production | staging | development (default: production)"
+    echo ""
+    echo "Runs on the server — /srv/www and /srv/backups are the host's paths."
+    echo "From your machine:"
+    echo "  ssh web@example.com 'bash -s' < $(basename "$0") example.com production"
+    echo ""
+    echo "Writes to /srv/backups/<site-name>/database/ on the server. To pull a"
+    echo "copy down to your machine instead, use the Ansible playbook:"
+    echo "  wp-ops trellis/backup/database-pull -e site=example.com -e env=production"
+    exit 0
+fi
 
 # Configuration
 SITE_NAME="${1:-example.com}"

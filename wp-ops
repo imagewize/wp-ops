@@ -88,10 +88,11 @@ CHECK="✓"
 CROSS="✗"
 WARN="!"
 
-# Commands that execute on the server rather than on this machine. They read
-# /srv/www/<site>/logs/ as local files and use GNU `date -d`, and are invoked by
-# streaming them to the host: ssh web@host 'bash -s' < run-monitoring.sh. Running
-# them here fails on a missing log path, which reads as a broken command rather
+# Commands that execute on the server rather than on this machine, and are
+# invoked by streaming them to the host: ssh web@host 'bash -s' < script.sh.
+# The monitors read /srv/www/<site>/logs/ as local files and use GNU `date -d`;
+# the backup scripts read /srv/www/<site> and write to /srv/backups/. Running
+# either here fails on a missing path, which reads as a broken command rather
 # than as "wrong machine" — so wp-ops says so up front instead.
 SERVER_SIDE_COMMANDS="
 scripts/monitoring/traffic-monitor
@@ -99,7 +100,28 @@ scripts/monitoring/security-monitor
 scripts/monitoring/ai-bot-monitor
 scripts/monitoring/error-monitor
 scripts/monitoring/run-monitoring
+scripts/backup/db-backup
+scripts/backup/site-backup
 "
+
+# The subset that back up to /srv/backups/ on the server. Called out separately
+# because the Ansible playbooks under trellis/backup/ do the same job *and*
+# retrieve the archive to this machine, which is usually what someone reaching
+# for a backup from their workstation actually wants.
+BACKUP_COMMANDS="
+scripts/backup/db-backup
+scripts/backup/site-backup
+"
+
+is_backup_command() {
+    local command_key="$1"
+    case "$BACKUP_COMMANDS" in
+        *"
+${command_key}
+"*) return 0 ;;
+    esac
+    return 1
+}
 
 is_server_side_command() {
     local command_key="$1"
@@ -139,6 +161,8 @@ server_side_example_args() {
     case "$1" in
         scripts/monitoring/error-monitor) echo "example.com 48" ;;
         scripts/monitoring/run-monitoring) echo "24 example.com" ;;
+        scripts/backup/db-backup) echo "example.com production" ;;
+        scripts/backup/site-backup) echo "example.com" ;;
         *) echo "/srv/www/example.com/logs/access.log 24" ;;
     esac
 }
@@ -925,7 +949,11 @@ print_server_side_guidance() {
 
     echo "${YELLOW}${WARN} ${command_key} runs on the server, not here.${RESET}"
     echo ""
-    if [[ "$command_key" == "scripts/monitoring/error-monitor" ]]; then
+    if is_backup_command "$command_key"; then
+        echo "It reads /srv/www/<site> and writes the archive to /srv/backups/<site>,"
+        echo "so both paths have to be the host's own. Stream it over SSH — nothing"
+        echo "needs to be installed there:"
+    elif [[ "$command_key" == "scripts/monitoring/error-monitor" ]]; then
         echo "It reads /var/log/nginx/, /var/log/php*-fpm.log, /srv/www/<site>/logs/"
         echo "and the systemd journal directly, and uses GNU 'date -d', so it has to"
         echo "execute on the Trellis host. Stream it over SSH — nothing needs to be"
@@ -943,6 +971,19 @@ print_server_side_guidance() {
     echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path} \\"
     echo "      $(server_side_example_args "$command_key")${RESET}"
     echo ""
+
+    if is_backup_command "$command_key"; then
+        echo "${DIM}That leaves the archive on the server. To back up *and* retrieve a copy${RESET}"
+        echo "${DIM}to this machine in one step, use the Ansible playbooks instead:${RESET}"
+        echo ""
+        if [[ "$command_key" == "scripts/backup/db-backup" ]]; then
+            echo "${DIM}  wp-ops trellis/backup/database-pull -e site=example.com -e env=production${RESET}"
+        else
+            echo "${DIM}  wp-ops trellis/backup/database-pull -e site=example.com -e env=production${RESET}"
+            echo "${DIM}  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production${RESET}"
+        fi
+        return 0
+    fi
 
     if [[ "$command_key" == "scripts/monitoring/error-monitor" ]]; then
         echo "${DIM}The systemd sections (critical errors, PHP segfaults, OOM kills) need${RESET}"
