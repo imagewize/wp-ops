@@ -9,6 +9,14 @@
 #
 # Requirements:
 #   brew install jq curl
+#
+# @desc     Check IP addresses against AbuseIPDB threat intelligence
+# @category security
+# @runs     local
+# @requires curl
+# @arg      ip  required  {1.2.3.4}  IP address to check (repeatable)
+# @example  wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8
+# @doc      trellis/security/README.md
 
 set -euo pipefail
 
