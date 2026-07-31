@@ -1,5 +1,17 @@
 ---
 # Scan a site's Nginx logs for attack patterns and suspicious activity.
+#
+# @desc     Scan a site's Nginx logs for attack patterns and suspicious activity
+# @category monitoring
+# @runs     local
+# @requires ansible-playbook
+# @arg      site         required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env          required  {production|staging|development}  Target environment
+# @flag     hours       optional  {24}  How many hours of log history to scan
+# @flag     threshold   optional  {100}  Requests-per-IP alert threshold
+# @flag     log_path    optional  {/path/to/access.log}  Override the default per-site access log path
+# @example  wp-ops trellis/monitoring/security-scan -e site=example.com -e env=production
+# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: security-scan.yml

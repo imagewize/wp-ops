@@ -1,5 +1,15 @@
 ---
 # Quick health check for a site: recent status codes, errors, and service status.
+#
+# @desc     Quick health check for a site: recent status codes, errors, and service status
+# @category monitoring
+# @runs     local
+# @requires ansible-playbook
+# @arg      site       required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env        required  {production|staging|development}  Target environment
+# @flag     log_path  optional  {/path/to/access.log}  Override the default per-site access log path
+# @example  wp-ops trellis/monitoring/quick-status -e site=example.com -e env=production
+# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: quick-status.yml

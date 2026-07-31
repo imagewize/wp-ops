@@ -1,5 +1,14 @@
 ---
 # Pull a site's uploads directory from a remote environment into development.
+#
+# @desc     Pull a site's uploads directory from a remote environment into development via rsync
+# @category backup
+# @runs     local
+# @requires ansible-playbook
+# @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env   required  {production|staging}  Remote environment to pull from
+# @example  wp-ops trellis/backup/files-pull -e site=example.com -e env=production
+# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: files-pull.yml

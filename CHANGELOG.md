@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.0] - 2026-07-31
+
+### Added
+
+- **trellis/backup**, **trellis/monitoring** - The second manifest rollout group (per `docs/cli-ux-plan.md`) is annotated: all 10 Ansible playbook commands (`database-backup`, `database-pull`, `database-push`, `files-backup`, `files-pull`, `files-push`, `quick-status`, `security-scan`, `setup-monitoring`, `traffic-report`). Each now declares `site`/`env` as required `@arg`s plus their optional `-e key=value` extras (`hours`, `threshold`, `email`, `log_path`), so `--help` shows exactly what a playbook expects instead of leaving it to `variable-check.yml`'s runtime failure to explain.
+- **wp-ops CLI** - `execute_playbook()` now renders `--help` from the manifest when one exists, the same short-circuit the generic script dispatcher already had. Previously every `trellis/**/*.yml` command's `--help` was a fixed three-line stub regardless of manifest data, so annotating a playbook had no visible effect until this wired up.
+
 ## [3.10.0] - 2026-07-31
 
 ### Added

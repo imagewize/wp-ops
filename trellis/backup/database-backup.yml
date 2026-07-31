@@ -1,5 +1,14 @@
 ---
 # Back up a site's database from any environment (development/staging/production).
+#
+# @desc     Back up a site's database from any environment (development/staging/production)
+# @category backup
+# @runs     local
+# @requires ansible-playbook
+# @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env   required  {production|staging|development}  Target environment
+# @example  wp-ops trellis/backup/database-backup -e site=example.com -e env=production
+# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: database-backup.yml

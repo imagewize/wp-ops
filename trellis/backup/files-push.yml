@@ -1,5 +1,14 @@
 ---
 # Push development's uploads directory to a remote environment.
+#
+# @desc     Push development's uploads directory to a remote environment via rsync
+# @category backup
+# @runs     local
+# @requires ansible-playbook
+# @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env   required  {production|staging}  Remote environment to push to
+# @example  wp-ops trellis/backup/files-push -e site=example.com -e env=staging
+# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: files-push.yml

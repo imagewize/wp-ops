@@ -1,5 +1,16 @@
 ---
 # Install cron jobs for daily traffic reports and periodic security scans.
+#
+# @desc     Install cron jobs for daily traffic reports and periodic security scans
+# @category monitoring
+# @runs     local
+# @requires ansible-playbook
+# @arg      site        required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env         required  {production|staging|development}  Target environment
+# @flag     email      optional  {alerts@example.com}  Address to send monitoring alerts to
+# @flag     log_path   optional  {/path/to/access.log}  Override the default per-site access log path
+# @example  wp-ops trellis/monitoring/setup-monitoring -e site=example.com -e env=production
+# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: setup-monitoring.yml
