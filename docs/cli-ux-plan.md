@@ -279,6 +279,12 @@ plus guided prompts). No breaking changes.
 
 # Phase C — Go binary
 
+> **M3 scope:** see `docs/m3-go-skeleton.md` for the ordered task
+> breakdown, open decisions (Go module location, `mcp-server/*` catalog
+> parity, `docs` command deferral), and acceptance criteria. This section
+> stays the high-level architecture reference; the tracker doc is where
+> multi-session implementation progress gets checked off.
+
 ## Framework
 
 **Cobra**, not `hashicorp/cli`.
@@ -389,7 +395,7 @@ purely additive distribution.
 |---|---|---|---|
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
 | M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **Done** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; CI lint wiring landed after. Only `mcp-server/*` (2, out of scope) remains unannotated |
-| M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | Not started |
+| M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | **Scoped** — see `docs/m3-go-skeleton.md` for the full task breakdown; implementation not started |
 | M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | Not started |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
