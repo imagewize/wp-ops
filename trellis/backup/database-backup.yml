@@ -1,4 +1,5 @@
 ---
+# Back up a site's database from any environment (development/staging/production).
 - import_playbook: variable-check.yml
   vars:
     playbook: database-backup.yml

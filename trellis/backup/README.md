@@ -75,6 +75,8 @@ All playbooks require two variables:
 - `site` - The site name as defined in your Trellis configuration
 - `env` - The environment (development, staging, production)
 
+**Via wp-ops:** these playbooks are also runnable through the [`wp-ops`](../../README.md) CLI (`wp-ops trellis --help` to list them), e.g. `wp-ops trellis database-backup -e site=example.com -e env=production`. Requires `TRELLIS_DIR` set to your Trellis project — see [trellis/README.md](../README.md#via-the-wp-ops-cli).
+
 ### Database Backup
 
 Creates a compressed database backup and stores it in the `database_backup` directory.

@@ -100,6 +100,8 @@ ansible-playbook monitoring/trellis/setup-monitoring.yml -e site=example.com -e 
 
 **Note:** The playbooks default to per-site logs at `/srv/www/{{ site }}/logs/access.log`. Override with `-e log_file=/path/to/log` if your Trellis uses global logs.
 
+**Via wp-ops:** these playbooks are also runnable through the [`wp-ops`](../../README.md) CLI (`wp-ops trellis --help` to list them), e.g. `wp-ops trellis traffic-report -e site=example.com -e env=production`. Requires `TRELLIS_DIR` set to your Trellis project — see [trellis/README.md](../README.md#via-the-wp-ops-cli).
+
 ## Alternative Access Methods
 
 While we recommend using root SSH access with key-based authentication, you can use alternative approaches if you prefer:

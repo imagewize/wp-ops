@@ -1,4 +1,5 @@
 ---
+# Scan a site's Nginx logs for attack patterns and suspicious activity.
 - import_playbook: variable-check.yml
   vars:
     playbook: security-scan.yml
@@ -30,7 +31,7 @@
 
     - name: Copy security-monitor.sh to remote server
       copy:
-        src: "../scripts/security-monitor.sh"
+        src: "../../scripts/monitoring/security-monitor.sh"
         dest: "/home/{{ web_user }}/security-monitor.sh"
         mode: '0755'
       when: not script_stat.stat.exists

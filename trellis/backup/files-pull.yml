@@ -1,4 +1,5 @@
 ---
+# Pull a site's uploads directory from a remote environment into development.
 - import_playbook: variable-check.yml
   vars:
     playbook: files-pull.yml

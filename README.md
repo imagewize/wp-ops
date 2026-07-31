@@ -10,6 +10,7 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 ## Contents
 
+- [wp-ops CLI](#wp-ops-cli)
 - [Trellis](#trellis)
 - [Bedrock](#bedrock)
 - [WP-CLI](#wp-cli)
@@ -18,6 +19,42 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 - [MCP Server](#mcp-server)
 - [WordPress Utilities](#wordpress-utilities)
 - [Troubleshooting](#troubleshooting)
+
+## wp-ops CLI
+
+A single entry point for everything in this repo. Auto-discovers commands across every category and groups them by subdirectory.
+
+```bash
+./install.sh                 # add wp-ops to your PATH (one-time)
+wp-ops                       # interactive category → command picker
+wp-ops --help                # list all categories
+wp-ops trellis --help        # list commands in one category
+wp-ops <category> <command> [args...]
+```
+
+Ansible playbook commands (`wp-ops trellis <playbook>`, covering `trellis/backup/` and `trellis/monitoring/`) run against a real Trellis project's `ansible.cfg`, inventory, and `group_vars/`, so set `TRELLIS_DIR` first:
+
+```bash
+export TRELLIS_DIR=/path/to/your/trellis
+wp-ops trellis database-backup -e site=example.com -e env=production
+```
+
+Likewise, WP-CLI script commands (`wp-ops wp-cli <script>`, `wp-ops bedrock <script>` — the security scanners, transient diagnostics, and the pattern-validate command) run against a real WordPress/Bedrock install via `wp`, so set `WP_SITE_DIR` first:
+
+```bash
+export WP_SITE_DIR=/path/to/your/bedrock-site
+wp-ops wp-cli scanner-wrapper
+wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
+```
+
+`wordpress-utilities/` is different again — those files are copy-paste-into-a-theme reference snippets (PHP includes, CSS, browser JS), not scripts with meaningful "run" behavior. `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead of executing them:
+
+```bash
+wp-ops wordpress-utilities footer            # print to stdout
+wp-ops wordpress-utilities footer --copy      # copy to clipboard
+wp-ops wordpress-utilities footer --path      # print just the file path
+wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
+```
 
 ## Trellis
 

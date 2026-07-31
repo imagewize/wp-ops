@@ -55,6 +55,19 @@ ansible-playbook trellis/monitoring/traffic-report.yml -e site=example.com -e en
 ./trellis/updater/trellis-updater.sh
 ```
 
+### Via the wp-ops CLI
+
+Every playbook in `backup/` and `monitoring/` is also discoverable and runnable through the [`wp-ops`](../README.md) wrapper (`wp-ops trellis --help` lists them). Set `TRELLIS_DIR` to your actual Trellis project once, since the playbooks read its `ansible.cfg`, inventory, and `group_vars/`:
+
+```bash
+export TRELLIS_DIR=/path/to/your/trellis
+
+wp-ops trellis database-backup -e site=example.com -e env=production
+wp-ops trellis traffic-report -e site=example.com -e env=production -e hours=6
+```
+
+Arguments after the command name are passed straight through to `ansible-playbook`, so any invocation documented in this guide works unchanged after `wp-ops trellis <playbook>`.
+
 ---
 
 ## 1. Backup & Synchronization

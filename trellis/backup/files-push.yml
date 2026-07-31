@@ -1,4 +1,5 @@
 ---
+# Push development's uploads directory to a remote environment.
 - import_playbook: variable-check.yml
   vars:
     playbook: files-push.yml

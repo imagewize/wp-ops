@@ -1,0 +1,18 @@
+---
+# Variable validation for backup playbooks
+# This playbook validates that required variables (site, env) are provided
+
+- name: Check required variables for {{ playbook }}
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Check if 'site' variable is defined
+      fail:
+        msg: "ERROR: 'site' variable is required. Usage: ansible-playbook {{ playbook }} -e site=example.com -e env=production"
+      when: site is not defined or site == ""
+
+    - name: Check if 'env' variable is defined
+      fail:
+        msg: "ERROR: 'env' variable is required. Usage: ansible-playbook {{ playbook }} -e site=example.com -e env=production"
+      when: env is not defined or env == ""

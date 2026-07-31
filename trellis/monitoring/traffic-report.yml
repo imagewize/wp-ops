@@ -1,4 +1,5 @@
 ---
+# Generate a traffic analysis report from a site's Nginx access log.
 - import_playbook: variable-check.yml
   vars:
     playbook: traffic-report.yml
@@ -29,7 +30,7 @@
 
     - name: Copy traffic-monitor.sh to remote server
       copy:
-        src: "../scripts/traffic-monitor.sh"
+        src: "../../scripts/monitoring/traffic-monitor.sh"
         dest: "/home/{{ web_user }}/traffic-monitor.sh"
         mode: '0755'
       when: not script_stat.stat.exists
