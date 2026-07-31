@@ -1,0 +1,2801 @@
+[
+  {
+    "category": "scripts",
+    "key": "scripts/backup/db-backup",
+    "description": "Back up a Trellis site database with WP-CLI, gzip it, and prune backups older than 30 days",
+    "script_path": "scripts/backup/db-backup.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "wp"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site directory under /srv/www",
+        "raw": "site-name    optional  {example.com}  Site directory under /srv/www"
+      },
+      {
+        "name": "backup-type",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Backup type",
+        "raw": "backup-type  optional  {production|staging|development}  Backup type"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c db-backup.sh example.com production"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/backup/site-backup",
+    "description": "Full backup of a Trellis site: database, uploads, config, and plugins/themes",
+    "script_path": "scripts/backup/site-backup.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "wp"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site directory under /srv/www",
+        "raw": "site-name  optional  {example.com}  Site directory under /srv/www"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c site-backup.sh example.com"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/git/create-pr",
+    "description": "Create a GitHub PR with an AI-generated description",
+    "script_path": "scripts/git/create-pr.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "gh"
+    ],
+    "args": [
+      {
+        "name": "base-branch",
+        "required_raw": "optional",
+        "required": false,
+        "default": "main",
+        "description": "Target branch for the PR",
+        "raw": "base-branch  optional  {main}  Target branch for the PR"
+      },
+      {
+        "name": "pr-title",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"Add new feature\"",
+        "description": "PR title (prompted if omitted)",
+        "raw": "pr-title     optional  {\"Add new feature\"}  PR title (prompted if omitted)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--ai",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "claude",
+          "codex",
+          "vibe"
+        ],
+        "description": "Choose AI backend (default: auto-detect)",
+        "raw": "--ai              optional  {claude|codex|vibe}  Choose AI backend (default: auto-detect)"
+      },
+      {
+        "name": "--no-ai",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip AI-powered description generation",
+        "raw": "--no-ai           optional  {}  Skip AI-powered description generation"
+      },
+      {
+        "name": "--no-interactive",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip all prompts, use defaults/arguments",
+        "raw": "--no-interactive  optional  {}  Skip all prompts, use defaults/arguments"
+      },
+      {
+        "name": "--update",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Update existing PR description for current branch",
+        "raw": "--update          optional  {}  Update existing PR description for current branch"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Print the generated body and exit without touching GitHub",
+        "raw": "--dry-run         optional  {}  Print the generated body and exit without touching GitHub"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/git/create-pr --ai=claude",
+      "wp-ops scripts/git/create-pr main \"Add new feature\" --no-ai"
+    ],
+    "manifest_category": "git",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/git/gh-traffic",
+    "description": "Fetch and display GitHub repository traffic statistics (14-day window)",
+    "script_path": "scripts/git/gh-traffic.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "gh"
+    ],
+    "args": [
+      {
+        "name": "owner/repo",
+        "required_raw": "required",
+        "required": true,
+        "default": "imagewize/nynaeve",
+        "description": "GitHub repository",
+        "raw": "owner/repo  required  {imagewize/nynaeve}  GitHub repository"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--days",
+        "required_raw": "optional",
+        "required": false,
+        "default": "14",
+        "description": "Number of days to fetch (max: 14)",
+        "raw": "--days   optional  {14}  Number of days to fetch (max: 14)"
+      },
+      {
+        "name": "--json",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Output raw JSON instead of formatted table",
+        "raw": "--json   optional  {}  Output raw JSON instead of formatted table"
+      },
+      {
+        "name": "--quiet",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Suppress header row in table output",
+        "raw": "--quiet  optional  {}  Suppress header row in table output"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet"
+    ],
+    "manifest_category": "git",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/git/git-log-oneline",
+    "description": "Show the last N git commits as compact one-liners",
+    "script_path": "scripts/git/git-log-oneline.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "git"
+    ],
+    "args": [
+      {
+        "name": "n",
+        "required_raw": "optional",
+        "required": false,
+        "default": "10",
+        "description": "Number of commits to show",
+        "raw": "n  optional  {10}  Number of commits to show"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/git/git-log-oneline 20"
+    ],
+    "manifest_category": "git",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/batch-resize",
+    "description": "Batch resize and center-crop images for featured images",
+    "script_path": "scripts/images/batch-resize.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "magick"
+    ],
+    "args": [
+      {
+        "name": "files",
+        "required_raw": "required",
+        "required": true,
+        "default": "*.png",
+        "description": "One or more input image files",
+        "raw": "files      required  {*.png}  One or more input image files"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--width",
+        "required_raw": "required",
+        "required": true,
+        "default": "1200",
+        "description": "Output width in pixels",
+        "raw": "--width    required  {1200}  Output width in pixels"
+      },
+      {
+        "name": "--height",
+        "required_raw": "required",
+        "required": true,
+        "default": "630",
+        "description": "Output height in pixels",
+        "raw": "--height   required  {630}  Output height in pixels"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "featured-post",
+        "description": "Output filename prefix",
+        "raw": "--output   optional  {featured-post}  Output filename prefix"
+      },
+      {
+        "name": "--format",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "jpg",
+          "png",
+          "webp"
+        ],
+        "description": "Output format (default: jpg)",
+        "raw": "--format   optional  {jpg|png|webp}  Output format (default: jpg)"
+      },
+      {
+        "name": "--quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "85",
+        "description": "Quality for jpg/webp, 1-100",
+        "raw": "--quality  optional  {85}  Quality for jpg/webp, 1-100"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show what would be done without processing",
+        "raw": "--dry-run  optional  {}  Show what would be done without processing"
+      },
+      {
+        "name": "--delete",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Delete original files after successful conversion",
+        "raw": "--delete   optional  {}  Delete original files after successful conversion"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png"
+    ],
+    "manifest_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/convert-to-webp",
+    "description": "Convert a JPG to WebP with center-crop (Facebook OG ratio by default)",
+    "script_path": "scripts/images/convert-to-webp.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "cwebp"
+    ],
+    "args": [
+      {
+        "name": "input",
+        "required_raw": "required",
+        "required": true,
+        "default": "input.jpg",
+        "description": "Source JPG file",
+        "raw": "input   required  {input.jpg}  Source JPG file"
+      },
+      {
+        "name": "output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "output.webp",
+        "description": "Output WebP path (default: \u003cinput\u003e.webp)",
+        "raw": "output  optional  {output.webp}  Output WebP path (default: \u003cinput\u003e.webp)"
+      },
+      {
+        "name": "quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "82",
+        "description": "WebP quality",
+        "raw": "quality optional  {82}  WebP quality"
+      },
+      {
+        "name": "width",
+        "required_raw": "optional",
+        "required": false,
+        "default": "800",
+        "description": "Output width",
+        "raw": "width   optional  {800}  Output width"
+      },
+      {
+        "name": "height",
+        "required_raw": "optional",
+        "required": false,
+        "default": "419",
+        "description": "Output height",
+        "raw": "height  optional  {419}  Output height"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/images/convert-to-webp input.jpg output.webp 82 800 419"
+    ],
+    "manifest_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/make-square-webp",
+    "description": "Pad an image onto a square canvas and export it as WebP",
+    "script_path": "scripts/images/make-square-webp.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "magick"
+    ],
+    "args": [
+      {
+        "name": "input",
+        "required_raw": "required",
+        "required": true,
+        "default": "input.webp",
+        "description": "Source image",
+        "raw": "input           required  {input.webp}  Source image"
+      },
+      {
+        "name": "output",
+        "required_raw": "required",
+        "required": true,
+        "default": "output.webp",
+        "description": "Output WebP path",
+        "raw": "output          required  {output.webp}  Output WebP path"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2000",
+        "description": "Square canvas size in pixels (default: max dimension)",
+        "raw": "--size          optional  {2000}  Square canvas size in pixels (default: max dimension)"
+      },
+      {
+        "name": "--quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "85",
+        "description": "WebP quality (0-100)",
+        "raw": "--quality       optional  {85}  WebP quality (0-100)"
+      },
+      {
+        "name": "--background",
+        "required_raw": "optional",
+        "required": false,
+        "default": "white",
+        "description": "Background color",
+        "raw": "--background    optional  {white}  Background color"
+      },
+      {
+        "name": "--left-pad",
+        "required_raw": "optional",
+        "required": false,
+        "default": "200",
+        "description": "Add left padding by right-aligning after resize",
+        "raw": "--left-pad      optional  {200}  Add left padding by right-aligning after resize"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/images/make-square-webp input.webp output.webp --left-pad 200 --size 2000"
+    ],
+    "manifest_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/openverse_download",
+    "description": "Download Openverse image URLs (single, repeated, or from a manifest file) and optionally convert to WebP",
+    "script_path": "scripts/images/openverse_download.py",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "python3"
+    ],
+    "flags": [
+      {
+        "name": "--url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://...",
+        "description": "Image URL (repeatable)",
+        "raw": "--url           optional  {https://...}  Image URL (repeatable)"
+      },
+      {
+        "name": "--manifest",
+        "required_raw": "optional",
+        "required": false,
+        "default": "urls.txt",
+        "description": "Text file: '\u003curl\u003e \u003coptional-filename\u003e' per line",
+        "raw": "--manifest      optional  {urls.txt}  Text file: '\u003curl\u003e \u003coptional-filename\u003e' per line"
+      },
+      {
+        "name": "--out-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": ".",
+        "description": "Output directory",
+        "raw": "--out-dir       optional  {.}  Output directory"
+      },
+      {
+        "name": "--convert-webp",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Convert downloaded images to .webp",
+        "raw": "--convert-webp  optional  {}  Convert downloaded images to .webp"
+      },
+      {
+        "name": "--quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "75",
+        "description": "WebP quality",
+        "raw": "--quality       optional  {75}  WebP quality"
+      },
+      {
+        "name": "--resize",
+        "required_raw": "optional",
+        "required": false,
+        "default": "0",
+        "description": "Resize width (0 to skip)",
+        "raw": "--resize        optional  {0}  Resize width (0 to skip)"
+      },
+      {
+        "name": "--keep-original",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Keep the original file after WebP conversion",
+        "raw": "--keep-original optional  {}  Keep the original file after WebP conversion"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/images/openverse_download --url https://example.com/img.jpg --convert-webp"
+    ],
+    "manifest_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/openverse_search",
+    "description": "Search the Openverse image API and print matching results",
+    "script_path": "scripts/images/openverse_search.py",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "python3"
+    ],
+    "args": [
+      {
+        "name": "query",
+        "required_raw": "required",
+        "required": true,
+        "default": "sunset",
+        "description": "Search query",
+        "raw": "query            required  {sunset}  Search query"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--license",
+        "required_raw": "optional",
+        "required": false,
+        "default": "cc0",
+        "description": "License filter",
+        "raw": "--license        optional  {cc0}  License filter"
+      },
+      {
+        "name": "--license-type",
+        "required_raw": "optional",
+        "required": false,
+        "default": "all",
+        "description": "License type",
+        "raw": "--license-type   optional  {all}  License type"
+      },
+      {
+        "name": "--page-size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "5",
+        "description": "Results per page",
+        "raw": "--page-size      optional  {5}  Results per page"
+      },
+      {
+        "name": "--limit",
+        "required_raw": "optional",
+        "required": false,
+        "default": "5",
+        "description": "Max results to print",
+        "raw": "--limit          optional  {5}  Max results to print"
+      },
+      {
+        "name": "--mature",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Include mature results",
+        "raw": "--mature         optional  {}  Include mature results"
+      },
+      {
+        "name": "--provider",
+        "required_raw": "optional",
+        "required": false,
+        "default": "flickr",
+        "description": "Source provider filter",
+        "raw": "--provider       optional  {flickr}  Source provider filter"
+      },
+      {
+        "name": "--json",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Output raw JSON results",
+        "raw": "--json           optional  {}  Output raw JSON results"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10"
+    ],
+    "manifest_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/misc/convert-screenshot-for-claude",
+    "description": "Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)",
+    "script_path": "scripts/misc/convert-screenshot-for-claude.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "convert"
+    ],
+    "args": [
+      {
+        "name": "png-file",
+        "required_raw": "required",
+        "required": true,
+        "default": "test-screenshot.png",
+        "description": "PNG file to convert",
+        "raw": "png-file  required  {test-screenshot.png}  PNG file to convert"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "90",
+        "description": "JPEG quality (1-100)",
+        "raw": "--quality optional  {90}  JPEG quality (1-100)"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png"
+    ],
+    "manifest_category": "misc",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/misc/find-and-replace-files",
+    "description": "Find (and optionally replace) multiple copies of a file across projects",
+    "script_path": "scripts/misc/find-and-replace-files.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "find"
+    ],
+    "doc": "scripts/misc/README-FIND-AND-REPLACE.md",
+    "args": [
+      {
+        "name": "filename",
+        "required_raw": "required",
+        "required": true,
+        "default": "create-pr.sh",
+        "description": "Name of file to search for",
+        "raw": "filename     required  {create-pr.sh}  Name of file to search for"
+      },
+      {
+        "name": "source-file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/wp-ops/scripts/git/create-pr.sh",
+        "description": "Replacement file (enables replace mode)",
+        "raw": "source-file  optional  {~/wp-ops/scripts/git/create-pr.sh}  Replacement file (enables replace mode)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--directory",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code",
+        "description": "Search directory (default: current directory)",
+        "raw": "--directory  optional  {~/code}  Search directory (default: current directory)"
+      },
+      {
+        "name": "--maxdepth",
+        "required_raw": "optional",
+        "required": false,
+        "default": "5",
+        "description": "Maximum search depth",
+        "raw": "--maxdepth   optional  {5}  Maximum search depth"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show what would be done without making changes",
+        "raw": "--dry-run    optional  {}  Show what would be done without making changes"
+      },
+      {
+        "name": "--list",
+        "required_raw": "optional",
+        "required": false,
+        "description": "List found files without replacing",
+        "raw": "--list       optional  {}  List found files without replacing"
+      },
+      {
+        "name": "--size",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also show file sizes in listing",
+        "raw": "--size       optional  {}  Also show file sizes in listing"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh"
+    ],
+    "manifest_category": "misc",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/misc/post-count",
+    "description": "Count published WordPress posts by year (or month), locally or over SSH",
+    "script_path": "scripts/misc/post-count.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "flags": [
+      {
+        "name": "--year",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2026",
+        "description": "Only this year — prints a single total",
+        "raw": "--year     optional  {2026}  Only this year — prints a single total"
+      },
+      {
+        "name": "--months",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2026",
+        "description": "Monthly breakdown (YYYY-MM) for the given year",
+        "raw": "--months   optional  {2026}  Monthly breakdown (YYYY-MM) for the given year"
+      },
+      {
+        "name": "--type",
+        "required_raw": "optional",
+        "required": false,
+        "default": "post",
+        "description": "post_type to count",
+        "raw": "--type     optional  {post}  post_type to count"
+      },
+      {
+        "name": "--status",
+        "required_raw": "optional",
+        "required": false,
+        "default": "publish",
+        "description": "post_status to count",
+        "raw": "--status   optional  {publish}  post_status to count"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path passed to WP-CLI",
+        "raw": "--path     optional  {web/wp}  WordPress path passed to WP-CLI"
+      },
+      {
+        "name": "--ssh",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "Run remotely over ssh",
+        "raw": "--ssh      optional  {web@example.com}  Run remotely over ssh"
+      },
+      {
+        "name": "--site",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/current",
+        "description": "Remote site dir to cd into with --ssh",
+        "raw": "--site     optional  {/srv/www/example.com/current}  Remote site dir to cd into with --ssh"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/misc/post-count --ssh web@example.com --year 2026"
+    ],
+    "manifest_category": "misc",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/404-checker",
+    "description": "Check a site's internal links for broken (4xx/5xx) responses",
+    "script_path": "scripts/monitoring/404-checker.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "args": [
+      {
+        "name": "site-url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "Site to check",
+        "raw": "site-url  required  {https://example.com}  Site to check"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--mode",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "global",
+          "spider"
+        ],
+        "description": "global checks homepage links (~30s); spider recursively crawls (~5-10 min)",
+        "raw": "--mode     optional  {global|spider}  global checks homepage links (~30s); spider recursively crawls (~5-10 min)"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Append broken-link results to this file",
+        "raw": "--output   optional  Append broken-link results to this file"
+      },
+      {
+        "name": "--timeout",
+        "required_raw": "optional",
+        "required": false,
+        "default": "10",
+        "description": "curl max-time per request, in seconds",
+        "raw": "--timeout  optional  {10}  curl max-time per request, in seconds"
+      },
+      {
+        "name": "--level",
+        "required_raw": "optional",
+        "required": false,
+        "default": "3",
+        "description": "Spider depth for --mode spider",
+        "raw": "--level    optional  {3}  Spider depth for --mode spider"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/404-checker https://example.com",
+      "wp-ops scripts/monitoring/404-checker --mode spider https://example.com"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/ai-bot-monitor",
+    "description": "Analyze AI crawler traffic (GPTBot, ClaudeBot, etc.) from an Nginx access log",
+    "script_path": "scripts/monitoring/ai-bot-monitor.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "gawk"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "log_file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/logs/access.log",
+        "description": "Nginx access log path",
+        "raw": "log_file     optional  {/srv/www/example.com/logs/access.log}  Nginx access log path"
+      },
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours        optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "output_file",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Path to save the report instead of printing it",
+        "raw": "output_file  optional  Path to save the report instead of printing it"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c ai-bot-monitor.sh",
+      "ssh web@example.com 'bash -s' \u003c ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/cf7-smoke-test",
+    "description": "Playwright smoke test verifying CF7 submissions still work after an Nginx rate-limit deploy",
+    "script_path": "scripts/monitoring/cf7-smoke-test.js",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "args": [
+      {
+        "name": "contact-page-url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com/contact/",
+        "description": "Contact page URL to test",
+        "raw": "contact-page-url  required  {https://example.com/contact/}  Contact page URL to test"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"QA Bot\"",
+        "description": "Test submitter name",
+        "raw": "--name     optional  {\"QA Bot\"}  Test submitter name"
+      },
+      {
+        "name": "--email",
+        "required_raw": "optional",
+        "required": false,
+        "default": "qa@example.com",
+        "description": "Test submitter email",
+        "raw": "--email    optional  {qa@example.com}  Test submitter email"
+      },
+      {
+        "name": "--subject",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"Rate limit smoke test\"",
+        "description": "Test subject",
+        "raw": "--subject  optional  {\"Rate limit smoke test\"}  Test subject"
+      },
+      {
+        "name": "--message",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"...\"",
+        "description": "Test message body",
+        "raw": "--message  optional  {\"...\"}  Test message body"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name \"QA Bot\""
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/error-monitor",
+    "description": "Surface errors from Nginx, PHP-FPM, WordPress, MySQL, and systemd for a domain",
+    "script_path": "scripts/monitoring/error-monitor.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "domain",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site domain (used to find /srv/www/\u003cdomain\u003e/logs/)",
+        "raw": "domain       optional  {example.com}  Site domain (used to find /srv/www/\u003cdomain\u003e/logs/)"
+      },
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours        optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "output_file",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Path to save the report instead of printing it",
+        "raw": "output_file  optional  Path to save the report instead of printing it"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c error-monitor.sh",
+      "ssh root@example.com 'bash -s' \u003c error-monitor.sh example.com 48"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/redirect-check",
+    "description": "Mass-check a list of URLs for redirects with curl",
+    "script_path": "scripts/monitoring/redirect-check.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "args": [
+      {
+        "name": "urls",
+        "required_raw": "optional",
+        "required": false,
+        "description": "One or more URLs to check; falls back to the hardcoded list in the script when omitted",
+        "raw": "urls  optional  One or more URLs to check; falls back to the hardcoded list in the script when omitted"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/redirect-check https://example.com/old-page/"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/run-monitoring",
+    "description": "Run traffic, security, AI-bot, and error monitoring together and save timestamped reports",
+    "script_path": "scripts/monitoring/run-monitoring.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "gawk"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours   optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "domain",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site domain",
+        "raw": "domain  optional  {example.com}  Site domain"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c run-monitoring.sh",
+      "ssh web@example.com 'bash -s' \u003c run-monitoring.sh 24 othersite.com"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/security-monitor",
+    "description": "Detect malicious activity (wp-login/xmlrpc abuse, high-volume IPs) in an Nginx access log",
+    "script_path": "scripts/monitoring/security-monitor.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "gawk"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "log_file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/logs/access.log",
+        "description": "Nginx access log path",
+        "raw": "log_file        optional  {/srv/www/example.com/logs/access.log}  Nginx access log path"
+      },
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours           optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "alert_threshold",
+        "required_raw": "optional",
+        "required": false,
+        "default": "100",
+        "description": "Flag a single IP once it exceeds this many requests",
+        "raw": "alert_threshold optional  {100}  Flag a single IP once it exceeds this many requests"
+      },
+      {
+        "name": "output_file",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Path to save the report instead of printing it",
+        "raw": "output_file     optional  Path to save the report instead of printing it"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c security-monitor.sh",
+      "ssh web@example.com 'bash -s' \u003c security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/server-monitor",
+    "description": "Live CPU, memory, disk, and PHP-FPM process snapshot of a server over SSH",
+    "script_path": "scripts/monitoring/server-monitor.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "ssh-target",
+        "required_raw": "required",
+        "required": true,
+        "default": "web@example.com",
+        "description": "SSH target to connect to",
+        "raw": "ssh-target            required  {web@example.com}  SSH target to connect to"
+      },
+      {
+        "name": "php-fpm-pool-pattern",
+        "required_raw": "optional",
+        "required": false,
+        "default": "php-fpm: pool",
+        "description": "Pattern to match PHP-FPM pool processes",
+        "raw": "php-fpm-pool-pattern  optional  {php-fpm: pool}  Pattern to match PHP-FPM pool processes"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/server-monitor web@example.com"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/traffic-monitor",
+    "description": "Analyze legitimate traffic from an Nginx access log",
+    "script_path": "scripts/monitoring/traffic-monitor.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "gawk"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "log_file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/logs/access.log",
+        "description": "Nginx access log path",
+        "raw": "log_file     optional  {/srv/www/example.com/logs/access.log}  Nginx access log path"
+      },
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours        optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "output_file",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Path to save the report instead of printing it",
+        "raw": "output_file  optional  Path to save the report instead of printing it"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh",
+      "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/updown-webhook-handler",
+    "description": "Analyze Nginx logs on the server when updown.io reports downtime via webhook",
+    "script_path": "scripts/monitoring/updown-webhook-handler.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "grep"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "site_url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site domain (used to locate per-site logs)",
+        "raw": "site_url    optional  {example.com}  Site domain (used to locate per-site logs)"
+      },
+      {
+        "name": "event_type",
+        "required_raw": "optional",
+        "required": false,
+        "default": "down",
+        "description": "Event type from the updown.io webhook payload",
+        "raw": "event_type  optional  {down}  Event type from the updown.io webhook payload"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c updown-webhook-handler.sh example.com down"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/patterns/center-screenshots",
+    "description": "Center pattern screenshots on a fixed canvas in place (backs up originals first)",
+    "script_path": "scripts/patterns/center-screenshots.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "magick"
+    ],
+    "doc": "scripts/patterns/README.md",
+    "args": [
+      {
+        "name": "screenshots-dir",
+        "required_raw": "required",
+        "required": true,
+        "default": "./screenshots",
+        "description": "Directory of pattern-*.webp screenshots",
+        "raw": "screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots"
+      },
+      {
+        "name": "width",
+        "required_raw": "optional",
+        "required": false,
+        "default": "900",
+        "description": "Target canvas width",
+        "raw": "width            optional  {900}  Target canvas width"
+      },
+      {
+        "name": "height",
+        "required_raw": "optional",
+        "required": false,
+        "default": "600",
+        "description": "Target canvas height",
+        "raw": "height           optional  {600}  Target canvas height"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/patterns/center-screenshots ./screenshots 900 600"
+    ],
+    "manifest_category": "patterns",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/patterns/convert-to-webp",
+    "description": "Convert PNG pattern screenshots to WebP using sharp",
+    "script_path": "scripts/patterns/convert-to-webp.js",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "doc": "scripts/patterns/README.md",
+    "args": [
+      {
+        "name": "input-file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "pattern-hero-dark.png",
+        "description": "Single PNG to convert (omit when using --all)",
+        "raw": "input-file     optional  {pattern-hero-dark.png}  Single PNG to convert (omit when using --all)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--all",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Convert every pattern-*.png file in --dir",
+        "raw": "--all          optional  {}  Convert every pattern-*.png file in --dir"
+      },
+      {
+        "name": "--dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "./screenshots",
+        "description": "Source directory for --all",
+        "raw": "--dir          optional  {./screenshots}  Source directory for --all"
+      },
+      {
+        "name": "--output-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "./webp",
+        "description": "Output directory (default: same as source)",
+        "raw": "--output-dir   optional  {./webp}  Output directory (default: same as source)"
+      },
+      {
+        "name": "--quality",
+        "required_raw": "optional",
+        "required": false,
+        "default": "85",
+        "description": "WebP quality 1-100",
+        "raw": "--quality      optional  {85}  WebP quality 1-100"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show what would be done without writing files",
+        "raw": "--dry-run      optional  {}  Show what would be done without writing files"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90"
+    ],
+    "manifest_category": "patterns",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/patterns/screenshot-patterns",
+    "description": "Screenshot WordPress block patterns end-to-end (temp page, Playwright capture, WebP convert)",
+    "script_path": "scripts/patterns/screenshot-patterns.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "doc": "scripts/patterns/README.md",
+    "args": [
+      {
+        "name": "pattern-slug",
+        "required_raw": "required",
+        "required": true,
+        "default": "hero-dark",
+        "description": "Pattern slug(s) to screenshot (repeatable)",
+        "raw": "pattern-slug  required  {hero-dark}  Pattern slug(s) to screenshot (repeatable)"
+      }
+    ],
+    "examples": [
+      "PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark"
+    ],
+    "manifest_category": "patterns",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/patterns/screenshot-url",
+    "description": "Screenshot a URL with Playwright, targeting a CSS selector or the full page",
+    "script_path": "scripts/patterns/screenshot-url.js",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "doc": "scripts/patterns/README.md",
+    "args": [
+      {
+        "name": "url",
+        "required_raw": "required",
+        "required": true,
+        "default": "http://example.test/my-page/",
+        "description": "URL to screenshot",
+        "raw": "url         required  {http://example.test/my-page/}  URL to screenshot"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--out",
+        "required_raw": "required",
+        "required": true,
+        "default": "pattern.png",
+        "description": "Output PNG path",
+        "raw": "--out       required  {pattern.png}  Output PNG path"
+      },
+      {
+        "name": "--width",
+        "required_raw": "optional",
+        "required": false,
+        "default": "1400",
+        "description": "Viewport width",
+        "raw": "--width     optional  {1400}  Viewport width"
+      },
+      {
+        "name": "--height",
+        "required_raw": "optional",
+        "required": false,
+        "default": "900",
+        "description": "Viewport height",
+        "raw": "--height    optional  {900}  Viewport height"
+      },
+      {
+        "name": "--wait",
+        "required_raw": "optional",
+        "required": false,
+        "default": "3000",
+        "description": "Milliseconds to wait after load, for JS-rendered content",
+        "raw": "--wait      optional  {3000}  Milliseconds to wait after load, for JS-rendered content"
+      },
+      {
+        "name": "--selector",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\".entry-content \u003e *:first-child\"",
+        "description": "Comma-separated CSS selectors, tried in order",
+        "raw": "--selector  optional  {\".entry-content \u003e *:first-child\"}  Comma-separated CSS selectors, tried in order"
+      },
+      {
+        "name": "--full-page",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip selector matching and screenshot the entire page",
+        "raw": "--full-page optional  {}  Skip selector matching and screenshot the entire page"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/patterns/screenshot-url http://example.test/my-page/ --out=pattern.png"
+    ],
+    "manifest_category": "patterns",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/patterns/trim-screenshots",
+    "description": "Trim whitespace from pattern screenshots in place, keeping aspect ratio (backs up originals first)",
+    "script_path": "scripts/patterns/trim-screenshots.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "magick"
+    ],
+    "doc": "scripts/patterns/README.md",
+    "args": [
+      {
+        "name": "screenshots-dir",
+        "required_raw": "required",
+        "required": true,
+        "default": "./screenshots",
+        "description": "Directory of pattern-*.webp screenshots",
+        "raw": "screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots"
+      },
+      {
+        "name": "width",
+        "required_raw": "optional",
+        "required": false,
+        "default": "900",
+        "description": "Resize width after trimming",
+        "raw": "width            optional  {900}  Resize width after trimming"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/patterns/trim-screenshots ./screenshots 900"
+    ],
+    "manifest_category": "patterns",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/release/deploy-plugin-wporg",
+    "description": "Publish a plugin from its git working tree to the WordPress.org SVN repository",
+    "script_path": "scripts/release/deploy-plugin-wporg.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "svn"
+    ],
+    "args": [
+      {
+        "name": "slug",
+        "required_raw": "required",
+        "required": true,
+        "default": "warder-cookie-consent",
+        "description": "WordPress.org plugin slug",
+        "raw": "slug     required  {warder-cookie-consent}  WordPress.org plugin slug"
+      },
+      {
+        "name": "version",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2.1.4",
+        "description": "Release version (default: read from the plugin file's Version: header)",
+        "raw": "version  optional  {2.1.4}  Release version (default: read from the plugin file's Version: header)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--plugin-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": ".",
+        "description": "Plugin git working tree (default: current directory)",
+        "raw": "--plugin-dir  optional  {.}  Plugin git working tree (default: current directory)"
+      },
+      {
+        "name": "--assets-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": ".wordpress-org",
+        "description": "Marketing assets directory",
+        "raw": "--assets-dir  optional  {.wordpress-org}  Marketing assets directory"
+      },
+      {
+        "name": "--build",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"npm ci \u0026\u0026 npx webpack\"",
+        "description": "Build command to run first",
+        "raw": "--build       optional  {\"npm ci \u0026\u0026 npx webpack\"}  Build command to run first"
+      },
+      {
+        "name": "--svn-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "../\u003cslug\u003e-svn",
+        "description": "SVN checkout location",
+        "raw": "--svn-dir     optional  {../\u003cslug\u003e-svn}  SVN checkout location"
+      },
+      {
+        "name": "--username",
+        "required_raw": "optional",
+        "required": false,
+        "default": "Rhand",
+        "description": "WordPress.org SVN username",
+        "raw": "--username    optional  {Rhand}  WordPress.org SVN username"
+      },
+      {
+        "name": "--message",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"Release \u003cversion\u003e\"",
+        "description": "Commit message",
+        "raw": "--message     optional  {\"Release \u003cversion\u003e\"}  Commit message"
+      },
+      {
+        "name": "--commit",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Actually run svn ci (prompts for SVN password)",
+        "raw": "--commit      optional  {}  Actually run svn ci (prompts for SVN password)"
+      },
+      {
+        "name": "--force",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Allow re-deploying a tag that already exists",
+        "raw": "--force       optional  {}  Allow re-deploying a tag that already exists"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build \"npm ci \u0026\u0026 npx webpack\""
+    ],
+    "manifest_category": "release",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/release/release-plugin",
+    "description": "Bump plugin version and generate an AI changelog entry (Claude or Codex)",
+    "script_path": "scripts/release/release-plugin.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "claude"
+    ],
+    "args": [
+      {
+        "name": "version",
+        "required_raw": "required",
+        "required": true,
+        "default": "2.5.3",
+        "description": "New plugin version",
+        "raw": "version    required  {2.5.3}  New plugin version"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--commit",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Auto-commit the version bump and changelog",
+        "raw": "--commit   optional  {}  Auto-commit the version bump and changelog"
+      },
+      {
+        "name": "--ai",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "claude",
+          "codex"
+        ],
+        "description": "AI CLI to use (default: claude, or the only one installed)",
+        "raw": "--ai       optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/release/release-plugin 2.5.3 --commit"
+    ],
+    "manifest_category": "release",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/release/release-theme",
+    "description": "Bump theme version and generate an AI changelog entry (Claude or Codex)",
+    "script_path": "scripts/release/release-theme.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "claude"
+    ],
+    "args": [
+      {
+        "name": "theme-name",
+        "required_raw": "required",
+        "required": true,
+        "default": "elayne",
+        "description": "Theme slug (demo/ or site/ Bedrock installation)",
+        "raw": "theme-name  required  {elayne}  Theme slug (demo/ or site/ Bedrock installation)"
+      },
+      {
+        "name": "version",
+        "required_raw": "required",
+        "required": true,
+        "default": "1.2.5",
+        "description": "New theme version",
+        "raw": "version     required  {1.2.5}  New theme version"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--commit",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Auto-commit the version bump and changelog",
+        "raw": "--commit    optional  {}  Auto-commit the version bump and changelog"
+      },
+      {
+        "name": "--ai",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "claude",
+          "codex"
+        ],
+        "description": "AI CLI to use (default: claude, or the only one installed)",
+        "raw": "--ai        optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit"
+    ],
+    "manifest_category": "release",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/release/upload-release-asset",
+    "description": "Upload a zipped plugin/theme as a GitHub Release asset (for when the release workflow didn't trigger)",
+    "script_path": "scripts/release/upload-release-asset.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "gh"
+    ],
+    "args": [
+      {
+        "name": "github-repo",
+        "required_raw": "required",
+        "required": true,
+        "default": "imagewize/warder-cookie-consent",
+        "description": "GitHub repo in owner/repo form",
+        "raw": "github-repo  required  {imagewize/warder-cookie-consent}  GitHub repo in owner/repo form"
+      },
+      {
+        "name": "tag",
+        "required_raw": "required",
+        "required": true,
+        "default": "v1.3.1",
+        "description": "Release tag to attach the asset to",
+        "raw": "tag          required  {v1.3.1}  Release tag to attach the asset to"
+      },
+      {
+        "name": "zip-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "warder-cookie-consent.zip",
+        "description": "Output zip filename (default: derived from repo slug)",
+        "raw": "zip-name     optional  {warder-cookie-consent.zip}  Output zip filename (default: derived from repo slug)"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1"
+    ],
+    "manifest_category": "release",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/sync/rsync-package-to-site",
+    "description": "Rsync a plugin/theme working copy into a Bedrock site for testing unreleased changes",
+    "script_path": "scripts/sync/rsync-package-to-site.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "rsync"
+    ],
+    "doc": "bedrock/local-package-development/README.md",
+    "args": [
+      {
+        "name": "kind",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "plugin",
+          "theme"
+        ],
+        "description": "Package type",
+        "raw": "kind          required  {plugin|theme}  Package type"
+      },
+      {
+        "name": "package-slug",
+        "required_raw": "required",
+        "required": true,
+        "default": "my-plugin",
+        "description": "Plugin/theme directory slug at the destination",
+        "raw": "package-slug  required  {my-plugin}  Plugin/theme directory slug at the destination"
+      },
+      {
+        "name": "source-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": ".",
+        "description": "Package working tree (default: current directory)",
+        "raw": "source-dir    optional  {.}  Package working tree (default: current directory)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Preview the sync without writing anything",
+        "raw": "--dry-run     optional  {}  Preview the sync without writing anything"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/sync/rsync-package-to-site theme my-theme"
+    ],
+    "manifest_category": "sync",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/sync/rsync-theme",
+    "description": "Rsync theme files from a Trellis site back to its standalone theme repository",
+    "script_path": "scripts/sync/rsync-theme.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "rsync"
+    ],
+    "flags": [
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Preview the sync without writing anything",
+        "raw": "--dry-run  optional  {}  Preview the sync without writing anything"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/sync/rsync-theme --dry-run"
+    ],
+    "manifest_category": "sync",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/woocommerce/create-product-variations",
+    "description": "Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell",
+    "script_path": "scripts/woocommerce/create-product-variations.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "trellis"
+    ],
+    "doc": "wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md",
+    "examples": [
+      "wp-ops scripts/woocommerce/create-product-variations"
+    ],
+    "manifest_category": "woocommerce",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/database-backup",
+    "description": "Back up a site's database from any environment (development/staging/production)",
+    "script_path": "trellis/backup/database-backup.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env   required  {production|staging|development}  Target environment"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/database-backup -e site=example.com -e env=production"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/database-pull",
+    "description": "Pull a site's database from a remote environment into development, with URL search-replace",
+    "script_path": "trellis/backup/database-pull.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging"
+        ],
+        "description": "Remote environment to pull from",
+        "raw": "env   required  {production|staging}  Remote environment to pull from"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/database-pull -e site=example.com -e env=production"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/database-push",
+    "description": "Push development's database to a remote environment, with URL search-replace",
+    "script_path": "trellis/backup/database-push.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging"
+        ],
+        "description": "Remote environment to push to",
+        "raw": "env   required  {production|staging}  Remote environment to push to"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/database-push -e site=example.com -e env=staging"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/files-backup",
+    "description": "Back up a site's uploads directory from any environment (development/staging/production)",
+    "script_path": "trellis/backup/files-backup.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env   required  {production|staging|development}  Target environment"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/files-backup -e site=example.com -e env=production"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/files-pull",
+    "description": "Pull a site's uploads directory from a remote environment into development via rsync",
+    "script_path": "trellis/backup/files-pull.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging"
+        ],
+        "description": "Remote environment to pull from",
+        "raw": "env   required  {production|staging}  Remote environment to pull from"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/files-pull -e site=example.com -e env=production"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/backup/files-push",
+    "description": "Push development's uploads directory to a remote environment via rsync",
+    "script_path": "trellis/backup/files-push.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site  required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging"
+        ],
+        "description": "Remote environment to push to",
+        "raw": "env   required  {production|staging}  Remote environment to push to"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/backup/files-push -e site=example.com -e env=staging"
+    ],
+    "manifest_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/monitoring/quick-status",
+    "description": "Quick health check for a site: recent status codes, errors, and service status",
+    "script_path": "trellis/monitoring/quick-status.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site       required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env        required  {production|staging|development}  Target environment"
+      }
+    ],
+    "flags": [
+      {
+        "name": "log_path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/access.log",
+        "description": "Override the default per-site access log path",
+        "raw": "log_path  optional  {/path/to/access.log}  Override the default per-site access log path"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/monitoring/quick-status -e site=example.com -e env=production"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/monitoring/security-scan",
+    "description": "Scan a site's Nginx logs for attack patterns and suspicious activity",
+    "script_path": "trellis/monitoring/security-scan.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site         required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env          required  {production|staging|development}  Target environment"
+      }
+    ],
+    "flags": [
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours of log history to scan",
+        "raw": "hours       optional  {24}  How many hours of log history to scan"
+      },
+      {
+        "name": "threshold",
+        "required_raw": "optional",
+        "required": false,
+        "default": "100",
+        "description": "Requests-per-IP alert threshold",
+        "raw": "threshold   optional  {100}  Requests-per-IP alert threshold"
+      },
+      {
+        "name": "log_path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/access.log",
+        "description": "Override the default per-site access log path",
+        "raw": "log_path    optional  {/path/to/access.log}  Override the default per-site access log path"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/monitoring/security-scan -e site=example.com -e env=production"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/monitoring/setup-monitoring",
+    "description": "Install cron jobs for daily traffic reports and periodic security scans",
+    "script_path": "trellis/monitoring/setup-monitoring.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site        required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env         required  {production|staging|development}  Target environment"
+      }
+    ],
+    "flags": [
+      {
+        "name": "email",
+        "required_raw": "optional",
+        "required": false,
+        "default": "alerts@example.com",
+        "description": "Address to send monitoring alerts to",
+        "raw": "email      optional  {alerts@example.com}  Address to send monitoring alerts to"
+      },
+      {
+        "name": "log_path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/access.log",
+        "description": "Override the default per-site access log path",
+        "raw": "log_path   optional  {/path/to/access.log}  Override the default per-site access log path"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/monitoring/setup-monitoring -e site=example.com -e env=production"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/monitoring/traffic-report",
+    "description": "Generate a traffic analysis report from a site's Nginx access log",
+    "script_path": "trellis/monitoring/traffic-report.yml",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ansible-playbook"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "site",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site        required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "env",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Target environment",
+        "raw": "env         required  {production|staging|development}  Target environment"
+      }
+    ],
+    "flags": [
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours of log history to include",
+        "raw": "hours      optional  {24}  How many hours of log history to include"
+      },
+      {
+        "name": "log_path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/access.log",
+        "description": "Override the default per-site access log path",
+        "raw": "log_path   optional  {/path/to/access.log}  Override the default per-site access log path"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/monitoring/traffic-report -e site=example.com -e env=production"
+    ],
+    "manifest_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/security/check-ips",
+    "description": "Check IP addresses against AbuseIPDB threat intelligence",
+    "script_path": "trellis/security/check-ips.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "doc": "trellis/security/README.md",
+    "args": [
+      {
+        "name": "ip",
+        "required_raw": "required",
+        "required": true,
+        "default": "1.2.3.4",
+        "description": "IP address to check (repeatable)",
+        "raw": "ip  required  {1.2.3.4}  IP address to check (repeatable)"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8"
+    ],
+    "manifest_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
+    "key": "trellis/updater/trellis-updater",
+    "description": "Safely update a Trellis installation to the latest upstream while preserving vault/config customizations",
+    "script_path": "trellis/updater/trellis-updater.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "git"
+    ],
+    "doc": "trellis/updater/README.md",
+    "examples": [
+      "wp-ops trellis/updater/trellis-updater"
+    ],
+    "manifest_category": "updater",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/content-creation/page-creation",
+    "description": "Deploy an HTML page to production via SCP and WP-CLI over SSH",
+    "script_path": "wp-cli/content-creation/page-creation.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "wp-cli/content-creation/PAGE-CREATION.md",
+    "args": [
+      {
+        "name": "content-file",
+        "required_raw": "required",
+        "required": true,
+        "default": "about-page-content.html",
+        "description": "Local HTML file with the page content",
+        "raw": "content-file  required  {about-page-content.html}  Local HTML file with the page content"
+      },
+      {
+        "name": "page-title",
+        "required_raw": "required",
+        "required": true,
+        "default": "About",
+        "description": "Page title",
+        "raw": "page-title    required  {About}  Page title"
+      },
+      {
+        "name": "page-slug",
+        "required_raw": "required",
+        "required": true,
+        "default": "about",
+        "description": "Page slug/post name",
+        "raw": "page-slug     required  {about}  Page slug/post name"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/content-creation/page-creation about-page-content.html \"About\" about"
+    ],
+    "manifest_category": "content-creation",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/diagnostics/diagnostic-transients",
+    "description": "Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)",
+    "script_path": "wp-cli/diagnostics/diagnostic-transients.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/diagnostics/README.md",
+    "examples": [
+      "wp-ops wp-cli/diagnostics/diagnostic-transients"
+    ],
+    "manifest_category": "diagnostics",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/diagnostics/list-posts-count",
+    "description": "Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv",
+    "script_path": "wp-cli/diagnostics/list-posts-count.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "wp-cli/diagnostics/README.md",
+    "examples": [
+      "wp-ops wp-cli/diagnostics/list-posts-count"
+    ],
+    "manifest_category": "diagnostics",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-general",
+    "description": "Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)",
+    "script_path": "wp-cli/security/scanner-general.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-general"
+    ],
+    "manifest_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-targeted",
+    "description": "Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)",
+    "script_path": "wp-cli/security/scanner-targeted.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-targeted"
+    ],
+    "manifest_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-wrapper",
+    "description": "Run both targeted and general malware scanners in sequence",
+    "script_path": "wp-cli/security/scanner-wrapper.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-wrapper"
+    ],
+    "manifest_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/blog-audit",
+    "description": "Analyze blog posts for content categorization and quality metrics",
+    "script_path": "wp-cli/seo/blog-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/orphan-pages-audit",
+    "description": "Find WordPress pages that exist but aren't linked from navigation menus",
+    "script_path": "wp-cli/seo/orphan-pages-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/page-audit",
+    "description": "Identify orphaned pages, analyze internal linking, and export a page inventory",
+    "script_path": "wp-cli/seo/page-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/redirect-audit",
+    "description": "Audit redirect chains: HTTPS pages, HTTP-\u003eHTTPS, and www canonicalization",
+    "script_path": "wp-cli/seo/redirect-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "URL to test (repeatable)",
+        "raw": "--url      required  {https://example.com}  URL to test (repeatable)"
+      },
+      {
+        "name": "--verbose",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show detailed curl output",
+        "raw": "--verbose  optional  {}  Show detailed curl output"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "results/audits",
+        "description": "Output directory for reports",
+        "raw": "--output   optional  {results/audits}  Output directory for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
+    ],
+    "manifest_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/schema-audit",
+    "description": "Check key pages for schema markup and validate implementation",
+    "script_path": "wp-cli/seo/schema-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "args": [
+      {
+        "name": "site-url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "Site URL to check",
+        "raw": "site-url  required  {https://example.com}  Site URL to check"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output  optional  {audits}  Output directory"
+      },
+      {
+        "name": "--pages",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/,/about/,/contact/",
+        "description": "Comma-separated page paths to check",
+        "raw": "--pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
+    ],
+    "manifest_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "bedrock",
+    "key": "bedrock/wp-cli-config/wp-cli-pattern-validate",
+    "description": "Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()",
+    "script_path": "bedrock/wp-cli-config/wp-cli-pattern-validate.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "bedrock/wp-cli-config/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "required",
+        "required": true,
+        "default": "web/app/themes/theme-name/patterns/",
+        "description": "Pattern file or directory (recursive)",
+        "raw": "path               required  {web/app/themes/theme-name/patterns/}  Pattern file or directory (recursive)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--fix",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Rewrite files in-place with the canonical output",
+        "raw": "--fix              optional  {}  Rewrite files in-place with the canonical output"
+      },
+      {
+        "name": "--diff",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Print a unified diff for files that need changes",
+        "raw": "--diff             optional  {}  Print a unified diff for files that need changes"
+      },
+      {
+        "name": "--log",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/",
+        "raw": "--log              optional  {}  Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/"
+      },
+      {
+        "name": "--log-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "docs/pattern-logs",
+        "description": "Override the log directory",
+        "raw": "--log-dir          optional  {docs/pattern-logs}  Override the log directory"
+      },
+      {
+        "name": "--compliance",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also run project-specific compliance checks",
+        "raw": "--compliance       optional  {}  Also run project-specific compliance checks"
+      },
+      {
+        "name": "--compliance-only",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip Gutenberg validation, only run compliance checks",
+        "raw": "--compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks"
+      }
+    ],
+    "examples": [
+      "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
+    ],
+    "manifest_category": "wp-cli-config",
+    "annotated": true
+  },
+  {
+    "category": "wordpress-utilities",
+    "key": "wordpress-utilities/age-verification/age-verification",
+    "description": "Cookie-based age verification modal script (jQuery)",
+    "script_path": "wordpress-utilities/age-verification/age-verification.js",
+    "runs_on": "local",
+    "doc": "wordpress-utilities/age-verification/README.md",
+    "manifest_category": "age-verification",
+    "annotated": true
+  },
+  {
+    "category": "wordpress-utilities",
+    "key": "wordpress-utilities/age-verification/footer",
+    "description": "Age verification modal HTML template (ACF-driven button content)",
+    "script_path": "wordpress-utilities/age-verification/footer.php",
+    "runs_on": "local",
+    "doc": "wordpress-utilities/age-verification/README.md",
+    "manifest_category": "age-verification",
+    "annotated": true
+  },
+  {
+    "category": "wordpress-utilities",
+    "key": "wordpress-utilities/age-verification/modal",
+    "description": "CSS styles for the age verification modal",
+    "script_path": "wordpress-utilities/age-verification/modal.css",
+    "runs_on": "local",
+    "doc": "wordpress-utilities/age-verification/README.md",
+    "manifest_category": "age-verification",
+    "annotated": true
+  },
+  {
+    "category": "wordpress-utilities",
+    "key": "wordpress-utilities/snippets/admin-user-creation",
+    "description": "Temporary admin user creation snippet for functions.php (remove after use)",
+    "script_path": "wordpress-utilities/snippets/admin-user-creation.php",
+    "runs_on": "local",
+    "doc": "wordpress-utilities/snippets/admin-user-creation-wpcli.md",
+    "manifest_category": "snippets",
+    "annotated": true
+  },
+  {
+    "category": "wordpress-utilities",
+    "key": "wordpress-utilities/snippets/post-expiry-noindex",
+    "description": "Auto-noindex posts past their expiry date via Yoast's wpseo_robots filter",
+    "script_path": "wordpress-utilities/snippets/post-expiry-noindex.php",
+    "runs_on": "local",
+    "doc": "wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
+    "manifest_category": "snippets",
+    "annotated": true
+  },
+  {
+    "category": "mcp-server",
+    "key": "mcp-server/dev",
+    "description": "Run the wp-ops MCP server in development mode (tsx, no build step)",
+    "script_path": "mcp-server/dev.sh",
+    "runs_on": "local",
+    "annotated": false
+  },
+  {
+    "category": "mcp-server",
+    "key": "mcp-server/start",
+    "description": "Build and start the wp-ops MCP server",
+    "script_path": "mcp-server/start.sh",
+    "runs_on": "local",
+    "annotated": false
+  }
+]
