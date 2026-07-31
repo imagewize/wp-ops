@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-07-31
+
+### Added
+
+- **wp-ops** - New unified CLI wrapper at the repo root. Auto-discovers executable scripts across every category, groups listings by subdirectory (e.g. `scripts/release/`, `wp-cli/seo/`), and adds an interactive category → command picker with colorized output and `✓`/`✗` completion markers when run from a terminal. Falls back to the original static listing when piped or run non-interactively, so scripted/CI usage is unaffected. Includes bash completion (`--completion`) and machine-readable output (`--json`).
+- **install.sh** - Adds the wp-ops repo to `PATH` via `~/.zshrc`/`~/.bashrc`, so the `wp-ops` command works from any directory.
+- **mcp-server/dev.sh**, **mcp-server/start.sh** - Give the MCP server discoverable run commands, so the pre-existing "MCP Server" wp-ops category actually lists and runs something instead of finding zero commands.
+
+### Changed
+
+- **scripts/** - Reorganized loose top-level scripts into themed subdirectories, matching the existing `backup/`, `monitoring/`, `woocommerce/` pattern:
+  - `scripts/release/` - `deploy-plugin-wporg.sh`, `release-plugin.sh`, `release-theme.sh`, `upload-release-asset.sh`
+  - `scripts/git/` - `create-pr.sh`, `gh-traffic.sh`, `git-log-oneline.sh`
+  - `scripts/sync/` - `rsync-theme.sh`, `rsync-package-to-site.sh`
+  - `scripts/images/` - `batch-resize.sh`, `convert-to-webp.sh`
+  - `scripts/misc/` - `post-count.sh`, `find-and-replace-files.sh`, `README-FIND-AND-REPLACE.md`
+  - Updated every path reference across `README.md`, `CLAUDE.md`, `AGENTS.md`, `scripts/README.md`, and `nginx/image-optimization/RESIZE-AND-CONVERSION.md`, plus self-referencing usage examples inside the moved scripts.
+
+### Fixed
+
+- **wp-ops** - `--completion` generated syntactically broken bash (`\({cword}` instead of `${cword}`) and split each category's command list across an unquoted line, so tab-completion would have thrown syntax errors and never populated. `set -e` also killed the entire interactive session whenever a picked command failed, instead of returning to the menu; and a script without its own `--help`/`-h` support could leak "file not found"-style output to stdout before the generic fallback usage was shown.
+- **trellis/updater/trellis-updater.sh**, **wp-cli/seo/redirect-audit.sh**, **scripts/images/convert-to-webp.sh**, **wordpress-utilities/age-verification/age-verification.js** - Fixed missing or misleading header comments that wp-ops surfaces as each command's help description. `trellis-updater.sh` had no real header at all, so wp-ops picked up an unrelated inline comment (`Set your project slug here...`); `redirect-audit.sh` led with a redundant filename-only title line; `convert-to-webp.sh` only had a `Usage:` line; `age-verification.js` had no header comment at all. Also taught wp-ops's description scraper to read JSDoc/`//` comments in `.js` files instead of only shell `#` comments, which is what surfaced the two JS gaps.
+
 ## [3.3.3] - 2026-07-25
 
 ### Fixed
