@@ -927,15 +927,22 @@ execute_playbook() {
     shift 2
 
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-        local description
-        description=$(get_description "$command_key")
-        echo "Usage: wp-ops $command_key -e site=<site> -e env=<development|staging|production> [-e key=value ...]"
-        echo ""
-        echo "Description: $description"
-        echo ""
-        echo "Playbook: $script_path"
-        echo "Runs via ansible-playbook against the Trellis project at \$TRELLIS_DIR"
-        echo "(currently: ${TRELLIS_DIR:-not set})"
+        if has_manifest "$command_key"; then
+            print_manifest_help "$command_key" "$script_path"
+            echo ""
+            echo "Runs via ansible-playbook against the Trellis project at \$TRELLIS_DIR"
+            echo "(currently: ${TRELLIS_DIR:-not set})"
+        else
+            local description
+            description=$(get_description "$command_key")
+            echo "Usage: wp-ops $command_key -e site=<site> -e env=<development|staging|production> [-e key=value ...]"
+            echo ""
+            echo "Description: $description"
+            echo ""
+            echo "Playbook: $script_path"
+            echo "Runs via ansible-playbook against the Trellis project at \$TRELLIS_DIR"
+            echo "(currently: ${TRELLIS_DIR:-not set})"
+        fi
         return 0
     fi
 

@@ -1,5 +1,14 @@
 ---
 # Push development's database to a remote environment, with URL search-replace.
+#
+# @desc     Push development's database to a remote environment, with URL search-replace
+# @category backup
+# @runs     local
+# @requires ansible-playbook
+# @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
+# @arg      env   required  {production|staging}  Remote environment to push to
+# @example  wp-ops trellis/backup/database-push -e site=example.com -e env=staging
+# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: database-push.yml
