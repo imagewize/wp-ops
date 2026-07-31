@@ -5,8 +5,10 @@
 > `wp-ops manifest lint`, and the first two command groups
 > (`scripts/backup/*`, `scripts/monitoring/*`, 10 commands) annotated.
 > Rollout group 2 (`trellis/backup/*.yml`, `trellis/monitoring/*.yml`, 10
-> commands) is now also annotated, on `feature/cli-manifest-m2`, shipping in
-> 3.11.0 — see "Progress" under Phase A below for details.
+> commands), merged to `main` in PR #135, is also annotated — 20/66 total.
+> Rollout group 3 (`wp-cli/**`, `bedrock/**`, 12 commands) is now annotated
+> too, on `feature/cli-manifest-m2-group3` — 32/66 total — see "Progress"
+> under Phase A below for details.
 
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
@@ -175,7 +177,13 @@ Annotate in dependency order, most-confusing-first:
    instead of checking `has_manifest` first — the same short-circuit the
    generic script dispatcher already had. Without it, annotating a `.yml`
    command had no visible effect on `--help`.
-3. `wp-cli/**` (11) and `bedrock/**` (1).
+3. `wp-cli/**` (11) and `bedrock/**` (1). **Done, on
+   `feature/cli-manifest-m2-group3`.** Also required a fix to
+   `execute_php_command()`, whose `--help` branch had the same
+   `has_manifest`-blind short-circuit as `execute_playbook()` (fixed in group
+   2) — it always rendered the hardcoded description/usage text instead of
+   `print_manifest_help()`, so annotating the 12 `.php` commands had no
+   visible effect on `--help` until fixed.
 4. `wordpress-utilities/**` (5) — snippets, mostly `@desc` + `@doc`.
 5. The remaining `scripts/**`.
 
@@ -193,16 +201,19 @@ Annotate in dependency order, most-confusing-first:
   and `--json` all pick it up for free.
 - Replace `is_server_side_command()` (`wp-ops:104`) with a `@runs` lookup.
   **Mechanism done**, coverage partial: it checks the manifest first and
-  falls back to the hardcoded `SERVER_SIDE_COMMANDS` list, so only the 20
-  annotated commands (10 from group 1, 10 from group 2) are manifest-driven
-  so far — all 10 trellis playbooks are `@runs local`, so the list itself is
-  unchanged by this group. It's only fully redundant — and removable — once
-  rollout groups 3–5 land too.
+  falls back to the hardcoded `SERVER_SIDE_COMMANDS` list, so only the 32
+  annotated commands (10 from group 1, 10 from group 2, 12 from group 3) are
+  manifest-driven so far — all are `@runs local` or `either`-free so the
+  hardcoded list itself is unchanged by groups 2–3. It's only fully
+  redundant — and removable — once rollout groups 4–5 land too.
 - Rewrite the `--help` path (`wp-ops:1068`) to render from the manifest.
   **Done** — `print_manifest_help()` short-circuits the script-probe entirely
   when a manifest exists, so commands with no `--help` handling of their own
   (6 of the 8 annotated monitoring scripts) get real usage output for the
-  first time.
+  first time. `execute_php_command()` had the same has_manifest-blind
+  short-circuit `execute_playbook()` had before the group 2 fix; corrected
+  in group 3 so the 12 `wp-cli`/`bedrock` `.php` commands' `--help` is also
+  manifest-driven now.
 - Add guided prompting to `fzf_menu()` (`wp-ops:1477`) and
   `interactive_command_menu()` (`wp-ops:1563`). **Not started** — deferred to
   M2, once enough commands have `@arg` data for per-argument prompts to be
@@ -332,7 +343,7 @@ purely additive distribution.
 | # | Scope | Version | Status |
 |---|---|---|---|
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
-| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **In progress** — trellis playbooks annotated (20/66 total), guided prompts and remaining groups not started |
+| M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **In progress** — groups 1–3 annotated (32/66 total), guided prompts and remaining groups (4–5) not started |
 | M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | Not started |
 | M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | Not started |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |

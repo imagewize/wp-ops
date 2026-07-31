@@ -14,6 +14,15 @@
 #
 # Requires: WP-CLI access to WordPress installation
 #
+# @desc     Identify orphaned pages, analyze internal linking, and export a page inventory
+# @category seo
+# @runs     local
+# @requires wp
+# @flag     --path      optional  {web/wp}  WordPress path for WP-CLI
+# @flag     --output    optional  {audits}  Output directory
+# @flag     --site-url  optional  {https://example.com}  Site URL for reports
+# @example  wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo
+# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

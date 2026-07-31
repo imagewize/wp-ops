@@ -1023,19 +1023,30 @@ execute_php_command() {
     fi
 
     if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-        local description
-        description=$(get_description "$command_key")
-        echo "Description: $description"
-        echo ""
-        echo "Script: $script_path"
-        echo "Runs via WP-CLI against the site at \$WP_SITE_DIR (currently: ${WP_SITE_DIR:-not set})"
-        echo ""
-        if [[ -n "$wp_command" ]]; then
-            echo "Usage: wp-ops $command_key [${wp_command} args...]"
-            echo "Runs as: wp --require=$(basename "$script_path") ${wp_command} [args...]"
+        if has_manifest "$command_key"; then
+            print_manifest_help "$command_key" "$script_path"
+            echo ""
+            echo "Runs via WP-CLI against the site at \$WP_SITE_DIR (currently: ${WP_SITE_DIR:-not set})"
+            if [[ -n "$wp_command" ]]; then
+                echo "Runs as: wp --require=$(basename "$script_path") ${wp_command} [args...]"
+            else
+                echo "Runs as: wp eval-file $(basename "$script_path") [args...]"
+            fi
         else
-            echo "Usage: wp-ops $command_key [args...]"
-            echo "Runs as: wp eval-file $(basename "$script_path") [args...]"
+            local description
+            description=$(get_description "$command_key")
+            echo "Description: $description"
+            echo ""
+            echo "Script: $script_path"
+            echo "Runs via WP-CLI against the site at \$WP_SITE_DIR (currently: ${WP_SITE_DIR:-not set})"
+            echo ""
+            if [[ -n "$wp_command" ]]; then
+                echo "Usage: wp-ops $command_key [${wp_command} args...]"
+                echo "Runs as: wp --require=$(basename "$script_path") ${wp_command} [args...]"
+            else
+                echo "Usage: wp-ops $command_key [args...]"
+                echo "Runs as: wp eval-file $(basename "$script_path") [args...]"
+            fi
         fi
         return 0
     fi

@@ -14,6 +14,15 @@
 #
 # Requires: WP-CLI access to WordPress installation
 #
+# @desc     Analyze blog posts for content categorization and quality metrics
+# @category seo
+# @runs     local
+# @requires wp
+# @flag     --path      optional  {web/wp}  WordPress path for WP-CLI
+# @flag     --output    optional  {audits}  Output directory
+# @flag     --site-url  optional  {https://example.com}  Site URL for reports
+# @example  wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo
+# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

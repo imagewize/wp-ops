@@ -13,6 +13,15 @@
 # Usage: ./page-creation.sh <content-file> <page-title> <page-slug>
 # Example: ./page-creation.sh about-page-content.html "About" "about"
 #
+# @desc     Deploy an HTML page to production via SCP and WP-CLI over SSH
+# @category content-creation
+# @runs     local
+# @requires ssh
+# @arg      content-file  required  {about-page-content.html}  Local HTML file with the page content
+# @arg      page-title    required  {About}  Page title
+# @arg      page-slug     required  {about}  Page slug/post name
+# @example  wp-ops wp-cli/content-creation/page-creation about-page-content.html "About" about
+# @doc      wp-cli/content-creation/PAGE-CREATION.md
 
 set -e  # Exit on error
 

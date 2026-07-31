@@ -25,6 +25,14 @@
  *
  * Via Command Line:
  *   php wp-content/themes/client/security-scanner.php
+ *
+ * @desc     Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)
+ * @category security
+ * @runs     local
+ * @requires wp
+ * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
+ * @example  wp-ops wp-cli/security/scanner-targeted
+ * @doc      wp-cli/security/README.md
  */
 
 // ============================================================================

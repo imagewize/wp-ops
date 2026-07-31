@@ -4,6 +4,13 @@
  *
  * Run this via WP-CLI to diagnose transient storage issues
  * Usage: wp eval-file wp-content/themes/client/diagnostic-transients.php
+ *
+ * @desc     Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)
+ * @category diagnostics
+ * @runs     local
+ * @requires wp
+ * @example  wp-ops wp-cli/diagnostics/diagnostic-transients
+ * @doc      wp-cli/diagnostics/README.md
  */
 
 echo "=== TRANSIENT DIAGNOSTIC REPORT ===\n";

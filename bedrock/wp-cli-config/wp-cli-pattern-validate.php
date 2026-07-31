@@ -34,6 +34,20 @@
  *
  *     # If not auto-required via wp-cli.yml, pass --require explicitly:
  *     wp --require=wp-cli-pattern-validate.php pattern validate web/app/themes/your-theme/patterns/
+ *
+ * @desc     Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()
+ * @category wp-cli-config
+ * @runs     local
+ * @requires wp
+ * @arg      path               required  {web/app/themes/theme-name/patterns/}  Pattern file or directory (recursive)
+ * @flag     --fix              optional  {}  Rewrite files in-place with the canonical output
+ * @flag     --diff             optional  {}  Print a unified diff for files that need changes
+ * @flag     --log              optional  {}  Write per-pattern diffs and a summary to docs/pattern-logs/<date>/
+ * @flag     --log-dir          optional  {docs/pattern-logs}  Override the log directory
+ * @flag     --compliance       optional  {}  Also run project-specific compliance checks
+ * @flag     --compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks
+ * @example  wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix
+ * @doc      bedrock/wp-cli-config/README.md
  */
 
 if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {

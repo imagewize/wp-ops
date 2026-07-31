@@ -14,6 +14,15 @@
 #
 # Requires: WP-CLI access to WordPress installation
 #
+# @desc     Find WordPress pages that exist but aren't linked from navigation menus
+# @category seo
+# @runs     local
+# @requires wp
+# @flag     --path      optional  {web/wp}  WordPress path for WP-CLI
+# @flag     --output    optional  {audits}  Output directory
+# @flag     --site-url  optional  {https://example.com}  Site URL for reports
+# @example  wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo
+# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 
