@@ -1,0 +1,13 @@
+{
+  "name": "wp-ops-pattern-screenshots",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright/sharp toolkit for screenshotting WordPress block patterns and converting them to WebP",
+  "devDependencies": {
+    "playwright": "^1.48.0",
+    "sharp": "^0.35.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
