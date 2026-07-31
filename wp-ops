@@ -8,6 +8,7 @@
 #        wp-ops --help
 #        wp-ops --json list
 #        wp-ops search <term>
+#        wp-ops docs <term>
 #        wp-ops doctor
 #        wp-ops scripts backup db example.com production
 #
@@ -96,6 +97,7 @@ SERVER_SIDE_COMMANDS="
 scripts/monitoring/traffic-monitor
 scripts/monitoring/security-monitor
 scripts/monitoring/ai-bot-monitor
+scripts/monitoring/error-monitor
 scripts/monitoring/run-monitoring
 "
 
@@ -107,6 +109,38 @@ ${command_key}
 "*) return 0 ;;
     esac
     return 1
+}
+
+# The subset of those that take an Nginx *access* log path as their first
+# argument. For these, "I already have a copy of the log here" is a meaningful
+# thing to say, and they're the ones that need gawk to parse the combined-format
+# timestamp. error-monitor reads a fixed set of system log paths for a domain and
+# filters them with plain awk, and run-monitoring's first argument is an hour
+# count — neither has a log file you could hand it locally.
+ACCESS_LOG_COMMANDS="
+scripts/monitoring/traffic-monitor
+scripts/monitoring/security-monitor
+scripts/monitoring/ai-bot-monitor
+"
+
+takes_access_log_argument() {
+    local command_key="$1"
+    case "$ACCESS_LOG_COMMANDS" in
+        *"
+${command_key}
+"*) return 0 ;;
+    esac
+    return 1
+}
+
+# Example arguments to show after the SSH redirect. Each of these scripts orders
+# its positional arguments differently, and a wrong example is worse than none.
+server_side_example_args() {
+    case "$1" in
+        scripts/monitoring/error-monitor) echo "example.com 48" ;;
+        scripts/monitoring/run-monitoring) echo "24 example.com" ;;
+        *) echo "/srv/www/example.com/logs/access.log 24" ;;
+    esac
 }
 
 # Those scripts date-filter with `date -d "N hours ago"`, which is GNU-only —
@@ -382,6 +416,7 @@ print_usage() {
     echo "  wp-ops [command] --where         Print the path to a command's script"
     echo ""
     echo "  wp-ops search <term>             Search commands by name or description"
+    echo "  wp-ops docs [term] [-l]          Search the guides (no term lists them)"
     echo "  wp-ops doctor                    Check dependencies and environment"
     echo "  wp-ops --help, -h                Show this help message"
     echo "  wp-ops --version, -v             Show version"
@@ -890,20 +925,40 @@ print_server_side_guidance() {
 
     echo "${YELLOW}${WARN} ${command_key} runs on the server, not here.${RESET}"
     echo ""
-    echo "It reads /srv/www/<site>/logs/access.log directly and uses GNU 'date -d',"
-    echo "so it has to execute on the Trellis host. Stream it over SSH — nothing"
-    echo "needs to be installed there:"
+    if [[ "$command_key" == "scripts/monitoring/error-monitor" ]]; then
+        echo "It reads /var/log/nginx/, /var/log/php*-fpm.log, /srv/www/<site>/logs/"
+        echo "and the systemd journal directly, and uses GNU 'date -d', so it has to"
+        echo "execute on the Trellis host. Stream it over SSH — nothing needs to be"
+        echo "installed there:"
+    else
+        echo "It reads /srv/www/<site>/logs/access.log directly and uses GNU 'date -d',"
+        echo "so it has to execute on the Trellis host. Stream it over SSH — nothing"
+        echo "needs to be installed there:"
+    fi
     echo ""
     echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path}${RESET}"
     echo ""
-    echo "Arguments go after the redirect, e.g. a different log and time window:"
+    echo "Arguments go after the redirect:"
     echo ""
     echo "  ${BOLD}ssh web@example.com 'bash -s' < ${relative_path} \\"
-    echo "      /srv/www/example.com/logs/access.log 24${RESET}"
+    echo "      $(server_side_example_args "$command_key")${RESET}"
     echo ""
+
+    if [[ "$command_key" == "scripts/monitoring/error-monitor" ]]; then
+        echo "${DIM}The systemd sections (critical errors, PHP segfaults, OOM kills) need${RESET}"
+        echo "${DIM}journal access, which the web user usually lacks — connect as root to${RESET}"
+        echo "${DIM}include them. They're reported as skipped rather than empty otherwise.${RESET}"
+        return 0
+    fi
+
     echo "${DIM}Accurate time filtering needs gawk on the server (Ubuntu ships mawk;${RESET}"
     echo "${DIM}apt install gawk). Without it the script falls back to a line estimate.${RESET}"
     echo ""
+
+    if ! takes_access_log_argument "$command_key"; then
+        return 0
+    fi
+
     if has_gnu_date; then
         echo "${DIM}Already have a log file on this machine? Pass its path and it runs here:${RESET}"
         echo "${DIM}  wp-ops ${command_key} /path/to/access.log${RESET}"
@@ -965,10 +1020,13 @@ execute_command() {
                 # /srv/www is the Trellis web root: present when we're actually
                 # on the server (run it), absent on a workstation. An explicit
                 # readable file argument is an intentional "I have the log here"
-                # — honoured, but only where GNU date exists to run it, since
-                # otherwise it dies several screens in on `date: illegal option`.
+                # — honoured for the commands that actually take a log path
+                # (error-monitor's first argument is a domain, run-monitoring's
+                # is an hour count), and only where GNU date exists to run it,
+                # since otherwise it dies several screens in on `date: illegal
+                # option`.
                 if [[ ! -d /srv/www ]]; then
-                    if [[ ! -f "${1:-}" ]]; then
+                    if ! takes_access_log_argument "$command_key" || [[ ! -f "${1:-}" ]]; then
                         print_server_side_guidance "$command_key" "$script_path"
                         return 1
                     fi
@@ -1122,6 +1180,13 @@ print_search_results() {
     if [[ -z "$matches" ]]; then
         echo "${YELLOW}No commands match '${term}'.${RESET}"
         echo ""
+        # Plenty of what this repo knows is written down rather than scripted
+        # (Nginx templates, troubleshooting guides), so point at the prose before
+        # sending someone off to browse the catalog.
+        if [[ -n "$(docs_matching_files "$term")" ]]; then
+            echo "The documentation mentions it though — try ${BOLD}wp-ops docs ${term}${RESET}."
+            echo ""
+        fi
         echo "Run ${BOLD}wp-ops${RESET} to browse everything by category."
         return 1
     fi
@@ -1142,6 +1207,134 @@ print_search_results() {
         is_server_side_command "$cmd_key" && tag="${YELLOW}(server)${RESET} "
         printf "  ${CYAN}%-40s${RESET} %s${DIM}%s${RESET}\n" "$cmd_key" "$tag" "$description"
     done <<< "$matches"
+    echo ""
+}
+
+# =============================================================================
+# Documentation Search
+# =============================================================================
+
+# This repo is more documentation than script — 60-odd guides, and two whole
+# categories (nginx/, troubleshooting/) that hold no runnable command at all.
+# `wp-ops search` only ever looked at command names and descriptions, so none of
+# that prose was reachable from the CLI; you had to know which file to open.
+
+# Matching lines shown per document before the rest are summarised. Guides are
+# long and a common term ("nginx") hits dozens of times in one file, which would
+# otherwise bury the other matching documents.
+DOC_MATCH_LIMIT=3
+
+# Width to truncate a matching line to, so a long paragraph stays on one row.
+DOC_LINE_WIDTH=96
+
+# Short terms drown in substring hits — "oom" also matches "server room", "ttl"
+# matches "settled". `-w` restores the signal without making the default
+# behaviour surprising. Intentionally unquoted at each use site: empty or "-w".
+DOC_GREP_OPTS=""
+
+find_docs() {
+    find "$REPO_ROOT" -type f -name "*.md" \
+        ! -path "*/.git/*" ! -path "*/node_modules/*" ! -path "*/vendor/*" \
+        | sort
+}
+
+# Fed by process substitution rather than a pipe, and always returning 0: under
+# `set -e` a `$(find_docs | while ...)` whose final iteration doesn't match would
+# take the whole CLI down with it.
+docs_matching_files() {
+    local term="$1"
+    local doc
+    while IFS= read -r doc; do
+        if grep -qi $DOC_GREP_OPTS -- "$term" "$doc" 2>/dev/null; then
+            echo "$doc"
+        fi
+    done < <(find_docs)
+    return 0
+}
+
+print_docs_list() {
+    local doc_count
+    doc_count=$(find_docs | wc -l | tr -d ' ')
+
+    echo "${BOLD}Documentation${RESET} ${DIM}(${doc_count} files)${RESET}"
+    echo ""
+
+    local doc
+    while IFS= read -r doc; do
+        printf "  ${CYAN}%s${RESET}\n" "${doc#${REPO_ROOT}/}"
+    done < <(find_docs)
+
+    echo ""
+    echo "${DIM}Search inside them with: wp-ops docs <term>${RESET}"
+    echo ""
+}
+
+print_docs_results() {
+    local term="$1"
+    local paths_only="${2:-}"
+
+    if [[ -z "$term" ]]; then
+        print_docs_list
+        return 0
+    fi
+
+    local matching_files
+    matching_files=$(docs_matching_files "$term")
+
+    if [[ -z "$matching_files" ]]; then
+        echo "${YELLOW}No documents match '${term}'.${RESET}"
+        echo ""
+        echo "Try ${BOLD}wp-ops search ${term}${RESET} to look for a command instead."
+        return 1
+    fi
+
+    # Machine/pipe-friendly mode, so `wp-ops docs oom -l | xargs $EDITOR` works.
+    if [[ -n "$paths_only" ]]; then
+        local doc
+        while IFS= read -r doc; do
+            echo "${doc#${REPO_ROOT}/}"
+        done <<< "$matching_files"
+        return 0
+    fi
+
+    local file_count noun
+    file_count=$(echo "$matching_files" | wc -l | tr -d ' ')
+    noun="documents"
+    [[ "$file_count" -eq 1 ]] && noun="document"
+
+    echo "${BOLD}${file_count} ${noun} matching '${term}':${RESET}"
+    echo ""
+
+    local doc match_count line line_number text
+    while IFS= read -r doc; do
+        match_count=$(grep -ci $DOC_GREP_OPTS -- "$term" "$doc" 2>/dev/null || echo 0)
+
+        printf "  ${CYAN}%s${RESET} ${DIM}(%s)${RESET}\n" \
+            "${doc#${REPO_ROOT}/}" "$match_count match$([[ "$match_count" -eq 1 ]] || echo es)"
+
+        while IFS= read -r line; do
+            line_number="${line%%:*}"
+            text="${line#*:}"
+            # Markdown indentation and list markers carry no meaning once a line
+            # is shown out of context, so collapse the leading whitespace.
+            text=$(echo "$text" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]\{2,\}/ /g')
+            if [[ ${#text} -gt $DOC_LINE_WIDTH ]]; then
+                text="${text:0:$((DOC_LINE_WIDTH - 1))}…"
+            fi
+            printf "    ${DIM}%5s${RESET}  %s\n" "$line_number" "$text"
+        done < <(grep -in $DOC_GREP_OPTS -- "$term" "$doc" 2>/dev/null | head -"$DOC_MATCH_LIMIT")
+
+        if [[ "$match_count" -gt "$DOC_MATCH_LIMIT" ]]; then
+            printf "    ${DIM}%5s  … %s more${RESET}\n" "" "$((match_count - DOC_MATCH_LIMIT))"
+        fi
+        echo ""
+    done <<< "$matching_files"
+
+    if [[ -z "$DOC_GREP_OPTS" ]]; then
+        echo "${DIM}Whole words only: wp-ops docs ${term} -w   ·   paths only: wp-ops docs ${term} -l${RESET}"
+    else
+        echo "${DIM}Paths only (for piping to an editor): wp-ops docs ${term} -l${RESET}"
+    fi
     echo ""
 }
 
@@ -1254,10 +1447,12 @@ run_doctor() {
     check_env_dir "WP_SITE_DIR" "needed by wp-cli/ and bedrock/ scripts" detect_wp_site_dir || true
     echo ""
 
-    local command_count
+    local command_count doc_count
     command_count=$(get_all_commands | wc -l | tr -d ' ')
+    doc_count=$(find_docs | wc -l | tr -d ' ')
     echo "${BOLD}Catalog${RESET}"
     printf "  ${GREEN}%s${RESET} ${DIM}%s commands discovered in %s${RESET}\n" "$CHECK" "$command_count" "$REPO_ROOT"
+    printf "  ${GREEN}%s${RESET} ${DIM}%s documents searchable with 'wp-ops docs <term>'${RESET}\n" "$CHECK" "$doc_count"
     echo ""
 
     if [[ $missing_required -eq 1 ]]; then
@@ -1430,7 +1625,7 @@ _wp_ops_completion() {
     local categories="$categories_list"
 
     if [[ \${cword} -eq 1 ]]; then
-        COMPREPLY=(\$(compgen -W "--help --version --json --completion search doctor \$categories" -- "\${cur}"))
+        COMPREPLY=(\$(compgen -W "--help --version --json --completion search docs doctor \$categories" -- "\${cur}"))
     elif [[ \${cword} -eq 2 ]]; then
         local category="\${words[1]}"
         local commands=""
@@ -1481,6 +1676,7 @@ main() {
         print_usage
         print_categories
         echo "Run 'wp-ops search <term>' to find a command"
+        echo "Run 'wp-ops docs <term>' to search the documentation"
         echo "Run 'wp-ops doctor' to check dependencies and environment"
         echo "Run 'wp-ops --json' for machine-readable command list"
         return 0
@@ -1492,6 +1688,7 @@ main() {
             print_usage
             print_categories
             echo "Run 'wp-ops search <term>' to find a command"
+            echo "Run 'wp-ops docs <term>' to search the documentation"
             echo "Run 'wp-ops doctor' to check dependencies and environment"
             echo "Run 'wp-ops --json' for machine-readable command list"
             return 0
@@ -1511,6 +1708,22 @@ main() {
             ;;
         search|--search)
             print_search_results "${2:-}"
+            return $?
+            ;;
+        docs|--docs)
+            shift
+            local docs_term="" docs_paths_only=""
+            # -l is accepted on either side of the term, since which one you
+            # reach for first depends on whether you're piping or reading.
+            local docs_arg
+            for docs_arg in "$@"; do
+                case "$docs_arg" in
+                    -l|--files|--paths) docs_paths_only=1 ;;
+                    -w|--word) DOC_GREP_OPTS="-w" ;;
+                    *) [[ -z "$docs_term" ]] && docs_term="$docs_arg" ;;
+                esac
+            done
+            print_docs_results "$docs_term" "$docs_paths_only"
             return $?
             ;;
         doctor|--doctor)

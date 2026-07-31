@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.9.0] - 2026-07-31
+
+### Added
+
+- **scripts/monitoring** - New `error-monitor.sh`: error-log review across the whole stack — Nginx (global and per-site, with a severity breakdown), PHP-FPM, WordPress/Acorn exceptions, MySQL/MariaDB, and the systemd journal (priority-`err` messages, PHP segfaults, OOM kills). Completes the monitoring set: the existing three read the *access* log and answer "who is visiting?", this one reads the *error* logs and answers "is anything broken?". Migrated from a client project, where it hardcoded one server and one domain; it now takes `[domain] [hours] [output_file]` like its siblings and is wired into `run-monitoring.sh`, whose summary gains an error section that calls out segfaults and OOM kills separately — those drop requests mid-flight and leave no access-log trace. Where the journal isn't readable (the `web` user usually can't), those sections report as *skipped* rather than empty, since "no errors" and "no permission" otherwise look identical while you're chasing an outage.
+- **wp-ops CLI** - `wp-ops docs [term]`: full-text search across the repository's ~60 guides, grouped by document with line numbers. `wp-ops search` only ever looked at command names and descriptions, which left two entire categories (`nginx/`, `troubleshooting/`) and every README unreachable from the CLI — a large part of what this toolkit knows is written down rather than scripted. `-w` matches whole words only (so `oom` stops matching "server room"), `-l` prints paths only for piping to an editor, and a bare `wp-ops docs` lists every guide. When `wp-ops search` finds no command for a term, it now checks the documentation and points there.
+
+### Fixed
+
+- **scripts/monitoring/error-monitor** - Time filtering that only claimed to be time filtering. The original counted `tail -100 | wc -l`, which reports ~100 for any non-empty log regardless of the window, and its Nginx count combined `find`'s output with a line count into a value that made `[ "$x" -gt 0 ]` fail outright. Every source is now filtered to the requested window by its own timestamp format (Nginx `2026/07/31 11:07:01`, PHP-FPM `[31-Jul-2026 …]`, Acorn `[2026-07-31 …]`, MySQL ISO), all of which sort chronologically as text — so plain `awk` string comparison suffices and no `gawk` is required on the server. Counts and excerpts now come from a single read of each file, so the number can't disagree with the lines printed beneath it. Also: PHP-FPM logs are found by globbing `/var/log/php*-fpm.log` instead of asking `php -v` (the CLI version can differ from the version FPM runs), Acorn stack-trace continuation lines stay attached to their entry, and the summary no longer exits early on `set -e` when a breakdown line's count is zero.
+- **wp-ops CLI** - The server-side guidance printed for `run-monitoring` was written for the access-log monitors: it described reading `access.log`, suggested a log path as the first argument (`run-monitoring`'s is an hour count), and offered to run it locally against a log file it doesn't accept. Guidance, example arguments, and the local-log-file escape hatch are now scoped to the commands that genuinely take an access log path.
+
 ## [3.8.0] - 2026-07-31
 
 ### Added

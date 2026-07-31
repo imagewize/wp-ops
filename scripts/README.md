@@ -41,6 +41,7 @@ scripts/
 ├── monitoring/                  # Server monitoring and alerting
 │   ├── 404-checker.sh          # Internal broken-link checker (homepage scan or recursive spider)
 │   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
+│   ├── error-monitor.sh        # Nginx/PHP-FPM/WordPress/MySQL/systemd error log review
 │   ├── redirect-check.sh       # Mass URL redirect checker using curl
 │   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
@@ -147,6 +148,9 @@ cd ~/code/my-plugin
 
 # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot
 ./scripts/monitoring/server-monitor.sh web@example.com
+
+# Review error logs (nginx, PHP-FPM, WordPress, MySQL, systemd)
+ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 24
 
 # Run all monitors and save timestamped reports
 ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
@@ -1643,6 +1647,83 @@ Average per worker: 150.02 MB
 
 ---
 
+### error-monitor.sh
+
+Error-log review across every layer of the stack. The traffic/security/AI-bot
+monitors read the *access* log and answer "who is visiting?"; this one reads the
+*error* logs and answers "is anything broken?".
+
+Runs **on the server** — it reads `/var/log/` and `/srv/www/<domain>/logs/`
+directly and needs GNU `date` — so stream it over SSH like `run-monitoring.sh`.
+
+#### Features
+
+- Nginx error log, global and per-site, with a severity breakdown
+  (`[emerg]`/`[alert]`/`[crit]`/`[error]`/`[warn]`/`[notice]`) so a single
+  `[emerg]` isn't buried among hundreds of routine notices
+- PHP-FPM error log, discovered by globbing `/var/log/php*-fpm.log` rather than
+  asking `php -v` — the CLI version can differ from the version FPM runs, and a
+  server mid-upgrade has more than one log
+- WordPress/Acorn exceptions (`.../cache/acorn/logs/laravel.log`), with stack
+  trace continuation lines kept attached to their entry
+- MySQL/MariaDB error log
+- systemd journal: priority-`err` messages, PHP segfaults, OOM kills
+- Every source is **filtered to the requested time window**, each by its own
+  timestamp format — counts and excerpts come from one read of the file, so they
+  can never disagree
+- Summary with a per-source breakdown, and a callout when segfaults or OOM kills
+  occurred (those drop requests mid-flight and never appear in the access log)
+
+#### Usage
+
+```bash
+ssh <target> 'bash -s' < ./error-monitor.sh [domain] [hours] [output_file]
+
+# Examples
+ssh web@example.com 'bash -s' < scripts/monitoring/error-monitor.sh
+ssh web@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 48
+ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 24
+
+# On the server itself
+./error-monitor.sh example.com 24
+```
+
+Connect as **root** to include the systemd sections. The `web` user usually
+can't read the journal, in which case those checks are reported as *skipped*
+rather than silently empty — an empty result and no permission look identical
+otherwise, and the difference matters when you're chasing an outage.
+
+#### Example Output
+
+```
+━━━ Nginx Error Log (example.com) ━━━
+14 entries in the last 24h (/srv/www/example.com/logs/error.log)
+
+━━━ Nginx Severity Breakdown ━━━
+  11 [error]
+   2 [warn]
+   1 [crit]
+
+━━━ Out of Memory Events ━━━
+✓ No OOM killer events
+
+━━━ Summary ━━━
+23 log entries in the last 24 hours
+
+Breakdown:
+  - Nginx (example.com):   14
+  - PHP-FPM:               2
+  - WordPress/Acorn:       7
+```
+
+#### Requirements
+
+- Runs on the server (GNU `date`; no `gawk` needed — the time filtering is plain
+  `awk` string comparison, since these log formats all sort chronologically as text)
+- `journalctl` access for the systemd sections (root, or a user in `adm`/`systemd-journal`)
+
+---
+
 ### 404-checker.sh
 
 Internal broken-link checker for WordPress sites. Scans for pages and links that return 4xx or 5xx responses. Two modes: a fast homepage scan (~30 s) that catches global footer/nav issues, and a recursive wget spider (~5–10 min) that traverses the whole site.
@@ -1740,7 +1821,7 @@ https://example.com/old-page/ => 404 ->
 
 ### run-monitoring.sh (285 lines)
 
-Orchestrator that runs all three monitoring scripts in sequence and generates a consolidated markdown summary report.
+Orchestrator that runs all four monitoring scripts in sequence and generates a consolidated markdown summary report.
 
 #### Features
 
@@ -1748,11 +1829,13 @@ Orchestrator that runs all three monitoring scripts in sequence and generates a 
   - `traffic-monitor.sh` — traffic analysis
   - `security-monitor.sh` — security threat detection
   - `ai-bot-monitor.sh` — AI crawler analysis
+  - `error-monitor.sh` — error logs across nginx, PHP-FPM, WordPress, MySQL, systemd
 
 - **Timestamped Output Files** (for the default site):
   - `traffic-monitor-YYYY-MM-DD-HHmmss.txt`
   - `security-monitor-YYYY-MM-DD-HHmmss.txt`
   - `ai-bot-monitor-YYYY-MM-DD-HHmmss.txt`
+  - `error-monitor-YYYY-MM-DD-HHmmss.txt`
   - `monitoring-summary-YYYY-MM-DD.md` — consolidated markdown report
 
   When a non-default `domain` argument is passed, each filename gets a
@@ -1767,8 +1850,13 @@ Orchestrator that runs all three monitoring scripts in sequence and generates a 
   - Site name, total requests, real user traffic, unique visitors, bandwidth
   - Security alert and warning counts with top alerts listed
   - AI crawler share of traffic and bandwidth
+  - Error-log entry totals, plus PHP segfault and OOM-kill counts called out
+    separately (those take down requests without leaving an access-log trace)
   - Top 10 most requested pages (real users)
   - Recommendations and next steps
+
+  Run it as `root` to get the systemd portion of the error report; as `web` those
+  sections are marked skipped.
 
 #### Usage
 

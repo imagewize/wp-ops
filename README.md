@@ -31,6 +31,7 @@ wp-ops trellis --help        # list commands in one category
 wp-ops <category> <command> [args...]
 
 wp-ops search webp           # find a command by name or description
+wp-ops docs oom              # search the guides, not just the commands
 wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
@@ -56,13 +57,25 @@ If either variable is unset, wp-ops looks for the project by walking up from you
 
 `nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts; `wp-ops nginx` lists those documents instead of commands.
 
-Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the Nginx log monitors, which read `/srv/www/<site>/logs/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
+A good deal of what this repo knows is written down rather than scripted, so `wp-ops docs` searches the prose the way `wp-ops search` searches the catalog:
+
+```bash
+wp-ops docs                  # list every guide
+wp-ops docs "search-replace" # show matching lines, grouped by document
+wp-ops docs oom -w           # whole words only (so "oom" skips "server room")
+wp-ops docs oom -l           # paths only, for piping: wp-ops docs oom -l | xargs $EDITOR
+```
+
+When `wp-ops search` finds no command for a term, it checks the documentation and points you there.
+
+Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the log monitors, which read `/srv/www/<site>/logs/` and `/var/log/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
 
 ```bash
 ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 48
 ```
 
-Nothing needs to be installed on the server for that — the script is streamed to its stdin. It does want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it the monitors fall back to a line-count estimate. `wp-ops --json` reports this as a `runs_on` field (`local` or `server`).
+Nothing needs to be installed on the server for that — the script is streamed to its stdin. The access-log monitors want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it they fall back to a line-count estimate. `error-monitor` needs neither gawk nor a log path — it takes the domain, and connecting as `root` additionally gets you the systemd sections (critical errors, PHP segfaults, OOM kills) that the `web` user can't read. `wp-ops --json` reports the local/server split as a `runs_on` field.
 
 `wordpress-utilities/` is different: those are copy-paste-into-a-theme snippets, not runnable scripts, so `wp-ops wordpress-utilities <snippet>` prints or clipboard-copies them instead:
 
