@@ -93,7 +93,7 @@ filter_recent_logs() {
     cutoff_epoch=$(date -d "${HOURS} hours ago" +%s)
 
     # Parse nginx combined log timestamps and filter by actual time.
-    # Requires gawk (available by default on Ubuntu); falls back to tail estimate if missing.
+    # Requires gawk (Ubuntu ships mawk by default: apt install gawk); falls back to tail estimate if missing.
     # Nginx timestamp format: [DD/Mon/YYYY:HH:MM:SS +ZONE]
     if command -v gawk &>/dev/null; then
         gawk -v cutoff="$cutoff_epoch" '

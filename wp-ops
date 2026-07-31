@@ -1118,10 +1118,24 @@ run_doctor() {
     check_binary "zip" "packaging plugin/theme release assets" "optional" || true
     echo ""
 
+    echo "${BOLD}Remote & sync${RESET}"
+    check_binary "ssh" "remote monitors, screenshots, post counts" "optional" || true
+    check_binary "rsync" "theme and package sync" "optional" || true
+    echo ""
+
     echo "${BOLD}Helpers${RESET}"
     check_binary "jq" "JSON parsing in several scripts" "optional" || true
-    check_binary "gawk" "log analysis in monitoring scripts" "optional" || true
     check_binary "fzf" "fuzzy command picker in 'wp-ops'" "optional" || true
+    echo ""
+
+    # The log monitors (traffic/security/ai-bot) read /srv/www/<site>/logs/
+    # directly and use GNU `date -d`, and run-monitoring.sh is invoked as
+    # `ssh host 'bash -s' < run-monitoring.sh`. They execute on the server, so
+    # checking their dependencies against this machine would be misleading.
+    echo "${BOLD}Server-side${RESET} ${DIM}(not checked here — these run on the server)${RESET}"
+    printf "  ${DIM}%s %-18s %s${RESET}\n" "·" "gawk" "time filtering in the Nginx log monitors"
+    printf "  ${DIM}%s %-18s %s${RESET}\n" " " "" "Ubuntu ships mawk by default, so gawk may be absent:"
+    printf "  ${DIM}%s %-18s %s${RESET}\n" " " "" "check with  ssh web@host 'command -v gawk'"
     echo ""
 
     echo "${BOLD}Environment${RESET}"
