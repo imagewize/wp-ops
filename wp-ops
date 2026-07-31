@@ -7,11 +7,13 @@
 # Usage: wp-ops [category] [command] [args...]
 #        wp-ops --help
 #        wp-ops --json list
+#        wp-ops search <term>
+#        wp-ops doctor
 #        wp-ops scripts backup db example.com production
 #
 # Categories: scripts, trellis, wp-cli, bedrock, nginx, wordpress-utilities, troubleshooting
 #
-# Install: ./install.sh (symlinks this file onto your PATH)
+# Install: ./install.sh (adds this repo to your PATH)
 
 # Use compat mode for older bash versions (macOS ships 3.2)
 set -e
@@ -83,6 +85,16 @@ fi
 
 CHECK="✓"
 CROSS="✗"
+WARN="!"
+
+# The toolkit's version lives in CHANGELOG.md (Keep a Changelog format), so read
+# it from there instead of maintaining a second copy that silently drifts.
+get_version() {
+    local version
+    version=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' "${REPO_ROOT}/CHANGELOG.md" 2>/dev/null \
+        | tr -d '#[] ')
+    echo "${version:-unknown}"
+}
 
 # =============================================================================
 # Data Structures
@@ -106,10 +118,40 @@ trap "rm -f '$COMMAND_FILE' '$CATEGORY_FILE'" EXIT
 # File format for CATEGORY_FILE:
 # category|command_key1,command_key2,...
 
+# Header comments are written for someone reading the file, not for a one-line
+# catalog entry, so tidy them up: drop the "script.sh - " self-reference many of
+# them open with, keep only the first sentence (headers routinely wrap a
+# paragraph across several comment lines), and cap the length so the catalog's
+# columns stay aligned.
+clean_description() {
+    local description="$1"
+    local script_path="$2"
+    local filename
+    filename=$(basename "$script_path")
+
+    description=$(echo "$description" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    description="${description#${filename}}"
+    description=$(echo "$description" | sed -E 's/^[[:space:]]*[-—:][[:space:]]*//')
+
+    # First sentence only — "Foo (in place). Trims whitespace," becomes "Foo (in
+    # place)." rather than a fragment ending mid-clause.
+    if [[ "$description" == *". "* ]]; then
+        description="${description%%. *}."
+    fi
+
+    description=$(echo "$description" | sed -e 's/[[:space:],;:]*$//')
+
+    if [[ ${#description} -gt 72 ]]; then
+        description="${description:0:71}…"
+    fi
+
+    echo "$description"
+}
+
 discover_commands() {
     > "$COMMAND_FILE"
     > "$CATEGORY_FILE"
-    
+
     for i in "${!CATEGORIES[@]}"; do
         category="${CATEGORIES[$i]}"
         category_dir="${REPO_ROOT}/${category}"
@@ -183,7 +225,7 @@ discover_commands() {
                         description=$(head -20 "$script_path" | grep -m1 -E '^#\s' | sed 's/^#\s*//')
                         ;;
                 esac
-                description=$(echo "$description" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+                description=$(clean_description "$description" "$script_path")
                 if [[ -z "$description" ]]; then
                     description=$(basename "$command_key")
                 fi
@@ -217,8 +259,55 @@ get_category_commands() {
     grep "^${category}|" "$CATEGORY_FILE" 2>/dev/null | head -1 | cut -d'|' -f2-
 }
 
+# Emitted in CATEGORIES order (most-used first), not alphabetically — that
+# ordering is curated, and sorting would throw it away.
 get_active_categories() {
-    cut -d'|' -f1 "$CATEGORY_FILE" 2>/dev/null | sort -u
+    local category
+    for category in "${CATEGORIES[@]}"; do
+        if grep -q "^${category}|" "$CATEGORY_FILE" 2>/dev/null; then
+            echo "$category"
+        fi
+    done
+}
+
+get_category_display_name() {
+    local category="$1"
+    local i
+    for i in "${!CATEGORIES[@]}"; do
+        if [[ "${CATEGORIES[$i]}" == "$category" ]]; then
+            echo "${CATEGORY_DISPLAY_NAMES[$i]}"
+            return 0
+        fi
+    done
+    echo "$category"
+}
+
+# nginx/ and troubleshooting/ hold guides and Nginx config templates, not
+# runnable scripts, so they never produce commands. They're still real parts of
+# the toolkit, so treat them as documentation categories rather than letting
+# 'wp-ops nginx' dead-end on "no commands found".
+category_is_docs_only() {
+    local category="$1"
+    [[ -d "${REPO_ROOT}/${category}" ]] \
+        && ! grep -q "^${category}|" "$CATEGORY_FILE" 2>/dev/null
+}
+
+print_category_docs() {
+    local category="$1"
+    local category_display
+    category_display=$(get_category_display_name "$category")
+
+    echo "${BOLD}${category_display}${RESET} ${DIM}(documentation, no runnable commands)${RESET}"
+    echo ""
+
+    local doc
+    while IFS= read -r doc; do
+        printf "  ${CYAN}%s${RESET}\n" "${doc#${REPO_ROOT}/}"
+    done < <(find "${REPO_ROOT}/${category}" -type f -name "*.md" | sort)
+    echo ""
+    echo "${DIM}These are guides and config templates — open them in your editor, or copy${RESET}"
+    echo "${DIM}the .conf.j2 templates into your Trellis project's nginx-includes/.${RESET}"
+    echo ""
 }
 
 get_all_commands() {
@@ -257,13 +346,18 @@ print_header() {
 
 print_usage() {
     echo "Usage:"
-    echo "  wp-ops                           Show all available commands"
+    echo "  wp-ops                           Interactive picker (or list, when piped)"
+    echo "  wp-ops [category] [command]      Run a command"
+    echo "  wp-ops [category] --help         Show commands in a category"
+    echo "  wp-ops [command] --help          Show a command's own help"
+    echo "  wp-ops [command] --where         Print the path to a command's script"
+    echo ""
+    echo "  wp-ops search <term>             Search commands by name or description"
+    echo "  wp-ops doctor                    Check dependencies and environment"
     echo "  wp-ops --help, -h                Show this help message"
     echo "  wp-ops --version, -v             Show version"
     echo "  wp-ops --json                    Output command list as JSON"
     echo "  wp-ops --completion              Show bash completion script"
-    echo "  wp-ops [category] --help         Show commands in a category"
-    echo "  wp-ops [category] [command]      Run a command"
     echo ""
 }
 
@@ -271,35 +365,41 @@ print_categories() {
     echo "${BOLD}Available Categories:${RESET}"
     echo ""
 
-    for category in $(get_active_categories); do
-        for i in "${!CATEGORIES[@]}"; do
-            if [[ "${CATEGORIES[$i]}" == "$category" ]]; then
-                category_display="${CATEGORY_DISPLAY_NAMES[$i]}"
-                break
-            fi
-        done
+    local category category_display cmd_list command_count noun
+    for category in "${CATEGORIES[@]}"; do
+        category_display=$(get_category_display_name "$category")
+
+        if category_is_docs_only "$category"; then
+            printf "  ${CYAN}%-25s${RESET} ${DIM}%-20s (docs only)${RESET}\n" \
+                "$category_display" "$category"
+            continue
+        fi
 
         cmd_list=$(get_category_commands "$category")
-        command_count=$(echo "$cmd_list" | tr ',' '\n' | wc -l)
-        printf "  ${CYAN}%-25s${RESET} ${DIM}%-20s (%d commands)${RESET}\n" "$category_display" "$category" "$command_count"
+        [[ -z "$cmd_list" ]] && continue
+
+        command_count=$(echo "$cmd_list" | tr ',' '\n' | wc -l | tr -d ' ')
+        noun="commands"
+        [[ "$command_count" -eq 1 ]] && noun="command"
+        printf "  ${CYAN}%-25s${RESET} ${DIM}%-20s (%d %s)${RESET}\n" \
+            "$category_display" "$category" "$command_count" "$noun"
     done
     echo ""
 }
 
 print_category_commands() {
     local category="$1"
-    
-    local category_display="$category"
-    for i in "${!CATEGORIES[@]}"; do
-        if [[ "${CATEGORIES[$i]}" == "$category" ]]; then
-            category_display="${CATEGORY_DISPLAY_NAMES[$i]}"
-            break
-        fi
-    done
-    
+
+    local category_display
+    category_display=$(get_category_display_name "$category")
+
     local cmd_list=$(get_category_commands "$category")
-    
+
     if [[ -z "$cmd_list" ]]; then
+        if category_is_docs_only "$category"; then
+            print_category_docs "$category"
+            return 1
+        fi
         echo "${YELLOW}No commands found in category: $category_display${RESET}"
         return 1
     fi
@@ -324,15 +424,18 @@ print_category_commands() {
             last_subgroup="$subgroup"
         fi
 
+        # The subgroup heading above already carries the "category/subgroup/"
+        # prefix, so repeating it per row only overflows the column. The bare
+        # name is also what you'd type: `wp-ops trellis database-backup`.
         local description
         description=$(get_description "$cmd_key")
-        printf "  ${CYAN}%-30s${RESET} ${DIM}%s${RESET}\n" "$cmd_key" "$description"
+        printf "    ${CYAN}%-32s${RESET} ${DIM}%s${RESET}\n" "$(basename "$cmd_key")" "$description"
     done
     echo ""
 }
 
 print_all_commands() {
-    for category in $(get_active_categories | sort); do
+    for category in $(get_active_categories); do
         print_category_commands "$category"
     done
 }
@@ -341,7 +444,7 @@ print_json() {
     local first=true
     echo "["
     
-    for category in $(get_active_categories | sort); do
+    for category in $(get_active_categories); do
         local cmd_list=$(get_category_commands "$category")
         
         for cmd_key in $(echo "$cmd_list" | tr ',' '\n' | sort); do
@@ -410,20 +513,122 @@ get_script_path() {
     return 1
 }
 
+# A Trellis project is a parent directory holding a trellis/ansible.cfg — so
+# from anywhere inside one (the trellis/ dir itself, the Bedrock site next to
+# it, a theme deep inside that site), walking up finds it. Saves exporting
+# TRELLIS_DIR when you're already standing in the project you mean.
+#
+# The walk stops below $HOME on purpose. A generic parent like ~/code holds many
+# unrelated checkouts, and matching a sibling ~/code/trellis from ~/code/wp-ops
+# would silently aim destructive playbooks (database-push!) at the wrong
+# project. Detections are also confirmed before use — see require_trellis_dir.
+detect_trellis_dir() {
+    local dir="$PWD"
+    local stop_at="${HOME:-/}"
+    local previous="$PWD"
+
+    while [[ -n "$dir" && "$dir" != "/" && "$dir" != "$stop_at" ]]; do
+        # Standing in the Trellis directory itself.
+        if [[ -f "${dir}/ansible.cfg" && -d "${dir}/group_vars" ]]; then
+            echo "$dir"
+            return 0
+        fi
+
+        # $dir contains a trellis/ — but so does any parent that merely holds a
+        # Trellis checkout among unrelated repos (~/code/trellis sitting next to
+        # ~/code/wp-ops). Standing in the project root is unambiguous; from
+        # deeper down it's only really *this* project when the directory we
+        # walked up through is the project's own Bedrock site (web/wp), not a
+        # sibling that happens to live alongside the Trellis checkout.
+        if [[ -f "${dir}/trellis/ansible.cfg" ]]; then
+            if [[ "$dir" == "$PWD" || -d "${previous}/web/wp" ]]; then
+                echo "${dir}/trellis"
+                return 0
+            fi
+        fi
+
+        previous="$dir"
+        dir=$(dirname "$dir")
+    done
+
+    return 1
+}
+
+# Likewise for a Bedrock site: web/wp/ is Bedrock's WordPress core directory,
+# and composer.json sits at its root.
+detect_wp_site_dir() {
+    local dir="$PWD"
+    local stop_at="${HOME:-/}"
+
+    while [[ -n "$dir" && "$dir" != "/" && "$dir" != "$stop_at" ]]; do
+        if [[ -d "${dir}/web/wp" && -f "${dir}/composer.json" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir=$(dirname "$dir")
+    done
+
+    return 1
+}
+
+# An auto-detected directory is a convenience, not an assumption worth acting
+# on unprompted: these commands back up, overwrite, and push databases. Confirm
+# interactively, and refuse to guess at all when there's nobody to ask.
+confirm_detected_dir() {
+    local var_name="$1"
+    local value="$2"
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo "${RED}${CROSS} ${var_name} is not set.${RESET}"
+        echo ""
+        echo "Detected a candidate at ${value}, but wp-ops won't assume it"
+        echo "non-interactively. Set it explicitly:"
+        echo ""
+        echo "  export ${var_name}=${value}"
+        echo ""
+        return 1
+    fi
+
+    echo "${YELLOW}${WARN} ${var_name} is not set.${RESET}"
+    echo "Detected from the current directory: ${BOLD}${value}${RESET}"
+    echo ""
+
+    local reply
+    read -r -p "Use it for this command? [y/N] " reply
+    echo ""
+
+    if [[ "$reply" =~ ^[Yy] ]]; then
+        return 0
+    fi
+
+    echo "Cancelled. Set it explicitly instead:"
+    echo ""
+    echo "  export ${var_name}=/path/to/your/project"
+    echo ""
+    return 1
+}
+
 # Ansible playbooks (trellis/backup, trellis/monitoring) run against a real
 # Trellis project's ansible.cfg/inventory/group_vars, not against this repo,
 # so they need to know where that project lives.
 require_trellis_dir() {
     if [[ -z "${TRELLIS_DIR:-}" ]]; then
-        echo "${RED}${CROSS} TRELLIS_DIR is not set.${RESET}"
-        echo ""
-        echo "Ansible playbook commands run against a real Trellis project (they read"
-        echo "its ansible.cfg, inventory, and group_vars/), so wp-ops needs to know"
-        echo "where that project lives:"
-        echo ""
-        echo "  export TRELLIS_DIR=/path/to/your/trellis"
-        echo ""
-        return 1
+        local detected
+        if detected=$(detect_trellis_dir); then
+            confirm_detected_dir "TRELLIS_DIR" "$detected" || return 1
+            TRELLIS_DIR="$detected"
+            export TRELLIS_DIR
+        else
+            echo "${RED}${CROSS} TRELLIS_DIR is not set.${RESET}"
+            echo ""
+            echo "Ansible playbook commands run against a real Trellis project (they read"
+            echo "its ansible.cfg, inventory, and group_vars/), so wp-ops needs to know"
+            echo "where that project lives. Either run this from inside the project, or:"
+            echo ""
+            echo "  export TRELLIS_DIR=/path/to/your/trellis"
+            echo ""
+            return 1
+        fi
     fi
 
     if [[ ! -f "${TRELLIS_DIR}/ansible.cfg" ]]; then
@@ -479,15 +684,23 @@ execute_playbook() {
 # Ansible) wp-ops needs to know where that site lives.
 require_wp_site_dir() {
     if [[ -z "${WP_SITE_DIR:-}" ]]; then
-        echo "${RED}${CROSS} WP_SITE_DIR is not set.${RESET}"
-        echo ""
-        echo "WP-CLI script commands run against a real WordPress/Bedrock site, so"
-        echo "wp-ops needs to know where that project lives (the directory you'd"
-        echo "normally cd into before running 'wp ...'):"
-        echo ""
-        echo "  export WP_SITE_DIR=/path/to/your/bedrock-site"
-        echo ""
-        return 1
+        local detected
+        if detected=$(detect_wp_site_dir); then
+            confirm_detected_dir "WP_SITE_DIR" "$detected" || return 1
+            WP_SITE_DIR="$detected"
+            export WP_SITE_DIR
+        else
+            echo "${RED}${CROSS} WP_SITE_DIR is not set.${RESET}"
+            echo ""
+            echo "WP-CLI script commands run against a real WordPress/Bedrock site, so"
+            echo "wp-ops needs to know where that project lives (the directory you'd"
+            echo "normally cd into before running 'wp ...'). Either run this from inside"
+            echo "the site, or:"
+            echo ""
+            echo "  export WP_SITE_DIR=/path/to/your/bedrock-site"
+            echo ""
+            return 1
+        fi
     fi
 
     if [[ ! -d "$WP_SITE_DIR" ]]; then
@@ -652,6 +865,13 @@ execute_command() {
         return 1
     fi
 
+    # Handled before dispatch so it works for every command type — the file you'd
+    # read, edit, or copy into a project is often what you actually want.
+    if [[ "${1:-}" == "--where" ]]; then
+        echo "$script_path"
+        return 0
+    fi
+
     if [[ "$command_key" == wordpress-utilities/* ]]; then
         execute_snippet "$command_key" "$script_path" "$@"
         return $?
@@ -711,6 +931,41 @@ execute_command() {
     return "$exit_code"
 }
 
+# Every command_key whose basename is exactly $1. Usually one, but some names
+# legitimately repeat across subdirectories (scripts/images/convert-to-webp and
+# scripts/patterns/convert-to-webp), and silently running whichever sorts first
+# is the wrong answer.
+find_commands_by_basename() {
+    local name="$1"
+    local category_filter="${2:-}"
+    local cmd_key
+
+    for cmd_key in $(get_all_commands); do
+        if [[ -n "$category_filter" && "$cmd_key" != "${category_filter}/"* ]]; then
+            continue
+        fi
+        if [[ "$(basename "$cmd_key")" == "$name" ]]; then
+            echo "$cmd_key"
+        fi
+    done
+}
+
+print_ambiguous() {
+    local name="$1"
+    shift
+
+    local first_match="$1"
+
+    echo "${YELLOW}${WARN} '${name}' matches more than one command:${RESET}"
+    echo ""
+    local cmd_key
+    for cmd_key in "$@"; do
+        printf "  ${CYAN}%-40s${RESET} ${DIM}%s${RESET}\n" "$cmd_key" "$(get_description "$cmd_key")"
+    done
+    echo ""
+    echo "Run it by its full name, e.g. ${BOLD}wp-ops ${first_match}${RESET}"
+}
+
 suggest_similar() {
     local input="$1"
     local best_match=""
@@ -741,14 +996,216 @@ suggest_similar() {
 }
 
 # =============================================================================
+# Search
+# =============================================================================
+
+print_search_results() {
+    local term="$1"
+
+    if [[ -z "$term" ]]; then
+        echo "${RED}${CROSS} Usage: wp-ops search <term>${RESET}"
+        return 1
+    fi
+
+    local matches
+    matches=$(grep -i -- "$term" "$COMMAND_FILE" 2>/dev/null | sort || true)
+
+    if [[ -z "$matches" ]]; then
+        echo "${YELLOW}No commands match '${term}'.${RESET}"
+        echo ""
+        echo "Run ${BOLD}wp-ops${RESET} to browse everything by category."
+        return 1
+    fi
+
+    local count
+    count=$(echo "$matches" | wc -l | tr -d ' ')
+    local noun="matches"
+    [[ "$count" -eq 1 ]] && noun="match"
+
+    echo "${BOLD}${count} ${noun} for '${term}':${RESET}"
+    echo ""
+
+    local line cmd_key description
+    while IFS= read -r line; do
+        cmd_key="${line%%|*}"
+        description="${line#*|}"
+        printf "  ${CYAN}%-40s${RESET} ${DIM}%s${RESET}\n" "$cmd_key" "$description"
+    done <<< "$matches"
+    echo ""
+}
+
+# =============================================================================
+# Doctor
+# =============================================================================
+
+# Most commands here shell out to tools this repo deliberately doesn't vendor
+# (Ansible, WP-CLI, ImageMagick, Playwright...). Without a preflight you only
+# find out which one is missing partway through an operation.
+check_binary() {
+    local binary="$1"
+    local purpose="$2"
+    local required="$3"
+
+    if command -v "$binary" >/dev/null 2>&1; then
+        printf "  ${GREEN}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}%s${RESET}\n" "$CHECK" "$binary" "$purpose"
+        return 0
+    fi
+
+    if [[ "$required" == "required" ]]; then
+        printf "  ${RED}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}%s${RESET}\n" "$CROSS" "$binary" "$purpose"
+    else
+        printf "  ${YELLOW}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}%s${RESET}\n" "$WARN" "$binary" "$purpose"
+    fi
+    return 1
+}
+
+check_env_dir() {
+    local var_name="$1"
+    local purpose="$2"
+    local detector="$3"
+
+    local value="${!var_name:-}"
+
+    if [[ -z "$value" ]]; then
+        local detected
+        if detected=$("$detector"); then
+            printf "  ${YELLOW}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}not set — candidate at %s (confirmed per run)${RESET}\n" \
+                "$WARN" "$var_name" "$detected"
+        else
+            printf "  ${YELLOW}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}not set — %s${RESET}\n" \
+                "$WARN" "$var_name" "$purpose"
+        fi
+        return 1
+    fi
+
+    if [[ ! -d "$value" ]]; then
+        printf "  ${RED}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}%s (not a directory)${RESET}\n" "$CROSS" "$var_name" "$value"
+        return 1
+    fi
+
+    printf "  ${GREEN}%s${RESET} ${BOLD}%-18s${RESET} ${DIM}%s${RESET}\n" "$CHECK" "$var_name" "$value"
+    return 0
+}
+
+run_doctor() {
+    local missing_required=0
+
+    echo ""
+    echo "${BOLD}wp-ops doctor${RESET} ${DIM}$(get_version)${RESET}"
+    echo ""
+
+    echo "${BOLD}Core${RESET}"
+    check_binary "git" "version control, release scripts" "required" || missing_required=1
+    check_binary "curl" "redirect checks, 404 checks, webhooks" "required" || missing_required=1
+    echo ""
+
+    echo "${BOLD}WordPress & Trellis${RESET}"
+    check_binary "wp" "WP-CLI scripts (wp-cli/, bedrock/)" "optional" || true
+    check_binary "ansible-playbook" "Trellis playbooks (trellis/)" "optional" || true
+    check_binary "trellis" "Trellis CLI" "optional" || true
+    check_binary "composer" "Bedrock dependency management" "optional" || true
+    echo ""
+
+    echo "${BOLD}Images & patterns${RESET}"
+    check_binary "magick" "batch resize, trim/center screenshots" "optional" || true
+    check_binary "cwebp" "WebP conversion" "optional" || true
+    check_binary "node" "Playwright screenshots, sharp conversion" "optional" || true
+    echo ""
+
+    echo "${BOLD}Git & release${RESET}"
+    check_binary "gh" "PR creation, releases, traffic stats" "optional" || true
+    check_binary "svn" "WordPress.org plugin deploys" "optional" || true
+    check_binary "zip" "packaging plugin/theme release assets" "optional" || true
+    echo ""
+
+    echo "${BOLD}Helpers${RESET}"
+    check_binary "jq" "JSON parsing in several scripts" "optional" || true
+    check_binary "gawk" "log analysis in monitoring scripts" "optional" || true
+    check_binary "fzf" "fuzzy command picker in 'wp-ops'" "optional" || true
+    echo ""
+
+    echo "${BOLD}Environment${RESET}"
+    check_env_dir "TRELLIS_DIR" "needed by trellis/ playbooks" detect_trellis_dir || true
+    check_env_dir "WP_SITE_DIR" "needed by wp-cli/ and bedrock/ scripts" detect_wp_site_dir || true
+    echo ""
+
+    local command_count
+    command_count=$(get_all_commands | wc -l | tr -d ' ')
+    echo "${BOLD}Catalog${RESET}"
+    printf "  ${GREEN}%s${RESET} ${DIM}%s commands discovered in %s${RESET}\n" "$CHECK" "$command_count" "$REPO_ROOT"
+    echo ""
+
+    if [[ $missing_required -eq 1 ]]; then
+        echo "${RED}${CROSS} Missing a required tool — install it before continuing.${RESET}"
+        echo ""
+        return 1
+    fi
+
+    echo "${GREEN}${CHECK} Core tools present. Optional ones are only needed by the commands that use them.${RESET}"
+    echo ""
+    return 0
+}
+
+# =============================================================================
 # Interactive Menu
 # =============================================================================
 
+# With ~65 commands across 8 categories, drilling category -> command via
+# `select` means a lot of scrolling. When fzf is available, skip straight to
+# fuzzy-matching the whole catalog (name and description) with the script's
+# header comment as a preview.
+fzf_menu() {
+    local selection
+    selection=$(
+        while IFS='|' read -r cmd_key description; do
+            printf "%s\t%s\n" "$cmd_key" "$description"
+        done < "$COMMAND_FILE" | sort | fzf \
+            --delimiter='\t' \
+            --with-nth=1,2 \
+            --prompt='wp-ops > ' \
+            --header='Type to filter · Enter to run · Esc to quit' \
+            --height=80% \
+            --reverse \
+            --preview="head -40 ${REPO_ROOT}/{1}.* 2>/dev/null" \
+            --preview-window='right:55%:wrap'
+    ) || return 1
+
+    [[ -z "$selection" ]] && return 1
+
+    local cmd_key="${selection%%$'\t'*}"
+
+    echo ""
+    printf "  ${BOLD}%s${RESET}\n" "$cmd_key"
+    printf "  ${DIM}%s${RESET}\n" "$(get_description "$cmd_key")"
+    echo ""
+
+    local extra_args=()
+    read -r -p "Arguments (leave blank for none, --help for usage): " -a extra_args
+
+    echo ""
+    # Guard against set -e: a failing command shouldn't abort the picker loop.
+    execute_command "$cmd_key" "${extra_args[@]+"${extra_args[@]}"}" || true
+    return 0
+}
+
 interactive_menu() {
+    # fzf_menu returns non-zero when the user escapes out of the picker, which
+    # is how they quit the loop.
+    if command -v fzf >/dev/null 2>&1; then
+        while true; do
+            fzf_menu || return 0
+            echo ""
+            local again
+            read -r -p "Pick another command? [Y/n] " again
+            [[ "$again" =~ ^[Nn] ]] && return 0
+            echo ""
+        done
+    fi
+
     local categories=()
     local category
 
-    for category in $(get_active_categories | sort); do
+    for category in $(get_active_categories); do
         categories+=("$category")
     done
     categories+=("Quit")
@@ -831,7 +1288,7 @@ interactive_command_menu() {
 
 print_completion() {
     local categories_list
-    categories_list=$(get_active_categories | sort | tr '\n' ' ')
+    categories_list=$(get_active_categories | tr '\n' ' ')
     
     cat <<EOF
 # Bash completion for wp-ops
@@ -842,14 +1299,14 @@ _wp_ops_completion() {
     local categories="$categories_list"
 
     if [[ \${cword} -eq 1 ]]; then
-        COMPREPLY=(\$(compgen -W "--help --version --json --completion \$categories" -- "\${cur}"))
+        COMPREPLY=(\$(compgen -W "--help --version --json --completion search doctor \$categories" -- "\${cur}"))
     elif [[ \${cword} -eq 2 ]]; then
         local category="\${words[1]}"
         local commands=""
         case "\$category" in
 EOF
     
-    for cat in $(get_active_categories | sort); do
+    for cat in $(get_active_categories); do
         cmd_list=$(get_category_commands "$cat" | tr ',' '\n')
         echo "            $cat)"
         echo -n '                commands="'
@@ -892,8 +1349,9 @@ main() {
 
         print_usage
         print_categories
+        echo "Run 'wp-ops search <term>' to find a command"
+        echo "Run 'wp-ops doctor' to check dependencies and environment"
         echo "Run 'wp-ops --json' for machine-readable command list"
-        echo "Run 'wp-ops [category] --help' to see commands in a category"
         return 0
     fi
     
@@ -902,12 +1360,14 @@ main() {
             print_header
             print_usage
             print_categories
+            echo "Run 'wp-ops search <term>' to find a command"
+            echo "Run 'wp-ops doctor' to check dependencies and environment"
             echo "Run 'wp-ops --json' for machine-readable command list"
             return 0
             ;;
         --version|-v)
-            echo "wp-ops CLI v1.0.0"
-            echo "Part of wp-ops toolkit"
+            echo "wp-ops $(get_version)"
+            echo "$(get_all_commands | wc -l | tr -d ' ') commands from ${REPO_ROOT}"
             return 0
             ;;
         --json)
@@ -918,106 +1378,94 @@ main() {
             print_completion
             return 0
             ;;
+        search|--search)
+            print_search_results "${2:-}"
+            return $?
+            ;;
+        doctor|--doctor)
+            run_doctor
+            return $?
+            ;;
     esac
     
     local category=""
     local command=""
     local remaining_args=("$@")
-    
-    is_category=false
+    local cat
+
+    # An optional leading category ("wp-ops trellis database-backup") narrows
+    # the lookup; without one the whole catalog is searched.
     for cat in "${CATEGORIES[@]}"; do
         if [[ "${remaining_args[0]}" == "$cat" ]]; then
             category="$cat"
-            is_category=true
             remaining_args=("${remaining_args[@]:1}")
             break
         fi
     done
-    
+
     if [[ ${#remaining_args[@]} -gt 0 ]]; then
-        if [[ "$is_category" == false ]]; then
-            for cat in "${CATEGORIES[@]}"; do
-                if [[ "${remaining_args[0]}" == "$cat" ]]; then
-                    category="$cat"
-                    remaining_args=("${remaining_args[@]:1}")
-                    is_category=true
-                    break
-                fi
-            done
+        local candidate="${remaining_args[0]}"
+
+        # "wp-ops trellis --help" lists the category rather than looking for a
+        # command literally named "--help".
+        if [[ -n "$category" && ( "$candidate" == "--help" || "$candidate" == "-h" ) ]]; then
+            remaining_args=("${remaining_args[@]:1}")
+            candidate=""
         fi
-        
-        if [[ ${#remaining_args[@]} -gt 0 ]]; then
-            local all_commands
-            all_commands=$(get_all_commands)
-            for cmd_key in $all_commands; do
-                if [[ "${remaining_args[0]}" == "$cmd_key" ]]; then
-                    command="$cmd_key"
-                    remaining_args=("${remaining_args[@]:1}")
-                    break
+
+        if [[ -n "$candidate" ]]; then
+            if grep -q "^${candidate}|" "$COMMAND_FILE" 2>/dev/null; then
+                # Exact full command key, e.g. "scripts/release/release-plugin".
+                command="$candidate"
+                remaining_args=("${remaining_args[@]:1}")
+            else
+                # Bare name, e.g. "release-plugin". Prefer a match inside the
+                # named category, then fall back to the whole catalog.
+                local matches
+                matches=$(find_commands_by_basename "$candidate" "$category")
+                if [[ -z "$matches" && -n "$category" ]]; then
+                    matches=$(find_commands_by_basename "$candidate")
                 fi
-            done
-            
-            if [[ -z "$command" && -n "$category" ]]; then
-                local cmd_list
-                cmd_list=$(get_category_commands "$category")
-                for cmd_key in $(echo "$cmd_list" | tr ',' '\n'); do
-                    local cmd_name
-                    cmd_name=$(basename "$cmd_key")
-                    if [[ "$cmd_name" == "${remaining_args[0]}" ]]; then
-                        command="$cmd_key"
-                        remaining_args=("${remaining_args[@]:1}")
-                        break
-                    fi
-                done
-            fi
-            
-            if [[ -z "$command" ]]; then
-                local all_commands_list
-                all_commands_list=$(get_all_commands)
-                for cmd_key in $all_commands_list; do
-                    local cmd_name
-                    cmd_name=$(basename "$cmd_key")
-                    if [[ "$cmd_name" == "${remaining_args[0]}" ]]; then
-                        for cat in "${CATEGORIES[@]}"; do
-                            local cat_cmds
-                            cat_cmds=$(get_category_commands "$cat")
-                            if echo "$cat_cmds" | grep -q "$cmd_key"; then
-                                category="$cat"
-                                break
-                            fi
-                        done
-                        command="$cmd_key"
-                        remaining_args=("${remaining_args[@]:1}")
-                        break
-                    fi
-                done
+
+                local match_count
+                match_count=$(echo "$matches" | grep -c . || true)
+
+                if [[ "$match_count" -gt 1 ]]; then
+                    print_ambiguous "$candidate" $matches
+                    return 1
+                fi
+
+                if [[ "$match_count" -eq 1 ]]; then
+                    command="$matches"
+                    remaining_args=("${remaining_args[@]:1}")
+                fi
             fi
         fi
     fi
-    
-    if [[ -n "$category" && -z "$command" ]]; then
-        print_category_commands "$category"
-        echo "Usage: wp-ops $category <command> [args...]"
-        return 0
-    fi
-    
+
     if [[ -n "$command" ]]; then
         execute_command "$command" "${remaining_args[@]+"${remaining_args[@]}"}"
         return $?
     fi
-    
-    if [[ ${#remaining_args[@]} -gt 0 ]]; then
-        local first_arg="${remaining_args[0]}"
-        local rest_args=("${remaining_args[@]:1}")
-        if execute_command "$first_arg" "${rest_args[@]+"${rest_args[@]}"}"; then
-            return 0
-        fi
+
+    if [[ -n "$category" ]]; then
+        print_category_commands "$category" || return 0
+        echo "Usage: wp-ops $category <command> [args...]"
+        return 0
     fi
-    
-    echo "Error: Unknown command or category"
+
+    # Nothing resolved. One error with a way forward beats reprinting the whole
+    # catalog on top of it.
+    echo "${RED}${CROSS} Unknown command or category: ${remaining_args[0]}${RESET}"
     echo ""
-    print_usage
-    print_categories
+    local suggestion
+    suggestion=$(suggest_similar "${remaining_args[0]}")
+    if [[ -n "$suggestion" ]]; then
+        echo "${YELLOW}Did you mean:${RESET}"
+        echo "$suggestion"
+        echo ""
+    fi
+    echo "Try ${BOLD}wp-ops search ${remaining_args[0]}${RESET}, or ${BOLD}wp-ops${RESET} to browse everything."
     return 1
 }
 
