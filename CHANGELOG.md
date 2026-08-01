@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.16.0] - 2026-08-01
+
+### Added
+
+- **go** - M4 task 1 (`internal/exec/wpcli.go`, per `docs/m4-go-cli-completion.md`): the Go CLI can now run `wp-cli/**` and `bedrock/**` `.php` commands, closing one of the two remaining executor gaps from M3. Port of `execute_php_command()` (`wp-ops:1146`) — detects a registered `WP_CLI_Command` subclass via `get_registered_wp_command()`'s Go equivalent and invokes `wp --require=<script> <command> [args...]`, falling back to `wp eval-file <script> [args...]` otherwise. `resolveWPSiteDir()` (`go/cmd/wpsite.go`) ports `require_wp_site_dir()`, mirroring `resolveTrellisDir()`'s detect-then-confirm flow via `internal/detect.WPSiteDir()`. `--help` renders from the manifest with no probe, same manifest-first-by-construction property `ansible.go` already has. `go/cmd/dispatch.go`'s `.php` branch now dispatches for real instead of printing the M4 stub message; `wordpress-utilities/*` snippets still hit that stub pending task 2.
+
 ## [3.15.1] - 2026-08-01
 
 ### Added

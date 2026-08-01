@@ -128,12 +128,15 @@ func executeEntry(e catalog.Entry, args []string) int {
 		return executeAnsible(e, args, isHelp)
 	}
 
-	// wp-cli/*.php and wordpress-utilities/* snippets don't have Go
-	// executors yet — internal/exec/wpcli.go and snippet.go are explicitly
-	// M4 scope (docs/m3-go-skeleton.md, "Explicitly out of scope for M3").
-	// They're still in the catalog (list/search/doctor/--json need them for
-	// parity), just not runnable through this binary yet.
-	if ext == ".php" || strings.HasPrefix(e.Key, "wordpress-utilities/") {
+	if ext == ".php" {
+		return executeWPCLI(e, args, isHelp)
+	}
+
+	// wordpress-utilities/* snippets don't have a Go executor yet —
+	// internal/exec/snippet.go is M4 task 2 (docs/m4-go-cli-completion.md).
+	// Still in the catalog (list/search/doctor/--json need it for parity),
+	// just not runnable through this binary yet.
+	if strings.HasPrefix(e.Key, "wordpress-utilities/") {
 		if isHelp {
 			fmt.Print(wpexec.FormatGenericHelp(e))
 			return 0
@@ -194,6 +197,39 @@ func executeAnsible(e catalog.Entry, args []string, isHelp bool) int {
 	}
 
 	code, err := wpexec.RunPlaybook(trellisDir, filepath.Join(root, e.ScriptPath), args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	printCompletionBanner(e.Key, code)
+	return code
+}
+
+func executeWPCLI(e catalog.Entry, args []string, isHelp bool) int {
+	root, err := repoRoot()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	scriptPath := filepath.Join(root, e.ScriptPath)
+	wpCommand := wpexec.RegisteredWPCommand(scriptPath)
+
+	if isHelp {
+		fmt.Print(wpexec.FormatWPCLIHelp(e, os.Getenv("WP_SITE_DIR"), wpCommand))
+		return 0
+	}
+
+	if !wpexec.WPAvailable() {
+		fmt.Fprintln(os.Stderr, "wp (WP-CLI) not found on PATH. Install WP-CLI first.")
+		return 1
+	}
+
+	wpSiteDir, ok := resolveWPSiteDir()
+	if !ok {
+		return 1
+	}
+
+	code, err := wpexec.RunWPCLI(wpSiteDir, scriptPath, wpCommand, args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

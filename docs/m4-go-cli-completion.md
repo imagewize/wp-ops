@@ -1,9 +1,9 @@
 # M4: Go CLI Completion — Implementation Tracker
 
-> **Status (2026-08-01):** Not started. Scoped out of M3
-> (`docs/m3-go-skeleton.md`, "Explicitly out of scope for M3") now that M3
-> is merged to `main` (PR #140). Parent plan: `docs/cli-ux-plan.md` (Phase
-> C, milestone M4, target **4.0.0**).
+> **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`)
+> is done. Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly out of
+> scope for M3") now that M3 is merged to `main` (PR #140). Parent plan:
+> `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
 
 ## Goal
 
@@ -66,27 +66,34 @@ by how directly each blocks "the Go binary can replace bash," not by a
 hard technical dependency.
 
 ### 1. `internal/exec/wpcli.go`
-Port of `execute_php_command()` (`wp-ops:1146`).
-- [ ] Detect `extends WP_CLI_Command` in the script source; if present,
+Port of `execute_php_command()` (`wp-ops:1146`). **Done.**
+- [x] Detect `extends WP_CLI_Command` in the script source; if present,
   resolve the registered command name (port of
   `get_registered_wp_command()`, `wp-ops:1140`) and invoke via
   `wp --require=<script> <registered-command> [args...]`; otherwise
-  `wp eval-file <script> [args...]`
-- [ ] Run from `$WP_SITE_DIR` (port of `require_wp_site_dir()`,
-  `wp-ops:1109`, reusing `internal/detect.WPSiteDir()` from M3) — fail
-  clearly if unset/undetected, same as bash
-- [ ] Fail clearly if `wp` isn't on `PATH` before attempting anything
-- [ ] `--help` renders from the manifest (`internal/exec/help.go`'s shared
+  `wp eval-file <script> [args...]` — `RegisteredWPCommand()` /
+  `RunWPCLI()` in `wpcli.go`
+- [x] Run from `$WP_SITE_DIR` (port of `require_wp_site_dir()`,
+  `wp-ops:1109`) — fail clearly if unset/undetected, same as bash.
+  `resolveWPSiteDir()` in `go/cmd/wpsite.go` mirrors `resolveTrellisDir()`
+  (M3), reusing `internal/detect.WPSiteDir()` and `detect.Confirm()`
+- [x] Fail clearly if `wp` isn't on `PATH` before attempting anything —
+  `WPAvailable()`, checked in `executeWPCLI()` before site-dir resolution
+- [x] `--help` renders from the manifest (`internal/exec/help.go`'s shared
   renderer, extended with the "Runs via WP-CLI against..." / "Runs as:
   wp ..." lines bash prints), no probe — same manifest-first-by-construction
   property ansible.go already has, so there's no short-circuit bug class to
-  worry about here
-- [ ] Wire into `go/cmd/dispatch.go`: replace the `ext == ".php"` early
-  return (currently prints "isn't runnable through the Go CLI yet") with a
-  real call
-- [ ] Unit tests mirroring `internal/exec/ansible_test.go`'s shape: help
-  rendering, the `WP_CLI_Command` detection branch, missing-`wp`/missing-
-  `WP_SITE_DIR` failure paths
+  worry about here. `FormatWPCLIHelp()`
+- [x] Wire into `go/cmd/dispatch.go`: `ext == ".php"` now dispatches to
+  `executeWPCLI()` instead of the M4 stub message (the stub remains for
+  `wordpress-utilities/*` pending task 2)
+- [x] Unit tests mirroring `internal/exec/ansible_test.go`'s shape:
+  `wpcli_test.go` covers `RegisteredWPCommand` (WP_CLI_Command subclass,
+  plain script, missing file) and `FormatWPCLIHelp` (eval-file form,
+  --require form, site-dir-not-set). Manual pass: both `--help` forms
+  rendered correctly end to end (`wp-cli/security/scanner-targeted`,
+  `bedrock/wp-cli-config/wp-cli-pattern-validate`), and the
+  `WP_SITE_DIR`-not-a-directory failure path was exercised
 
 ### 2. `internal/exec/snippet.go`
 Port of `execute_snippet()` (`wp-ops:1232`) — covers `wordpress-utilities/**`.
