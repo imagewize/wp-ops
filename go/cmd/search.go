@@ -25,15 +25,18 @@ func init() {
 	rootCmd.AddCommand(searchCmd)
 }
 
-// runSearch ports print_search_results (wp-ops:1566), minus the "the docs
-// mention it" doc-search cross-reference — `docs` search is deferred to M4
-// (docs/m3-go-skeleton.md, open decision #3).
+// runSearch ports print_search_results (wp-ops:1566), including the "the
+// docs mention it" cross-reference into docs.go's full-text doc search
+// (wp-ops:1582-1586).
 func runSearch(term string) {
 	c := mustCatalog()
 	matches := c.Search(term)
 
 	if len(matches) == 0 {
 		fmt.Printf("No commands match '%s'.\n\n", term)
+		if hasDocMatches(term) {
+			fmt.Printf("The documentation mentions it though — try wp-ops docs %s.\n\n", term)
+		}
 		fmt.Println("Run wp-ops to browse everything by category.")
 		os.Exit(1)
 	}

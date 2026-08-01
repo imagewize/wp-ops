@@ -2,11 +2,11 @@
 
 > **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`),
 > task 2 (`internal/exec/snippet.go`), task 3 (`internal/ui` Bubble Tea
-> picker), and task 4 (shell completions) are done. Scoped out of M3
-> (`docs/m3-go-skeleton.md`, "Explicitly out of scope for M3") now that M3
-> is merged to `main` (PR #140). Parent plan: `docs/cli-ux-plan.md` (Phase
-> C, milestone M4, target **4.0.0**). Remaining: task 5 (`docs` search) and
-> task 6 (goreleaser + Homebrew tap).
+> picker), task 4 (shell completions), and task 5 (`docs` search) are done.
+> Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly out of scope for
+> M3") now that M3 is merged to `main` (PR #140). Parent plan:
+> `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
+> Remaining: task 6 (goreleaser + Homebrew tap).
 
 ## Goal
 
@@ -227,11 +227,31 @@ Replaces the hand-written `print_completion()` (`wp-ops:2098`, bash-only). **Don
 
 ### 5. `docs` search command
 Deferred from M3 per open decision #2 above; port of `docs` search
-(`wp-ops:1235-1346`) if decision #2 confirms it's in scope.
-- [ ] Walk `@doc` references from the catalog (already populated by M3's
-  `internal/catalog`) plus a full-text search fallback over doc files,
-  matching bash's behavior
-- [ ] `wp-ops docs <term>` prints matching doc paths/excerpts
+(`wp-ops:1610-1736`, dispatch at `wp-ops:2196-2211`). **Done.**
+- [x] Full-text search over every `*.md` file in the repo (excluding
+  `.git`/`node_modules`/`vendor`), independent of any command's manifest —
+  the `@doc` per-command directive (`catalog.Entry.Doc`) is a separate,
+  already-shipped feature (surfaced in executors' `--help` and `--json`
+  since M2/M3); `docs` search never reads it. New `go/cmd/docs.go`:
+  `findDocs` (file discovery), `compileDocTerm` (case-insensitive, or
+  whole-word via `-w`/`--word`), `searchDocFile`/`searchDocs` (per-file and
+  aggregate matching, `grep -c` semantics — match count is lines, not
+  occurrences)
+- [x] `wp-ops docs [term]` prints matching doc paths/excerpts: no term lists
+  every doc file; a term prints each matching file with its match count and
+  up to 3 matching lines (collapsed whitespace, truncated to 96 chars) plus
+  a "… N more" summary; `-l`/`--files`/`--paths` prints matching paths only
+- [x] `wp-ops search`'s "no command matches" path regains the "the
+  documentation mentions it though" cross-reference into `docs` search
+  (`hasDocMatches` in `docs.go`), closing the gap `search.go`'s doc comment
+  flagged when `search` was ported ahead of `docs` landing
+- [x] Unit tests (`go/cmd/docs_test.go`): file discovery/exclusion,
+  case-insensitive vs. whole-word matching, whitespace collapsing/
+  truncation, match-count-is-lines-not-occurrences. Manual pass: term
+  search, `-w`, `-l`, no-term listing, and no-match all verified against the
+  real repo tree; `go/scripts/parity-check.sh` still 8/8 (`docs` isn't part
+  of that contract — bash's own output there is hand-formatted prose, not a
+  stable interface, same reasoning `search`/`doctor` already use)
 
 ### 6. `goreleaser` + Homebrew tap distribution
 Gated on open decision #1 (embed vs. locate).
@@ -270,6 +290,6 @@ milestone table:
 - [x] Generated completions work in at least bash and zsh
 - [ ] `brew install imagewize/tap/wp-ops` (or the chosen distribution path
   per open decision #1) produces a working, self-contained binary
-- [ ] `docs` search, if in scope per open decision #2, matches bash output
+- [x] `docs` search, if in scope per open decision #2, matches bash output
 - [ ] CI green on all of the above (`go-build.yml` plus any new
   goreleaser workflow)
