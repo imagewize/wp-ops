@@ -148,9 +148,12 @@ func executeEntry(e catalog.Entry, args []string) int {
 		return 0
 	}
 
-	if e.RunsOn == "server" && !serverSideGuardOK() {
-		printServerSideGuidance(e)
-		return 1
+	// Bash runs this guard before the .yml/.php branches above rather than
+	// here; the placement is equivalent in practice because every
+	// server-side command is a .sh (all 8 of them), so none of them can
+	// reach those branches. See serverside.go.
+	if proceed, code := serverSideGuard(os.Stderr, e, args); !proceed {
+		return code
 	}
 
 	root, err := repoRoot()
@@ -209,28 +212,6 @@ func printCompletionBanner(key string, code int) {
 	} else {
 		fmt.Printf("✗ %s exited with code %d\n", key, code)
 	}
-}
-
-// serverSideGuardOK reports whether this looks like the Trellis host itself
-// (/srv/www exists) — a simplified port of the guard in execute_command()
-// (wp-ops:1405-1429). Bash's full version also honours an explicit log-file
-// argument for the handful of commands that accept one and checks for GNU
-// date; that nuance is deliberately not ported yet (not required for M3's
-// acceptance criteria — see docs/m3-go-skeleton.md task 8's manual pass,
-// which exercises a local, not server-side, command end to end).
-func serverSideGuardOK() bool {
-	info, err := os.Stat("/srv/www")
-	return err == nil && info.IsDir()
-}
-
-// printServerSideGuidance is a simplified port of print_server_side_guidance
-// (wp-ops:1293) — see the note on serverSideGuardOK.
-func printServerSideGuidance(e catalog.Entry) {
-	fmt.Fprintf(os.Stderr, "! %s runs on the server, not here.\n\n", e.Key)
-	fmt.Fprintln(os.Stderr, "Stream it over SSH instead — nothing needs to be installed there:")
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintf(os.Stderr, "  ssh web@example.com 'bash -s' < %s\n\n", e.ScriptPath)
-	fmt.Fprintln(os.Stderr, "See the script's own header comment for its expected arguments.")
 }
 
 // printUnknownCommand ports main()'s final fallback (wp-ops:2297-2309).
