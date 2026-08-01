@@ -1,16 +1,40 @@
 name: Go Build
 
+# The catalog is generated from the manifests in the command categories, not
+# just from go/ — so the drift check ("Check catalog.json is up to date")
+# below has to run when a *manifest* changes too, or a manifest-only PR
+# merges with a stale catalog.json and fails some later, unrelated go/ PR
+# instead. The category list mirrors catalog.Categories in
+# go/internal/catalog/catalog.go — keep the two in sync.
 on:
   push:
     branches: [main]
+    # Duplicated below rather than shared via a YAML anchor — GitHub Actions
+    # does not support anchors in workflow files.
     paths:
       - 'go/**'
       - '.github/workflows/go-build.yml'
+      - 'scripts/**'
+      - 'trellis/**'
+      - 'wp-cli/**'
+      - 'bedrock/**'
+      - 'nginx/**'
+      - 'wordpress-utilities/**'
+      - 'troubleshooting/**'
+      - 'mcp-server/**'
   pull_request:
     branches: [main]
     paths:
       - 'go/**'
       - '.github/workflows/go-build.yml'
+      - 'scripts/**'
+      - 'trellis/**'
+      - 'wp-cli/**'
+      - 'bedrock/**'
+      - 'nginx/**'
+      - 'wordpress-utilities/**'
+      - 'troubleshooting/**'
+      - 'mcp-server/**'
 
 jobs:
   build:
