@@ -1,9 +1,10 @@
 # M4: Go CLI Completion — Implementation Tracker
 
 > **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`)
-> is done. Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly out of
-> scope for M3") now that M3 is merged to `main` (PR #140). Parent plan:
-> `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
+> and task 2 (`internal/exec/snippet.go`) are done. Scoped out of M3
+> (`docs/m3-go-skeleton.md`, "Explicitly out of scope for M3") now that M3
+> is merged to `main` (PR #140). Parent plan: `docs/cli-ux-plan.md`
+> (Phase C, milestone M4, target **4.0.0**).
 
 ## Goal
 
@@ -96,23 +97,38 @@ Port of `execute_php_command()` (`wp-ops:1146`). **Done.**
   `WP_SITE_DIR`-not-a-directory failure path was exercised
 
 ### 2. `internal/exec/snippet.go`
-Port of `execute_snippet()` (`wp-ops:1232`) — covers `wordpress-utilities/**`.
-- [ ] Default (no args): print to stdout. Match bash's TTY-aware
-  formatting (dimmed filename header + trailing reference-snippet notice
+Port of `execute_snippet()` (`wp-ops:1232`) — covers `wordpress-utilities/**`. **Done.**
+- [x] Default (no args): print to stdout. Match bash's TTY-aware
+  formatting (filename header + trailing reference-snippet notice
   on a terminal; raw file content only when piped/redirected, so
-  `wp-ops ... > footer.php` still works)
-- [ ] `--path`: print only the resolved file path
-- [ ] `--copy`: copy to clipboard. Port `find_clipboard_cmd()`
+  `wp-ops ... > footer.php` still works) — `PrintSnippet()` in
+  `snippet.go`. Go port drops bash's ANSI dimming, matching the rest of
+  the Go CLI's plain-text convention (`printCompletionBanner` etc.)
+- [x] `--path`: print only the resolved file path
+- [x] `--copy`: copy to clipboard. Port `find_clipboard_cmd()`
   (`wp-ops:1220`) — `pbcopy` (macOS) → `xclip`/`xsel` (Linux) →
   `clip.exe` (WSL/Windows) — fail with the same "no clipboard tool found,
-  try --path instead" message if none are on `PATH`
-- [ ] `--help` renders from the manifest, plus the fixed "this is a
+  try --path instead" message if none are on `PATH` — `clipboardCmd()` /
+  `CopySnippet()`
+- [x] `--help` renders from the manifest, plus the fixed "this is a
   reference snippet, not run directly" explanation and the three-line
-  usage block bash prints (`wp-ops <key>`, `--copy`, `--path`)
-- [ ] Wire into `go/cmd/dispatch.go`: replace the
-  `strings.HasPrefix(e.Key, "wordpress-utilities/")` early return
-- [ ] Unit tests: `--path`/`--copy`/default branches, clipboard-tool
-  fallback chain (mock `exec.LookPath`), TTY vs. piped output shape
+  usage block bash prints (`wp-ops <key>`, `--copy`, `--path`) —
+  `FormatSnippetHelp()`
+- [x] Wire into `go/cmd/dispatch.go`: replaced the
+  `strings.HasPrefix(e.Key, "wordpress-utilities/")` early return with
+  `executeSnippet()`. Also fixed an ordering bug found while wiring this
+  up: the `ext == ".php"` check ran before the `wordpress-utilities/`
+  prefix check, so `wordpress-utilities/**.php` snippets (3 of the 5
+  non-doc files in that tree) were silently executed via WP-CLI instead
+  of printed/copied. The category-prefix check now runs first.
+- [x] Unit tests: `--path`/`--copy`/default branches, clipboard-tool
+  fallback chain (mock `exec.LookPath`), TTY vs. piped output shape —
+  `snippet_test.go`. Manual pass: `--help`/`--path`/default/`--copy` all
+  exercised end to end against a real annotated `.php` snippet
+  (`wordpress-utilities/snippets/post-expiry-noindex`), a non-`.php`
+  snippet pair (`.css`/`.js` in `wordpress-utilities/age-verification/`),
+  and a plain-file `.php` snippet (`age-verification/footer`) to confirm
+  the ordering fix
 
 ### 3. `internal/ui` — Bubble Tea interactive picker
 Replaces the `fzf`-dependent `fzf_menu()` (`wp-ops:1477`) and its

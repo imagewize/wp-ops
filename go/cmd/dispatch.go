@@ -128,22 +128,16 @@ func executeEntry(e catalog.Entry, args []string) int {
 		return executeAnsible(e, args, isHelp)
 	}
 
-	if ext == ".php" {
-		return executeWPCLI(e, args, isHelp)
+	// Checked before the .php branch below: wordpress-utilities/* snippets
+	// are reference files, several of them .php, so the category prefix
+	// must win over the extension or they'd be run through WP-CLI instead
+	// of printed/copied.
+	if strings.HasPrefix(e.Key, "wordpress-utilities/") {
+		return executeSnippet(e, args, isHelp)
 	}
 
-	// wordpress-utilities/* snippets don't have a Go executor yet —
-	// internal/exec/snippet.go is M4 task 2 (docs/m4-go-cli-completion.md).
-	// Still in the catalog (list/search/doctor/--json need it for parity),
-	// just not runnable through this binary yet.
-	if strings.HasPrefix(e.Key, "wordpress-utilities/") {
-		if isHelp {
-			fmt.Print(wpexec.FormatGenericHelp(e))
-			return 0
-		}
-		fmt.Fprintf(os.Stderr, "%s isn't runnable through the Go CLI yet — its executor lands in M4.\n", e.Key)
-		fmt.Fprintf(os.Stderr, "Run it via the bash CLI instead: wp-ops %s %s\n", e.Key, strings.Join(args, " "))
-		return 1
+	if ext == ".php" {
+		return executeWPCLI(e, args, isHelp)
 	}
 
 	if isHelp {
@@ -236,6 +230,23 @@ func executeWPCLI(e catalog.Entry, args []string, isHelp bool) int {
 	}
 	printCompletionBanner(e.Key, code)
 	return code
+}
+
+func executeSnippet(e catalog.Entry, args []string, isHelp bool) int {
+	if isHelp {
+		fmt.Print(wpexec.FormatSnippetHelp(e))
+		return 0
+	}
+
+	root, err := repoRoot()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	scriptPath := filepath.Join(root, e.ScriptPath)
+	tty := detect.IsTerminal(os.Stdout)
+
+	return wpexec.RunSnippet(os.Stdout, os.Stderr, e, scriptPath, args, tty)
 }
 
 func printCompletionBanner(key string, code int) {
