@@ -55,8 +55,13 @@ homebrew_casks:
     binaries:
       - wp-ops
     repository:
+      # The actual GitHub repo is imagewize/homebrew-tap — Homebrew's tap
+      # naming convention maps `brew tap imagewize/tap` (and the README's
+      # `brew install imagewize/tap/wp-ops`) to a repo literally prefixed
+      # "homebrew-"; the short form only works if the repo is named that
+      # way.
       owner: imagewize
-      name: tap
+      name: homebrew-tap
       branch: main
       # The default GITHUB_TOKEN goreleaser runs with is scoped to this
       # repo (imagewize/wp-ops) only and can't push to imagewize/tap — see
