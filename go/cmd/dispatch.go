@@ -44,7 +44,7 @@ func registerCatalogCommands(c *catalog.Catalog) {
 		rootCmd.AddCommand(leaf)
 	}
 
-	for _, category := range c.Categories() {
+	for _, category := range c.DisplayCategories() {
 		cat := category // capture
 		catCmd := &cobra.Command{
 			Use:                cat,
@@ -73,7 +73,7 @@ func categoryBasenameCompletions(cat string) func(cc *cobra.Command, args []stri
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		entries := mustCatalog().CommandsIn(cat)
+		entries := mustCatalog().CommandsInDisplay(cat)
 		seen := make(map[string]bool, len(entries))
 		basenames := make([]string, 0, len(entries))
 		for _, e := range entries {
@@ -112,7 +112,7 @@ func runCategory(c *catalog.Catalog, category string, args []string) {
 	matches := c.FindByBasename(candidate)
 	var inCategory []catalog.Entry
 	for _, m := range matches {
-		if m.Category == category {
+		if m.DisplayCategory == category {
 			inCategory = append(inCategory, m)
 		}
 	}
