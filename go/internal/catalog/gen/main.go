@@ -140,16 +140,7 @@ func main() {
 				entry.Description = fallbackDescription(path, key)
 			}
 
-			switch {
-			case cmd.Runs == "server":
-				entry.RunsOn = "server"
-			case cmd.Runs != "":
-				entry.RunsOn = "local"
-			case serverSideFallback[key]:
-				entry.RunsOn = "server"
-			default:
-				entry.RunsOn = "local"
-			}
+			entry.RunsOn = runsOnFor(cmd.Runs, key)
 
 			entries = append(entries, entry)
 		}
@@ -198,6 +189,23 @@ func main() {
 	}
 
 	fmt.Fprintf(os.Stderr, "catalog: wrote %d commands to %s\n", len(entries), outPath)
+}
+
+// runsOnFor ports is_server_side_command() (wp-ops:126): an explicit @runs is
+// authoritative — "server" means server, any *other* non-empty value means
+// local — and only a command with no @runs at all falls through to the
+// hardcoded SERVER_SIDE_COMMANDS list.
+func runsOnFor(runs, key string) string {
+	switch {
+	case runs == "server":
+		return "server"
+	case runs != "":
+		return "local"
+	case serverSideFallback[key]:
+		return "server"
+	default:
+		return "local"
+	}
 }
 
 // fallbackDescription ports discover_commands()'s per-extension header
