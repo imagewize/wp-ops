@@ -21,8 +21,9 @@
 > tasks 3 (Bubble Tea picker) and 4 (shell completions) are merged (PRs
 > #144, #145); tasks 1–2 (remaining executors) were also done earlier. Task
 > 5 (`docs` search) and 6 (goreleaser + tap) remain — see
-> `docs/m4-go-cli-completion.md`. Phase F (below) is a new, unscheduled
-> proposal raised against M4's shipped picker/list surfaces.
+> `docs/m4-go-cli-completion.md`. Phase F (below) was raised against M4's
+> shipped picker/list surfaces; its options 1–3 merged in PR #146 (3.20.0),
+> option 4 is still open.
 
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
@@ -397,8 +398,8 @@ purely additive distribution.
 
 # Phase F — Command discovery: default views and picker density
 
-**Status (2026-08-01):** Options 1, 2, and 3 done, on
-`feature/cli-manifest-phase-f-discovery`. Option 4 not started.
+**Status (2026-08-01):** Options 1, 2, and 3 done, merged to `main` in
+PR #146 (3.20.0). Option 4 not started.
 Raised against the M4 Go CLI (`docs/m4-go-cli-completion.md`), after M4
 tasks 3 (Bubble Tea picker) and 4 (shell completions) shipped — the
 manifest work in Phase A gave every command good metadata, but the three
@@ -525,7 +526,7 @@ touch `viewBrowse`), not a prerequisite for it.
 | M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **In progress** — tasks 1–4 done (PHP/snippet executors, picker PR #144, completions PR #145); tasks 5 (`docs` search) and 6 (goreleaser + tap) remain. See `docs/m4-go-cli-completion.md` |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
-| F | Command discovery: category-first default views, picker grouping | unscheduled | **In progress** — options 1–3 done (`feature/cli-manifest-phase-f-discovery`), option 4 not started. See Phase F below |
+| F | Command discovery: category-first default views, picker grouping | 3.20.0 | **In progress** — options 1–3 done, merged (PR #146); option 4 not started. See Phase F below |
 
 ## Immediate fixes (do now, independent of the plan)
 
