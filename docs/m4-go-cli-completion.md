@@ -1,10 +1,10 @@
 # M4: Go CLI Completion — Implementation Tracker
 
-> **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`)
-> and task 2 (`internal/exec/snippet.go`) are done. Scoped out of M3
-> (`docs/m3-go-skeleton.md`, "Explicitly out of scope for M3") now that M3
-> is merged to `main` (PR #140). Parent plan: `docs/cli-ux-plan.md`
-> (Phase C, milestone M4, target **4.0.0**).
+> **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`),
+> task 2 (`internal/exec/snippet.go`), and task 3 (`internal/ui` Bubble Tea
+> picker) are done. Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly
+> out of scope for M3") now that M3 is merged to `main` (PR #140). Parent
+> plan: `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
 
 ## Goal
 
@@ -49,7 +49,9 @@ Dual maintenance during M3–M4" in the parent plan.
    implementation (recommended — that's the whole point of dropping the
    `fzf` dependency) or only replaces the `fzf` path and keeps a bare
    fallback. **Recommendation:** one Bubble Tea implementation, no `fzf`
-   dependency at all post-M4.
+   dependency at all post-M4. **Resolved (task 3):** one implementation
+   (`internal/ui`), no `fzf` dependency added — `go.mod` only gained
+   `bubbletea`/`bubbles`/`lipgloss`.
 4. **Typed flags vs. `DisableFlagParsing`.** M3's task 7 note flags this
    explicitly: per-entry Cobra commands currently use
    `DisableFlagParsing: true` and pass args through raw. If the Bubble Tea
@@ -57,6 +59,8 @@ Dual maintenance during M3–M4" in the parent plan.
    does in bash, decide whether it reads `catalog.Entry.Flags` directly
    (no Cobra flag involvement, recommended — keeps the raw passthrough
    M3 chose) or whether picker-driven runs need real typed flags after all.
+   **Resolved (task 3):** reads `catalog.Entry.Args`/`.Flags` directly
+   (`internal/ui/fields.go`); Cobra flag parsing is untouched.
 
 ## Task breakdown
 
@@ -133,26 +137,55 @@ Port of `execute_snippet()` (`wp-ops:1232`) — covers `wordpress-utilities/**`.
 ### 3. `internal/ui` — Bubble Tea interactive picker
 Replaces the `fzf`-dependent `fzf_menu()` (`wp-ops:1477`) and its
 no-`fzf` fallback `interactive_command_menu()` (`wp-ops:1563`), per open
-decision #3.
-- [ ] Category → command list navigation, filterable by typing (the `fzf`
-  UX bash currently shells out for)
-- [ ] Curated preview pane per M1/Phase A: manifest-rendered usage/args
+decision #3. **Done.**
+- [x] Category → command list navigation, filterable by typing (the `fzf`
+  UX bash currently shells out for) — a flat list sorted/filtered via
+  `catalog.Search` (keys are already category-prefixed, so filtering
+  naturally groups by category); every rune keypress re-filters instantly,
+  no `/`-to-filter mode switch. `Model.updateBrowse` in `internal/ui/model.go`
+- [x] Curated preview pane per M1/Phase A: manifest-rendered usage/args
   /examples (`internal/exec/help.go`'s body renderer already produces
-  this text — reuse it verbatim, don't re-derive)
-- [ ] Guided per-`@arg`/`@flag` prompting on selection, port of
+  this text — reuse it verbatim, don't re-derive) — `internal/exec/help.go`
+  gained `PreviewBody()`, extracted from the existing `writeManifestHelpBody`
+  used by all three executors' own `--help`, so the picker's preview and
+  `--help` output can never drift
+- [x] Guided per-`@arg`/`@flag` prompting on selection, port of
   `prompt_manifest_args()` (`wp-ops:1477`-area helper added in M2/3.13.0):
   one prompt per declared arg/flag showing description + choices/default
   inline, reprompt on blank required field, "Additional arguments"
   catch-all at the end for anything not expressible as a single manifest
-  line (repeatable flags, etc. — same limitation bash's version has)
-- [ ] No-manifest commands keep a plain free-text prompt, same fallback
-  bash uses
-- [ ] Launches when `wp-ops` runs with no args on an interactive terminal
+  line (repeatable flags, etc. — same limitation bash's version has) —
+  pure logic ported into `internal/ui/fields.go` (`buildFields`/
+  `resolveField`, unit-tested) and driven by `Model.updatePrompt`
+- [x] No-manifest commands keep a plain free-text prompt, same fallback
+  bash uses — `buildFields` returns nil for any entry with no declared
+  `@arg`/`@flag` (annotated or not), which `beginPrompting` routes straight
+  to the free-text stage
+- [x] Launches when `wp-ops` runs with no args on an interactive terminal
   (`main()`'s `[[ -t 0 && -t 1 ]]` check, `wp-ops:2148`) — non-interactive
-  (piped/redirected) keeps printing `list`-equivalent output
-- [ ] Manual pass: run the picker end to end for one command per executor
+  (piped/redirected) keeps printing `list`-equivalent output —
+  `rootRunE` in `go/cmd/root.go`, gated on `detect.IsTerminal(os.Stdin) &&
+  detect.IsTerminal(os.Stdout)`; `go/cmd/interactive.go`'s `runInteractive`
+  owns the "pick another command?" outer loop (port of `interactive_menu`'s
+  loop, wp-ops:2001-2013), running the selected command only after the
+  Bubble Tea program has released the terminal, same as `fzf_menu` exiting
+  before `execute_command` runs (wp-ops:1993-1997)
+- [x] Manual pass: run the picker end to end for one command per executor
   type (`.sh`, `.yml`, `.php` post-task-1, snippet post-task-2), same
-  spirit as M3's task 8 manual pass
+  spirit as M3's task 8 manual pass — driven via `expect` against the real
+  binary (no fzf/bubbletea test harness needed a TTY substitute): a `.sh`
+  command (`scripts/git/git-log-oneline`) end to end including a
+  non-default guided value (`n`=5, verified exactly 5 commits printed) and
+  the "Pick another command?" loop; a `.yml`/Ansible command
+  (`trellis/backup/database-backup`) through its two required args,
+  including the blank-required-field reprompt; a `.php`/WP-CLI command
+  (`wp-cli/security/scanner-targeted`) reaching `executeWPCLI` and failing
+  clearly on unset `WP_SITE_DIR`, same as direct invocation; a
+  `wordpress-utilities` snippet with no declared args
+  (`post-expiry-noindex`) through the free-text fallback to a full
+  successful completion. Also verified: Esc-to-quit from the browse list,
+  Ctrl+C-to-quit from a field prompt, and an empty filter query's "No
+  matches" state
 
 ### 4. Shell completions
 Replaces the hand-written `print_completion()` (`wp-ops:2098`, bash-only).
