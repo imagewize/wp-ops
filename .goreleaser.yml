@@ -70,6 +70,19 @@ homebrew_casks:
     directory: Casks
     homepage: "https://github.com/imagewize/wp-ops"
     description: "Unified CLI for WordPress operations, Trellis, and Bedrock workflows"
+    # The binary isn't code-signed/notarized (no Apple Developer ID), so
+    # macOS quarantines it on download and Gatekeeper kills it outright on
+    # first run (exit 137) rather than showing the usual "open anyway"
+    # prompt a signed-but-unnotarized app would get. Stripping the
+    # quarantine bit post-install is the standard goreleaser fix for
+    # distributing an unsigned CLI binary via a cask — found by an actual
+    # `brew install imagewize/tap/wp-ops` failing this way.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/wp-ops"]
+          end
 
 release:
   github:
