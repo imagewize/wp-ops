@@ -1,12 +1,28 @@
 # M4: Go CLI Completion — Implementation Tracker
 
-> **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`),
-> task 2 (`internal/exec/snippet.go`), task 3 (`internal/ui` Bubble Tea
-> picker), task 4 (shell completions), and task 5 (`docs` search) are done.
-> Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly out of scope for
-> M3") now that M3 is merged to `main` (PR #140). Parent plan:
-> `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
-> Remaining: task 6 (goreleaser + Homebrew tap).
+> **Status (2026-08-01):** All 6 tasks done, on
+> `feature/goreleaser-homebrew-tap`, not yet merged — M4 is otherwise
+> complete. Task 6 (goreleaser + Homebrew tap) resolved open decision #1 in
+> favor of **(a) embed**: `go.mod`/`go.sum` moved from `go/` to the repo
+> root (module renamed `github.com/imagewize/wp-ops/go` →
+> `github.com/imagewize/wp-ops`; no import paths changed, since the
+> directory layout under `go/` didn't move) so a new root-level `assets`
+> package (`assets.go`) could `//go:embed` the command-carrying directories
+> — `go:embed` can't ascend directories or cross the module boundary
+> `go/go.mod` used to impose. `repoRoot()` (`go/cmd/env.go`) gained a third
+> fallback tier, `extractedAssetsRoot()`, below `WP_OPS_ROOT` and live-
+> checkout detection: it extracts the embedded tree to a version-stamped
+> `~/.cache/wp-ops` directory on first run and reuses it after, verified
+> end to end by running a copied-out binary with `HOME` pointed at an empty
+> directory. `.goreleaser.yml` publishes a `homebrew_casks` entry (`brews`
+> is hard-deprecated as of goreleaser v2.16) to the newly created
+> `imagewize/tap` repo; `.github/workflows/release.yml` runs it on `v*` tag
+> pushes. **Not yet done:** a repo admin still needs to create a
+> `HOMEBREW_TAP_GITHUB_TOKEN` PAT and set it as a repo secret (the default
+> `GITHUB_TOKEN` can't push cross-repo), and no `v*` tag has been pushed
+> yet, so `brew install imagewize/tap/wp-ops` has nothing to install until
+> the first one ships. Parent plan: `docs/cli-ux-plan.md` (Phase C,
+> milestone M4, target **4.0.0**).
 
 ## Goal
 
@@ -254,20 +270,48 @@ Deferred from M3 per open decision #2 above; port of `docs` search
   stable interface, same reasoning `search`/`doctor` already use)
 
 ### 6. `goreleaser` + Homebrew tap distribution
-Gated on open decision #1 (embed vs. locate).
-- [ ] If embed: `go:embed` the script tree (everything under the category
-  directories in `catalog.Categories`), extract to a cache dir
-  (`~/.cache/wp-ops` or platform equivalent) on first run;
-  `internal/detect`'s `WP_OPS_ROOT` env var overrides for development,
-  pointing at a live checkout instead of the extracted copy
-- [ ] `.goreleaser.yml`: build matrix (darwin/linux, amd64/arm64 at
-  minimum), archive naming, checksums
-- [ ] Homebrew tap: `imagewize/tap` formula, `brew install
-  imagewize/tap/wp-ops`
-- [ ] Update `install.sh` or superseded by `brew install` instructions —
-  decide whether `install.sh`'s PATH-append approach stays as a
-  no-Homebrew fallback or is retired
-- [ ] CI: goreleaser run on tag push, separate from `go-build.yml`
+Gated on open decision #1 (embed vs. locate). **Done**, on
+`feature/goreleaser-homebrew-tap`.
+- [x] Embed resolved: `go.mod`/`go.sum` moved from `go/` to the repo root
+  (module renamed to bare `github.com/imagewize/wp-ops`, directory layout
+  and all existing import paths unchanged) so a new root-level `assets`
+  package (`assets.go`) can `//go:embed` `catalog.Categories`' directories
+  plus `docs/` and the root guide files — `go:embed` can't reach outside
+  the module a source file lives in, and `go/go.mod` previously made `go/`
+  its own module boundary, putting the script tree out of reach. `WP_OPS_ROOT`
+  keeps working exactly as before (checked first, ahead of both live-checkout
+  detection and the new embedded fallback) — `repoRoot()` in `go/cmd/env.go`
+  now has three tiers instead of two. New `extractedAssetsRoot()` extracts
+  to `os.UserCacheDir()/wp-ops/assets-<version>` (version read straight off
+  the embedded `CHANGELOG.md`, since `repoRoot()` isn't resolved yet at that
+  point) via a temp-dir-then-rename so concurrent invocations can't race on
+  a partial extract; `.sh`/`.py`/`.js` files get the executable bit back on
+  extraction (`internal/exec/shell.go` execs them directly), `.php`/`.yml`
+  don't need it. Unit-tested (`go/cmd/env_test.go`); manually verified by
+  copying a built binary outside the checkout and running it with `HOME`
+  pointed at an empty directory — both `--version` and a real script
+  (`scripts/git/git-log-oneline`) worked purely off the embedded tree, with
+  the cache dir populated as expected.
+- [x] `.goreleaser.yml`: darwin/linux × amd64/arm64 build matrix, `tar.gz`
+  archives (bundling `LICENSE.md`/`README.md`/`CHANGELOG.md`), checksums.
+  Verified with `goreleaser check` and a `goreleaser release --snapshot
+  --clean --skip=publish` dry run — all 4 binaries built and ran correctly.
+- [x] Homebrew tap: created `imagewize/tap` (public, with a README pointing
+  back here). Publishes via goreleaser's `homebrew_casks` section, **not**
+  `brews` — hard-deprecated as of goreleaser v2.16
+  (https://goreleaser.com/deprecations/#brews) in favor of casks for
+  precompiled-binary distribution regardless of GUI-vs-CLI. Cross-repo push
+  needs a token wider than the default `GITHUB_TOKEN`; `repository.token`
+  templates in `HOMEBREW_TAP_GITHUB_TOKEN` from the environment.
+- [x] `install.sh` decision: kept as the no-Homebrew fallback (and the
+  documented path until the first tagged release exists at all) —
+  `README.md`'s "wp-ops CLI" section now shows `brew install
+  imagewize/tap/wp-ops` first, `install.sh` second.
+- [x] CI: new `.github/workflows/release.yml`, triggered on `v*` tag
+  pushes, separate from `go-build.yml` (push/PR to `main`, never
+  publishes). Not yet exercised for real — no tag has been pushed and the
+  `HOMEBREW_TAP_GITHUB_TOKEN` secret doesn't exist yet; both are required
+  before the first release can actually publish.
 
 ## Explicitly out of scope for M4
 
@@ -282,14 +326,21 @@ milestone table:
 
 ## Acceptance criteria for M4 done
 
-- [ ] `wp-cli/**` `.php` commands and `wordpress-utilities/**` snippets run
-  end to end through the Go binary (one of each, minimum)
-- [ ] Interactive picker launches on a bare `wp-ops` invocation with no
+- [x] `wp-cli/**` `.php` commands and `wordpress-utilities/**` snippets run
+  end to end through the Go binary (one of each, minimum) — task 1/2's
+  manual passes above
+- [x] Interactive picker launches on a bare `wp-ops` invocation with no
   `fzf` binary required, with guided per-argument prompting matching M2's
-  bash UX
+  bash UX — task 3's manual pass above
 - [x] Generated completions work in at least bash and zsh
-- [ ] `brew install imagewize/tap/wp-ops` (or the chosen distribution path
-  per open decision #1) produces a working, self-contained binary
+- [x] A binary built via the chosen distribution path (embed, per open
+  decision #1) is working and self-contained — verified by running a
+  binary copied outside the checkout with an empty `HOME`, per task 6.
+  **Not yet verified:** the actual `brew install imagewize/tap/wp-ops`
+  command end to end — that needs a real tagged release, which needs the
+  `HOMEBREW_TAP_GITHUB_TOKEN` secret set first (see task 6)
 - [x] `docs` search, if in scope per open decision #2, matches bash output
-- [ ] CI green on all of the above (`go-build.yml` plus any new
-  goreleaser workflow)
+- [ ] CI green on all of the above — `go-build.yml` is (module move
+  verified with `go build`/`go vet`/`go test`/`parity-check.sh` all
+  passing locally); `release.yml` hasn't run for real yet, since no `v*`
+  tag has been pushed
