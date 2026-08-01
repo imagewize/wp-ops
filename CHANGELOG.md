@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.23.1] - 2026-08-01
+
+### Fixed
+
+- **go** - The Homebrew tap's real repo name is `imagewize/homebrew-tap`, not `imagewize/tap` — Homebrew's tap-naming convention maps the short `imagewize/tap` form used in `brew tap`/`brew install` commands to a repo literally prefixed `homebrew-`. `.goreleaser.yml`'s `repository.name` pointed at the wrong one, so the first real release's cask push landed nowhere; caught by an actual `brew install imagewize/tap/wp-ops` run. Also: the installed binary isn't code-signed or notarized (no Apple Developer ID), so macOS quarantines it on download and Gatekeeper killed it outright on first run (`exit 137`) instead of showing the usual "open anyway" prompt — a `homebrew_casks` `hooks.post.install` now strips `com.apple.quarantine` from the staged binary, the standard goreleaser fix for distributing an unsigned CLI tool via a cask. `brew install imagewize/tap/wp-ops` followed by `wp-ops --version`/`wp-ops search` verified working end to end after both fixes.
+
 ## [3.23.0] - 2026-08-01
 
 ### Added
