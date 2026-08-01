@@ -330,7 +330,7 @@ func TestFindRepoRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("findRepoRoot(): %v", err)
 	}
-	for _, want := range []string{"wp-ops", "go/go.mod", "scripts"} {
+	for _, want := range []string{"wp-ops", "go.mod", "scripts"} {
 		if _, err := os.Stat(filepath.Join(root, want)); err != nil {
 			t.Errorf("repo root %s is missing %s: %v", root, want, err)
 		}
