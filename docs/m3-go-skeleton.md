@@ -205,6 +205,18 @@ Port of `execute_playbook()` (`wp-ops:710`). **Done.**
 - [x] Ambiguous-basename resolution (`wp-ops:1105`) and did-you-mean
   (`wp-ops:1136`) — `printAmbiguous()` / `suggestSimilar()` in
   `dispatch.go`, scored identically to bash's substring/prefix heuristic
+- [x] Server-side guard — full port of the guard in `execute_command()`
+  (`wp-ops:1405`-1429) plus `print_server_side_guidance()` (`wp-ops:1293`)
+  and `print_gnu_date_required()` (`wp-ops:1361`), in `go/cmd/serverside.go`
+  with tests. Covers what the earlier simplified version dropped: an
+  explicit readable log-file argument unlocks a local run, but *only* for
+  the three `ACCESS_LOG_COMMANDS` (`error-monitor`'s first argument is a
+  domain, `run-monitoring`'s an hour count) and only where GNU `date -d`
+  exists, since otherwise the script dies several screens in on `date:
+  illegal option`. All three guidance variants (backup, `error-monitor`,
+  default access-log) and both `has_gnu_date` branches are ported.
+  Verified byte-identical to bash (modulo ANSI colour) for all 8
+  server-side commands and the GNU-date-required path
 
 ### 8. Parity verification
 **Done** — `go/scripts/parity-check.sh`, 8/8 checks passing.
@@ -280,11 +292,8 @@ All met, on `feature/cli-manifest-m3-go-skeleton` (not yet merged):
   — exercised by a real PR: **#140**, both `Go Build` and `Manifest Lint`
   passing
 
-**Remaining before merge:** consider whether the simplified
-`serverSideGuardOK()`/`printServerSideGuidance()` in `go/cmd/dispatch.go`
-(see its doc comment) is worth fleshing out to match bash's fuller version
-before M4, or left as a documented gap. This is the last open item — the
-other two are now done: the branch is pushed with PR #140 open and CI green,
-and `go/internal/catalog/gen` has direct unit tests
-(`gen/main_test.go`) rather than only transitive coverage via
-`catalog_test.go` + the parity script.
+**Remaining before merge:** nothing — all three items are done. The branch is
+pushed with PR #140 open and CI green; `go/internal/catalog/gen` has direct
+unit tests (`gen/main_test.go`) rather than only transitive coverage via
+`catalog_test.go` + the parity script; and the server-side guard is now a
+full port rather than a documented gap (`go/cmd/serverside.go`, see task 7).
