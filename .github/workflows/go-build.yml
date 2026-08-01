@@ -1,0 +1,71 @@
+name: Go Build
+
+# The catalog is generated from the manifests in the command categories, not
+# just from go/ — so the drift check ("Check catalog.json is up to date")
+# below has to run when a *manifest* changes too, or a manifest-only PR
+# merges with a stale catalog.json and fails some later, unrelated go/ PR
+# instead. The category list mirrors catalog.Categories in
+# go/internal/catalog/catalog.go — keep the two in sync.
+on:
+  push:
+    branches: [main]
+    # Duplicated below rather than shared via a YAML anchor — GitHub Actions
+    # does not support anchors in workflow files.
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-build.yml'
+      - 'scripts/**'
+      - 'trellis/**'
+      - 'wp-cli/**'
+      - 'bedrock/**'
+      - 'nginx/**'
+      - 'wordpress-utilities/**'
+      - 'troubleshooting/**'
+      - 'mcp-server/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'go/**'
+      - '.github/workflows/go-build.yml'
+      - 'scripts/**'
+      - 'trellis/**'
+      - 'wp-cli/**'
+      - 'bedrock/**'
+      - 'nginx/**'
+      - 'wordpress-utilities/**'
+      - 'troubleshooting/**'
+      - 'mcp-server/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go/go.mod
+          # Both paths are repo-root-relative: an action resolves its own
+          # inputs itself, so defaults.run.working-directory (go) applies
+          # only to `run:` steps, not here. Without cache-dependency-path
+          # setup-go looks for ./go.sum, doesn't find it, and silently
+          # disables dependency caching.
+          cache-dependency-path: go/go.sum
+
+      - name: Generate catalog
+        run: go generate ./...
+
+      - name: Check catalog.json is up to date
+        run: git diff --exit-code -- internal/catalog/catalog.json
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...

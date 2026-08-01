@@ -2,3 +2,12 @@
 backup/.DS_Store
 create-pr.sh
 trellis/security/.env
+
+# Go CLI (go/ — see docs/m3-go-skeleton.md)
+go/wp-ops
+go/wp-ops-go-test
+
+# internal/catalog/catalog.json is committed, not ignored: go:embed requires
+# it to exist for the package to compile at all (a chicken-and-egg problem
+# for `go generate` on a fresh clone otherwise), and committing it lets CI
+# detect drift with `git diff --exit-code` after regenerating.
