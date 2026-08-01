@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.15.1] - 2026-08-01
+
+### Added
+
+- **docs** - Scoped out M4 (remaining Go executors, Bubble Tea picker, completions, goreleaser + tap, per `docs/cli-ux-plan.md` Phase C) into a new tracker doc, `docs/m4-go-cli-completion.md`, following M3's format: an ordered task breakdown (`internal/exec/wpcli.go`, `internal/exec/snippet.go`, the interactive picker, shell completions, `docs` search, goreleaser/tap distribution), four flagged open decisions (embed vs. locate scripts, `docs` command inclusion, picker scope vs. bash's two picker paths, typed flags vs. the `DisableFlagParsing` M3 chose), and explicit M4 done criteria. `cli-ux-plan.md`'s M4 milestone row and M3's tracker doc now point at it. Also corrected `cli-ux-plan.md` and `docs/m3-go-skeleton.md`, both of which still described M3 as "implemented, not yet merged" on a feature branch after PR #140 had already merged to `main`. No code changes.
+
 ## [3.15.0] - 2026-08-01
 
 ### Added

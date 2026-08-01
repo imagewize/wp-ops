@@ -1,7 +1,7 @@
 # M3: Go CLI Skeleton — Implementation Tracker
 
-> **Status (2026-08-01):** Implemented on `feature/cli-manifest-m3-go-skeleton`,
-> not yet merged. All nine task groups below are done: `go build ./...` from
+> **Status (2026-08-01):** Merged to `main` (PR #140). All nine task groups
+> below are done: `go build ./...` from
 > `go/` produces a working `wp-ops` binary; the embedded catalog matches
 > bash's 66-command set field-for-field (`go/scripts/parity-check.sh` passes
 > 8/8 checks, including a strict `--json list` diff); a `scripts/**/*.sh`
@@ -275,7 +275,7 @@ table:
 
 ## Acceptance criteria for M3 done
 
-All met, on `feature/cli-manifest-m3-go-skeleton` (not yet merged):
+All met, merged to `main` (PR #140):
 
 - [x] `go build ./...` produces a working binary from `go/`
 - [x] `catalog.json` is generated at build time from all 66 discoverable
@@ -292,8 +292,10 @@ All met, on `feature/cli-manifest-m3-go-skeleton` (not yet merged):
   — exercised by a real PR: **#140**, both `Go Build` and `Manifest Lint`
   passing
 
-**Remaining before merge:** nothing — all three items are done. The branch is
-pushed with PR #140 open and CI green; `go/internal/catalog/gen` has direct
+**Remaining before merge:** nothing — all three items were done before merge.
+PR #140 merged to `main` with CI green; `go/internal/catalog/gen` has direct
 unit tests (`gen/main_test.go`) rather than only transitive coverage via
-`catalog_test.go` + the parity script; and the server-side guard is now a
-full port rather than a documented gap (`go/cmd/serverside.go`, see task 7).
+`catalog_test.go` + the parity script; and the server-side guard is a full
+port rather than a documented gap (`go/cmd/serverside.go`, see task 7). Next
+up: M4 — see `docs/cli-ux-plan.md`'s milestone table and
+`docs/m4-go-cli-completion.md` for the task breakdown.
