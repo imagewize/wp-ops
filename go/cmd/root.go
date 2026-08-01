@@ -8,6 +8,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/imagewize/wp-ops/go/internal/detect"
 )
 
 // jsonFlag backs `list --json` (list.go registers its own, properly-parsed
@@ -58,6 +60,14 @@ func rootRunE(cc *cobra.Command, args []string) error {
 	c := mustCatalog()
 
 	if len(args) == 0 {
+		// Port of main()'s `[[ -t 0 && -t 1 ]]` branch (wp-ops:2154-2157):
+		// launch the picker only on a real interactive terminal; a
+		// piped/redirected invocation keeps printing list-equivalent output
+		// so `wp-ops | less` etc. still work.
+		if detect.IsTerminal(os.Stdin) && detect.IsTerminal(os.Stdout) {
+			os.Exit(runInteractive(c))
+			return nil
+		}
 		printCategorizedList(c)
 		return nil
 	}

@@ -20,6 +20,18 @@ func FormatGenericHelp(e catalog.Entry) string {
 	return b.String()
 }
 
+// PreviewBody renders the same manifest-derived usage/args/flags/examples
+// body used by every executor's --help, without any executor-specific
+// trailer (the "Runs via ansible-playbook..."/"Runs as: wp ..." lines
+// FormatHelp/FormatWPCLIHelp/FormatSnippetHelp append). The internal/ui
+// picker's preview pane reuses this verbatim per M4 task 3, rather than
+// re-deriving its own rendering of a catalog.Entry.
+func PreviewBody(e catalog.Entry) string {
+	var b strings.Builder
+	writeManifestHelpBody(&b, e)
+	return b.String()
+}
+
 // writeManifestHelpBody renders the shared body of print_manifest_help
 // (wp-ops:352): usage line, description, arguments, flags, requires, the
 // server-side note, examples, docs, and the script path. FormatHelp
