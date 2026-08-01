@@ -121,6 +121,17 @@ bash's discovery exactly — verified by `go/scripts/parity-check.sh`'s
   un-annotated fallback-scrape command); only real malformations
   (bad `@runs`, malformed `@arg`/`@flag`, a dangling `@doc`) fail the
   generator
+- [x] Unit tests for the generator's own discovery rules
+  (`gen/main_test.go`), covering the parity-critical logic that
+  `catalog_test.go` and the parity script only exercise transitively: the
+  per-category file-type filters (including their exclusivity — `.py` only
+  under `scripts/`, `.yml` only under `trellis/`), the
+  `@runs`-beats-`SERVER_SIDE_COMMANDS` precedence from
+  `is_server_side_command()` (`wp-ops:126`, extracted into `runsOnFor()` to
+  be testable), `clean_description()`'s trim / filename-strip /
+  first-sentence / trailing-punctuation / 72-**rune** cap behavior, and the
+  header-scrape fallback per extension including its 20-line (comment) and
+  5-line (Python docstring) scan windows
 
 ### 4. `internal/detect`
 Port of: **Done**, with unit tests covering the sibling-checkout false
@@ -218,12 +229,22 @@ Port of `execute_playbook()` (`wp-ops:710`). **Done.**
 ### 9. CI
 **Done.**
 - [x] `.github/workflows/go-build.yml` — `go build ./...`, `go vet ./...`,
-  `go test ./...` on push/PR to `main`, scoped to the `go/` directory (path
-  filter on `go/**`). Separate workflow from `manifest-lint.yml` (different
-  toolchain, fails independently). Also runs `go generate ./...` first,
-  then `git diff --exit-code -- internal/catalog/catalog.json` to catch a
+  `go test ./...` on push/PR to `main`. Separate workflow from
+  `manifest-lint.yml` (different toolchain, fails independently). Also runs
+  `go generate ./...` first, then
+  `git diff --exit-code -- internal/catalog/catalog.json` to catch a
   forgotten regeneration after a manifest edit — see task 3's note on why
   `catalog.json` is committed rather than gitignored
+- [x] Path filter covers `go/**` **plus every category directory in
+  `catalog.Categories`** (`scripts/`, `trellis/`, `wp-cli/`, `bedrock/`,
+  `nginx/`, `wordpress-utilities/`, `troubleshooting/`, `mcp-server/`). The
+  filter was initially `go/**` only, which defeated the drift check's whole
+  purpose: the catalog is generated from *manifests*, so a manifest-only PR
+  never triggered the workflow and could merge with a stale `catalog.json`,
+  surfacing later as a confusing failure on an unrelated `go/` PR. Keep the
+  list in sync with `catalog.Categories` if a category is ever added. The
+  two `paths:` blocks are duplicated rather than shared via a YAML anchor —
+  GitHub Actions does not support anchors in workflow files
 
 ## Explicitly out of scope for M3
 
@@ -255,13 +276,15 @@ All met, on `feature/cli-manifest-m3-go-skeleton` (not yet merged):
 - [x] At least one `scripts/**` `.sh` command and one `trellis/**/*.yml`
   command run successfully end to end through the Go binary (see task 8's
   manual-pass note)
-- [x] CI is green on `go build`/`vet`/`test` (`.github/workflows/go-build.yml`,
-  not yet exercised by an actual PR since this branch isn't pushed/opened yet)
+- [x] CI is green on `go build`/`vet`/`test` (`.github/workflows/go-build.yml`)
+  — exercised by a real PR: **#140**, both `Go Build` and `Manifest Lint`
+  passing
 
-**Remaining before merge:** push the branch and open a PR so CI actually
-runs (only run locally so far); decide whether `go/internal/catalog/gen`
-needs its own unit tests (currently only exercised transitively via
-`catalog_test.go` + the parity script, not directly); consider whether the
-simplified `serverSideGuardOK()`/`printServerSideGuidance()` in
-`go/cmd/dispatch.go` (see its doc comment) is worth fleshing out to match
-bash's fuller version before M4, or left as a documented gap.
+**Remaining before merge:** consider whether the simplified
+`serverSideGuardOK()`/`printServerSideGuidance()` in `go/cmd/dispatch.go`
+(see its doc comment) is worth fleshing out to match bash's fuller version
+before M4, or left as a documented gap. This is the last open item — the
+other two are now done: the branch is pushed with PR #140 open and CI green,
+and `go/internal/catalog/gen` has direct unit tests
+(`gen/main_test.go`) rather than only transitive coverage via
+`catalog_test.go` + the parity script.
