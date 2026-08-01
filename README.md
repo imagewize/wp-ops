@@ -23,13 +23,13 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 A single entry point for everything in this repo. Auto-discovers commands across every category and groups them by subdirectory.
 
-> A Go rewrite of this CLI (`go/`) is feature-complete — same manifest-driven commands, a real Cobra binary, generated shell completions, and a Bubble Tea interactive picker with no `fzf` dependency. It isn't tagged for release yet, so `brew install imagewize/tap/wp-ops` doesn't have anything to install until the first `v*` tag ships; the bash CLI below stays the documented install path until then. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
+> A Go rewrite of this CLI (`go/`) is feature-complete and installable — same manifest-driven commands, a real Cobra binary, generated shell completions, and a Bubble Tea interactive picker with no `fzf` dependency. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
 
 ```bash
-# Once a release is tagged:
+# Recommended: Homebrew (installs the Go binary)
 brew install imagewize/tap/wp-ops
 
-# Without Homebrew (or before the first release), the bash CLI:
+# Without Homebrew, the bash CLI:
 ./install.sh                 # add wp-ops to your PATH (one-time)
 
 wp-ops                       # interactive picker
