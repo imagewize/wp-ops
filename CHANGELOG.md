@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.23.2] - 2026-08-01
+
+### Changed
+
+- **docs** - `docs/cli-ux-plan.md` and `docs/m4-go-cli-completion.md` now reflect M4's actual shipped state instead of the "not yet merged"/"not yet verified" wording written before PR #150 and #151 landed: `brew install imagewize/tap/wp-ops` is confirmed working end to end at v3.23.1, including the tap-repo-name fix, the Gatekeeper quarantine-strip hook, and the org PAT permission gotcha (fine-grained tokens default to read-only; the cask push needs `Contents: Read and write` explicitly) hit while setting up the release credentials. Root `README.md`'s "wp-ops CLI" intro drops the "not tagged yet" hedge and leads with `brew install` as the recommended path.
+
 ## [3.23.1] - 2026-08-01
 
 ### Fixed

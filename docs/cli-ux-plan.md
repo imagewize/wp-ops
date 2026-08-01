@@ -17,20 +17,26 @@
 > running `wp-ops manifest lint` on push/PR to `main`) landed right after —
 > M2 is now fully done bar the 2 out-of-scope `mcp-server/*` commands. See
 > "Phase A implementation" below. M3 (Go CLI skeleton) is also done, merged
-> to `main` in PR #140 — see `docs/m3-go-skeleton.md`. M4 is now fully
-> done — tasks 3 (Bubble Tea picker) and 4 (shell completions) are merged
-> (PRs #144, #145); tasks 1–2 (remaining executors) were also done earlier.
-> Task 5 (`docs` search) is merged to `main`. Task 6 (goreleaser + Homebrew
-> tap) is done, on `feature/goreleaser-homebrew-tap`, not yet merged —
-> `go.mod`/`go.sum` moved from `go/` to the repo root so a new root-level
-> `assets` package could embed the script tree (`go:embed` can't cross a
-> module boundary, and `go/go.mod` previously made `go/` its own module),
-> `imagewize/tap` was created, and `.goreleaser.yml` +
-> `.github/workflows/release.yml` publish a `homebrew_casks` entry there on
-> `v*` tag pushes. Not yet exercised end to end: no tag has been pushed and
-> the cross-repo `HOMEBREW_TAP_GITHUB_TOKEN` secret still needs to be
-> created and set. See `docs/m4-go-cli-completion.md` task 6 for the full
-> writeup.
+> to `main` in PR #140 — see `docs/m3-go-skeleton.md`. **M4 is fully done
+> and shipped** — tasks 3 (Bubble Tea picker) and 4 (shell completions) are
+> merged (PRs #144, #145); tasks 1–2 (remaining executors) were also done
+> earlier. Task 5 (`docs` search) is merged to `main`. Task 6 (goreleaser +
+> Homebrew tap), merged in PR #150: `go.mod`/`go.sum` moved from `go/` to
+> the repo root so a new root-level `assets` package could embed the script
+> tree (`go:embed` can't cross a module boundary, and `go/go.mod`
+> previously made `go/` its own module). PR #151 fixed two bugs the first
+> real tagged release (`v3.23.0`) surfaced that PR #150 couldn't have
+> caught without actually running `brew install`: the tap repo has to be
+> named `imagewize/homebrew-tap` on GitHub (Homebrew's naming convention
+> maps the short `imagewize/tap` form to a `homebrew-`-prefixed repo — it
+> was created as plain `imagewize/tap` and renamed), and the unsigned,
+> unnotarized binary gets quarantined by macOS on download, so Gatekeeper
+> silently killed it (`exit 137`) until a `homebrew_casks` `hooks.post.install`
+> stripped `com.apple.quarantine` from it. `brew install
+> imagewize/tap/wp-ops` is now confirmed working end to end at **v3.23.1**
+> — verified `--version`, `search`, and a real script invocation, all in
+> isolation (no repo checkout, empty `HOME`, fresh cache-dir extraction).
+> See `docs/m4-go-cli-completion.md` task 6 for the full writeup.
 > Phase F (below) was raised against M4's
 > shipped picker/list surfaces; its options 1–3 merged in PR #146 (3.20.0).
 > Option 4 (splitting `scripts`) is now also done, on
@@ -588,7 +594,7 @@ touch `viewBrowse`), not a prerequisite for it.
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
 | M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **Done** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; CI lint wiring landed after. Only `mcp-server/*` (2, out of scope) remains unannotated |
 | M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | **Done**, merged to `main` (PR #140) — see `docs/m3-go-skeleton.md` for the full breakdown; all acceptance criteria met, parity script passing 8/8 |
-| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **Done** — tasks 1–5 shipped (PHP/snippet executors, picker PR #144, completions PR #145, `docs` search merged to `main`); task 6 (goreleaser + tap) done on `feature/goreleaser-homebrew-tap`, not yet merged. First tagged release + `HOMEBREW_TAP_GITHUB_TOKEN` secret still needed before `brew install` works end to end. See `docs/m4-go-cli-completion.md` |
+| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **Done** — tasks 1–5 shipped (PHP/snippet executors, picker PR #144, completions PR #145, `docs` search merged to `main`); task 6 (goreleaser + tap) merged in PR #150, with two distribution bugs (wrong tap repo name, macOS Gatekeeper quarantine) fixed in PR #151. `brew install imagewize/tap/wp-ops` verified working end to end at v3.23.1. See `docs/m4-go-cli-completion.md` |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
 | F | Command discovery: category-first default views, picker grouping | 3.20.0 | **In progress** — options 1–3 done, merged (PR #146); option 4 not started. See Phase F below |

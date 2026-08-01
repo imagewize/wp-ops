@@ -1,10 +1,9 @@
 # M4: Go CLI Completion — Implementation Tracker
 
-> **Status (2026-08-01):** All 6 tasks done, on
-> `feature/goreleaser-homebrew-tap`, not yet merged — M4 is otherwise
-> complete. Task 6 (goreleaser + Homebrew tap) resolved open decision #1 in
-> favor of **(a) embed**: `go.mod`/`go.sum` moved from `go/` to the repo
-> root (module renamed `github.com/imagewize/wp-ops/go` →
+> **Status (2026-08-01):** **M4 is complete and shipped**, all 6 tasks
+> done. Task 6 (goreleaser + Homebrew tap) merged in PR #150, resolving
+> open decision #1 in favor of **(a) embed**: `go.mod`/`go.sum` moved from
+> `go/` to the repo root (module renamed `github.com/imagewize/wp-ops/go` →
 > `github.com/imagewize/wp-ops`; no import paths changed, since the
 > directory layout under `go/` didn't move) so a new root-level `assets`
 > package (`assets.go`) could `//go:embed` the command-carrying directories
@@ -12,17 +11,34 @@
 > `go/go.mod` used to impose. `repoRoot()` (`go/cmd/env.go`) gained a third
 > fallback tier, `extractedAssetsRoot()`, below `WP_OPS_ROOT` and live-
 > checkout detection: it extracts the embedded tree to a version-stamped
-> `~/.cache/wp-ops` directory on first run and reuses it after, verified
-> end to end by running a copied-out binary with `HOME` pointed at an empty
-> directory. `.goreleaser.yml` publishes a `homebrew_casks` entry (`brews`
-> is hard-deprecated as of goreleaser v2.16) to the newly created
-> `imagewize/tap` repo; `.github/workflows/release.yml` runs it on `v*` tag
-> pushes. **Not yet done:** a repo admin still needs to create a
-> `HOMEBREW_TAP_GITHUB_TOKEN` PAT and set it as a repo secret (the default
-> `GITHUB_TOKEN` can't push cross-repo), and no `v*` tag has been pushed
-> yet, so `brew install imagewize/tap/wp-ops` has nothing to install until
-> the first one ships. Parent plan: `docs/cli-ux-plan.md` (Phase C,
-> milestone M4, target **4.0.0**).
+> `~/.cache/wp-ops` directory on first run and reuses it after. `.goreleaser.yml`
+> publishes a `homebrew_casks` entry (`brews` is hard-deprecated as of
+> goreleaser v2.16) to a tap repo; `.github/workflows/release.yml` runs it
+> on `v*` tag pushes.
+>
+> The first real tagged release (`v3.23.0`) surfaced two bugs PR #150's
+> local testing (a `goreleaser --snapshot` dry run, no actual publish)
+> couldn't have caught, fixed in follow-up PR #151: (1) the tap repo has to
+> be named `imagewize/homebrew-tap` on GitHub — Homebrew's naming
+> convention maps the short `imagewize/tap` form used in `brew
+> tap`/`brew install` to a repo literally prefixed `homebrew-`; it was
+> created as plain `imagewize/tap` and renamed to match; (2) the binary
+> isn't code-signed or notarized (no Apple Developer ID), so macOS
+> quarantines it on download and Gatekeeper killed it outright on first
+> run (`exit 137`) instead of prompting to allow it — a `homebrew_casks`
+> `hooks.post.install` now strips `com.apple.quarantine` from the staged
+> binary, the standard goreleaser fix for an unsigned CLI cask. Both tags
+> (`v3.23.0`, then `v3.23.1`) were deleted and recreated while iterating on
+> these fixes — safe pre-launch since there were no real consumers yet.
+>
+> **`brew install imagewize/tap/wp-ops` is now confirmed working end to
+> end at v3.23.1** — verified `wp-ops --version`, `wp-ops search`, and a
+> real script invocation (`scripts/git/git-log-oneline --help`), all
+> against the actual installed binary run in isolation (empty `HOME`, no
+> repo checkout anywhere nearby), confirming the embedded-asset extraction
+> path works for a genuine brew-installed user, not just in a local test
+> harness. Parent plan: `docs/cli-ux-plan.md` (Phase C, milestone M4,
+> target **4.0.0**).
 
 ## Goal
 
@@ -270,8 +286,10 @@ Deferred from M3 per open decision #2 above; port of `docs` search
   stable interface, same reasoning `search`/`doctor` already use)
 
 ### 6. `goreleaser` + Homebrew tap distribution
-Gated on open decision #1 (embed vs. locate). **Done**, on
-`feature/goreleaser-homebrew-tap`.
+Gated on open decision #1 (embed vs. locate). **Done**, merged in PR #150,
+with two follow-up distribution bugs fixed in PR #151 (see the status
+banner above) — `brew install imagewize/tap/wp-ops` confirmed working end
+to end at v3.23.1.
 - [x] Embed resolved: `go.mod`/`go.sum` moved from `go/` to the repo root
   (module renamed to bare `github.com/imagewize/wp-ops`, directory layout
   and all existing import paths unchanged) so a new root-level `assets`
@@ -296,22 +314,34 @@ Gated on open decision #1 (embed vs. locate). **Done**, on
   archives (bundling `LICENSE.md`/`README.md`/`CHANGELOG.md`), checksums.
   Verified with `goreleaser check` and a `goreleaser release --snapshot
   --clean --skip=publish` dry run — all 4 binaries built and ran correctly.
-- [x] Homebrew tap: created `imagewize/tap` (public, with a README pointing
-  back here). Publishes via goreleaser's `homebrew_casks` section, **not**
-  `brews` — hard-deprecated as of goreleaser v2.16
-  (https://goreleaser.com/deprecations/#brews) in favor of casks for
-  precompiled-binary distribution regardless of GUI-vs-CLI. Cross-repo push
-  needs a token wider than the default `GITHUB_TOKEN`; `repository.token`
-  templates in `HOMEBREW_TAP_GITHUB_TOKEN` from the environment.
-- [x] `install.sh` decision: kept as the no-Homebrew fallback (and the
-  documented path until the first tagged release exists at all) —
-  `README.md`'s "wp-ops CLI" section now shows `brew install
+- [x] Homebrew tap: created as `imagewize/tap`, then renamed to
+  `imagewize/homebrew-tap` (PR #151) — Homebrew's tap-naming convention
+  maps the short `imagewize/tap` form used in `brew tap`/`brew install` to
+  a repo literally prefixed `homebrew-`; the plain `tap` name silently
+  fails with "Repository not found" at install time, only caught by
+  actually running `brew install`. Publishes via goreleaser's
+  `homebrew_casks` section, **not** `brews` — hard-deprecated as of
+  goreleaser v2.16 (https://goreleaser.com/deprecations/#brews) in favor of
+  casks for precompiled-binary distribution regardless of GUI-vs-CLI.
+  Cross-repo push needs a token wider than the default `GITHUB_TOKEN`;
+  `repository.token` templates in `HOMEBREW_TAP_GITHUB_TOKEN` from the
+  environment — creating that PAT also surfaced that `imagewize`'s org
+  policy requires fine-grained PATs to be granted **Contents: Read and
+  write** explicitly (the default/first attempt was Read-only, which 403s
+  on the cask file push; org-level "require administrator approval" was
+  already off, so that wasn't the blocker it first looked like).
+  Also added a `hooks.post.install` stripping `com.apple.quarantine` from
+  the staged binary (PR #151) — it isn't code-signed or notarized, so
+  macOS quarantines it on download and Gatekeeper killed it outright
+  (`exit 137`) on first run without the strip.
+- [x] `install.sh` decision: kept as the no-Homebrew fallback —
+  `README.md`'s "wp-ops CLI" section shows `brew install
   imagewize/tap/wp-ops` first, `install.sh` second.
 - [x] CI: new `.github/workflows/release.yml`, triggered on `v*` tag
   pushes, separate from `go-build.yml` (push/PR to `main`, never
-  publishes). Not yet exercised for real — no tag has been pushed and the
-  `HOMEBREW_TAP_GITHUB_TOKEN` secret doesn't exist yet; both are required
-  before the first release can actually publish.
+  publishes). Exercised for real across `v3.23.0` (tap-push failed twice,
+  see above) and `v3.23.1` (fully green, cask published, `brew install`
+  verified).
 
 ## Explicitly out of scope for M4
 
@@ -334,13 +364,12 @@ milestone table:
   bash UX — task 3's manual pass above
 - [x] Generated completions work in at least bash and zsh
 - [x] A binary built via the chosen distribution path (embed, per open
-  decision #1) is working and self-contained — verified by running a
-  binary copied outside the checkout with an empty `HOME`, per task 6.
-  **Not yet verified:** the actual `brew install imagewize/tap/wp-ops`
-  command end to end — that needs a real tagged release, which needs the
-  `HOMEBREW_TAP_GITHUB_TOKEN` secret set first (see task 6)
+  decision #1) is working and self-contained — verified two ways: a
+  binary copied outside the checkout with an empty `HOME` (task 6's local
+  test), and a real `brew install imagewize/tap/wp-ops` at v3.23.1
+  (`--version`/`search`/a real script invocation, all in isolation)
 - [x] `docs` search, if in scope per open decision #2, matches bash output
-- [ ] CI green on all of the above — `go-build.yml` is (module move
-  verified with `go build`/`go vet`/`go test`/`parity-check.sh` all
-  passing locally); `release.yml` hasn't run for real yet, since no `v*`
-  tag has been pushed
+- [x] CI green on all of the above — `go-build.yml` (module move verified
+  with `go build`/`go vet`/`go test`/`parity-check.sh`) and `release.yml`
+  (green at v3.23.1, after two failed attempts at v3.23.0 that surfaced
+  and fixed the tap-name and quarantine bugs — see task 6)
