@@ -43,11 +43,17 @@ jobs:
       run:
         working-directory: go
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go/go.mod
+          # Both paths are repo-root-relative: an action resolves its own
+          # inputs itself, so defaults.run.working-directory (go) applies
+          # only to `run:` steps, not here. Without cache-dependency-path
+          # setup-go looks for ./go.sum, doesn't find it, and silently
+          # disables dependency caching.
+          cache-dependency-path: go/go.sum
 
       - name: Generate catalog
         run: go generate ./...
