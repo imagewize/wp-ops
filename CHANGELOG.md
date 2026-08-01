@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.18.0] - 2026-08-01
+
+### Added
+
+- **go** - M4 task 3 (`internal/ui`, per `docs/m4-go-cli-completion.md`): the Go CLI now has an interactive picker, replacing bash's two-path `fzf_menu()`/`interactive_command_menu()` (`wp-ops:1962`, `wp-ops:2047`) with a single Bubble Tea implementation and no `fzf` dependency (open decision #3). Launches on a bare `wp-ops` invocation from an interactive terminal (`detect.IsTerminal` on both stdin and stdout, port of `main()`'s `[[ -t 0 && -t 1 ]]` check); a piped/redirected invocation still prints the plain `list`-equivalent output. A flat, instantly-filterable command list (typing narrows the set on every keystroke, no `/`-to-filter mode switch) pairs with a live preview pane rendering `internal/exec/help.go`'s manifest body verbatim via its new `PreviewBody()` export, so the picker and every executor's own `--help` can never drift apart. Selecting a command walks its declared `@arg`/`@flag` lines one at a time — port of `prompt_manifest_args()`/`prompt_one_manifest_param()` (`wp-ops:484`, `wp-ops:420`) as pure, unit-tested logic in `internal/ui/fields.go` (`buildFields`/`resolveField`): choices/defaults shown inline, a blank required field reprompts, an off-list choice is accepted with a note, and every run ends with an "Additional arguments" catch-all for anything a single manifest line can't express (repeatable flags, etc. — same limitation bash's version has). A command with no declared `@arg`/`@flag` at all falls back to a single free-text prompt, same as bash. `go/cmd/interactive.go` owns the "Pick another command?" outer loop, running the selected command only after the Bubble Tea program has released the terminal — same reasoning as `fzf_menu` exiting before `execute_command` runs (`wp-ops:1993-1997`). Manually verified end to end for one command per executor type: a `.sh` command with a non-default guided value, a `.yml`/Ansible command through its required-field reprompt, a `.php`/WP-CLI command reaching its executor and failing clearly on unset `WP_SITE_DIR`, and a `wordpress-utilities` snippet completing successfully through the no-manifest-args fallback. New direct dependencies: `github.com/charmbracelet/bubbletea`, `bubbles`, `lipgloss`.
+
 ## [3.17.0] - 2026-08-01
 
 ### Added
