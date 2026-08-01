@@ -22,8 +22,14 @@
 > #144, #145); tasks 1–2 (remaining executors) were also done earlier. Task
 > 5 (`docs` search) and 6 (goreleaser + tap) remain — see
 > `docs/m4-go-cli-completion.md`. Phase F (below) was raised against M4's
-> shipped picker/list surfaces; its options 1–3 merged in PR #146 (3.20.0),
-> option 4 is still open.
+> shipped picker/list surfaces; its options 1–3 merged in PR #146 (3.20.0).
+> Option 4 (splitting `scripts`) is now also done, on
+> `feature/cli-picker-search-scripts-categories`, not yet merged — turned out
+> far cheaper than estimated since every `scripts/**` file already carried a
+> fine-grained `@category` tag, just never wired into the top-level grouping.
+> The same branch also fixes a small regression option 3 introduced: typing
+> on the picker's new outermost category screen did nothing until Enter was
+> pressed on "All categories" first. See Phase F's "Done (4)" below.
 
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
@@ -399,7 +405,10 @@ purely additive distribution.
 # Phase F — Command discovery: default views and picker density
 
 **Status (2026-08-01):** Options 1, 2, and 3 done, merged to `main` in
-PR #146 (3.20.0). Option 4 not started.
+PR #146 (3.20.0). Option 4 done, on
+`feature/cli-picker-search-scripts-categories`, not yet merged — see "Done
+(4)" below. That branch also fixes a type-to-search regression option 3
+introduced; see the same section.
 Raised against the M4 Go CLI (`docs/m4-go-cli-completion.md`), after M4
 tasks 3 (Bubble Tea picker) and 4 (shell completions) shipped — the
 manifest work in Phase A gave every command good metadata, but the three
@@ -481,8 +490,54 @@ from before); Ctrl+C is the only "quit entirely" key past stageCategory.
 so both `cmd` and `internal/ui` read the same map without either package
 importing the other.
 
-**Recommendation:** 1–3 done; 4 (splitting the oversized `scripts`
-category) is a bigger, separable change worth sequencing on its own.
+**Done (4):** far cheaper than the effort estimate above predicted — every
+`scripts/**` file already carries a fine-grained `@category` directive
+(`backup`, `git`, `images`, `misc`, `monitoring`, `patterns`, `release`,
+`sync`, `woocommerce`), a byproduct of Phase A's rollout groups 1 and 5. That
+data just wasn't wired into the top-level grouping catalog.json's `category`
+field is derived from directory name only, and `Catalog.Categories()` /
+`CommandsIn()` / `registerCatalogCommands` all keyed off it. Rather than
+promote every subcategory (several are too small to justify their own
+top-level entry — `backup`(2), `git`(3), `misc`(3), `sync`(2),
+`woocommerce`(1)), only the four with 4+ commands were split out:
+`monitoring`(10), `images`(5), `patterns`(5), `release`(4); the rest stay
+folded into `scripts`(11).
+
+Implementation added a new `catalog.Entry.DisplayCategory` field
+(`internal/catalog/catalog.go`), computed in `gen/main.go`'s
+`displayCategoryFor()`, kept **deliberately separate** from the existing
+`Category` field: `printJSON` (`cmd/list.go`) must keep emitting `category`
+as the top-level directory, byte-for-byte identical to bash's, since
+`go/scripts/parity-check.sh` diffs `--json` field-for-field and other
+tooling may depend on that contract (see "the CLI and MCP server have
+forked" above). A parallel `Catalog.DisplayCategories()` /
+`CommandsInDisplay()` / `byDisplayCategory` was added alongside the existing
+`Categories()`/`CommandsIn()`/`byCategory`; `printCategorizedList`,
+`printAllCommands`, `printCategoryCommands`, `registerCatalogCommands` (so
+`wp-ops monitoring`/`images`/`patterns`/`release` work as real category
+commands), `runCategory`'s basename-scoping filter, and the picker's
+`buildCategoryOptions`/`filterByCategory`/`categoryRank`/`viewBrowse` header
+all switched to the Display variants; `printJSON` alone was left untouched.
+`catalog.CategoryDisplayNames`/`CategoryBlurbs` gained entries for the four
+new categories, and a new `catalog.DisplayOrder` var (parallel to the
+existing directory-walk `Categories` var) gives them curated placement
+right after `scripts`. Verified: `go test ./...` green, `parity-check.sh`
+still 8/8 (confirming `--json` didn't drift), and a manual pass through both
+the non-interactive `wp-ops list`/`wp-ops monitoring` output and the
+Bubble Tea picker's category-select screen.
+
+**Also fixed alongside (4):** option 3 made `stageCategory` the picker's new
+default screen, but it only handled arrow keys — typing there did nothing,
+so a user had to arrow-down-and-Enter onto "All categories" before typing
+could filter anything, silently dropping the "just start typing to search"
+behavior the picker had before option 3 shipped. `updateCategory`
+(`model.go`) now treats a rune/space keypress as "jump straight into
+`stageBrowse` unscoped, seeded with the typed text as the initial filter" —
+arrow+Enter still drills into a category, but typing anywhere on that screen
+now searches the whole catalog immediately, same as before option 3.
+
+**Recommendation:** 1–4 all done. Remaining Phase F work, if any, would be
+new findings from further use of the split categories and picker.
 
 ## Picker visual density vs. upstream Bubble Tea examples
 
