@@ -17,8 +17,12 @@
 > running `wp-ops manifest lint` on push/PR to `main`) landed right after —
 > M2 is now fully done bar the 2 out-of-scope `mcp-server/*` commands. See
 > "Phase A implementation" below. M3 (Go CLI skeleton) is also done, merged
-> to `main` in PR #140 — see `docs/m3-go-skeleton.md`. M4 is next; see
-> `docs/m4-go-cli-completion.md`.
+> to `main` in PR #140 — see `docs/m3-go-skeleton.md`. M4 is in progress —
+> tasks 3 (Bubble Tea picker) and 4 (shell completions) are merged (PRs
+> #144, #145); tasks 1–2 (remaining executors) were also done earlier. Task
+> 5 (`docs` search) and 6 (goreleaser + tap) remain — see
+> `docs/m4-go-cli-completion.md`. Phase F (below) is a new, unscheduled
+> proposal raised against M4's shipped picker/list surfaces.
 
 A plan to take the `wp-ops` CLI from "auto-discovered shell scripts" to a
 declarative, self-documenting tool with the ergonomics of
@@ -391,6 +395,126 @@ purely additive distribution.
 
 ---
 
+# Phase F — Command discovery: default views and picker density
+
+**Status (2026-08-01):** Options 1, 2, and 3 done, on
+`feature/cli-manifest-phase-f-discovery`. Option 4 not started.
+Raised against the M4 Go CLI (`docs/m4-go-cli-completion.md`), after M4
+tasks 3 (Bubble Tea picker) and 4 (shell completions) shipped — the
+manifest work in Phase A gave every command good metadata, but the three
+surfaces that render the *list* of commands still show too much at once, or
+too little structure, to act as a landing page.
+
+## The problem
+
+Three views, three different symptoms:
+
+1. **`wp-ops list` / piped bare `wp-ops`** (`go/cmd/list.go:34`,
+   `printCategorizedList`) — flattens all ~66 commands under category
+   headers, one full-sentence description per line. Correctly organized,
+   just long: it's a wall of text that requires scrolling, not a landing
+   page.
+2. **The Bubble Tea picker on bare `wp-ops`** (`go/internal/ui/model.go`) —
+   the opposite problem. `New()` (`model.go:80-89`) loads `c.Entries` as one
+   flat, alphabetically-sorted list with no category grouping at all,
+   filterable by typing. Compact, but directionless: nothing distinguishes
+   a backup command from an image-conversion command except reading each
+   line.
+3. **`trellis` with no arguments** — short (~22 lines) because it's a
+   **two-level** structure: top-level verbs, some of which (`db`, `server`,
+   `key`, `vm`) fan out to subcommands only shown after typing
+   `trellis db`.
+
+## Key finding: the two-level structure already exists
+
+`wp-ops <category>` (e.g. `wp-ops trellis`) is already a real command —
+`registerCatalogCommands` (`go/cmd/dispatch.go:47-61`) registers one Cobra
+command per active category, whose bare-args `RunE` calls `runCategory` →
+`printCategoryCommands` (`list.go:49`), printing just that category's
+commands. Nothing needs to be built to get trellis-style drill-down; it's
+wired but not the *default* landing view — `wp-ops list` and bare `wp-ops`
+both still call `printCategorizedList`, which shows everything at once
+instead of pointing at the category commands that already exist.
+
+## Options
+
+| # | Change | Effort | Effect |
+|---|---|---|---|
+| 1 | Rewrite `printCategorizedList` to print **category names + counts + one blurb only** (~8 lines), pointing at `wp-ops <category>` for the existing full per-category view | Small — one function, no new plumbing | Matches `trellis`'s brevity directly |
+| 2 | Picker: insert **dim, non-selectable category header rows** into the browse list — group `filterEntries`'s output by category before rendering (`model.go`'s `viewBrowse`, `filterEntries`) | Small–medium — a grouping pass plus header rows in `viewBrowse` | Same item count, but scannable instead of a flat name wall |
+| 3 | Picker: add a **category-select stage before the command list** (browse categories → then that category's commands), mirroring `trellis`'s two-level nav | Medium — a new `stage` in the picker's state machine (`model.go:17-24`) | Biggest ergonomic win, closest match to `trellis`, but adds a keystroke to drill into a category |
+| 4 | Split the oversized `scripts` category (35 commands, no subgrouping — the largest of the 6 active categories) into subcategories matching its existing directories (`backup`, `monitoring`, `git`, `images`, `release`, `sync`, `woocommerce`, `misc`, `patterns`) | Larger — touches `@category` manifest values across ~25 files plus catalog grouping logic | Fixes the one category still too big even after #1 |
+
+**Done (1):** `printCategorizedList` (`list.go`) now prints an 8-line
+category summary (name, count, one blurb from a new `catalog.CategoryBlurbs`
+map); the original full per-command listing moved to `printAllCommands`,
+exposed as `wp-ops list --all`. Bare `wp-ops` (piped) and `wp-ops --help`
+both pick up the shorter view for free since they already called
+`printCategorizedList` (`root.go:71,83`).
+
+**Done (2):** `filterEntries` (`model.go`) now sorts by category rank
+(`catalog.Categories`' curated order, matching option 1's summary order)
+then key, instead of plain alphabetical-by-key — categories were already
+contiguous as a side effect of key-prefix sorting, but not in curated
+order. `viewBrowse` tracks the previous row's category while iterating the
+visible window and renders a `categoryHeaderStyle`-styled header line
+whenever it changes, including at the top of the window after a scroll (so
+a mid-scroll view still tells you what category you're looking at). Headers
+aren't part of `m.filtered`, so cursor movement and selection indices are
+unaffected — only rendering changed.
+
+**Done (3):** added `stageCategory` as the picker's new outermost stage
+(`model.go`'s `stage` enum), shown first on launch: "All categories" (cursor
+default, scoped to nothing — the full catalog, same reach as before this
+option) followed by each active category with its count and
+`catalog.CategoryBlurbs` text, reusing the same list `cmd`'s compact `list`
+view (option 1) shows. Selecting a category sets `browseCategory` and
+re-filters into `stageBrowse` scoped to just that category (`applyFilter` /
+new `filterByCategory`); the browse header grows a breadcrumb
+(`wp-ops > Trellis > `) and, once scoped, the option-2 per-row category
+headers stop repeating themselves since the breadcrumb already says which
+category. Esc now means "go up one level" everywhere (stageBrowse → back to
+stageCategory; stageFields/stageFreeText → back to stageBrowse, unchanged
+from before); Ctrl+C is the only "quit entirely" key past stageCategory.
+`catalog.CategoryBlurbs` moved from `cmd/list.go` into `internal/catalog`
+so both `cmd` and `internal/ui` read the same map without either package
+importing the other.
+
+**Recommendation:** 1–3 done; 4 (splitting the oversized `scripts`
+category) is a bigger, separable change worth sequencing on its own.
+
+## Picker visual density vs. upstream Bubble Tea examples
+
+Bubble Tea's own README demo (a `./demo` todo-list picker: `[ ] Plant
+carrots`, `[x] See friends`, four items, generous blank lines between
+sections, no borders, a single faint hint line) reads as calmer than
+`wp-ops`'s picker, which wraps both the list and the preview in
+`lipgloss.RoundedBorder()` panes (`model.go:43`) side by side inside an
+alt-screen, with rows packed tightly.
+
+Worth naming explicitly: **this is not an apples-to-apples comparison.**
+The README demo is a 4-item toy built to be legible in a screenshot; the
+`wp-ops` picker is rendering up to 66 filterable rows *and* a live
+multi-section preview pane (usage/args/examples — `wpexec.PreviewBody`),
+which is closer to real dense Bubble Tea tools (`gh dash`, `glow`) than to
+the README's todo list. A literal style match isn't the goal.
+
+What *is* borrowable regardless of density:
+
+- More vertical whitespace around the header/footer (the demo never
+  crowds text against the pane edge).
+- Lighter chrome on the list pane specifically — a single outer border
+  around the whole app, rather than two nested bordered boxes
+  (`borderedPane` applied twice in `viewBrowse`), reads as less boxed-in.
+- The footer hint style (`j/k, up/down: select • enter: choose • q, esc:
+  quit`) is already close to what `wp-ops` does (`viewBrowse`'s footer
+  string) — no change needed there.
+
+This is a secondary polish item, best done alongside option #2 above (both
+touch `viewBrowse`), not a prerequisite for it.
+
+---
+
 # Milestones
 
 | # | Scope | Version | Status |
@@ -398,9 +522,10 @@ purely additive distribution.
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
 | M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **Done** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; CI lint wiring landed after. Only `mcp-server/*` (2, out of scope) remains unannotated |
 | M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | **Done**, merged to `main` (PR #140) — see `docs/m3-go-skeleton.md` for the full breakdown; all acceptance criteria met, parity script passing 8/8 |
-| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | Not started — see `docs/m4-go-cli-completion.md` |
+| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **In progress** — tasks 1–4 done (PHP/snippet executors, picker PR #144, completions PR #145); tasks 5 (`docs` search) and 6 (goreleaser + tap) remain. See `docs/m4-go-cli-completion.md` |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
+| F | Command discovery: category-first default views, picker grouping | unscheduled | **In progress** — options 1–3 done (`feature/cli-manifest-phase-f-discovery`), option 4 not started. See Phase F below |
 
 ## Immediate fixes (do now, independent of the plan)
 
