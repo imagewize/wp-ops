@@ -23,11 +23,16 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 A single entry point for everything in this repo. Auto-discovers commands across every category and groups them by subdirectory.
 
-> A Go rewrite of this CLI is in progress (`go/`) — same manifest-driven commands, a real Cobra binary with generated shell completions, eventually a `brew install`. It isn't distributed yet, so the bash CLI below stays the way to install and run wp-ops for now. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
+> A Go rewrite of this CLI (`go/`) is feature-complete — same manifest-driven commands, a real Cobra binary, generated shell completions, and a Bubble Tea interactive picker with no `fzf` dependency. It isn't tagged for release yet, so `brew install imagewize/tap/wp-ops` doesn't have anything to install until the first `v*` tag ships; the bash CLI below stays the documented install path until then. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
 
 ```bash
+# Once a release is tagged:
+brew install imagewize/tap/wp-ops
+
+# Without Homebrew (or before the first release), the bash CLI:
 ./install.sh                 # add wp-ops to your PATH (one-time)
-wp-ops                       # interactive picker (fuzzy, if fzf is installed)
+
+wp-ops                       # interactive picker
 wp-ops --help                # list all categories
 wp-ops trellis --help        # list commands in one category
 wp-ops <category> <command> [args...]
@@ -38,7 +43,7 @@ wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
 
-`wp-ops` with no arguments opens an interactive picker. Install [fzf](https://github.com/junegunn/fzf) (`brew install fzf`) and it becomes a fuzzy search over every command with the script's header as a live preview; without fzf it falls back to a numbered category → command menu.
+`wp-ops` with no arguments opens an interactive picker. In the bash CLI, install [fzf](https://github.com/junegunn/fzf) (`brew install fzf`) and it becomes a fuzzy search over every command with the script's header as a live preview; without fzf it falls back to a numbered category → command menu. The Go CLI's picker (Bubble Tea) has this built in — no `fzf` dependency either way.
 
 Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
 

@@ -47,13 +47,16 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go/go.mod
+          go-version-file: go.mod
           # Both paths are repo-root-relative: an action resolves its own
           # inputs itself, so defaults.run.working-directory (go) applies
-          # only to `run:` steps, not here. Without cache-dependency-path
-          # setup-go looks for ./go.sum, doesn't find it, and silently
-          # disables dependency caching.
-          cache-dependency-path: go/go.sum
+          # only to `run:` steps, not here. go.mod/go.sum live at the repo
+          # root (the module covers the whole repo so the root-level
+          # `assets` package's go:embed directives can reach scripts/,
+          # trellis/, etc. — see docs/m4-go-cli-completion.md task 6).
+          # Without cache-dependency-path setup-go looks for ./go.sum,
+          # doesn't find it, and silently disables dependency caching.
+          cache-dependency-path: go.sum
 
       - name: Generate catalog
         run: go generate ./...
@@ -69,3 +72,15 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+      - name: Build and vet root assets package
+        # The go/ subtree's ./... patterns above don't reach the root-level
+        # `assets` package (its go:embed directives are what let the
+        # binary embed scripts/, trellis/, etc. — see
+        # docs/m4-go-cli-completion.md task 6). go/'s Build step above
+        # already compiles it transitively as an import, but vet doesn't
+        # visit dependencies, so it gets its own explicit check here.
+        working-directory: .
+        run: |
+          go build ./...
+          go vet ./...

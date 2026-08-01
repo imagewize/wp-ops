@@ -1,4 +1,4 @@
-module github.com/imagewize/wp-ops/go
+module github.com/imagewize/wp-ops
 
 go 1.26.4
 
