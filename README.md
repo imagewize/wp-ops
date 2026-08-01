@@ -23,6 +23,8 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 A single entry point for everything in this repo. Auto-discovers commands across every category and groups them by subdirectory.
 
+> A Go rewrite of this CLI is in progress (`go/`) — same manifest-driven commands, a real Cobra binary with generated shell completions, eventually a `brew install`. It isn't distributed yet, so the bash CLI below stays the way to install and run wp-ops for now. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
+
 ```bash
 ./install.sh                 # add wp-ops to your PATH (one-time)
 wp-ops                       # interactive picker (fuzzy, if fzf is installed)

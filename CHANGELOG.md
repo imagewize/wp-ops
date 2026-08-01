@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.19.0] - 2026-08-01
+
+### Added
+
+- **go** - M4 task 4 (shell completions, per `docs/m4-go-cli-completion.md`): the Go CLI now generates real bash/zsh/fish/PowerShell completion scripts via Cobra's built-in `completion` command — free once the command tree is fully populated, since `rootCmd` doesn't opt out of it. Added `categoryBasenameCompletions()` (`go/cmd/dispatch.go`) as each category command's `ValidArgsFunction`, porting bash's `print_completion()` (`wp-ops:2098`) two-token grammar: `wp-ops <category> <TAB>` offers every basename in that category (deduplicated), and anything past the basename returns no completions — the rest of argv belongs to the underlying script, not to wp-ops. The dynamically-registered per-entry (full-key, hidden) leaf commands from M3 task 7 complete without error despite `DisableFlagParsing: true`: positional args fall back to file completion (a reasonable default, since most scripts take paths) and `--<TAB>` correctly suppresses bogus flag suggestions instead of leaking them.
+- **go** - `wp-ops doctor` now reports whether `wp-ops completion bash`/`zsh` will actually work: zsh always does (its `compinit` ships with the shell, no extra package), but bash needs bash ≥4 — macOS ships bash 3.2, frozen since 2007 over the GPLv3 relicense, which can't run Cobra's generated script even with `bash-completion` installed — and the separate `bash-completion` package itself. Both are checked and reported with install guidance (`brew install bash`, `brew install bash-completion`) rather than failing silently on a clean Mac.
+- **docs** - Root `README.md`'s "wp-ops CLI" section gets a pointer note: a Go rewrite is in progress (`go/`), not yet distributed, so the documented bash CLI usage stays authoritative for now — links to `docs/cli-ux-plan.md` for the plan and milestone status.
+
 ## [3.18.0] - 2026-08-01
 
 ### Added
