@@ -55,8 +55,36 @@ func registerCatalogCommands(c *catalog.Catalog) {
 				runCategory(mustCatalog(), cat, args)
 				return nil
 			},
+			ValidArgsFunction: categoryBasenameCompletions(cat),
 		}
 		rootCmd.AddCommand(catCmd)
+	}
+}
+
+// categoryBasenameCompletions backs `wp-ops <category> <TAB>` completion:
+// bash's actual completion grammar (print_completion, wp-ops:2098) is
+// exactly two tokens — category, then a basename within it — and stops
+// there (cword >= 3 gets no completions, since anything past the basename
+// belongs to the underlying script's own argv). ValidArgsFunction is called
+// once per positional slot regardless of DisableFlagParsing, so this only
+// needs to guard on "am I completing the first arg after the category".
+func categoryBasenameCompletions(cat string) func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		entries := mustCatalog().CommandsIn(cat)
+		seen := make(map[string]bool, len(entries))
+		basenames := make([]string, 0, len(entries))
+		for _, e := range entries {
+			b := filepath.Base(e.Key)
+			if seen[b] {
+				continue
+			}
+			seen[b] = true
+			basenames = append(basenames, b)
+		}
+		return basenames, cobra.ShellCompDirectiveNoFileComp
 	}
 }
 

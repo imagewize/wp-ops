@@ -1,10 +1,12 @@
 # M4: Go CLI Completion — Implementation Tracker
 
 > **Status (2026-08-01):** In progress. Task 1 (`internal/exec/wpcli.go`),
-> task 2 (`internal/exec/snippet.go`), and task 3 (`internal/ui` Bubble Tea
-> picker) are done. Scoped out of M3 (`docs/m3-go-skeleton.md`, "Explicitly
-> out of scope for M3") now that M3 is merged to `main` (PR #140). Parent
-> plan: `docs/cli-ux-plan.md` (Phase C, milestone M4, target **4.0.0**).
+> task 2 (`internal/exec/snippet.go`), task 3 (`internal/ui` Bubble Tea
+> picker), and task 4 (shell completions) are done. Scoped out of M3
+> (`docs/m3-go-skeleton.md`, "Explicitly out of scope for M3") now that M3
+> is merged to `main` (PR #140). Parent plan: `docs/cli-ux-plan.md` (Phase
+> C, milestone M4, target **4.0.0**). Remaining: task 5 (`docs` search) and
+> task 6 (goreleaser + Homebrew tap).
 
 ## Goal
 
@@ -188,19 +190,40 @@ decision #3. **Done.**
   matches" state
 
 ### 4. Shell completions
-Replaces the hand-written `print_completion()` (`wp-ops:2098`, bash-only).
-- [ ] Wire Cobra's built-in `completion` command (bash/zsh/fish/PowerShell)
-  — largely free once the command tree is fully populated (it already is,
-  post-M3), but verify the dynamically-registered per-entry commands
-  (`DisableFlagParsing: true`, M3 task 7) complete correctly; Cobra's
-  default completion may need `ValidArgsFunction` hints since flag
-  parsing is disabled
-- [ ] Category → basename two-token completion (`wp-ops <category>
+Replaces the hand-written `print_completion()` (`wp-ops:2098`, bash-only). **Done.**
+- [x] Wire Cobra's built-in `completion` command (bash/zsh/fish/PowerShell)
+  — free once the command tree is fully populated (it already was, post-M3):
+  Cobra registers it automatically since `rootCmd` doesn't set
+  `CompletionOptions.DisableDefaultCmd`. Verified the dynamically-registered
+  per-entry (full-key, hidden) leaf commands complete without error despite
+  `DisableFlagParsing: true` — positional args fall back to
+  `ShellCompDirectiveDefault` (file completion, a reasonable default for
+  scripts that mostly take paths), and `--<TAB>` correctly returns
+  `ShellCompDirectiveNoFileComp` rather than leaking bogus flag suggestions.
+  No `ValidArgsFunction` needed for these; the open decision's concern
+  didn't end up applying in practice.
+- [x] Category → basename two-token completion (`wp-ops <category>
   <TAB>` → basenames in that category), matching bash's actual grammar
   ported in M3 task 7, not the flatter completion bash's
-  `print_completion()` implements today
-- [ ] Manual pass: source the generated completion script in bash and zsh,
-  confirm category and basename completion both work
+  `print_completion()` implements today — `categoryBasenameCompletions()`
+  in `dispatch.go`, wired as each category command's `ValidArgsFunction`:
+  returns every basename in the category (deduplicated) when completing the
+  first arg, `ShellCompDirectiveNoFileComp` with no candidates for anything
+  past that — matching bash's `cword >= 3` → `COMPREPLY=()`, since
+  everything after the basename belongs to the underlying script's own
+  argv, not to wp-ops. Unit-tested (`dispatch_test.go`).
+- [x] Manual pass: source the generated completion script in bash and zsh,
+  confirm category and basename completion both work — zsh verified with a
+  real `compinit` + sourced completion script driven via `expect` (TAB
+  against `wp-ops scripts <TAB>` and `wp-ops scripts db<TAB>`, confirming
+  both the full category list and prefix-filtered single-match
+  autocomplete); bash needed two things installed first that a stock macOS
+  shell lacks — Homebrew `bash` (macOS ships bash 3.2, frozen since 2007
+  over the GPLv3 relicense, which Cobra's generated script can't run even
+  with `bash-completion` installed) and the `bash-completion` package
+  itself — then verified the same way. `wp-ops doctor` now reports both
+  (see below) so this isn't a silent trap for the next person testing on a
+  clean Mac.
 
 ### 5. `docs` search command
 Deferred from M3 per open decision #2 above; port of `docs` search
@@ -244,7 +267,7 @@ milestone table:
 - [ ] Interactive picker launches on a bare `wp-ops` invocation with no
   `fzf` binary required, with guided per-argument prompting matching M2's
   bash UX
-- [ ] Generated completions work in at least bash and zsh
+- [x] Generated completions work in at least bash and zsh
 - [ ] `brew install imagewize/tap/wp-ops` (or the chosen distribution path
   per open decision #1) produces a working, self-contained binary
 - [ ] `docs` search, if in scope per open decision #2, matches bash output

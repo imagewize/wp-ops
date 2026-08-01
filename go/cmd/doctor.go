@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	osexec "os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -81,6 +83,10 @@ func runDoctor() int {
 		fmt.Println()
 	}
 
+	fmt.Println("Shell completion (wp-ops completion --help for setup)")
+	checkShellCompletion()
+	fmt.Println()
+
 	fmt.Println("Server-side (not checked here — these run on the server)")
 	fmt.Println("  ·  gawk               time filtering in the Nginx log monitors")
 	fmt.Println("     Ubuntu ships mawk by default, so gawk may be absent:")
@@ -118,6 +124,73 @@ func checkBinary(bin, purpose string, required bool) bool {
 	}
 	fmt.Printf("  %s %-18s %s\n", mark, bin, purpose)
 	return ok
+}
+
+// bashCompletionPaths are the well-known install locations for the
+// bash-completion package across common package managers. Presence of any
+// one of them is treated as "installed" — good enough for doctor's
+// advisory purpose, not a hard guarantee it's sourced in every shell.
+var bashCompletionPaths = []string{
+	"/opt/homebrew/etc/profile.d/bash_completion.sh", // Homebrew, Apple Silicon
+	"/usr/local/etc/profile.d/bash_completion.sh",    // Homebrew, Intel
+	"/etc/profile.d/bash_completion.sh",
+	"/usr/share/bash-completion/bash_completion", // Debian/Ubuntu, Fedora
+	"/etc/bash_completion",                       // older distros
+}
+
+// checkShellCompletion reports whether `wp-ops completion <shell>` is
+// likely to work end to end. zsh's compinit ships with the shell itself, so
+// it always works once `source <(wp-ops completion zsh)` runs. bash needs
+// two things Cobra's generated script assumes are present: bash ≥4 (macOS
+// ships 3.2, frozen since 2007 over the GPLv3 relicense — Homebrew's `bash`
+// formula installs a current one) and the separate bash-completion package
+// (`brew install bash-completion` for that bash 3.2 case, or
+// `bash-completion@2` alongside a bash ≥4).
+func checkShellCompletion() {
+	fmt.Println("  ✓ zsh                works out of the box (compinit) — no extra package needed")
+
+	if _, err := osexec.LookPath("bash"); err != nil {
+		fmt.Println("  ! bash               not found on PATH")
+		return
+	}
+
+	if major, ok := bashMajorVersion(); ok && major < 4 {
+		fmt.Printf("  ! bash %-14s completions need bash ≥4 — install a current one: brew install bash\n", fmt.Sprintf("%d.x", major))
+	} else {
+		fmt.Println("  ✓ bash               version supports completions")
+	}
+
+	found := false
+	for _, p := range bashCompletionPaths {
+		if _, err := os.Stat(p); err == nil {
+			found = true
+			break
+		}
+	}
+	if found {
+		fmt.Println("  ✓ bash-completion    found")
+	} else {
+		fmt.Println("  ! bash-completion    not found — install it: brew install bash-completion (or your distro's bash-completion package)")
+	}
+}
+
+// bashMajorVersion shells out to whatever `bash` is on PATH and parses
+// $BASH_VERSION's leading integer (e.g. "5.3.15(1)-release" -> 5).
+func bashMajorVersion() (int, bool) {
+	out, err := osexec.Command("bash", "-c", "echo -n \"$BASH_VERSION\"").Output()
+	if err != nil {
+		return 0, false
+	}
+	version := strings.TrimSpace(string(out))
+	major, _, ok := strings.Cut(version, ".")
+	if !ok {
+		return 0, false
+	}
+	n, err := strconv.Atoi(major)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
 }
 
 func checkEnvDir(varName, purpose string, detector func(startDir, stopAt string) (string, bool)) {
