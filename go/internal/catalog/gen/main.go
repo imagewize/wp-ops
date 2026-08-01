@@ -55,6 +55,28 @@ func extensionsFor(category string) map[string]bool {
 // mcp-server/dev and mcp-server/start, neither of which is in this list, so
 // it never fires; ported for exactness, matching is_server_side_command()'s
 // own fallback order).
+// promotedScriptCategories are the @category values under scripts/** with
+// enough commands (4+) to warrant their own top-level DisplayCategory
+// (Phase F option 4, docs/cli-ux-plan.md) rather than staying folded into
+// "scripts" alongside backup/git/misc/sync/woocommerce (2-3 commands each).
+var promotedScriptCategories = map[string]bool{
+	"monitoring": true,
+	"images":     true,
+	"patterns":   true,
+	"release":    true,
+}
+
+// displayCategoryFor computes catalog.Entry.DisplayCategory: the manifest's
+// own @category value for a promoted scripts/** subcategory, otherwise the
+// directory category unchanged. See DisplayCategory's doc comment for why
+// this is kept separate from Category.
+func displayCategoryFor(category, manifestCategory string) string {
+	if category == "scripts" && promotedScriptCategories[manifestCategory] {
+		return manifestCategory
+	}
+	return category
+}
+
 var serverSideFallback = map[string]bool{
 	"scripts/monitoring/traffic-monitor":  true,
 	"scripts/monitoring/security-monitor": true,
@@ -122,6 +144,7 @@ func main() {
 
 			entry := catalog.Entry{
 				Category:         category,
+				DisplayCategory:  displayCategoryFor(category, cmd.Category),
 				Key:              key,
 				ScriptPath:       rel,
 				Runs:             cmd.Runs,

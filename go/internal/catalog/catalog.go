@@ -57,7 +57,18 @@ type Entry struct {
 	// for parity and for later phases to use, not currently consumed by any
 	// wp-ops subcommand.
 	ManifestCategory string `json:"manifest_category,omitempty"`
-	Annotated        bool   `json:"annotated"`
+	// DisplayCategory is the grouping used by every human-facing surface —
+	// list.go's category views, the interactive picker, and the per-category
+	// Cobra commands (dispatch.go). It equals Category except for the
+	// scripts/** subcategories big enough to warrant their own top-level
+	// group (Phase F option 4, docs/cli-ux-plan.md): "monitoring", "images",
+	// "patterns", "release" (see gen/main.go's promotedScriptCategories).
+	// Deliberately kept separate from Category so --json (printJSON,
+	// parity-check.sh) stays byte-for-byte identical to bash's
+	// directory-based "category" field — bash has no equivalent of this
+	// split and isn't getting one before it's retired at 4.0.0.
+	DisplayCategory string `json:"display_category"`
+	Annotated       bool   `json:"annotated"`
 }
 
 // RequiresString joins Requires the way bash's manifest_get "requires"
@@ -69,9 +80,10 @@ func (e Entry) RequiresString() string {
 
 // Catalog is the full set of discovered commands, indexed for lookup.
 type Catalog struct {
-	Entries    []Entry
-	byKey      map[string]Entry
-	byCategory map[string][]Entry
+	Entries           []Entry
+	byKey             map[string]Entry
+	byCategory        map[string][]Entry
+	byDisplayCategory map[string][]Entry
 }
 
 // Load parses the embedded catalog.json. It only returns an error if the
@@ -85,17 +97,24 @@ func Load() (*Catalog, error) {
 	}
 
 	c := &Catalog{
-		Entries:    entries,
-		byKey:      make(map[string]Entry, len(entries)),
-		byCategory: make(map[string][]Entry),
+		Entries:           entries,
+		byKey:             make(map[string]Entry, len(entries)),
+		byCategory:        make(map[string][]Entry),
+		byDisplayCategory: make(map[string][]Entry),
 	}
 	for _, e := range entries {
 		c.byKey[e.Key] = e
 		c.byCategory[e.Category] = append(c.byCategory[e.Category], e)
+		c.byDisplayCategory[e.DisplayCategory] = append(c.byDisplayCategory[e.DisplayCategory], e)
 	}
 	for cat := range c.byCategory {
 		sort.Slice(c.byCategory[cat], func(i, j int) bool {
 			return c.byCategory[cat][i].Key < c.byCategory[cat][j].Key
+		})
+	}
+	for cat := range c.byDisplayCategory {
+		sort.Slice(c.byDisplayCategory[cat], func(i, j int) bool {
+			return c.byDisplayCategory[cat][i].Key < c.byDisplayCategory[cat][j].Key
 		})
 	}
 	return c, nil
@@ -111,6 +130,8 @@ func (c *Catalog) Lookup(key string) (Entry, bool) {
 
 // Categories returns category names in Categories (curated) order, skipping
 // any with zero discovered commands — mirrors bash's get_active_categories().
+// This is the directory-based grouping consumed by printJSON, kept distinct
+// from DisplayCategories so --json stays byte-for-byte identical to bash.
 func (c *Catalog) Categories() []string {
 	var out []string
 	for _, cat := range Categories {
@@ -121,9 +142,31 @@ func (c *Catalog) Categories() []string {
 	return out
 }
 
+// DisplayCategories returns DisplayCategory names in DisplayOrder (curated)
+// order, skipping any with zero discovered commands. This is what every
+// human-facing surface — list.go's views, the interactive picker, and
+// dispatch.go's per-category Cobra commands — groups by; see DisplayCategory
+// for why it's kept separate from Categories.
+func (c *Catalog) DisplayCategories() []string {
+	var out []string
+	for _, cat := range DisplayOrder {
+		if len(c.byDisplayCategory[cat]) > 0 {
+			out = append(out, cat)
+		}
+	}
+	return out
+}
+
 // CommandsIn returns a category's commands sorted by key.
 func (c *Catalog) CommandsIn(category string) []Entry {
 	return c.byCategory[category]
+}
+
+// CommandsInDisplay returns a DisplayCategory's commands sorted by key —
+// the DisplayCategory counterpart to CommandsIn, used by every human-facing
+// grouped view.
+func (c *Catalog) CommandsInDisplay(category string) []Entry {
+	return c.byDisplayCategory[category]
 }
 
 // FindByBasename returns every entry whose key's final path segment matches
@@ -170,10 +213,37 @@ var Categories = []string{
 	"mcp-server",
 }
 
+// DisplayOrder lists DisplayCategory names in curated (most-used-first)
+// order — the DisplayCategory counterpart to Categories, consumed by
+// Catalog.DisplayCategories(). "scripts" keeps the subcategories too small
+// to warrant their own top-level group (Phase F option 4,
+// docs/cli-ux-plan.md: backup, git, misc, sync, woocommerce — 11 commands
+// combined); monitoring/images/patterns/release split out right after it
+// since each has enough commands (4+) to stand alone. See gen/main.go's
+// promotedScriptCategories for the threshold.
+var DisplayOrder = []string{
+	"scripts",
+	"monitoring",
+	"images",
+	"patterns",
+	"release",
+	"trellis",
+	"wp-cli",
+	"bedrock",
+	"nginx",
+	"wordpress-utilities",
+	"troubleshooting",
+	"mcp-server",
+}
+
 // CategoryDisplayNames mirrors bash's CATEGORY_DISPLAY_NAMES, parallel to
-// Categories.
+// Categories, plus the DisplayOrder-only entries split out of "scripts".
 var CategoryDisplayNames = map[string]string{
 	"scripts":             "Scripts",
+	"monitoring":          "Monitoring",
+	"images":              "Images",
+	"patterns":            "Patterns",
+	"release":             "Release",
 	"trellis":             "Trellis",
 	"wp-cli":              "WP-CLI",
 	"bedrock":             "Bedrock",
@@ -189,7 +259,11 @@ var CategoryDisplayNames = map[string]string{
 // and `internal/ui` can use the same text without either importing the
 // other.
 var CategoryBlurbs = map[string]string{
-	"scripts":             "Backup, monitoring, release, git, image, and sync utilities",
+	"scripts":             "Backup, git, sync, and other one-off utility scripts",
+	"monitoring":          "Log monitoring, uptime checks, and traffic analysis",
+	"images":              "Image resizing, WebP/AVIF conversion, and Openverse downloads",
+	"patterns":            "Block pattern screenshots and format conversion",
+	"release":             "WordPress plugin/theme release and asset upload automation",
 	"trellis":             "Trellis provisioning, backups, and Ansible playbook commands",
 	"wp-cli":              "WordPress diagnostics, audits, and WP-CLI-driven tools",
 	"bedrock":             "Bedrock/Composer pattern validation",

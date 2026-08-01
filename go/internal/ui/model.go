@@ -57,11 +57,11 @@ func buildCategoryOptions(c *catalog.Catalog) []categoryOption {
 		count: len(c.Entries),
 		blurb: "Search or browse the whole catalog",
 	}}
-	for _, cat := range c.Categories() {
+	for _, cat := range c.DisplayCategories() {
 		opts = append(opts, categoryOption{
 			key:   cat,
 			label: catalog.CategoryDisplayNames[cat],
-			count: len(c.CommandsIn(cat)),
+			count: len(c.CommandsInDisplay(cat)),
 			blurb: catalog.CategoryBlurbs[cat],
 		})
 	}
@@ -144,7 +144,7 @@ func filterEntries(all []catalog.Entry, query string) []catalog.Entry {
 	// duplicating catalog's case-insensitive substring-match logic.
 	entries := c.Search(query)
 	sort.SliceStable(entries, func(i, j int) bool {
-		ri, rj := categoryRank(entries[i].Category), categoryRank(entries[j].Category)
+		ri, rj := categoryRank(entries[i].DisplayCategory), categoryRank(entries[j].DisplayCategory)
 		if ri != rj {
 			return ri < rj
 		}
@@ -153,16 +153,16 @@ func filterEntries(all []catalog.Entry, query string) []catalog.Entry {
 	return entries
 }
 
-// categoryRank orders by position in catalog.Categories (the curated,
+// categoryRank orders by position in catalog.DisplayOrder (the curated,
 // most-used-first order), falling back to the end of the list for any
 // category that isn't in it — defensive only, every real category is.
 func categoryRank(category string) int {
-	for i, cat := range catalog.Categories {
+	for i, cat := range catalog.DisplayOrder {
 		if cat == category {
 			return i
 		}
 	}
-	return len(catalog.Categories)
+	return len(catalog.DisplayOrder)
 }
 
 func (m Model) Init() tea.Cmd {
@@ -261,6 +261,23 @@ func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.catCursor++
 		}
 		return m, nil
+
+	case tea.KeyRunes, tea.KeySpace:
+		// Typing anywhere on the category-select stage jumps straight into
+		// stageBrowse unscoped ("All categories") with the typed text as the
+		// initial filter — restores the pre-Phase-F-option-3 "just start
+		// typing to search" muscle memory that adding this stage as the new
+		// default screen otherwise took away (arrow+enter was still the only
+		// way to make a keypress do anything here).
+		runes := msg.Runes
+		if msg.Type == tea.KeySpace {
+			runes = []rune{' '}
+		}
+		m.browseCategory = ""
+		m.filterQuery = runes
+		m.applyFilter()
+		m.stage = stageBrowse
+		return m, nil
 	}
 	return m, nil
 }
@@ -343,7 +360,7 @@ func (m *Model) applyFilter() {
 func filterByCategory(all []catalog.Entry, category string) []catalog.Entry {
 	var out []catalog.Entry
 	for _, e := range all {
-		if e.Category == category {
+		if e.DisplayCategory == category {
 			out = append(out, e)
 		}
 	}
@@ -501,10 +518,10 @@ func (m Model) viewBrowse() string {
 	lastCat := ""
 	for i := start; i < end; i++ {
 		e := m.filtered[i]
-		if m.browseCategory == "" && e.Category != lastCat {
-			list.WriteString(categoryHeaderStyle.Render(catalog.CategoryDisplayNames[e.Category]))
+		if m.browseCategory == "" && e.DisplayCategory != lastCat {
+			list.WriteString(categoryHeaderStyle.Render(catalog.CategoryDisplayNames[e.DisplayCategory]))
 			list.WriteString("\n")
-			lastCat = e.Category
+			lastCat = e.DisplayCategory
 		}
 		line := fmt.Sprintf("%-28s", truncate(filepath.Base(e.Key), 28))
 		if e.RunsOn == "server" {

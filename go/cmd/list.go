@@ -46,8 +46,8 @@ func printCategorizedList(c *catalog.Catalog) {
 	fmt.Println("wp-ops — WordPress Operations Tools")
 	fmt.Println()
 
-	for _, category := range c.Categories() {
-		entries := c.CommandsIn(category)
+	for _, category := range c.DisplayCategories() {
+		entries := c.CommandsInDisplay(category)
 		fmt.Printf("  %-22s (%2d)  %s\n", catalog.CategoryDisplayNames[category], len(entries), catalog.CategoryBlurbs[category])
 	}
 
@@ -67,9 +67,9 @@ func printAllCommands(c *catalog.Catalog) {
 	fmt.Println("wp-ops — WordPress Operations Tools (full list)")
 	fmt.Println()
 
-	for _, category := range c.Categories() {
+	for _, category := range c.DisplayCategories() {
 		fmt.Printf("%s (%s):\n\n", catalog.CategoryDisplayNames[category], category)
-		printCategoryEntries(c.CommandsIn(category))
+		printCategoryEntries(c.CommandsInDisplay(category))
 		fmt.Println()
 	}
 
@@ -80,7 +80,7 @@ func printAllCommands(c *catalog.Catalog) {
 }
 
 func printCategoryCommands(c *catalog.Catalog, category string) {
-	entries := c.CommandsIn(category)
+	entries := c.CommandsInDisplay(category)
 	if len(entries) == 0 {
 		fmt.Printf("No commands found in category: %s\n", catalog.CategoryDisplayNames[category])
 		return
@@ -103,7 +103,12 @@ func printCategoryEntries(entries []catalog.Entry) {
 // printJSON renders the catalog as JSON, matching bash's print_json
 // (wp-ops:853) field-for-field: category is the top-level directory (not
 // the @category manifest directive), and path duplicates command — bash's
-// own printf uses $cmd_key for both fields.
+// own printf uses $cmd_key for both fields. Deliberately uses Categories()/
+// CommandsIn() (the directory grouping), not DisplayCategories()/
+// CommandsInDisplay() — this is the one surface that must stay byte-for-byte
+// identical to bash's output (see go/scripts/parity-check.sh), so the
+// scripts/** DisplayCategory split (monitoring/images/patterns/release)
+// must never leak into it.
 func printJSON(c *catalog.Catalog) {
 	type jsonEntry struct {
 		Category    string `json:"category"`

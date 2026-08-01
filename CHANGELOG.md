@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.21.0] - 2026-08-01
+
+### Added
+
+- **go** - Phase F option 4 (per `docs/cli-ux-plan.md`): split the oversized 35-command `scripts` category into real top-level categories. Turned out far cheaper than the original effort estimate — every `scripts/**` file already carries a fine-grained `@category` directive from Phase A's rollout, it just wasn't wired into the top-level grouping. Added a new `catalog.Entry.DisplayCategory` field, computed in `gen/main.go`, kept deliberately separate from the existing directory-based `Category` field so `printJSON`'s `--json` output stays byte-for-byte identical to bash's (`go/scripts/parity-check.sh` still 8/8) — only the human-facing surfaces (`list`, the picker, `wp-ops <category>`) read the new grouping. Subcategories with 4+ commands get their own top-level entry — `monitoring`(10), `images`(5), `patterns`(5), `release`(4) — while the smaller ones (`backup`, `git`, `misc`, `sync`, `woocommerce`, 2-3 commands each) stay folded into `scripts`(11), per a new `catalog.DisplayOrder` var and matching `CategoryDisplayNames`/`CategoryBlurbs` entries. `Catalog.DisplayCategories()`/`CommandsInDisplay()` join the existing `Categories()`/`CommandsIn()` rather than replacing them. `displayCategoryFor()` is table-tested (`gen/main_test.go`), and `TestCommandsInDisplayPreservesCategoryForJSON` (`catalog_test.go`) encodes the `--json` parity guarantee as an assertion rather than just a comment.
+
+### Fixed
+
+- **go** - The Bubble Tea picker's outermost category-select screen (Phase F option 3, 3.20.0) only handled arrow keys, so typing did nothing until Enter was pressed on "All categories" first — silently dropping the "just start typing to search" behavior the picker had before that stage existed. `updateCategory` (`internal/ui/model.go`) now treats a rune/space keypress as jumping straight into the browse list, unscoped, seeded with the typed text as the initial filter; arrow+Enter still drills into a category as before. New `internal/ui/model_test.go` — the package previously had no tests for `model.go` at all, only `fields.go`'s pure helpers — covers both key branches plus regression guards for arrow-key navigation and Enter-to-drill-into-a-category.
+
 ## [3.20.0] - 2026-08-01
 
 ### Added

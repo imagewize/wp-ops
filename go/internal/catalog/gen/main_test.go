@@ -101,6 +101,48 @@ func TestRunsOnFor(t *testing.T) {
 	}
 }
 
+// TestDisplayCategoryFor covers the Phase F option 4 split
+// (docs/cli-ux-plan.md): scripts/** subcategories with 4+ commands get
+// promoted to their own DisplayCategory, everything else — including
+// other categories' own @category tags, e.g. trellis/backup/*.yml also
+// using "backup" — stays untouched.
+func TestDisplayCategoryFor(t *testing.T) {
+	tests := []struct {
+		name             string
+		category         string
+		manifestCategory string
+		want             string
+	}{
+		{"promoted scripts subcategory: monitoring", "scripts", "monitoring", "monitoring"},
+		{"promoted scripts subcategory: images", "scripts", "images", "images"},
+		{"promoted scripts subcategory: patterns", "scripts", "patterns", "patterns"},
+		{"promoted scripts subcategory: release", "scripts", "release", "release"},
+		{"non-promoted scripts subcategory stays scripts: backup", "scripts", "backup", "scripts"},
+		{"non-promoted scripts subcategory stays scripts: woocommerce", "scripts", "woocommerce", "scripts"},
+		{"scripts file with no @category at all", "scripts", "", "scripts"},
+		{
+			// trellis/backup/*.yml also tags "@category backup" — must not be
+			// swept into the scripts-only "backup" grouping (there isn't one;
+			// "backup" was never promoted) nor otherwise affected, since
+			// promotion only ever applies within category == "scripts".
+			"non-scripts category is never overridden, even with a matching manifest tag",
+			"trellis", "backup", "trellis",
+		},
+		{
+			"non-scripts category with a promoted-looking manifest tag is still untouched",
+			"trellis", "monitoring", "trellis",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := displayCategoryFor(tt.category, tt.manifestCategory); got != tt.want {
+				t.Errorf("displayCategoryFor(%q, %q) = %q, want %q", tt.category, tt.manifestCategory, got, tt.want)
+			}
+		})
+	}
+}
+
 // TestCleanDescription ports clean_description() (wp-ops:221).
 func TestCleanDescription(t *testing.T) {
 	tests := []struct {
