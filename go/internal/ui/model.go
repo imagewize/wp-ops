@@ -261,6 +261,23 @@ func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.catCursor++
 		}
 		return m, nil
+
+	case tea.KeyRunes, tea.KeySpace:
+		// Typing anywhere on the category-select stage jumps straight into
+		// stageBrowse unscoped ("All categories") with the typed text as the
+		// initial filter — restores the pre-Phase-F-option-3 "just start
+		// typing to search" muscle memory that adding this stage as the new
+		// default screen otherwise took away (arrow+enter was still the only
+		// way to make a keypress do anything here).
+		runes := msg.Runes
+		if msg.Type == tea.KeySpace {
+			runes = []rune{' '}
+		}
+		m.browseCategory = ""
+		m.filterQuery = runes
+		m.applyFilter()
+		m.stage = stageBrowse
+		return m, nil
 	}
 	return m, nil
 }
