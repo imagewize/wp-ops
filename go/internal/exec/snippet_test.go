@@ -138,7 +138,8 @@ func TestRunSnippet_CopyNoClipboardTool(t *testing.T) {
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1", code)
 	}
-	if !strings.Contains(errOut.String(), "--path instead") {
+	if !strings.Contains(errOut.String(), "No clipboard tool found") ||
+		!strings.Contains(errOut.String(), "wp-ops wordpress-utilities/snippets/footer --path") {
 		t.Errorf("stderr missing --path fallback guidance:\n%s", errOut.String())
 	}
 }
