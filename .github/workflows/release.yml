@@ -1,0 +1,41 @@
+name: Release
+
+# Builds and publishes the Go CLI via goreleaser on every version tag push —
+# see docs/m4-go-cli-completion.md, task 6. Separate from go-build.yml,
+# which runs on every push/PR to main and never publishes anything.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The default GITHUB_TOKEN is scoped to this repo only, so it
+          # can't push the generated cask file to imagewize/tap. This must
+          # be a personal access token (fine-grained, "Contents:
+          # read and write" on imagewize/tap is enough) created and added
+          # as a repo secret by a repo admin — not something to generate or
+          # paste into a PR/commit. See the "Distribution" section of
+          # docs/cli-ux-plan.md's Phase C for context.
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}

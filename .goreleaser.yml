@@ -1,0 +1,75 @@
+version: 2
+
+# Builds and releases the wp-ops Go CLI — see docs/m4-go-cli-completion.md,
+# task 6, and docs/cli-ux-plan.md's Phase C "Distribution" section. The
+# scripts themselves are not part of this build: they're embedded at compile
+# time via the root-level `assets` package (assets.go), so this .goreleaser.yml
+# only needs to know about the Go binary.
+
+before:
+  hooks:
+    - go generate ./...
+
+builds:
+  - id: wp-ops
+    main: ./go
+    binary: wp-ops
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - id: wp-ops
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - LICENSE.md
+      - README.md
+      - CHANGELOG.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  # CHANGELOG.md is hand-maintained (Keep a Changelog format, read at
+  # runtime by getVersion()/embeddedVersion() — see go/cmd/version.go and
+  # go/cmd/env.go). Goreleaser's own commit-log changelog would just
+  # duplicate/conflict with it in the GitHub Release body.
+  disable: true
+
+# `brews` was goreleaser's older formula-based Homebrew publisher; it's
+# hard-deprecated as of goreleaser v2.16 in favor of `homebrew_casks`
+# (https://goreleaser.com/deprecations/#brews), which is now the recommended
+# way to distribute a precompiled binary via a tap regardless of whether
+# it's a GUI app — `binaries:` alone is enough for a plain CLI tool.
+homebrew_casks:
+  - name: wp-ops
+    binaries:
+      - wp-ops
+    repository:
+      owner: imagewize
+      name: tap
+      branch: main
+      # The default GITHUB_TOKEN goreleaser runs with is scoped to this
+      # repo (imagewize/wp-ops) only and can't push to imagewize/tap — see
+      # .github/workflows/release.yml for where this env var is set.
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://github.com/imagewize/wp-ops"
+    description: "Unified CLI for WordPress operations, Trellis, and Bedrock workflows"
+
+release:
+  github:
+    owner: imagewize
+    name: wp-ops
+  # scripts/, trellis/, wp-cli/, etc. aren't release artifacts — they're
+  # embedded into the binary, not shipped alongside it.
+  extra_files: []
