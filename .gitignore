@@ -7,6 +7,9 @@ trellis/security/.env
 go/wp-ops
 go/wp-ops-go-test
 
+# goreleaser's local build output (see docs/m4-go-cli-completion.md, task 6)
+dist/
+
 # internal/catalog/catalog.json is committed, not ignored: go:embed requires
 # it to exist for the package to compile at all (a chicken-and-egg problem
 # for `go generate` on a fresh clone otherwise), and committing it lets CI
