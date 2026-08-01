@@ -31,6 +31,7 @@ playbooks, and more.
 
   wp-ops list                             List every command by category
   wp-ops search <term>                    Search commands by name or description
+  wp-ops docs [term] [-l]                 Search the guides (no term lists them)
   wp-ops doctor                           Check dependencies and environment
   wp-ops --json                           Output the command list as JSON
   wp-ops --version                        Show version`,

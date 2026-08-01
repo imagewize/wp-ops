@@ -20,8 +20,9 @@
 > to `main` in PR #140 — see `docs/m3-go-skeleton.md`. M4 is in progress —
 > tasks 3 (Bubble Tea picker) and 4 (shell completions) are merged (PRs
 > #144, #145); tasks 1–2 (remaining executors) were also done earlier. Task
-> 5 (`docs` search) and 6 (goreleaser + tap) remain — see
-> `docs/m4-go-cli-completion.md`. Phase F (below) was raised against M4's
+> 5 (`docs` search) is done, on `feature/go-docs-search`, not yet merged.
+> Task 6 (goreleaser + tap) remains — see `docs/m4-go-cli-completion.md`.
+> Phase F (below) was raised against M4's
 > shipped picker/list surfaces; its options 1–3 merged in PR #146 (3.20.0).
 > Option 4 (splitting `scripts`) is now also done, on
 > `feature/cli-picker-search-scripts-categories`, not yet merged — turned out
@@ -578,7 +579,7 @@ touch `viewBrowse`), not a prerequisite for it.
 | M1 | Manifest spec, bash parser, `manifest lint`, backup + monitoring annotated | 3.10.0 | **Done**, merged (PR #134) |
 | M2 | All 66 annotated; guided prompts; `@runs` replaces the hardcoded list | 3.11.0 | **Done** — groups 1–5 plus the 2 `trellis` stragglers annotated (64/66 total); guided prompts shipped in 3.13.0; CI lint wiring landed after. Only `mcp-server/*` (2, out of scope) remains unannotated |
 | M3 | Go skeleton, catalog generator, shell + ansible executors; parity on `list`/`search`/`doctor`/`--json` | 4.0.0-beta | **Done**, merged to `main` (PR #140) — see `docs/m3-go-skeleton.md` for the full breakdown; all acceptance criteria met, parity script passing 8/8 |
-| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **In progress** — tasks 1–4 done (PHP/snippet executors, picker PR #144, completions PR #145); tasks 5 (`docs` search) and 6 (goreleaser + tap) remain. See `docs/m4-go-cli-completion.md` |
+| M4 | Remaining executors, Bubble Tea picker, completions, goreleaser + tap | 4.0.0 | **In progress** — tasks 1–5 done (PHP/snippet executors, picker PR #144, completions PR #145, `docs` search on `feature/go-docs-search`); task 6 (goreleaser + tap) remains. See `docs/m4-go-cli-completion.md` |
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
 | F | Command discovery: category-first default views, picker grouping | 3.20.0 | **In progress** — options 1–3 done, merged (PR #146); option 4 not started. See Phase F below |

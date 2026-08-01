@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.22.0] - 2026-08-01
+
+### Added
+
+- **go** - M4 task 5 (per `docs/m4-go-cli-completion.md`): the Go CLI gets `wp-ops docs [term]`, a port of bash's full-text search over the repo's ~65 markdown guides (`wp-ops:1610-1736`). With no term, lists every `*.md` file under the repo root (excluding `.git`/`node_modules`/`vendor`); with a term, prints each matching file with its match count and up to 3 matching lines (collapsed whitespace, truncated to 96 chars), plus a "… N more" summary beyond that. `-w`/`--word` restricts matching to whole words (so `oom` doesn't hit inside "server room"); `-l`/`--files`/`--paths` prints matching paths only, for piping to an editor. This is unrelated to the per-command `@doc` manifest directive (`catalog.Entry.Doc`, already surfaced by `--help`/`--json`) — a pure filesystem search independent of any command's manifest, new file `go/cmd/docs.go`. `wp-ops search`'s "no command matches" path (`go/cmd/search.go`) regains the "the documentation mentions it though" cross-reference into this search, matching bash's behavior — the gap was called out explicitly in a comment left when `search` was ported ahead of `docs` landing. Unit-tested (`go/cmd/docs_test.go`): file discovery/exclusion, case-insensitivity vs. whole-word matching, whitespace collapsing/truncation, and match-count-is-lines-not-occurrences (`grep -c` semantics). `go/scripts/parity-check.sh` still 8/8 — `docs` isn't part of that contract (bash's output there is hand-formatted prose, not a stable interface), and neither `--json` nor `search`/`doctor` changed shape.
+
 ## [3.21.0] - 2026-08-01
 
 ### Added
