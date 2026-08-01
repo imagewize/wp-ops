@@ -182,3 +182,17 @@ var CategoryDisplayNames = map[string]string{
 	"troubleshooting":     "Troubleshooting",
 	"mcp-server":          "MCP Server",
 }
+
+// CategoryBlurbs is a one-line summary per category — shown alongside its
+// command count in cmd's compact `list` view and ui's picker category-select
+// stage. Phase F, docs/cli-ux-plan.md. Lives here (not in cmd) so both `cmd`
+// and `internal/ui` can use the same text without either importing the
+// other.
+var CategoryBlurbs = map[string]string{
+	"scripts":             "Backup, monitoring, release, git, image, and sync utilities",
+	"trellis":             "Trellis provisioning, backups, and Ansible playbook commands",
+	"wp-cli":              "WordPress diagnostics, audits, and WP-CLI-driven tools",
+	"bedrock":             "Bedrock/Composer pattern validation",
+	"wordpress-utilities": "Reusable snippets copied into WordPress projects",
+	"mcp-server":          "MCP server dev/start commands",
+}

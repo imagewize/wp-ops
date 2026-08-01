@@ -12,27 +12,59 @@ import (
 	"github.com/imagewize/wp-ops/go/internal/catalog"
 )
 
+var allFlag bool
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List every command by category",
 	RunE: func(cc *cobra.Command, args []string) error {
 		c := mustCatalog()
-		if jsonFlag {
+		switch {
+		case jsonFlag:
 			printJSON(c)
-			return nil
+		case allFlag:
+			printAllCommands(c)
+		default:
+			printCategorizedList(c)
 		}
-		printCategorizedList(c)
 		return nil
 	},
 }
 
 func init() {
 	listCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
+	listCmd.Flags().BoolVar(&allFlag, "all", false, "List every command in every category, with descriptions")
 	rootCmd.AddCommand(listCmd)
 }
 
+// printCategorizedList renders the compact, category-only default view —
+// what bare `wp-ops` and `wp-ops list` show. Full per-command output moved
+// to printAllCommands (`--all`); a single category's commands are already
+// available via `wp-ops <category>` (dispatch.go's per-category Cobra
+// commands), so this view doesn't need to duplicate that.
 func printCategorizedList(c *catalog.Catalog) {
 	fmt.Println("wp-ops — WordPress Operations Tools")
+	fmt.Println()
+
+	for _, category := range c.Categories() {
+		entries := c.CommandsIn(category)
+		fmt.Printf("  %-22s (%2d)  %s\n", catalog.CategoryDisplayNames[category], len(entries), catalog.CategoryBlurbs[category])
+	}
+
+	fmt.Println()
+	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops trellis')")
+	fmt.Println("Run 'wp-ops list --all' to see every command with its description")
+	fmt.Println("Run 'wp-ops search <term>' to find a command")
+	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
+	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
+}
+
+// printAllCommands is the original full listing: every command in every
+// category, one line each with its description. Kept behind `list --all`
+// since it's still the only single-command way to see the whole catalog at
+// once (e.g. for grepping).
+func printAllCommands(c *catalog.Catalog) {
+	fmt.Println("wp-ops — WordPress Operations Tools (full list)")
 	fmt.Println()
 
 	for _, category := range c.Categories() {
@@ -41,6 +73,7 @@ func printCategorizedList(c *catalog.Catalog) {
 		fmt.Println()
 	}
 
+	fmt.Println("Run 'wp-ops list' for a compact category summary")
 	fmt.Println("Run 'wp-ops search <term>' to find a command")
 	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
 	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
