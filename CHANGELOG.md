@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.17.0] - 2026-08-01
+
+### Added
+
+- **go** - M4 task 2 (`internal/exec/snippet.go`, per `docs/m4-go-cli-completion.md`): the Go CLI can now run `wordpress-utilities/**` reference snippets, closing the second of M4's two remaining executor gaps. Port of `execute_snippet()` (`wp-ops:1232`) — default (no args) prints the snippet to stdout, TTY-aware like bash (filename header plus trailing reference-snippet notice on a terminal, raw content only when piped/redirected so `wp-ops ... > footer.php` still works, minus bash's ANSI dimming to match the rest of the Go CLI's plain-text convention); `--path` prints only the resolved file path; `--copy` clipboard-copies via the same `pbcopy` → `xclip`/`xsel` → `clip.exe` fallback chain as `find_clipboard_cmd()` (`wp-ops:1220`), failing with the same "no clipboard tool found, try --path instead" message if none are on `PATH`. `--help` renders from the manifest plus the fixed "reference snippet, not run directly" explanation and three-line usage block bash prints. `go/cmd/dispatch.go`'s `wordpress-utilities/*` branch now dispatches for real instead of printing the M4 stub message.
+
+### Fixed
+
+- **go** - `go/cmd/dispatch.go`'s executor dispatch checked `ext == ".php"` before the `wordpress-utilities/` category prefix, a regression introduced when M4 task 1 split what had been a single combined condition. Since 3 of the 5 non-doc files under `wordpress-utilities/` are `.php`, they were silently executed via WP-CLI (`wp eval-file`) instead of being printed/copied as reference snippets — never shipped to a release, caught while wiring up task 2's executor. The category-prefix check now runs first.
+
 ## [3.16.0] - 2026-08-01
 
 ### Added
