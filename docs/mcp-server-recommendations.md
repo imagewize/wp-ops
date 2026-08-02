@@ -2,13 +2,27 @@
 
 Recommendations for getting more out of the wp-ops MCP server (`mcp-server/`) across
 all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), and
-non-WordPress sites — with a focus on saving time and tokens.
+non-WordPress sites — with a focus on saving time and tokens. Also covers the
+longer-term question of tighter coupling with the Go CLI binary.
 
-## Current state (as of the `add/mcp-server` branch)
+> **Status:** Up to date as of v3.23.2 (2026-08-01)
+
+## Current state
 
 The server exposes five tools — `security_scan`, `db_backup`, `wp_cli`,
 `redirect_audit`, `schema_audit` — backed by a Zod-validated site registry
 (`config/sites.json`).
+
+It's launched via the Go CLI (`wp-ops mcp-server dev` / `wp-ops mcp-server start`,
+both discoverable in the Go binary's 66-command catalog), but the Go CLI's role
+stops at **launching the process** — the MCP server itself **bypasses the Go CLI**
+and invokes scripts directly via Node.js `child_process.spawn`. This gives it
+low-level control the Go CLI doesn't currently expose:
+
+- **SSH streaming** — PHP scanner scripts are piped over SSH stdin, nothing is written to disk remotely
+- **Trellis VM support** — commands targeting dev VMs use `trellis vm shell`
+- **Custom binary paths** — non-standard PHP/WP-CLI paths for shared hosting (cPanel/Plesk)
+- **Its own site registry** (`config/sites.json`), separate from the Go CLI's catalog
 
 Observed setup gaps:
 
@@ -113,3 +127,206 @@ Observed setup gaps:
 2. Items 5–6: opens up all non-Trellis and static sites.
 3. Items 7–8: biggest recurring token savers.
 4. Items 9–11: output compaction and new tools.
+
+---
+
+## Long-term: tighter Go CLI integration
+
+The current split (Node.js MCP server + Go CLI) works and is well-tested. The
+items above are the near-term priority — they're low/medium effort with clear,
+immediate payoff. The options below are architectural and higher-effort; treat
+them as background/opportunistic work, not queued backlog.
+
+| Option | Description | Effort | Verdict |
+|--------|-------------|--------|---------|
+| **A — MCP calls Go CLI** | Shell out to `wp-ops` instead of calling scripts directly | Medium | Blocked until Go CLI supports SSH stdin streaming and Trellis VM shelling |
+| **B — Native Go MCP** | Rewrite the MCP server in Go as `wp-ops mcp serve` | High | Architecturally cleanest long-term, but premature until the Go MCP SDK matures |
+| **C — Keep current architecture** | Status quo | None | **Recommended for now** — already working, Node.js has mature MCP SDK support |
+
+### Option A: MCP Server Calls Go CLI
+
+```typescript
+// Instead of:
+spawn(phpBin, [scannerFile, scanPath])
+
+// Use:
+spawn("wp-ops", ["wp-cli/security/scanner-targeted", scanPath])
+```
+
+**Pros:** single execution path (Go CLI handles manifest, args, paths), less code
+duplication, easier to maintain.
+
+**Blockers:** Go CLI doesn't support stdin streaming for SSH (the MCP server's key
+optimization) or Trellis VM execution. Would need new Go CLI flags: `--ssh-host`,
+`--remote-path`, `--trellis-vm`, etc.
+
+### Option B: Native Go MCP (long-term)
+
+Rewrite the MCP server in Go as a subcommand: `wp-ops mcp serve --transport=stdio`
+(or `--transport=http`), eliminating the separate Node.js process entirely.
+
+```
+go/mcp/
+├── server.go           # MCP server lifecycle, transport setup
+├── transport/
+│   ├── stdio.go        # Stdio transport (stdin/stdout JSON-RPC)
+│   └── http.go         # Streamable HTTP transport (MCP over HTTP)
+├── tools/
+│   ├── security_scan.go
+│   ├── db_backup.go
+│   ├── wp_cli.go
+│   ├── redirect_audit.go
+│   └── schema_audit.go
+└── registry.go         # Site registry loading (replaces Node.js version)
+
+cmd/mcp.go              # New command: wp-ops mcp serve
+```
+
+**Required Go packages:**
+
+| Purpose | Package | Notes |
+|---------|---------|-------|
+| MCP SDK | [`go-mcp`](https://github.com/modelcontextprotocol/go-mcp) | Official Go SDK from MCP team |
+| or | [`mcp-go`](https://github.com/gptme/mcp-go) | Alternative with good examples |
+| JSON-RPC | `github.com/ybbus/jsonrpc/v3` | For stdio transport |
+| HTTP Server | `net/http` (stdlib) | For Streamable HTTP transport |
+| SSH | `golang.org/x/crypto/ssh` | For SSH streaming (replaces Node.js spawn) |
+| subprocess | `os/exec` (stdlib) | For local script execution |
+
+**Sketch — tool registration from the existing catalog:**
+
+```go
+func NewServer() *mcp.Server {
+    s := mcp.NewServer("wp-ops", "0.1.0")
+    for _, entry := range catalog.Entries {
+        if shouldExposeAsTool(entry) {
+            s.AddTool(mcp.Tool{
+                Name:        entry.Key,
+                Description: entry.Description,
+                Handler:     makeToolHandler(entry),
+            })
+        }
+    }
+    return s
+}
+
+func makeToolHandler(entry catalog.Entry) mcp.ToolHandler {
+    return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+        result, err := exec.Execute(entry, req.Arguments) // reuse existing Go CLI executor
+        if err != nil {
+            return nil, err
+        }
+        return &mcp.CallToolResult{Content: []mcp.Content{{Type: "text", Text: result.Output}}}, nil
+    }
+}
+```
+
+**SSH streaming equivalent** (replaces `spawn("ssh", ...)` + stdin write) using
+`golang.org/x/crypto/ssh`:
+
+```go
+func runRemote(scannerSource, sshHost, phpBin, remotePath string) (string, error) {
+    key, err := os.ReadFile(os.ExpandEnv("$HOME/.ssh/id_ed25519"))
+    if err != nil {
+        return "", err
+    }
+    signer, err := ssh.ParsePrivateKey(key)
+    if err != nil {
+        return "", err
+    }
+    config := &ssh.ClientConfig{
+        User:            "web",
+        Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+        HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Or proper verification
+    }
+    conn, err := ssh.Dial("tcp", sshHost+":22", config)
+    if err != nil {
+        return "", err
+    }
+    defer conn.Close()
+
+    session, err := conn.NewSession()
+    if err != nil {
+        return "", err
+    }
+    defer session.Close()
+
+    stdinPipe, err := session.StdinPipe()
+    if err != nil {
+        return "", err
+    }
+    var stdoutBuf, stderrBuf bytes.Buffer
+    session.Stdout = &stdoutBuf
+    session.Stderr = &stderrBuf
+
+    cmd := fmt.Sprintf("%s - %s", phpBin, remotePath)
+    if err := session.Start(cmd); err != nil {
+        return "", err
+    }
+    if _, err := io.Copy(stdinPipe, bytes.NewReader([]byte(scannerSource))); err != nil {
+        return "", err
+    }
+    stdinPipe.Close()
+    if err := session.Wait(); err != nil {
+        return "", err
+    }
+    return stdoutBuf.String(), nil
+}
+```
+
+**Migration path (if pursued):**
+
+| Phase | Task | Effort |
+|-------|------|--------|
+| 1 | Add `go-mcp` dependency, create `go/mcp/` package scaffold | Low |
+| 2 | Implement stdio transport with basic tool registration | Medium |
+| 3 | Port site registry to Go | Medium |
+| 4 | Port one tool (e.g., `redirect_audit`) end-to-end | Medium |
+| 5 | Port remaining tools | Medium |
+| 6 | Implement HTTP transport | Medium |
+| 7 | Add SSH streaming support to Go CLI executors | High |
+| 8 | Add Trellis VM support to Go CLI | High |
+| 9 | Test all tools end-to-end | Medium |
+| 10 | Deprecate Node.js MCP server | Low |
+
+**Comparison:**
+
+| Aspect | Node.js (current) | Go (proposed) |
+|--------|-------------------|--------------|
+| MCP SDK maturity | Excellent (official SDK) | Good (go-mcp, mcp-go) |
+| Dependency | Node.js runtime | None (compiled binary) |
+| Docker image | ~200MB (Node) | ~10MB (Go static) |
+| Startup time | ~500ms (Node init) | ~10ms (Go) |
+
+**When to pursue:** the Go MCP SDK reaches v1.0 stability, or SSH/VM support is
+being added to the Go CLI anyway for other reasons, or the Node.js runtime
+dependency itself becomes a distribution blocker. Until then, Option C stands.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `mcp-server/dev.sh` | Development launcher (calls `npm run dev`) |
+| `mcp-server/start.sh` | Production launcher (calls `npm run build && npm start`) |
+| `mcp-server/src/index.ts` | MCP server entry point, transport selection |
+| `mcp-server/src/server.ts` | MCP server setup, tool registration |
+| `mcp-server/src/registry.ts` | Site registry loading and validation |
+| `mcp-server/src/tools/*.ts` | Individual tool implementations |
+| `mcp-server/config/sites.json` | Site registry (gitignored) |
+| `mcp-server/config/sites.example.json` | Site registry template |
+
+## Verification Checklist
+
+- [ ] MCP server commands are in Go CLI catalog: `wp-ops mcp-server --help`
+- [ ] Development mode works: `wp-ops mcp-server dev`
+- [ ] Production build works: `npm run build` in mcp-server/
+- [ ] Site registry is properly configured: `cp config/sites.example.json config/sites.json`
+- [ ] MCP client can connect and list tools
+- [ ] Each of the 5 tools can be invoked successfully
+
+## See Also
+
+- [MCP Server README](../mcp-server/README.md) — Full setup, configuration, and usage
+- [CLI UX Plan](./cli-ux-plan.md) — Overall CLI architecture and roadmap
+- [m3-go-skeleton.md](./m3-go-skeleton.md) — Go CLI implementation details
+- [m4-go-cli-completion.md](./m4-go-cli-completion.md) — Go CLI completion and distribution
