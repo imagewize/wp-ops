@@ -3,7 +3,7 @@ import { z, type ZodTypeAny } from "zod";
 import { loadRegistry, resolveSiteEnv } from "./registry.js";
 import { runDbBackup } from "./tools/dbBackup.js";
 import { runSecurityScan } from "./tools/securityScan.js";
-import { isReadOnlyWpCommand, runWpCli } from "./tools/wpCli.js";
+import { isReadOnlyWpCommand, runWpCli, truncateWpCliOutput } from "./tools/wpCli.js";
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
@@ -94,12 +94,9 @@ export function createServer(): McpServer {
 
   server.tool(
     "wp_cli",
-    "Run a WP-CLI command against a configured site/environment. Pass the command and its arguments as " +
-      "separate tokens in `args` (e.g. [\"post\", \"list\", \"--post_type=page\", \"--format=json\"]), not as " +
-      "one shell string, and omit the leading \"wp\" and any --path flag (added automatically from the site " +
-      "registry). Read-only commands (list/get/exists/status/info/version/search/check-update/doctor/export) " +
-      "run immediately; anything else — updates, deletes, installs, search-replace, eval, etc. — requires " +
-      "confirm: true, which should only be set after the user has explicitly approved that specific command.",
+    "Run a WP-CLI command against a configured site/environment. Pass args as separate tokens " +
+      "(e.g. [\"post\", \"list\", \"--format=json\"]), omitting the leading \"wp\" and any --path. " +
+      "Mutating commands need confirm: true, only after explicit user approval.",
     {
       site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
       env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
@@ -126,7 +123,7 @@ export function createServer(): McpServer {
         const registry = loadRegistry();
         const entry = resolveSiteEnv(registry, site, env);
         const output = await runWpCli(entry, args);
-        return { content: [{ type: "text" as const, text: output }] };
+        return { content: [{ type: "text" as const, text: truncateWpCliOutput(output) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
@@ -136,10 +133,8 @@ export function createServer(): McpServer {
 
   server.tool(
     "redirect_audit",
-    "Run a comprehensive redirect chain audit for one or more URLs. Tests HTTPS pages for 200 status " +
-      "with 0 redirects (optimal), verifies HTTP→HTTPS 301 redirects, checks www→non-www canonicalization, " +
-      "and validates security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options). Returns color-coded " +
-      "status for each test with detailed recommendations. Pass either `urls` or `site`+`env` (to use the site's registered URL).",
+    "Audit one or more URLs for redirect-chain issues: HTTPS status/redirect count, HTTP→HTTPS and " +
+      "www→non-www canonicalization, and security headers. Pass `urls` or `site`+`env`.",
     {
       urls: z
         .array(z.string().url())
@@ -156,8 +151,12 @@ export function createServer(): McpServer {
         .boolean()
         .default(true)
         .describe('Whether to check for security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)'),
+      summary: z
+        .boolean()
+        .default(false)
+        .describe("If true, only list pages with at least one failing test — pages that fully pass are omitted."),
     },
-    async ({ urls, site, env, checkWww, checkSecurityHeaders }) => {
+    async ({ urls, site, env, checkWww, checkSecurityHeaders, summary }) => {
       try {
         // Resolve URLs from site/env if provided
         let targetUrls = urls;
@@ -182,7 +181,16 @@ export function createServer(): McpServer {
           "",
           "Results:",
         ];
+        // Mirrors the 3 categories runRedirectAudit itself counts toward passedTests/failedTests
+        // (security headers are reported but not scored) — a page only "fully passes" if all 3 do.
+        let omitted = 0;
         for (const page of result.pages) {
+          const pagePassed =
+            page.status === 200 && page.redirects === 0 && page.httpRedirect && (!checkWww || page.wwwRedirect);
+          if (summary && pagePassed) {
+            omitted++;
+            continue;
+          }
           lines.push(`  ${page.url}:`);
           lines.push(`    HTTPS: ${page.status} (redirects: ${page.redirects})`);
           lines.push(`    HTTP→HTTPS: ${page.httpRedirect ? "✅" : "❌"} ${page.httpRedirectTarget || "N/A"}`);
@@ -198,6 +206,9 @@ export function createServer(): McpServer {
               page.securityHeaders.xContentTypeOptions ? "✅" : "❌"
             }`
           );
+        }
+        if (summary && omitted > 0) {
+          lines.push(`  (${omitted} page(s) fully passed and are omitted from this summary)`);
         }
         lines.push("");
         lines.push(
@@ -216,9 +227,8 @@ export function createServer(): McpServer {
 
   server.tool(
     "schema_audit",
-    "Audit schema markup (JSON-LD) across key pages of a site. Checks for Organization, LocalBusiness, " +
-      "Service, Product, WebSite, BreadcrumbList, Article, FAQPage, HowTo, and Person schema types. " +
-      "Returns count of pages with/without schema and which schema types are present. Pass either `siteUrl` or `site`+`env`.",
+    "Audit JSON-LD schema markup (Organization, LocalBusiness, Product, Article, etc.) across key pages " +
+      "of a site. Pass `siteUrl` or `site`+`env`.",
     {
       siteUrl: z.string().optional().describe('Site URL to audit, e.g. "https://example.com"'),
       site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
@@ -230,8 +240,12 @@ export function createServer(): McpServer {
           'Specific pages to check as "name|url" pairs, e.g. ["Homepage|/", "Contact|/contact/"]. ' +
             'Defaults to common pages (homepage, services, about, contact, portfolio, shop, blog, etc.)'
         ),
+      summary: z
+        .boolean()
+        .default(false)
+        .describe("If true, only list pages missing schema or not found — pages that already have schema are omitted."),
     },
-    async ({ siteUrl, site, env, pages }) => {
+    async ({ siteUrl, site, env, pages, summary }) => {
       try {
         // Resolve siteUrl from site/env if provided
         let targetUrl = siteUrl;
@@ -262,8 +276,13 @@ export function createServer(): McpServer {
         }
         lines.push("");
         lines.push("Page Details:");
+        let omitted = 0;
         for (const page of result.pages) {
           const status = page.exists ? (page.hasSchema ? "✅ Has Schema" : "❌ No Schema") : "⚠️  Not Found";
+          if (summary && page.exists && page.hasSchema) {
+            omitted++;
+            continue;
+          }
           lines.push(`  ${page.pageName} (${page.url}): ${status}`);
           if (page.hasSchema) {
             const foundTypes = page.schemaTypes.filter((t) => t.found).map((t) => t.type);
@@ -271,6 +290,9 @@ export function createServer(): McpServer {
               lines.push(`    Types: ${foundTypes.join(", ")}`);
             }
           }
+        }
+        if (summary && omitted > 0) {
+          lines.push(`  (${omitted} page(s) already have schema and are omitted from this summary)`);
         }
         lines.push("");
         if (result.pagesWithoutSchema > 0) {
@@ -290,11 +312,9 @@ export function createServer(): McpServer {
 
   server.tool(
     "url_audit",
-    'Audit wp_posts.post_content for hardcoded dev URLs (e.g. ".test"/".localhost") baked in by ' +
-      "get_template_directory_uri() during local content creation — the CRITICAL post-migration check " +
-      "CLAUDE.md documents. Reports a hit count per pattern. Pass `replace: {from, to}` to also preview " +
-      "a `wp search-replace --all-tables --precise --dry-run`; add confirm: true, only after explicit " +
-      "user approval, to apply it for real.",
+    'Audit wp_posts.post_content for hardcoded dev URLs (e.g. ".test"/".localhost") from local content ' +
+      "creation. Pass `replace: {from, to}` to preview a search-replace; confirm: true (after explicit " +
+      "user approval) to apply it.",
     {
       site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
       env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),

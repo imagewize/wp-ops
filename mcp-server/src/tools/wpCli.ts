@@ -131,3 +131,18 @@ export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string>
   if (result.stderr.trim()) parts.push(`STDERR:\n${result.stderr.trim()}`);
   return parts.filter(Boolean).join("\n");
 }
+
+// A big `wp post list` on a large site can dump tens of KB into the model's context.
+// Capped well above what any well-formed command needs, and low enough to bound the
+// worst case; the truncation notice tells the model how to narrow the command instead.
+const MAX_OUTPUT_CHARS = 15_000;
+
+export function truncateWpCliOutput(text: string, maxChars: number = MAX_OUTPUT_CHARS): string {
+  if (text.length <= maxChars) return text;
+  return (
+    text.slice(0, maxChars) +
+    `\n\n[... truncated at ${maxChars.toLocaleString()} of ${text.length.toLocaleString()} characters. ` +
+    "Narrow the command instead of reading past this point — e.g. --format=count, --fields=, " +
+    "--posts_per_page=, or a more specific filter.]"
+  );
+}

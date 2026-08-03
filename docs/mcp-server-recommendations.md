@@ -5,9 +5,9 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v3.24.0 (2026-08-03) — items 1-8 done. Verified
-> 2026-08-03: item 1's "not registered user-scoped" observation was stale — it
-> already was, see below.
+> **Status:** Up to date as of v3.34.0 (2026-08-03) — items 1-11 done (all items
+> in this document). Verified 2026-08-03: item 1's "not registered user-scoped"
+> observation was stale — it already was, see below.
 
 ## Current state
 
@@ -151,20 +151,31 @@ Observed setup gaps:
    coincidentally collide with a safe verb — e.g. `wp option update list <value>`
    must stay gated even though its third token is `list`.*
 
-9. **Cap and compact tool output.**
+9. ✅ **Cap and compact tool output.** *Done, 2026-08-03.*
    `wp_cli` returns stdout verbatim — `wp post list` on a big site can dump tens
-   of KB straight into context. Truncate at ~10–20 KB with a "use
-   `--format=count` / `--fields=` / `--posts_per_page`" hint in the truncation
-   notice. Similarly, `schema_audit`'s default page list probes a dozen guessed
-   paths and pages that 404 still produce output lines. A `summary`-only mode
-   (counts + failures only) for both audits would cut typical results by more than
-   half.
+   of KB straight into context.
 
-10. **Keep tool descriptions tight once user-scoped.**
+   *`tools/wpCli.ts`'s new `truncateWpCliOutput()` caps the `wp_cli` tool's output
+   at 15,000 characters, appending a notice with the same "use `--format=count` /
+   `--fields=` / `--posts_per_page=`" hint proposed here. Applied only at the
+   `wp_cli` tool call site in `server.ts` — `urlAudit.ts`'s own `runWpCli` calls
+   (search-replace previews) are already small, curated reports and stay
+   untruncated. Separately, `redirect_audit` and `schema_audit` both gained a
+   `summary: z.boolean()` param: when true, pages that fully pass (the same
+   pass/fail categories each tool already scores) or already have schema are
+   omitted from the per-page detail, replaced with a single "N page(s) omitted"
+   line.*
+
+10. ✅ **Keep tool descriptions tight once user-scoped.** *Done, 2026-08-03.*
     With user-scope registration, all five tool descriptions load into *every*
-    session in every project. The `wp_cli` description especially is long; trim
-    descriptions to 1–2 sentences and move usage detail into error messages
-    (which only appear when needed) to save a fixed per-session tax.
+    session in every project.
+
+    *Trimmed `wp_cli`, `redirect_audit`, `schema_audit`, and `url_audit`'s
+    descriptions in `server.ts` from 3–4 sentences each to 1–2. The confirm-gating
+    detail `wp_cli`'s description used to spell out is still fully covered by the
+    runtime error already thrown when a mutating command is called without
+    `confirm: true`, so nothing was lost. `security_scan` and `db_backup` were
+    already tight and needed no change.*
 
 ## Highest-leverage new tool
 
@@ -186,7 +197,8 @@ Observed setup gaps:
 1. ✅ Items 1–4: config-only, doable immediately.
 2. ✅ Items 5–6: opens up all non-Trellis and static sites (turned out to already be implemented).
 3. ✅ Items 7–8: biggest recurring token savers.
-4. ✅ Item 11: `url_audit` tool — done. Item 9–10 (output compaction) remain.
+4. ✅ Item 11: `url_audit` tool — done.
+5. ✅ Items 9–10: output compaction and tight descriptions — done.
 
 ---
 
