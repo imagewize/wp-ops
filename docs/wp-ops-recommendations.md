@@ -141,6 +141,16 @@ workflow an agent should get as one deterministic call.
 outside an agent session — the read-only check is a one-line `wp db query` that the
 docs already give you.
 
+**Done, 2026-08-03.** `mcp-server/src/tools/urlAudit.ts` + a `url_audit` registration in
+`mcp-server/src/server.ts`. Runs a `wp db query … LIKE '%pattern%'` count per pattern
+(default `[".test", ".localhost"]`) against `wp_posts.post_content`; with `replace:
+{from, to}` it always previews `wp search-replace --all-tables --precise --dry-run`
+first and only applies for real when `confirm: true`. Built on `wpCli.ts`'s existing
+SSH/VM/local dispatch — `runWpCliRaw` was factored out of `runWpCli` so the count query
+result can be parsed as a number instead of scraped from the human-formatted string.
+No standalone `scripts/content/url-audit.sh` — the MCP tool covers the agent-session
+case this was written for, and the doc-given one-liner still covers the manual case.
+
 ---
 
 ## Gap 5: scripts worth upstreaming
@@ -272,6 +282,61 @@ them cover the two highest-frequency operations already.
 
 ---
 
+## Gap 7: dry-run coverage — mostly fine, two real gaps
+
+Prompted by `url_audit`'s design (a `replace` always previews via `wp
+search-replace --dry-run` first, and only applies for real with `confirm:
+true`): audited every *mutating* command in the catalog — anything that
+deletes, overwrites, search-replaces, pushes, provisions, or installs, not
+the read-only list/status/monitoring/audit scripts — for whether it has a
+literal `--dry-run` flag or an equivalent safety net. Verified 2026-08-03
+against script/playbook source, not just manifest headers.
+
+**Most already have one, just not always a literal flag:**
+
+| Command | Mutates | Safety net |
+|---------|---------|------------|
+| `scripts/misc/find-and-replace-files.sh` | files repo-wide | `-n`/`--dry-run` |
+| `scripts/sync/rsync-package-to-site.sh`, `rsync-theme.sh` | site/theme files | `--dry-run` |
+| `scripts/images/batch-resize.sh` | image files | `-d`/`--dry-run` |
+| `scripts/git/create-pr.sh` | GitHub PR | `--dry-run` + `read -p` prompts |
+| `bedrock/wp-cli-config/wp-cli-pattern-validate.php` | pattern files | preview-by-default; `--fix` opts into writing |
+| `scripts/patterns/center-screenshots.sh`, `trim-screenshots.sh` | images in place | auto-backs up originals to `originals/` first |
+| `scripts/backup/db-pull.sh` | local dev DB | backs up dev DB first, confirms (`--yes` to skip) |
+| `scripts/release/release-plugin.sh`, `release-theme.sh` | version bump, git commit | two confirmation prompts |
+| `scripts/release/upload-release-asset.sh` | GitHub release asset | confirms before overwrite |
+| `scripts/release/deploy-plugin-wporg.sh` | WP.org SVN (irreversible) | stages to local SVN checkout, prints `svn status`, only `svn ci`s with `--commit` |
+| `trellis/backup/database-push.yml` | remote DB (overwrite) | auto-exports/pulls a remote backup first |
+| `trellis/backup/database-pull.yml` | local dev DB (overwrite) | auto-backs up dev DB first |
+| `trellis/backup/files-push.yml` | remote uploads | Ansible `pause` confirmation prompt |
+| `trellis/backup/files-pull.yml` | local uploads | non-destructive (`delete: no`) |
+| `wp-cli/content-creation/import-page-draft.sh`, `page-creation.sh` | live page content | `read -p "Type 'yes' to continue"` |
+| `mcp-server` `wp_cli` tool | arbitrary WP-CLI | `confirm: true` gate on everything outside the read-only verb allowlist |
+| `mcp-server` `url_audit` tool | search-replace | dry-run preview always runs first; `confirm: true` to apply |
+
+**Two real gaps — no dry-run and no confirmation/backup net:**
+
+- **`scripts/woocommerce/create-product-variations.sh`** — bulk-creates
+  WooCommerce product variations directly via WP-CLI over the Trellis VM.
+  No preview, no confirmation prompt, no backup, no undo path. Highest
+  priority of the two: it's a live commerce catalog.
+- **`trellis/updater/trellis-updater.sh`** — backs up the whole Trellis
+  directory before starting (`cp -r … $BACKUP_DIR`), so a rollback path
+  exists, but nothing previews the changes and nothing asks for
+  confirmation before it starts rewriting files. Lower priority — the
+  backup makes this recoverable, just not previewable.
+
+**Recommendation:** add a `--dry-run` flag (print planned WP-CLI calls,
+skip execution) to `create-product-variations.sh` — it's the one script
+here with no safety net of any kind. Add a `read -p` confirmation prompt
+to `trellis-updater.sh` before it starts writing, matching the pattern
+`db-pull.sh` and the release scripts already use; skip a literal dry-run
+there since the existing backup already covers "how do I undo this."
+Everything else in the catalog is adequately covered and doesn't need
+follow-up.
+
+---
+
 ## Suggested order
 
 1. **Gap 3** — delete the stale seo-strategy monitoring fork. Costs nothing, stops
@@ -280,11 +345,13 @@ them cover the two highest-frequency operations already.
 3. **Gap 5 "Take" rows** — four scripts, mechanical work. **Done (2026-08-03).**
 4. **Gap 6, `db-backup`** — positional wrapper + fixes the `/srv/backups`
    permission dead end. Same shape and value as Gap 2. **Done.**
-5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap.
+5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap. **Done.**
 6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
 7. **Gap 6, remaining items** — the other eight `-e`-style playbooks and four
    unwrapped server scripts. Same mechanical pattern as `db-backup`; lower
    priority since they're used less often.
+8. **Gap 7** — `--dry-run` for `create-product-variations.sh`; a confirmation
+   prompt for `trellis-updater.sh`. Small, isolated fixes.
 
 Deliberately not queued: `@key` or any new manifest directive (premise false, and
 per [go-mcp-parity.md](go-mcp-parity.md) any new directive must land in both
