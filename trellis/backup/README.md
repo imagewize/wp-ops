@@ -9,8 +9,9 @@ Ansible playbooks for automated database backup, synchronization, and management
 - [Installation](#installation)
 - [Usage](#usage)
   - [Database Backup](#database-backup)
-  - [Database Pull](#database-pull)
     - [Alternative: Direct Shell Script Method](#alternative-direct-shell-script-method)
+  - [Database Pull](#database-pull)
+    - [Alternative: Direct Shell Script Method](#alternative-direct-shell-script-method-1)
   - [Database Push](#database-push)
   - [Files Backup](#files-backup)
   - [Files Pull](#files-pull)
@@ -97,6 +98,17 @@ ansible-playbook database-backup.yml -e site=example.com -e env=development
 - For remote environments: downloads backup to development server
 - Stores backup in `web/app/database_backup/` directory
 - Automatically cleans up temporary files
+
+#### Alternative: Direct Shell Script Method
+
+**Prefer [`scripts/backup/db-backup.sh`](../../scripts/backup/db-backup.sh)** (`wp-ops db-backup example.com production`) for a quick manual backup of a remote environment. It SSHes into the site's own web directory — already web-user-writable, unlike `/srv/backups`, which a stock Trellis box never provisions or `chown`s, so the backup fails with a permission error there on every site's first run — and streams `wp db export | gzip` straight into a local `database_backup/` directory. No remote temp file is ever written, so there's nothing to clean up on the server either.
+
+```bash
+wp-ops db-backup example.com production
+wp-ops db-backup example.com staging --host staging.example.com
+```
+
+Backing up `development` is already local — just run `wp db export --path=web/wp` directly. For automated/repeatable backups instead, use the Ansible playbook above.
 
 ### Database Pull
 

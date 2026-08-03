@@ -120,7 +120,7 @@ func TestServerSideGuard(t *testing.T) {
 		},
 		{
 			name:        "backup command ignores a real file argument",
-			entry:       serverEntry("scripts/backup/db-backup"),
+			entry:       serverEntry("scripts/backup/site-backup"),
 			args:        []string{logFile},
 			onHost:      false,
 			gnuDate:     true,
@@ -181,23 +181,12 @@ func TestPrintServerSideGuidanceVariants(t *testing.T) {
 		wantAbsent  []string
 	}{
 		{
-			name:    "db-backup names the backup paths and one pull playbook",
-			key:     "scripts/backup/db-backup",
-			gnuDate: true,
-			wantContain: []string{
-				"writes the archive to /srv/backups/<site>",
-				"ssh web@example.com 'bash -s' < scripts/backup/db-backup.sh",
-				"example.com production",
-				"wp-ops trellis/backup/database-pull",
-			},
-			// A database backup has no uploads archive to pull.
-			wantAbsent: []string{"files-pull", "gawk"},
-		},
-		{
-			name:    "site-backup also points at files-pull",
+			name:    "site-backup points at both pull playbooks",
 			key:     "scripts/backup/site-backup",
 			gnuDate: true,
 			wantContain: []string{
+				"writes the archive to /srv/backups/<site>",
+				"ssh web@example.com 'bash -s' < scripts/backup/site-backup.sh",
 				"wp-ops trellis/backup/database-pull",
 				"wp-ops trellis/backup/files-pull",
 				"example.com",
@@ -283,7 +272,6 @@ func TestServerSideExampleArgs(t *testing.T) {
 	tests := map[string]string{
 		"scripts/monitoring/error-monitor":    "example.com 48",
 		"scripts/monitoring/run-monitoring":   "24 example.com",
-		"scripts/backup/db-backup":            "example.com production",
 		"scripts/backup/site-backup":          "example.com",
 		"scripts/monitoring/traffic-monitor":  "/srv/www/example.com/logs/access.log 24",
 		"scripts/monitoring/security-monitor": "/srv/www/example.com/logs/access.log 24",

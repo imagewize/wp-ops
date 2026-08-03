@@ -77,7 +77,7 @@ func TestRunsOnFor(t *testing.T) {
 		{"explicit server", "server", "scripts/git/git-log-oneline", "server"},
 		{"explicit local", "local", "scripts/git/git-log-oneline", "local"},
 		{"no runs, not in fallback list", "", "scripts/git/git-log-oneline", "local"},
-		{"no runs, in fallback list", "", "scripts/backup/db-backup", "server"},
+		{"no runs, in fallback list", "", "scripts/backup/site-backup", "server"},
 		{
 			// The whole point of the precedence: an explicit @runs local on a
 			// command that's *also* in the hardcoded list must stay local.

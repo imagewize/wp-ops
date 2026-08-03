@@ -25,8 +25,8 @@ func TestLookup(t *testing.T) {
 	if !ok {
 		t.Fatal("Lookup(scripts/backup/db-backup) not found")
 	}
-	if e.RunsOn != "server" {
-		t.Errorf("RunsOn = %q, want server", e.RunsOn)
+	if e.RunsOn != "local" {
+		t.Errorf("RunsOn = %q, want local", e.RunsOn)
 	}
 
 	if _, ok := c.Lookup("does/not/exist"); ok {
