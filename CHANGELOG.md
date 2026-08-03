@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.30.3] - 2026-08-03
+
+### Fixed
+
+- **trellis/backup** - `files-pull` and `files-push` failed on every Trellis project with `Task failed: ... Error while resolving value for 'path': hostvars['development_host']`. Both playbooks read the development site's location as `{{ hostvars.development_host.wordpress_sites[site].local_path }}` and delegated their local-side tasks with `delegate_to: development_host`, but no such inventory host exists — Trellis's `hosts/development` lists the development machine by address (e.g. `192.168.56.5`), and nothing in Trellis or wp-ops ever defines a `development_host` alias. They now read `local_path` out of development's own `group_vars` via `lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml`, which is what the sibling `database-pull.yml`/`database-push.yml` already do (the play's own `wordpress_sites` belongs to the *remote* environment, so it can't supply a development path), and delegate their local tasks to `localhost` with `become: no` per the repo's local-delegation convention. The relative `local_path` this yields (e.g. `../site`) resolves against the playbook's directory, which is the Trellis project root — see 3.30.2's staging fix.
+
+Surfaced by the 3.30.2 end-to-end check: with `group_vars` finally resolving, `wp-ops files-pull imagewize.com production` got as far as the sync tasks and failed there instead, which is what exposed this second, older bug behind it. Verified fixed by a real pull against imagewize.com production — 140 files synced into `../site/web/app/uploads/`, with the staged `.wp-ops-run-*` playbooks cleaned up afterward.
+
 ## [3.30.2] - 2026-08-03
 
 ### Fixed
