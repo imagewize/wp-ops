@@ -366,6 +366,18 @@ there since the existing backup already covers "how do I undo this."
 Everything else in the catalog is adequately covered and doesn't need
 follow-up.
 
+**Done, 2026-08-03.** `scripts/woocommerce/create-product-variations.sh`
+takes `-d`/`--dry-run` (matching `batch-resize.sh`'s convention): builds
+each `wp wc product_variation create` invocation into an array either way,
+but only prints it (`[DRY RUN] ...`) instead of running it over `trellis vm
+shell` when the flag is set, so the full attribute cross-product can be
+previewed with no VM round trip. `trellis/updater/trellis-updater.sh` now
+prompts `This will overwrite files in $TRELLIS_DIR. Continue? (y/N)` before
+Step 1 (the backup, which still runs unconditionally once confirmed) — a
+`-y`/`--yes` flag (matching `db-pull.sh`'s convention) skips it for
+non-interactive use. Both scripts' manifest headers gained a `@flag` line
+so the new flag surfaces in `--help` and the interactive picker.
+
 ---
 
 ## Suggested order
@@ -384,7 +396,7 @@ follow-up.
    no underlying playbook to translate against; needs either real wrapper
    scripts or M5's `--on <env>` SSH dispatch.
 8. **Gap 7** — `--dry-run` for `create-product-variations.sh`; a confirmation
-   prompt for `trellis-updater.sh`. Small, isolated fixes.
+   prompt for `trellis-updater.sh`. Small, isolated fixes. **Done.**
 
 Deliberately not queued: `@key` or any new manifest directive (premise false, and
 per [go-mcp-parity.md](go-mcp-parity.md) any new directive must land in both

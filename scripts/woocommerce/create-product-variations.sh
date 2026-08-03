@@ -3,10 +3,14 @@
 # create-product-variations.sh - Bulk-create WooCommerce product variations via WP-CLI
 #
 # Usage:
-#   ./create-product-variations.sh
+#   ./create-product-variations.sh [-d|--dry-run]
+#
+# Options:
+#   -d, --dry-run   Print the wp wc product_variation create commands without running them
 #
 # Examples:
 #   ./create-product-variations.sh                        # Uses config below
+#   ./create-product-variations.sh --dry-run               # Preview without creating anything
 #   PRODUCT_ID=42 ./create-product-variations.sh          # Override product ID inline
 #
 # Notes:
@@ -19,11 +23,26 @@
 # @category woocommerce
 # @runs     local
 # @requires trellis
+# @flag     --dry-run  optional  {}  Print the planned wp wc product_variation create commands without running them
 # @example  wp-ops scripts/woocommerce/create-product-variations
+# @example  wp-ops scripts/woocommerce/create-product-variations --dry-run
 # @doc      wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
 
 set -euo pipefail
+
+# ============================================================================
+# Argument parsing
+# ============================================================================
+
+DRY_RUN=0
+for arg in "$@"; do
+  case "$arg" in
+    -d|--dry-run)
+      DRY_RUN=1
+      ;;
+  esac
+done
 
 # ============================================================================
 # Configuration
@@ -51,18 +70,29 @@ ATTR2_VALUES=("A4 with Notepad" "A4 Slim" "A5 with Notepad")
 CREATED=0
 FAILED=0
 
-echo "Creating variations for product ID ${PRODUCT_ID} on ${SITE_URL}"
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "[DRY RUN] Previewing variations for product ID ${PRODUCT_ID} on ${SITE_URL}"
+else
+  echo "Creating variations for product ID ${PRODUCT_ID} on ${SITE_URL}"
+fi
 echo "Attributes: ${ATTR1_SLUG} × ${ATTR2_SLUG}"
 echo "---"
 
 for val1 in "${ATTR1_VALUES[@]}"; do
   for val2 in "${ATTR2_VALUES[@]}"; do
+    WP_CMD=(wp --url="$SITE_URL" wc product_variation create "$PRODUCT_ID" \
+      --attributes="[{\"attribute\": \"${ATTR1_SLUG}\", \"value\": \"${val1}\"}, {\"attribute\": \"${ATTR2_SLUG}\", \"value\": \"${val2}\"}]" \
+      --regular_price="$REGULAR_PRICE" \
+      --user="$WP_USER" \
+      --path="$WP_PATH")
+
+    if [ "$DRY_RUN" -eq 1 ]; then
+      echo "[DRY RUN] ${val1} / ${val2} — ${WP_CMD[*]}"
+      continue
+    fi
+
     RESULT=$(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$WORKDIR" -- \
-      wp --url="$SITE_URL" wc product_variation create "$PRODUCT_ID" \
-        --attributes="[{\"attribute\": \"${ATTR1_SLUG}\", \"value\": \"${val1}\"}, {\"attribute\": \"${ATTR2_SLUG}\", \"value\": \"${val2}\"}]" \
-        --regular_price="$REGULAR_PRICE" \
-        --user="$WP_USER" \
-        --path="$WP_PATH" 2>&1 | grep -E "Success|Error|Created")
+      "${WP_CMD[@]}" 2>&1 | grep -E "Success|Error|Created")
 
     if echo "$RESULT" | grep -q "Success\|Created"; then
       echo "[OK]   ${val1} / ${val2} — ${RESULT}"
@@ -75,4 +105,8 @@ for val1 in "${ATTR1_VALUES[@]}"; do
 done
 
 echo "---"
-echo "Done: ${CREATED} created, ${FAILED} failed."
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "Dry run complete: $(( ${#ATTR1_VALUES[@]} * ${#ATTR2_VALUES[@]} )) variation(s) would be created. No changes made."
+else
+  echo "Done: ${CREATED} created, ${FAILED} failed."
+fi
