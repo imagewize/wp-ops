@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.30.0] - 2026-08-03
+
+### Added
+
+- **go** - `wp-ops init`: installs the Cobra-generated shell completion script for zsh, bash, or fish (auto-detected from `$SHELL`, or `--shell` to override), so `wp-ops <TAB>` works without the user hand-running `wp-ops completion <shell>` and figuring out where to put the output themselves. Prefers Homebrew-managed completion directories (`$(brew --prefix)/share/zsh/site-functions`, `.../share/bash-completion/completions`) when `brew` is on `PATH` — matching how this CLI is actually distributed (`homebrew_casks` in `.goreleaser.yml`, which unlike a Homebrew formula does *not* wire up completions automatically) — and falls back to a per-user directory (`~/.zsh/completions`, `~/.local/share/bash-completion/completions`, `~/.config/fish/completions`) otherwise, printing the `fpath`/`source` line the user still needs to add in that case. Named to match trellis-cli's `trellis init`; `doctor` remains the `trellis check` equivalent, which already existed.
+
+Addresses a gap raised in conversation: `doctor.go`'s `checkShellCompletion()` could tell you completions weren't installed but nothing installed them, and the Homebrew cask distribution path means no user gets them for free.
+
 ## [3.29.0] - 2026-08-03
 
 ### Added

@@ -28,6 +28,7 @@ A single entry point for everything in this repo. Auto-discovers commands across
 ```bash
 # Recommended: Homebrew (installs the Go binary)
 brew install imagewize/tap/wp-ops
+wp-ops init                  # install shell completions (one-time)
 
 # Without Homebrew, the bash CLI:
 ./install.sh                 # add wp-ops to your PATH (one-time)
@@ -46,6 +47,8 @@ wp-ops <command> --where     # print the path to a command's script
 `wp-ops` with no arguments opens an interactive picker. In the bash CLI, install [fzf](https://github.com/junegunn/fzf) (`brew install fzf`) and it becomes a fuzzy search over every command with the script's header as a live preview; without fzf it falls back to a numbered category → command menu. The Go CLI's picker (Bubble Tea) has this built in — no `fzf` dependency either way.
 
 Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
+
+`wp-ops init` (Go CLI only) installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after `brew install` — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
 
 Two categories need environment variables pointing at a real project before their commands work:
 
