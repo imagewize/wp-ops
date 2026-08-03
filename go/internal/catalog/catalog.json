@@ -2857,6 +2857,15 @@
   },
   {
     "category": "mcp-server",
+    "key": "mcp-server/run",
+    "description": "Rebuild if stale, then exec the MCP server for stdio transport.",
+    "script_path": "mcp-server/run.sh",
+    "runs_on": "local",
+    "display_category": "mcp-server",
+    "annotated": false
+  },
+  {
+    "category": "mcp-server",
     "key": "mcp-server/start",
     "description": "Build and start the wp-ops MCP server",
     "script_path": "mcp-server/start.sh",

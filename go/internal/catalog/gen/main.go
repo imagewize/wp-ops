@@ -33,6 +33,17 @@ var excludedFilenames = map[string]bool{
 	"transient-debug-browser.php": true,
 }
 
+// excludedDirs are directories the walk never descends into: build
+// artifacts and dependency trees (gitignored, so absent in a fresh CI
+// checkout) that would otherwise get scanned for the mcp-server category's
+// .js extension the moment a contributor runs `npm install`/`npm run build`
+// locally — e.g. mcp-server/node_modules, mcp-server/dist.
+var excludedDirs = map[string]bool{
+	"node_modules": true,
+	"dist":         true,
+	".git":         true,
+}
+
 // extensionsFor mirrors discover_commands()'s per-category name_matchers.
 func extensionsFor(category string) map[string]bool {
 	exts := map[string]bool{".sh": true, ".js": true}
@@ -112,6 +123,9 @@ func main() {
 				return err
 			}
 			if d.IsDir() {
+				if excludedDirs[d.Name()] {
+					return filepath.SkipDir
+				}
 				return nil
 			}
 			if !exts[filepath.Ext(path)] {

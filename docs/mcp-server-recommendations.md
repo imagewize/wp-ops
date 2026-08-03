@@ -15,8 +15,9 @@ The server exposes five tools — `security_scan`, `db_backup`, `wp_cli`,
 `redirect_audit`, `schema_audit` — backed by a Zod-validated site registry
 (`config/sites.json`).
 
-It's launched via the Go CLI (`wp-ops mcp-server dev` / `wp-ops mcp-server start`,
-both discoverable in the Go binary's 66-command catalog), but the Go CLI's role
+It's launched via the Go CLI (`wp-ops mcp-server dev` / `wp-ops mcp-server start` /
+`wp-ops mcp-server run`, all discoverable in the Go binary's 67-command catalog),
+but the Go CLI's role
 stops at **launching the process** — the MCP server itself **bypasses the Go CLI**
 and invokes scripts directly via Node.js `child_process.spawn`. This gives it
 low-level control the Go CLI doesn't currently expose:
