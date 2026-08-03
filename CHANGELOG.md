@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.31.0] - 2026-08-03
+
+### Added
+
+- **trellis/backup** - `files-pull` takes an optional `--delete yes` flag (`wp-ops files-pull example.com production --delete yes`, or `-e delete=yes` when running the playbook directly), which passes rsync's `--delete` through the `synchronize` task and makes the development uploads directory an exact mirror of the remote. The default stays `no`, i.e. a purely additive pull: local-only files survive, which is what you want most of the time — a long-lived development copy accumulates dev-only uploads and keeps media that has since been deleted from the remote library (on imagewize.com, 142 such files out of 16,670 after a fully-synced pull, mostly rotated `wc-logs/`, deleted screenshots and their generated sizes, and `.DS_Store`). Mirroring is destructive on the development side only and runs without a confirmation prompt, so the playbook emits an explicit warning task when the flag is on, and the completion message now states which mode ran (`mirrored — local-only files deleted` vs `additive — local-only files kept`). `trellis/backup/README.md` documents an `rsync --dry-run --itemize-changes` invocation for previewing the deletions first.
+
+  Deliberately not added to `files-push`: the same flag there would delete files on the remote server, a different risk class than pruning a local checkout.
+
 ## [3.30.3] - 2026-08-03
 
 ### Fixed

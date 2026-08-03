@@ -34,6 +34,32 @@ func TestLookup(t *testing.T) {
 	}
 }
 
+// TestFilesPullExposesDeleteFlag guards catalog.json staying in step with
+// trellis/backup/files-pull.yml's manifest: the entry is what turns
+// `--delete yes` into `-e delete=yes` (exec.BuildPlaybookArgs) and what
+// --help prints, so a manifest edit landing without a `go generate
+// ./internal/catalog` leaves the flag silently undocumented and untranslated.
+func TestFilesPullExposesDeleteFlag(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	e, ok := c.Lookup("trellis/backup/files-pull")
+	if !ok {
+		t.Fatal("Lookup(trellis/backup/files-pull) not found")
+	}
+	for _, f := range e.Flags {
+		if f.Name == "delete" {
+			if f.Required {
+				t.Error("delete flag is required, want optional (a pull is additive by default)")
+			}
+			return
+		}
+	}
+	t.Errorf("files-pull flags = %v, want one named delete (run `go generate ./internal/catalog`)", e.Flags)
+}
+
 func TestFindByBasename(t *testing.T) {
 	c, err := Load()
 	if err != nil {

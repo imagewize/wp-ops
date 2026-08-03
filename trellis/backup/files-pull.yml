@@ -7,7 +7,9 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging}  Remote environment to pull from
+# @flag     delete  optional  {no}  yes = mirror the remote exactly, deleting local uploads the remote no longer has
 # @example  wp-ops files-pull example.com production
+# @example  wp-ops files-pull example.com production --delete yes
 # @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
@@ -28,6 +30,11 @@
     # is the Trellis project root.
     dev_wordpress_sites: "{{ lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml }}"
     local_uploads_dir: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}/web/app/uploads/"
+    # Off by default: a pull is additive, so local-only uploads (dev
+    # experiments, files since deleted in the remote media library) survive.
+    # `--delete yes` makes the local directory an exact mirror of the remote
+    # instead, which is destructive on the development side only.
+    sync_delete: "{{ delete | default(false) | bool }}"
 
   pre_tasks:
     - name: Ensure site is valid
@@ -60,13 +67,22 @@
       state: directory
       mode: 0755
 
+  - name: Warn that --delete yes will remove local-only uploads
+    delegate_to: localhost
+    become: no
+    debug:
+      msg: >-
+        Mirroring {{ env }} into {{ local_uploads_dir }} — local files that do
+        not exist on {{ env }} will be DELETED.
+    when: sync_delete | bool
+
   - name: Sync uploads from {{ env }} to development using rsync
     delegate_to: localhost
     synchronize:
       mode: pull
       src: "{{ remote_uploads_dir }}"
       dest: "{{ local_uploads_dir }}"
-      delete: no
+      delete: "{{ sync_delete }}"
       rsync_opts:
         - "--archive"
         - "--compress"
@@ -76,4 +92,6 @@
 
   - name: Show sync completion message
     debug:
-      msg: "Uploads synced from {{ env }} to {{ local_uploads_dir }}"
+      msg: >-
+        Uploads synced from {{ env }} to {{ local_uploads_dir }}
+        ({{ 'mirrored — local-only files deleted' if sync_delete | bool else 'additive — local-only files kept' }})
