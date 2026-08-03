@@ -21,7 +21,13 @@
     project: "{{ wordpress_sites[site] }}"
     project_root: "{{ www_root }}/{{ site }}"
     remote_uploads_dir: "{{ project_root }}/shared/uploads/"
-    local_uploads_dir: "{{ hostvars.development_host.wordpress_sites[site].local_path }}/web/app/uploads/"
+    # `wordpress_sites` in this play is the remote environment's, so the
+    # development local_path has to be read out of development's own
+    # group_vars — same approach as database-push.yml. The relative path it
+    # yields (e.g. ../site) resolves against the playbook's directory, which
+    # is the Trellis project root.
+    dev_wordpress_sites: "{{ lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml }}"
+    local_uploads_dir: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}/web/app/uploads/"
 
   pre_tasks:
     - name: Ensure site is valid
@@ -36,7 +42,8 @@
       when: env == "development"
 
     - name: Check if local uploads folder exists
-      delegate_to: development_host
+      delegate_to: localhost
+      become: no
       stat:
         path: "{{ local_uploads_dir }}"
       register: local_uploads_check
@@ -60,7 +67,7 @@
     become: no
 
   - name: Sync uploads from development to {{ env }} using rsync
-    delegate_to: development_host
+    delegate_to: localhost
     synchronize:
       mode: push
       src: "{{ local_uploads_dir }}"
