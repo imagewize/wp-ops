@@ -139,6 +139,15 @@ func zshCandidateDirs() []completionDir {
 	return dirs
 }
 
+// systemBashCompletionDirs are the well-known install locations for the
+// bash-completion package on Linux, checked regardless of Homebrew — a
+// package-level var (rather than an inline literal) purely so tests can
+// override it and avoid ever touching real system directories.
+var systemBashCompletionDirs = []string{
+	"/usr/share/bash-completion/completions",
+	"/etc/bash_completion.d",
+}
+
 func bashCandidateDirs() []completionDir {
 	var dirs []completionDir
 	if prefix, ok := brewPrefix(); ok {
@@ -152,7 +161,7 @@ func bashCandidateDirs() []completionDir {
 			dirs = append(dirs, completionDir{filepath.Join(prefix, "etc", "bash_completion.d"), false})
 		}
 	}
-	for _, d := range []string{"/usr/share/bash-completion/completions", "/etc/bash_completion.d"} {
+	for _, d := range systemBashCompletionDirs {
 		if info, err := os.Stat(d); err == nil && info.IsDir() {
 			dirs = append(dirs, completionDir{d, false})
 		}

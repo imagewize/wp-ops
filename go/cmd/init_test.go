@@ -150,24 +150,34 @@ func TestZshCandidateDirsFallBackWithoutBrew(t *testing.T) {
 	}
 }
 
+// withNoSystemBashCompletionDirs points systemBashCompletionDirs at
+// nonexistent paths for the duration of the test, restoring the original on
+// cleanup. Without this, bashCandidateDirs() checks real, hardcoded system
+// paths (/usr/share/bash-completion/completions, /etc/bash_completion.d)
+// that may genuinely exist — and be writable — on the machine running the
+// test (true on the Linux CI runner), which would both make the "no brew"
+// fallback assertion flaky across platforms and, worse, actually write a
+// completion file into a real system directory as a test side effect.
+func withNoSystemBashCompletionDirs(t *testing.T) {
+	t.Helper()
+	orig := systemBashCompletionDirs
+	systemBashCompletionDirs = []string{filepath.Join(t.TempDir(), "does-not-exist")}
+	t.Cleanup(func() { systemBashCompletionDirs = orig })
+}
+
 func TestBashCandidateDirsEndsWithHomeFallback(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "/usr/bin:/bin")
+	withNoSystemBashCompletionDirs(t)
 
 	dirs := bashCandidateDirs()
-	if len(dirs) == 0 {
-		t.Fatal("bashCandidateDirs() returned no candidates")
+	if len(dirs) != 1 {
+		t.Fatalf("bashCandidateDirs() without brew or system dirs = %d entries, want 1 (home fallback only)", len(dirs))
 	}
-	last := dirs[len(dirs)-1]
 	want := filepath.Join(home, ".local", "share", "bash-completion", "completions")
-	if last.path != want || !last.needsWiring {
-		t.Errorf("last candidate = %+v, want {%q, true}", last, want)
-	}
-	for _, d := range dirs[:len(dirs)-1] {
-		if d.needsWiring {
-			t.Errorf("candidate %q marked needsWiring=true, want false for system/brew dirs", d.path)
-		}
+	if dirs[0].path != want || !dirs[0].needsWiring {
+		t.Errorf("candidate = %+v, want {%q, true}", dirs[0], want)
 	}
 }
 
@@ -215,6 +225,7 @@ func TestRunInitEndToEnd(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "/usr/bin:/bin") // force the no-brew fallback paths
+	withNoSystemBashCompletionDirs(t)
 
 	cases := []struct {
 		shell string
