@@ -5,12 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.24.0] - 2026-08-03
+
+### Added
+
+- **mcp-server** - `mcp-server/src/server.ts`: `site`/`env` tool parameters are now `z.enum(...)` built from the site registry at server start (`buildSiteEnvSchemas()`) instead of free-form `z.string()`, so an invalid site/env key is rejected before the call is made rather than costing a full round trip. Falls back to plain `z.string()` if the registry can't be loaded yet or is empty, so a fresh install without `config/sites.json` still starts.
+- **mcp-server** - `mcp-server/src/tools/wpCli.ts`: expanded the read-only allowlist. `SAFE_READ_VERBS` gained `size`/`tables`/`verify-checksums`/`pluck` (covers `wp db size`, `wp db tables`, `wp core verify-checksums`, `wp option pluck`); a new `NESTED_RESOURCE_VERBS` allowlist covers commands where the verb is the third token because the second names a sub-resource (`wp cron event list`), without blindly trusting `args[2]` for every command — `wp option update list <value>` still correctly requires `confirm: true`.
 
 ### Changed
 
 - **mcp-server** - `mcp-server/README.md`: recommend user-scoped MCP server registration in `~/.claude.json`; add Permissions section with pre-approval config for read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `wp_cli`); add Usage Tips covering multi-site registry and CLAUDE.md integration guidance.
-- **docs** - `docs/mcp-server-recommendations.md`: mark items 1-4 as documented with references to the updated README sections.
+- **docs** - `docs/mcp-server-recommendations.md`: mark items 1-8 as done. Items 5-6 (`wpBin`/`phpBin` override, `url` field + `site`/`env` on audits) turned out to already be implemented (predating this pass); items 7-8 are the new schema-enum and allowlist work above.
 
 ## [3.23.2] - 2026-08-01
 
