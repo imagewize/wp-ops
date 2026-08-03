@@ -73,7 +73,11 @@ npm run build
 
 ## Register with Claude Code
 
-Add to your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped):
+**Recommended:** Register the server **user-scoped** in `~/.claude.json` so the tools
+are available in every project and session. Project-scoped (`.mcp.json`) works but
+limits the tools to only that project directory.
+
+Add to your `~/.claude.json` (user-scoped) or `.mcp.json` (project-scoped):
 
 ```json
 {
@@ -87,6 +91,43 @@ Add to your `.mcp.json` (project-scoped) or `~/.claude.json` (user-scoped):
 ```
 
 Or add the same block under `mcpServers` in Claude Desktop's config file.
+
+> **Why user-scoped?** The site registry is central and multi-site. Registering
+> user-scoped lets any session — including in the wp-ops repo itself — run audits
+> or WP-CLI against any registered site without project-specific config.
+
+## Permissions (pre-approve read-only tools)
+
+The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, and
+read-only `wp_cli` commands) are safe to run without confirmation. Pre-approve
+them in `~/.claude/settings.json` to avoid repeated permission prompts:
+
+```json
+{
+  "mcp": {
+    "permissions": {
+      "mcp__wp-ops__redirect_audit": { "allowed": true },
+      "mcp__wp-ops__schema_audit": { "allowed": true },
+      "mcp__wp-ops__security_scan": { "allowed": true },
+      "mcp__wp-ops__wp_cli": { "allowed": true }
+    }
+  }
+}
+```
+
+Write operations (e.g., `wp_cli` with `search-replace`, `post delete`, `plugin install`)
+still require `confirm: true` and will prompt for approval.
+
+## Usage Tips
+
+- **Multi-site registry:** `config/sites.example.json` shows the full schema.
+  Add all your sites (Bedrock, plain WordPress, static sites) — the same tools
+  work across all of them. URL-only entries enable `redirect_audit` and
+  `schema_audit` for static/Jekyll sites.
+- **CLAUDE.md integration:** In each project that uses these tools, add a note
+  in `CLAUDE.md` like: "Prefer the wp-ops MCP tools (`wp_cli`, `security_scan`,
+  `redirect_audit`, `schema_audit`, `db_backup`) with the site key from
+  `mcp-server/config/sites.json`."
 
 ## Running as a network service (Streamable HTTP)
 

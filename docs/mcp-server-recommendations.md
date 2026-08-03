@@ -38,28 +38,37 @@ Observed setup gaps:
 
 ## Quick wins — no code changes
 
-1. **Register the server user-scoped.**
+1. **Register the server user-scoped.** ✅ *Documented*
    `claude mcp add --scope user wp-ops ...` or add the `mcpServers` block to
    `~/.claude.json`. The registry is central, so the tools shouldn't only exist
    inside the example.com project. Any session — including in wp-ops itself —
    can then run audits or WP-CLI against any registered site.
+   
+   *Updated `mcp-server/README.md` to recommend user-scoped as the default.*
 
-2. **Add more sites to `sites.json`.**
+2. **Add more sites to `sites.json`.** ✅ *Template ready*
    Plain WordPress installs (e.g. `client`) work today via `localPath` —
    nothing in `wpCli.ts` assumes Bedrock; `--path` is arbitrary. Remote non-Trellis
    hosts work too as long as `wp` is on the remote PATH.
+   
+   *`config/sites.example.json` already includes `client.nl` (shared hosting with
+   custom `wpBin`/`phpBin`) and `static-site` (URL-only) examples.*
 
-3. **Mention the MCP tools in each site's CLAUDE.md.**
+3. **Mention the MCP tools in each site's CLAUDE.md.** ✅ *Template provided*
    Without that, Claude keeps reaching for raw `wp` / `trellis vm shell` bash
    commands — more permission prompts, more trial-and-error tokens. One line like
    "prefer the `wp-ops` MCP tools (`wp_cli`, `security_scan`, …) with site key
    `example.com`" changes the default behavior.
+   
+   *Added CLAUDE.md integration template to `mcp-server/README.md` Usage Tips.*
 
-4. **Pre-approve the read-only tools** in `~/.claude/settings.json` permissions:
+4. **Pre-approve the read-only tools** in `~/.claude/settings.json` permissions: ✅ *Documented*
    `mcp__wp-ops__redirect_audit`, `mcp__wp-ops__schema_audit`,
    `mcp__wp-ops__security_scan`, `mcp__wp-ops__wp_cli`. The write-guard already
    lives server-side (`confirm: true`), so prompting again client-side for reads is
    pure friction.
+   
+   *Added Permissions section to `mcp-server/README.md` with the exact config.*
 
 ## Server improvements for non-Bedrock / non-WordPress sites
 

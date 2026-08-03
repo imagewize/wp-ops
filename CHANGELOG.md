@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **mcp-server** - `mcp-server/README.md`: recommend user-scoped MCP server registration in `~/.claude.json`; add Permissions section with pre-approval config for read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `wp_cli`); add Usage Tips covering multi-site registry and CLAUDE.md integration guidance.
+- **docs** - `docs/mcp-server-recommendations.md`: mark items 1-4 as documented with references to the updated README sections.
+
 ## [3.23.2] - 2026-08-01
 
 ### Changed
