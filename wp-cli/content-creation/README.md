@@ -13,11 +13,13 @@ WP-CLI, Trellis, and block-pattern tooling for creating and updating WordPress c
 - [`PAGE-CREATION.md`](PAGE-CREATION.md) – Full workflows for local (Trellis VM) and production deployments.
 - [`PATTERN-REQUIREMENTS.md`](PATTERN-REQUIREMENTS.md) – Canonical block pattern standards and validation checklist.
 - [`page-creation.sh`](page-creation.sh) – Automated production page deploy script (copies content, checks conflicts, verifies output).
+- [`import-page-draft.sh`](import-page-draft.sh) – Update an *existing* page's content from an HTML draft, locally and/or in production (complements `page-creation.sh`, which only creates).
 - [`examples/example-page-content.html`](examples/example-page-content.html) – Gutenberg block markup sample to copy and customize.
 
 ## Choose Your Path
 - **Create/update pages end-to-end:** Follow [`PAGE-CREATION.md`](PAGE-CREATION.md) (includes slug checks, remote commands, troubleshooting).
 - **Automate production deploys:** Configure and run `./page-creation.sh path/to/content.html "Page Title" "page-slug"` (see script header for server vars).
+- **Update an existing page from a draft:** `TRELLIS_DIR=/path/to/trellis SITE_DIR=/path/to/bedrock-site ./import-page-draft.sh draft.html 7673` — see script header for the full argument list (site, environment, template).
 - **Validate or author patterns:** Read [`PATTERN-REQUIREMENTS.md`](PATTERN-REQUIREMENTS.md) for required metadata, spacing, and layout rules before adding pattern-based content.
 - **Need a starting template?** Copy [`examples/example-page-content.html`](examples/example-page-content.html) and edit the block markup to fit your page.
 
