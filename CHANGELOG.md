@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.30.1] - 2026-08-03
+
+### Fixed
+
+- **go** - `wp-ops <TAB>` (root-level completion) offered categories and other registered subcommands but no basenames (e.g. `db-backup`, `db-pull`) — the per-entry full-key commands (`scripts/backup/db-backup`) are registered `Hidden` so `wp-ops --help` isn't drowned in ~66 entries, and Cobra's default subcommand-name completion skips hidden commands. `wp-ops <category> <TAB>` (e.g. `wp-ops scripts <TAB>`) already worked via `categoryBasenameCompletions`; root itself had no `ValidArgsFunction` to fall back on. Added `rootBasenameCompletions` (`go/cmd/dispatch.go`) and wired it into `rootCmd.ValidArgsFunction` (`go/cmd/root.go`) — Cobra calls `ValidArgsFunction` in addition to its subcommand-name matching, not instead of it, so this supplements the existing category/subcommand completions rather than replacing them. Matches the bare-basename invocation `rootRunE` already supports via `FindByBasename`.
+
+Found after running `wp-ops init` and finding `wp-ops db<TAB>` produced no completions.
+
 ## [3.30.0] - 2026-08-03
 
 ### Added
