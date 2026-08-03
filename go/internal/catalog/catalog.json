@@ -1074,6 +1074,43 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/monitoring/monitor",
+    "description": "Run traffic, security, AI-bot, and error monitoring together and save timestamped reports",
+    "script_path": "scripts/monitoring/monitor.sh",
+    "runs_on": "server",
+    "runs": "server",
+    "requires": [
+      "gawk"
+    ],
+    "doc": "trellis/monitoring/README.md",
+    "args": [
+      {
+        "name": "hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "How many hours back to analyze",
+        "raw": "hours   optional  {24}  How many hours back to analyze"
+      },
+      {
+        "name": "domain",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site domain",
+        "raw": "domain  optional  {example.com}  Site domain"
+      }
+    ],
+    "examples": [
+      "ssh web@example.com 'bash -s' \u003c monitor.sh",
+      "ssh web@example.com 'bash -s' \u003c monitor.sh 24 othersite.com"
+    ],
+    "manifest_category": "monitoring",
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/monitoring/redirect-check",
     "description": "Mass-check a list of URLs for redirects with curl",
     "script_path": "scripts/monitoring/redirect-check.sh",
@@ -1129,43 +1166,6 @@
     ],
     "examples": [
       "wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/"
-    ],
-    "manifest_category": "monitoring",
-    "display_category": "monitoring",
-    "annotated": true
-  },
-  {
-    "category": "scripts",
-    "key": "scripts/monitoring/run-monitoring",
-    "description": "Run traffic, security, AI-bot, and error monitoring together and save timestamped reports",
-    "script_path": "scripts/monitoring/run-monitoring.sh",
-    "runs_on": "server",
-    "runs": "server",
-    "requires": [
-      "gawk"
-    ],
-    "doc": "trellis/monitoring/README.md",
-    "args": [
-      {
-        "name": "hours",
-        "required_raw": "optional",
-        "required": false,
-        "default": "24",
-        "description": "How many hours back to analyze",
-        "raw": "hours   optional  {24}  How many hours back to analyze"
-      },
-      {
-        "name": "domain",
-        "required_raw": "optional",
-        "required": false,
-        "default": "example.com",
-        "description": "Site domain",
-        "raw": "domain  optional  {example.com}  Site domain"
-      }
-    ],
-    "examples": [
-      "ssh web@example.com 'bash -s' \u003c run-monitoring.sh",
-      "ssh web@example.com 'bash -s' \u003c run-monitoring.sh 24 othersite.com"
     ],
     "manifest_category": "monitoring",
     "display_category": "monitoring",

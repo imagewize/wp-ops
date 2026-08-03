@@ -47,7 +47,7 @@ current catalog:
 |------------|-------|---------------|
 | `wp-ops traffic` | fails | `scripts/monitoring/traffic-monitor.sh` |
 | `wp-ops security` | fails (suggests `security-monitor`) | `scripts/monitoring/security-monitor.sh` |
-| `wp-ops monitor` | fails | `scripts/monitoring/run-monitoring.sh` |
+| `wp-ops monitor` | works — resolves to `scripts/monitoring/monitor.sh` (renamed from `run-monitoring.sh`, 2026-08-03) | `scripts/monitoring/monitor.sh` |
 | `wp-ops ai-bots` | fails | `scripts/monitoring/ai-bot-monitor.sh` |
 | `wp-ops image-resize` | fails | `scripts/images/batch-resize.sh` |
 | `wp-ops page-create` | fails | `wp-cli/content-creation/page-creation.sh` |
@@ -72,6 +72,24 @@ quo is one extra round trip, not a lookup failure.
 opaque name — nothing about "run-monitoring" suggests it is the combined report),
 and leave the rest. Revisit only if the suggester turns out to be annoying in
 practice.
+
+**Done, 2026-08-03.** `git mv scripts/monitoring/run-monitoring.sh
+scripts/monitoring/monitor.sh` — basename resolution then does the rest, so
+`wp-ops monitor` (or `wp-ops scripts/monitoring/monitor`) now works in both
+CLIs with no new directive or alias table. Every reference to the old
+filename/key was swept and fixed alongside the rename, not left to the
+suggester: `wp-ops` (bash — `SERVER_SIDE_COMMANDS`, the `server_side_example_args`
+case, and prose in `doctor`/server-side-guard comments), `go/cmd/serverside.go`
+and its test (the `serverSideExampleArgs` case and `accessLogCommands` prose),
+`go/internal/catalog/gen/main.go`'s `serverSideFallback` map (regenerating
+`catalog.json`), and the current-state docs `README.md` and `scripts/README.md`
+(usage examples, the file-tree listing — reordered alphabetically since
+`monitor.sh` now sorts before `redirect-check.sh` — and the cron example).
+Historical status docs (`docs/m3-go-skeleton.md`, `CHANGELOG.md`) were left
+alone — they're dated records of what was true when written, not current
+reference material. The rest of Gap 1 (`traffic`, `security`, `ai-bots`,
+`image-resize`, `page-create`) stays as-is per the original recommendation —
+the did-you-mean suggester already covers those adequately.
 
 ---
 
@@ -389,7 +407,7 @@ so the new flag surfaces in `--help` and the interactive picker.
 4. **Gap 6, `db-backup`** — positional wrapper + fixes the `/srv/backups`
    permission dead end. Same shape and value as Gap 2. **Done.**
 5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap. **Done.**
-6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
+6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to. **Done.**
 7. **Gap 6, remaining items** — 6a (the nine `-e`-style playbooks) **done**,
    via a generic positional-arg translator rather than nine bespoke scripts.
    6b (four unwrapped server scripts) remains — different shape, since there's

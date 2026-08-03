@@ -43,8 +43,8 @@ scripts/
 │   ├── 404-checker.sh          # Internal broken-link checker (homepage scan or recursive spider)
 │   ├── ai-bot-monitor.sh       # AI crawler traffic analysis (GPTBot, ClaudeBot, etc.)
 │   ├── error-monitor.sh        # Nginx/PHP-FPM/WordPress/MySQL/systemd error log review
+│   ├── monitor.sh              # Orchestrator: runs all monitors and generates summary
 │   ├── redirect-check.sh       # Mass URL redirect checker using curl
-│   ├── run-monitoring.sh       # Orchestrator: runs all monitors and generates summary
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
@@ -154,7 +154,7 @@ cd ~/code/my-plugin
 ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 24
 
 # Run all monitors and save timestamped reports
-ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
 
 # Screenshot WordPress block patterns and convert to WebP
 cd scripts/patterns && npm install && npx playwright install chromium
@@ -1660,7 +1660,7 @@ monitors read the *access* log and answer "who is visiting?"; this one reads the
 *error* logs and answers "is anything broken?".
 
 Runs **on the server** — it reads `/var/log/` and `/srv/www/<domain>/logs/`
-directly and needs GNU `date` — so stream it over SSH like `run-monitoring.sh`.
+directly and needs GNU `date` — so stream it over SSH like `monitor.sh`.
 
 #### Features
 
@@ -1825,7 +1825,7 @@ https://example.com/old-page/ => 404 ->
 
 ---
 
-### run-monitoring.sh (285 lines)
+### monitor.sh (285 lines)
 
 Orchestrator that runs all four monitoring scripts in sequence and generates a consolidated markdown summary report.
 
@@ -1868,17 +1868,17 @@ Orchestrator that runs all four monitoring scripts in sequence and generates a c
 
 ```bash
 # Remote execution (recommended — streams script over SSH)
-ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
 
 # Remote with custom hours window
-ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 48
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh 48
 
 # Remote, for a different site on the same server
-ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 24 othersite.com
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh 24 othersite.com
 
 # Local execution on production server
-./run-monitoring.sh 24
-./run-monitoring.sh 24 othersite.com
+./monitor.sh 24
+./monitor.sh 24 othersite.com
 ```
 
 ---
@@ -2093,7 +2093,7 @@ backups, use the Ansible playbook instead:
 
 ```bash
 # Run all monitors daily at 9 AM (traffic + security + AI bots + summary)
-0 9 * * * /srv/scripts/monitoring/run-monitoring.sh 24 >> /var/log/monitoring.log 2>&1
+0 9 * * * /srv/scripts/monitoring/monitor.sh 24 >> /var/log/monitoring.log 2>&1
 
 # Hourly security scan (standalone)
 0 * * * * /srv/scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 1 50 > /var/log/security-scan.log 2>&1
