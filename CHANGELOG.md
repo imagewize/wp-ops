@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.26.0] - 2026-08-03
+
+### Added
+
+- **scripts/backup** - `db-pull.sh`: positional-argument wrapper (`wp-ops db-pull example.com production`) that pulls a remote site's database into local development over SSH, adapted from `imagewize.com/scripts/pull-db.sh` and generalized — no hardcoded site table. Runs via `trellis vm shell` and reads both the remote and local `siteurl` at run time through WP-CLI instead of guessing URL suffixes, so it isn't tied to any one site's naming convention. Backs up the current development database before overwriting it, prompts for confirmation (`--yes`/`-y` to skip), and supports multisite via `--multisite` (scopes `search-replace` with `--url` and fixes `wp_blogs` domains). Complements the existing `trellis/backup/database-pull.yml` playbook, which stays the better fit for automated/scheduled pulls; `trellis/backup/README.md` now points at the script instead of its old hand-copied inline-bash template. Addresses Gap 2 of `docs/wp-ops-recommendations.md`.
+
 ## [3.25.1] - 2026-08-03
 
 ### Fixed

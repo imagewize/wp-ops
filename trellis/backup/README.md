@@ -123,6 +123,8 @@ ansible-playbook database-pull.yml -e site=example.com -e env=staging
 
 For interactive development work, you can use a direct shell script approach that runs inside the Trellis VM. This method is **simpler and faster** than the Ansible playbook, using SSH pipes to stream the database directly without intermediate files.
 
+**Prefer [`scripts/backup/db-pull.sh`](../../scripts/backup/db-pull.sh)** (`wp-ops db-pull example.com production`) over hand-copying the inline command below — it's this same approach, generalized: it reads the production and development URLs at run time via WP-CLI instead of hardcoding them, backs up the current development database first, prompts for confirmation (`--yes` to skip), and supports multisite via `--multisite`. The raw steps are kept below for reference and for cases where you want to run/adapt them by hand.
+
 **Standard site example:**
 
 ```bash

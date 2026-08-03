@@ -75,7 +75,7 @@ practice.
 
 ---
 
-## Gap 2: `db-pull` ergonomics
+## Gap 2: `db-pull` ergonomics — done (`scripts/backup/db-pull.sh`, 2026-08-03)
 
 The capability exists — `trellis/backup/database-pull.yml` pulls a remote database
 into development with URL search-replace, and resolves as `wp-ops database-pull`.
@@ -178,7 +178,7 @@ generalized to arguments, as was done for `run-monitoring.sh`.
 
 1. **Gap 3** — delete the stale seo-strategy monitoring fork. Costs nothing, stops
    the divergence that produced the false "missing tools" list.
-2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value.
+2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value. **Done.**
 3. **Gap 5 "Take" rows** — four scripts, mechanical work.
 4. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap.
 5. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
