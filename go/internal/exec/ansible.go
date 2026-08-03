@@ -50,7 +50,7 @@ var importPlaybookRe = regexp.MustCompile(`(?m)^(\s*-\s*import_playbook:\s*)(\S+
 // its group_vars/, fixes that without the project needing to know
 // anything about wp-ops at all.
 func stagePlaybookInProjectDir(trellisDir, playbookPath string) (entryPath string, cleanup func(), err error) {
-	sweepStalePlaybookStaging(trellisDir)
+	sweepStalePlaybookStaging(trellisDir, time.Now())
 
 	srcDir := filepath.Dir(playbookPath)
 	runID := strconv.FormatInt(time.Now().UnixNano(), 36)
@@ -110,13 +110,29 @@ func stagePlaybookInProjectDir(trellisDir, playbookPath string) (entryPath strin
 	return entryPath, cleanup, nil
 }
 
-// sweepStalePlaybookStaging removes any leftover staged-playbook temp
-// files from a prior run that never got to clean up after itself (killed
-// mid-run, crashed, etc.). Best-effort: errors are ignored since this is
+// stalePlaybookStagingAge is how old a staged file must be before a sweep
+// will remove it. The delay is what keeps concurrent wp-ops runs against
+// the same Trellis project from deleting each other's staged playbooks —
+// the randomized run IDs give each run its own filenames, and this gives
+// them time to be read. An hour is far longer than the gap between
+// staging a playbook and ansible-playbook parsing it (`import_playbook:`
+// is a static import, resolved at parse time), so even a multi-hour
+// files-pull is unaffected by a later run sweeping its files: by then
+// Ansible has long since read them.
+const stalePlaybookStagingAge = time.Hour
+
+// sweepStalePlaybookStaging removes leftover staged-playbook temp files
+// from a prior run that never got to clean up after itself (killed
+// mid-run, crashed, etc.), skipping anything recent enough to belong to a
+// run still in progress. Best-effort: errors are ignored since this is
 // housekeeping, not the operation the caller actually asked for.
-func sweepStalePlaybookStaging(trellisDir string) {
+func sweepStalePlaybookStaging(trellisDir string, now time.Time) {
 	matches, _ := filepath.Glob(filepath.Join(trellisDir, stagedPlaybookPrefix+"*"))
 	for _, m := range matches {
+		info, err := os.Stat(m)
+		if err != nil || now.Sub(info.ModTime()) < stalePlaybookStagingAge {
+			continue
+		}
 		os.Remove(m)
 	}
 }
@@ -132,14 +148,24 @@ func sweepStalePlaybookStaging(trellisDir string) {
 // stagePlaybookInProjectDir) so the playbook's group_vars/host_vars
 // resolve against the project, not wherever playbookPath actually lives.
 func RunPlaybook(trellisDir, playbookPath string, args []string) (exitCode int, err error) {
-	stagedPath, cleanup, stageErr := stagePlaybookInProjectDir(trellisDir, playbookPath)
+	// The staged path is trellisDir-joined while cmd.Dir is trellisDir
+	// itself, so a relative TRELLIS_DIR (e.g. "./trellis", which
+	// resolveTrellisDir accepts) would leave ansible-playbook resolving
+	// "trellis/.wp-ops-run-*.yml" from inside trellis/. Resolve once here and
+	// both uses stay consistent.
+	absTrellisDir, absErr := filepath.Abs(trellisDir)
+	if absErr != nil {
+		return 1, fmt.Errorf("resolving TRELLIS_DIR %s: %w", trellisDir, absErr)
+	}
+
+	stagedPath, cleanup, stageErr := stagePlaybookInProjectDir(absTrellisDir, playbookPath)
 	if stageErr != nil {
-		return 1, fmt.Errorf("staging playbook into %s: %w", trellisDir, stageErr)
+		return 1, fmt.Errorf("staging playbook into %s: %w", absTrellisDir, stageErr)
 	}
 	defer cleanup()
 
 	cmd := osexec.Command("ansible-playbook", append([]string{stagedPath}, args...)...)
-	cmd.Dir = trellisDir
+	cmd.Dir = absTrellisDir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -151,6 +177,27 @@ func RunPlaybook(trellisDir, playbookPath string, args []string) (exitCode int, 
 		return 1, err
 	}
 	return 0, nil
+}
+
+// WithWPOpsRoot prepends "-e wp_ops_root=<abs root>" to args so playbooks
+// can reach files that live in the wp-ops tree rather than the Trellis
+// project — `trellis/monitoring/*.yml` copy helper scripts out of
+// `scripts/monitoring/`, for instance.
+//
+// They used to reach them with a playbook-relative `src: ../../scripts/...`,
+// which worked only because Ansible resolves a relative `src:` against the
+// directory of the playbook being executed and that playbook sat two levels
+// under the wp-ops root. RunPlaybook now stages playbooks into $TRELLIS_DIR
+// (see stagePlaybookInProjectDir), which moves that anchor to the Trellis
+// project, so the location has to be passed in explicitly instead.
+//
+// Prepended rather than appended: Ansible lets a later -e override an
+// earlier one, so a caller passing its own wp_ops_root still wins.
+func WithWPOpsRoot(args []string, root string) []string {
+	if abs, err := filepath.Abs(root); err == nil {
+		root = abs
+	}
+	return append([]string{"-e", "wp_ops_root=" + root}, args...)
 }
 
 // BuildPlaybookArgs translates positional CLI args into ansible-playbook
