@@ -6,6 +6,7 @@ import { runSecurityScan } from "./tools/securityScan.js";
 import { isReadOnlyWpCommand, runWpCli } from "./tools/wpCli.js";
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
+import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -279,6 +280,75 @@ export function createServer(): McpServer {
         } else if (result.totalPages > 0) {
           lines.push("✅ All pages have schema markup!");
         }
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "url_audit",
+    'Audit wp_posts.post_content for hardcoded dev URLs (e.g. ".test"/".localhost") baked in by ' +
+      "get_template_directory_uri() during local content creation — the CRITICAL post-migration check " +
+      "CLAUDE.md documents. Reports a hit count per pattern. Pass `replace: {from, to}` to also preview " +
+      "a `wp search-replace --all-tables --precise --dry-run`; add confirm: true, only after explicit " +
+      "user approval, to apply it for real.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      patterns: z
+        .array(z.string())
+        .min(1)
+        .default(DEFAULT_URL_AUDIT_PATTERNS)
+        .describe('Substrings to search for in wp_posts.post_content, e.g. [".test", ".localhost"]'),
+      replace: z
+        .object({
+          from: z.string().min(1).describe('URL to replace, e.g. "http://example.test"'),
+          to: z.string().min(1).describe('Replacement URL, e.g. "https://example.com"'),
+        })
+        .optional()
+        .describe(
+          "If set, runs `wp search-replace <from> <to> --all-tables --precise` as a dry-run preview " +
+            "(and for real if confirm: true)."
+        ),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Required (true) to actually apply `replace`, not just preview it. Only set after explicit user approval."
+        ),
+    },
+    async ({ site, env, patterns, replace, confirm }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runUrlAudit(entry, patterns, replace, confirm);
+
+        const lines: string[] = [`URL Audit for ${site}/${env}:`, ""];
+        for (const f of result.findings) {
+          lines.push(`  "${f.pattern}": ${f.count} hit(s) in wp_posts.post_content`);
+        }
+        lines.push("");
+        lines.push(
+          result.totalHits === 0 ? "✅ No dev URLs found." : `⚠️  ${result.totalHits} total hit(s) found.`
+        );
+
+        if (result.replacement) {
+          lines.push("");
+          lines.push(`Search-replace preview (${result.replacement.from} → ${result.replacement.to}), dry-run:`);
+          lines.push(result.replacement.dryRunReport);
+          if (result.replacement.applied) {
+            lines.push("");
+            lines.push("Applied for real:");
+            lines.push(result.replacement.applyReport ?? "");
+          } else {
+            lines.push("");
+            lines.push("Not applied — re-run with confirm: true after explicit user approval to apply it.");
+          }
+        }
+
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

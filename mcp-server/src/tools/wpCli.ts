@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import type { EnvEntry } from "../registry.js";
 import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
 
-interface ExecResult {
+export interface ExecResult {
   stdout: string;
   stderr: string;
   code: number;
@@ -104,21 +104,26 @@ function runVm(trellisDir: string, workdir: string, wpPath: string, args: string
   });
 }
 
-export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string> {
+// Raw exit code/stdout/stderr, for callers (e.g. urlAudit's count queries) that need to
+// parse stdout programmatically rather than read runWpCli's human-formatted string.
+export async function runWpCliRaw(entry: EnvEntry, args: string[]): Promise<ExecResult> {
   const wpBin = resolveWpBin(entry);
   const phpBin = resolvePhpBin(entry);
-  let result: ExecResult;
   // Order matters: a Trellis dev VM keeps the DB in the VM, so prefer the VM over
   // localPath when both are set — plain `wp` against the host can't reach the database.
   if (hasTrellisVm(entry)) {
-    result = await runVm(entry.trellisDir, entry.vmWorkdir, entry.vmPath ?? "web/wp", args, wpBin, phpBin);
+    return runVm(entry.trellisDir, entry.vmWorkdir, entry.vmPath ?? "web/wp", args, wpBin, phpBin);
   } else if (entry.sshHost && entry.remotePath) {
-    result = await runRemote(entry.sshHost, args, entry.remotePath, wpBin, phpBin);
+    return runRemote(entry.sshHost, args, entry.remotePath, wpBin, phpBin);
   } else if (entry.localPath) {
-    result = await runLocal(args, entry.localPath, wpBin, phpBin);
+    return runLocal(args, entry.localPath, wpBin, phpBin);
   } else {
     throw new Error("Site/env entry has none of: trellisDir+vmWorkdir, sshHost+remotePath, localPath, or url.");
   }
+}
+
+export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string> {
+  const result = await runWpCliRaw(entry, args);
 
   // Nonzero exit isn't necessarily failure (e.g. `plugin is-active` returns 1 for
   // "inactive"), so report it rather than throwing and let the caller interpret it.

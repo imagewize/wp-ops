@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.28.0] - 2026-08-03
+
+### Added
+
+- **mcp-server** - `url_audit` tool (`mcp-server/src/tools/urlAudit.ts`, registered in `mcp-server/src/server.ts`): audits `wp_posts.post_content` for hardcoded dev URLs (default patterns `.test`/`.localhost`) that `get_template_directory_uri()` bakes in during local content creation and that survive a database migration unless search-replaced — the CRITICAL check documented in the parent repo's `CLAUDE.md`, previously only reconstructed by hand from `wp-cli/migration/URL-UPDATE-METHODS.md` and `wp-cli/content-creation/PAGE-CREATION.md` each time. Reports a `wp db query` hit count per pattern; an optional `replace: {from, to}` always previews `wp search-replace --all-tables --precise --dry-run` first and only applies it for real when `confirm: true` is also set, matching `wp_cli`'s existing confirm-gating convention.
+
+### Changed
+
+- **mcp-server** - `tools/wpCli.ts`: factored `runWpCliRaw` (returns the raw exit code/stdout/stderr) out of `runWpCli` (which formats that into a human-readable string), so `urlAudit.ts` can parse the count query's stdout directly instead of scraping it out of the formatted string. `runWpCli` is now a thin wrapper over `runWpCliRaw`; behavior unchanged for existing callers.
+- **docs** - `docs/mcp-server-recommendations.md`: marked item 11 (the `url_audit` tool) done. `docs/wp-ops-recommendations.md`: marked Gap 4 done.
+
+Addresses Gap 4 of `docs/wp-ops-recommendations.md` and item 11 of `docs/mcp-server-recommendations.md`.
+
 ## [3.27.1] - 2026-08-03
 
 ### Fixed

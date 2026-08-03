@@ -168,7 +168,7 @@ Observed setup gaps:
 
 ## Highest-leverage new tool
 
-11. **A `url_audit` tool for the dev-URL problem CLAUDE.md marks CRITICAL** —
+11. ✅ **A `url_audit` tool for the dev-URL problem CLAUDE.md marks CRITICAL** —
     one call that runs the `%.test%` query against production, reports hits, and
     (with `confirm: true`) runs the `wp search-replace`. Today that workflow is
     two or three hand-composed `wp_cli` calls reconstructed from documentation
@@ -176,12 +176,17 @@ Observed setup gaps:
     single deterministic call. `db_pull` / `files_pull` wrappers (already planned
     in the mcp-server README) are the natural follow-ups.
 
+    **Done, 2026-08-03.** `tools/urlAudit.ts` + `url_audit` in `server.ts`. Counts
+    per pattern (default `.test`/`.localhost`) via `wp db query`; `replace:
+    {from, to}` always previews `wp search-replace --dry-run` and only applies
+    for real with `confirm: true`, matching `wp_cli`'s existing confirm gating.
+
 ## Suggested order of work
 
 1. ✅ Items 1–4: config-only, doable immediately.
 2. ✅ Items 5–6: opens up all non-Trellis and static sites (turned out to already be implemented).
 3. ✅ Items 7–8: biggest recurring token savers.
-4. Items 9–11: output compaction and new tools — remaining.
+4. ✅ Item 11: `url_audit` tool — done. Item 9–10 (output compaction) remain.
 
 ---
 

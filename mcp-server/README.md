@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — five tools implemented so far:
+Scaffold — six tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -35,6 +35,13 @@ Scaffold — five tools implemented so far:
   Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article,
   FAQPage, HowTo, and Person schema types. Returns count of pages with/without schema
   and which schema types are present. Uses `curl` to fetch pages and extract schema.
+- **`url_audit`** — audits `wp_posts.post_content` for hardcoded dev URLs (default
+  patterns `.test`/`.localhost`) that `get_template_directory_uri()` bakes in during local
+  content creation and that survive a database migration unless search-replaced — the
+  CRITICAL check documented in the parent repo's `CLAUDE.md`. Reports a hit count per
+  pattern. Pass `replace: {from, to}` to also preview a
+  `wp search-replace --all-tables --precise --dry-run`; add `confirm: true` (only after
+  explicit user approval) to apply it for real.
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
@@ -98,9 +105,11 @@ Or add the same block under `mcpServers` in Claude Desktop's config file.
 
 ## Permissions (pre-approve read-only tools)
 
-The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, and
-read-only `wp_cli` commands) are safe to run without confirmation. Pre-approve
-them in `~/.claude/settings.json` to avoid repeated permission prompts:
+The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, and
+read-only `wp_cli` commands) are safe to run without confirmation — `url_audit` only
+ever queries counts and, at most, a `--dry-run` search-replace preview unless
+`confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json` to
+avoid repeated permission prompts:
 
 ```json
 {
@@ -109,14 +118,16 @@ them in `~/.claude/settings.json` to avoid repeated permission prompts:
       "mcp__wp-ops__redirect_audit": { "allowed": true },
       "mcp__wp-ops__schema_audit": { "allowed": true },
       "mcp__wp-ops__security_scan": { "allowed": true },
+      "mcp__wp-ops__url_audit": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }
 }
 ```
 
-Write operations (e.g., `wp_cli` with `search-replace`, `post delete`, `plugin install`)
-still require `confirm: true` and will prompt for approval.
+Write operations (e.g., `wp_cli` with `search-replace`, `post delete`, `plugin install`,
+or `url_audit` with `replace` + `confirm: true`) still require `confirm: true` and will
+prompt for approval.
 
 ## Usage Tips
 
@@ -126,7 +137,7 @@ still require `confirm: true` and will prompt for approval.
   `schema_audit` for static/Jekyll sites.
 - **CLAUDE.md integration:** In each project that uses these tools, add a note
   in `CLAUDE.md` like: "Prefer the wp-ops MCP tools (`wp_cli`, `security_scan`,
-  `redirect_audit`, `schema_audit`, `db_backup`) with the site key from
+  `redirect_audit`, `schema_audit`, `db_backup`, `url_audit`) with the site key from
   `mcp-server/config/sites.json`."
 
 ## Running as a network service (Streamable HTTP)
