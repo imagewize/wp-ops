@@ -24,6 +24,12 @@
     project: "{{ wordpress_sites[site] }}"
     project_root: "{{ www_root }}/{{ site }}"
     report_hours: "{{ hours | default('24') }}"
+    # Where this playbook's helper scripts live. The Go CLI stages playbooks
+    # inside $TRELLIS_DIR so the project's group_vars/ resolve, which moves
+    # the anchor Ansible uses for relative `src:` paths off the wp-ops tree —
+    # so it passes -e wp_ops_root=. The default covers the bash CLI, which
+    # runs playbooks from their own directory in place.
+    monitor_scripts_dir: "{{ wp_ops_root | default(playbook_dir + '/../..', true) }}/scripts/monitoring"
     # Log file path - defaults to per-site logs, can be overridden with -e log_file=/path/to/log
     log_file: "{{ log_path | default(project_root + '/logs/access.log') }}"
 
@@ -42,7 +48,7 @@
 
     - name: Copy traffic-monitor.sh to remote server
       copy:
-        src: "../../scripts/monitoring/traffic-monitor.sh"
+        src: "{{ monitor_scripts_dir }}/traffic-monitor.sh"
         dest: "/home/{{ web_user }}/traffic-monitor.sh"
         mode: '0755'
       when: not script_stat.stat.exists

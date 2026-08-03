@@ -250,7 +250,8 @@ func executeAnsible(e catalog.Entry, args []string, isHelp bool) int {
 		return 1
 	}
 
-	code, err := wpexec.RunPlaybook(trellisDir, filepath.Join(root, e.ScriptPath), playbookArgs)
+	code, err := wpexec.RunPlaybook(trellisDir, filepath.Join(root, e.ScriptPath),
+		wpexec.WithWPOpsRoot(playbookArgs, root))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
