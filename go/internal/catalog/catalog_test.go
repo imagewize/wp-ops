@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 67 {
-		t.Errorf("len(Entries) = %d, want 67 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0)", len(c.Entries))
+	if len(c.Entries) != 68 {
+		t.Errorf("len(Entries) = %d, want 68 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0)", len(c.Entries))
 	}
 }
 
@@ -124,8 +124,8 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	}
 
 	scriptsRaw := c.CommandsIn("scripts")
-	if len(scriptsRaw) != 35 {
-		t.Errorf("CommandsIn(scripts) = %d entries, want 35 (directory-based grouping must be unaffected by the display split)", len(scriptsRaw))
+	if len(scriptsRaw) != 36 {
+		t.Errorf("CommandsIn(scripts) = %d entries, want 36 (directory-based grouping must be unaffected by the display split)", len(scriptsRaw))
 	}
 	for _, e := range scriptsRaw {
 		if e.Category != "scripts" {
@@ -134,8 +134,8 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	}
 
 	scriptsDisplay := c.CommandsInDisplay("scripts")
-	if len(scriptsDisplay) != 11 {
-		t.Errorf("CommandsInDisplay(scripts) = %d entries, want 11 (backup, git, misc, sync, woocommerce)", len(scriptsDisplay))
+	if len(scriptsDisplay) != 12 {
+		t.Errorf("CommandsInDisplay(scripts) = %d entries, want 12 (backup, git, misc, sync, woocommerce)", len(scriptsDisplay))
 	}
 
 	monitoring := c.CommandsInDisplay("monitoring")

@@ -41,6 +41,70 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/backup/db-pull",
+    "description": "Pull a remote site's database into development via SSH, with URL search-replace",
+    "script_path": "scripts/backup/db-pull.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "trellis"
+    ],
+    "doc": "trellis/backup/README.md",
+    "args": [
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site-name    optional  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "environment",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "production",
+          "staging"
+        ],
+        "description": "Remote environment to pull from",
+        "raw": "environment  optional  {production|staging}  Remote environment to pull from"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "SSH host to pull from (default: site-name)",
+        "raw": "--host       optional  {example.com}  SSH host to pull from (default: site-name)"
+      },
+      {
+        "name": "--multisite",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also fix wp_blogs domains and scope search-replace with --url",
+        "raw": "--multisite  optional  {}  Also fix wp_blogs domains and scope search-replace with --url"
+      },
+      {
+        "name": "--yes",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip the confirmation prompt",
+        "raw": "--yes        optional  {}  Skip the confirmation prompt"
+      }
+    ],
+    "examples": [
+      "wp-ops db-pull example.com production",
+      "wp-ops db-pull network.example.com production --multisite --yes"
+    ],
+    "manifest_category": "backup",
+    "display_category": "scripts",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/backup/site-backup",
     "description": "Full backup of a Trellis site: database, uploads, config, and plugins/themes",
     "script_path": "scripts/backup/site-backup.sh",

@@ -22,6 +22,7 @@ This directory contains utility scripts organized into functional areas:
 scripts/
 ├── backup/                      # Backup automation scripts
 │   ├── db-backup.sh            # Database-only backup with URL replacement
+│   ├── db-pull.sh              # Pull a remote database into development via SSH
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
 │   ├── create-pr.sh            # AI-powered GitHub PR creation
@@ -1221,6 +1222,39 @@ Trellis-aware database backup with optional URL replacement for staging/developm
     ├── {env}_db_with_urls_{timestamp}.sql.gz  # staging/dev only
     └── backup_info_{timestamp}.txt
 ```
+
+---
+
+### db-pull.sh
+
+Pulls a remote site's database into local development over SSH, with URL search-replace. Runs on your machine — uses `trellis vm shell` to reach the local dev VM, and SSHes from inside it straight to the remote host, so the dump streams through with no intermediate file on either end.
+
+#### Features
+
+- **No remote temp file**: streams `wp db export` over SSH directly into `wp db import`
+- **Dynamic URL detection**: reads both the remote and local `siteurl` at run time via WP-CLI — no hardcoded per-site URL table
+- **Safety backup**: exports the current development database before overwriting it
+- **Multisite support** (`--multisite`): scopes `search-replace` with `--url` and fixes `wp_blogs` domains
+- **Confirmation prompt**: skip with `--yes`/`-y`
+
+#### Usage
+
+```bash
+export TRELLIS_DIR=/path/to/trellis
+
+# Pull production into development
+./db-pull.sh example.com production
+
+# Pull from a host that differs from the site key, skip the prompt
+./db-pull.sh example.com staging --host staging.example.com --yes
+
+# Multisite network
+./db-pull.sh network.example.com production --multisite
+```
+
+Via wp-ops: `wp-ops db-pull example.com production`.
+
+For automated/repeatable pulls instead, use `trellis/backup/database-pull.yml` (`wp-ops trellis database-pull -e site=example.com -e env=production`) — it has no `trellis vm shell` dependency and is the better fit for CI/scheduled jobs. See [trellis/backup/README.md](../trellis/backup/README.md) for the tradeoffs.
 
 ---
 
