@@ -43,6 +43,10 @@ usage() {
     echo "URL search-replace. Streams the dump straight from the remote host"
     echo "into the local VM's database — no intermediate file either side."
     echo ""
+    echo "Trellis projects only: it drives the local dev site through"
+    echo "'trellis vm shell', so this has no equivalent for a non-Trellis"
+    echo "WordPress checkout."
+    echo ""
     echo "Arguments:"
     echo "  site-name    Site name under /srv/www, as in wordpress_sites.yml (default: example.com)"
     echo "  environment  production | staging (default: production) — used for messaging only"
@@ -52,8 +56,10 @@ usage() {
     echo "  --multisite  Also fix wp_blogs domains and scope search-replace with --url"
     echo "  --yes, -y    Skip the confirmation prompt"
     echo ""
-    echo "Requires TRELLIS_DIR set to your Trellis project (used to run"
-    echo "'trellis vm shell'):"
+    echo "Runs 'trellis vm shell' against your Trellis project. If TRELLIS_DIR"
+    echo "isn't set, it's auto-detected from the current directory (and"
+    echo "confirmed interactively) — set it explicitly to skip that or run"
+    echo "from outside the project:"
     echo "  TRELLIS_DIR=/path/to/trellis $(basename "$0") example.com production"
     echo ""
     echo "For automated/repeatable pulls instead, use the Ansible playbook:"
@@ -70,6 +76,73 @@ NC='\033[0m' # No Color
 log() { echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')]${NC} $1"; }
 error() { echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] ERROR:${NC} $1" >&2; }
 warning() { echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')] WARNING:${NC} $1"; }
+
+# Walk up from $PWD looking for a Trellis project, stopping below $HOME.
+# Mirrors go/internal/detect.TrellisDir: startDir itself can be the trellis/
+# directory (ansible.cfg + group_vars/ directly inside it), or a parent can
+# hold trellis/ansible.cfg — trusted only when we started there, or the
+# directory walked up through on the way is that parent's own Bedrock site
+# (web/wp/), so a sibling checkout that merely happens to sit near an
+# unrelated trellis/ isn't picked up by accident.
+detect_trellis_dir() {
+    local start="$PWD"
+    local dir="$start"
+    local previous="$start"
+
+    while [[ -n "$dir" && "$dir" != "/" && "$dir" != "$HOME" ]]; do
+        if [[ -f "$dir/ansible.cfg" && -d "$dir/group_vars" ]]; then
+            echo "$dir"
+            return 0
+        fi
+
+        if [[ -f "$dir/trellis/ansible.cfg" ]]; then
+            if [[ "$dir" == "$start" || -d "$previous/web/wp" ]]; then
+                echo "$dir/trellis"
+                return 0
+            fi
+        fi
+
+        previous="$dir"
+        dir="$(dirname "$dir")"
+    done
+
+    return 1
+}
+
+# Confirms an auto-detected TRELLIS_DIR before using it — this backs a
+# destructive operation (it overwrites the local dev database), so a
+# non-interactive session refuses to guess rather than silently proceeding.
+# Mirrors go/internal/detect.Confirm.
+confirm_trellis_dir() {
+    local detected="$1"
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo "TRELLIS_DIR is not set." >&2
+        echo "" >&2
+        echo "Detected a candidate at $detected, but wp-ops won't assume it" >&2
+        echo "non-interactively. Set it explicitly:" >&2
+        echo "" >&2
+        echo "  export TRELLIS_DIR=$detected" >&2
+        echo "" >&2
+        return 1
+    fi
+
+    echo "TRELLIS_DIR is not set."
+    echo "Detected from the current directory: $detected"
+    echo ""
+    read -p "Use it for this command? [y/N] " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        return 0
+    fi
+
+    echo "Cancelled. Set it explicitly instead:"
+    echo ""
+    echo "  export TRELLIS_DIR=/path/to/your/project"
+    echo ""
+    return 1
+}
 
 # Parse arguments
 POSITIONAL=()
@@ -113,9 +186,16 @@ fi
 
 TRELLIS_DIR="${TRELLIS_DIR:-}"
 if [[ -z "$TRELLIS_DIR" ]]; then
-    error "TRELLIS_DIR is not set. Point it at your Trellis project:"
-    echo "  export TRELLIS_DIR=/path/to/trellis" >&2
-    exit 1
+    if detected="$(detect_trellis_dir)"; then
+        if ! confirm_trellis_dir "$detected"; then
+            exit 1
+        fi
+        TRELLIS_DIR="$detected"
+    else
+        error "TRELLIS_DIR is not set. Point it at your Trellis project:"
+        echo "  export TRELLIS_DIR=/path/to/trellis" >&2
+        exit 1
+    fi
 fi
 
 if [[ ! -f "$TRELLIS_DIR/ansible.cfg" ]]; then
