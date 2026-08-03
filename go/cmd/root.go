@@ -54,8 +54,9 @@ playbooks, and more.
 	// The dynamic per-entry/category commands manage their own exit codes
 	// via os.Exit (to propagate the underlying script's real exit status),
 	// so Cobra's own usage-on-error printing would be redundant/wrong here.
-	SilenceUsage:  true,
-	SilenceErrors: true,
+	SilenceUsage:      true,
+	SilenceErrors:     true,
+	ValidArgsFunction: rootBasenameCompletions,
 }
 
 func rootRunE(cc *cobra.Command, args []string) error {

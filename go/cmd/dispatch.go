@@ -88,6 +88,32 @@ func categoryBasenameCompletions(cat string) func(cc *cobra.Command, args []stri
 	}
 }
 
+// rootBasenameCompletions backs `wp-ops <TAB>` for basenames like
+// "db-backup": the per-entry full-key commands registered above are
+// Hidden, and Cobra's default subcommand-name completion skips hidden
+// commands, so without this only categories/list/search/etc. would
+// complete — even though a bare basename (rootRunE's FindByBasename
+// fallback) is a valid invocation. Cobra calls ValidArgsFunction in
+// addition to its subcommand-name matching (not instead of), so this
+// supplements rather than replaces the category/subcommand completions.
+func rootBasenameCompletions(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) != 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	entries := mustCatalog().Entries
+	seen := make(map[string]bool, len(entries))
+	basenames := make([]string, 0, len(entries))
+	for _, e := range entries {
+		b := filepath.Base(e.Key)
+		if seen[b] {
+			continue
+		}
+		seen[b] = true
+		basenames = append(basenames, b)
+	}
+	return basenames, cobra.ShellCompDirectiveNoFileComp
+}
+
 // runCategory resolves a bare command name within a category, port of
 // main()'s "wp-ops <category> <command>" branch (wp-ops:2246-2283):
 // preferring a basename match inside the category, falling back to the
