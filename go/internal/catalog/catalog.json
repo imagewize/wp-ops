@@ -1083,6 +1083,42 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/monitoring/remote-ttfb-ua",
+    "description": "Measure TTFB from the server itself, across multiple user agents (default, Googlebot, AhrefsBot, Screaming Frog)",
+    "script_path": "scripts/monitoring/remote-ttfb-ua.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "args": [
+      {
+        "name": "ssh-host",
+        "required_raw": "required",
+        "required": true,
+        "default": "web@example.com",
+        "description": "SSH user@host to run curl from",
+        "raw": "ssh-host  required  {web@example.com}  SSH user@host to run curl from"
+      },
+      {
+        "name": "url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "URL to test (repeatable)",
+        "raw": "url       required  {https://example.com}  URL to test (repeatable)"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/"
+    ],
+    "manifest_category": "monitoring",
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/monitoring/run-monitoring",
     "description": "Run traffic, security, AI-bot, and error monitoring together and save timestamped reports",
     "script_path": "scripts/monitoring/run-monitoring.sh",
@@ -1245,6 +1281,35 @@
     "examples": [
       "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh",
       "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6"
+    ],
+    "manifest_category": "monitoring",
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/ttfb-test",
+    "description": "Measure TTFB for a URL over several requests and write a report with recommendations",
+    "script_path": "scripts/monitoring/ttfb-test.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl",
+      "bc"
+    ],
+    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "args": [
+      {
+        "name": "url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "URL to test",
+        "raw": "url  required  {https://example.com}  URL to test"
+      }
+    ],
+    "examples": [
+      "wp-ops scripts/monitoring/ttfb-test https://example.com"
     ],
     "manifest_category": "monitoring",
     "display_category": "monitoring",
@@ -2353,6 +2418,36 @@
   },
   {
     "category": "trellis",
+    "key": "trellis/security/check-deny-ips",
+    "description": "Check every individual IP in a Trellis deny-ips.conf.j2 against AbuseIPDB",
+    "script_path": "trellis/security/check-deny-ips.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl",
+      "jq",
+      "trellis"
+    ],
+    "doc": "trellis/security/README.md",
+    "flags": [
+      {
+        "name": "--full",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Full JSON output per IP via check-ips.sh, instead of the compact summary",
+        "raw": "--full  optional  {}  Full JSON output per IP via check-ips.sh, instead of the compact summary"
+      }
+    ],
+    "examples": [
+      "wp-ops trellis/security/check-deny-ips",
+      "wp-ops trellis/security/check-deny-ips --full"
+    ],
+    "manifest_category": "security",
+    "display_category": "trellis",
+    "annotated": true
+  },
+  {
+    "category": "trellis",
     "key": "trellis/security/check-ips",
     "description": "Check IP addresses against AbuseIPDB threat intelligence",
     "script_path": "trellis/security/check-ips.sh",
@@ -2395,6 +2490,71 @@
     ],
     "manifest_category": "updater",
     "display_category": "trellis",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/content-creation/import-page-draft",
+    "description": "Update an existing WordPress page from an HTML draft, locally and/or in production",
+    "script_path": "wp-cli/content-creation/import-page-draft.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh",
+      "trellis"
+    ],
+    "args": [
+      {
+        "name": "draft-file",
+        "required_raw": "required",
+        "required": true,
+        "default": "draft.html",
+        "description": "Local HTML draft with block markup",
+        "raw": "draft-file   required  {draft.html}  Local HTML draft with block markup"
+      },
+      {
+        "name": "page-id",
+        "required_raw": "required",
+        "required": true,
+        "default": "7673",
+        "description": "WordPress page ID to update",
+        "raw": "page-id      required  {7673}  WordPress page ID to update"
+      },
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site name under /srv/www (default: example.com)",
+        "raw": "site-name    optional  {example.com}  Site name under /srv/www (default: example.com)"
+      },
+      {
+        "name": "environment",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "local",
+          "production",
+          "both"
+        ],
+        "description": "Where to apply the update (default: local)",
+        "raw": "environment  optional  {local|production|both}  Where to apply the update (default: local)"
+      },
+      {
+        "name": "template",
+        "required_raw": "optional",
+        "required": false,
+        "default": "template-no-header.blade.php",
+        "description": "Optional _wp_page_template value to set",
+        "raw": "template     optional  {template-no-header.blade.php}  Optional _wp_page_template value to set"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673",
+      "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
+    ],
+    "manifest_category": "content-creation",
+    "display_category": "wp-cli",
     "annotated": true
   },
   {
