@@ -10,14 +10,28 @@
 #
 # Edit the PROJECT variable below before running.
 #
+# Options:
+#   --yes, -y      Skip the confirmation prompt before overwriting trellis/
+#
 # @desc     Safely update a Trellis installation to the latest upstream while preserving vault/config customizations
 # @category updater
 # @runs     local
 # @requires git
+# @flag     --yes  optional  {}  Skip the confirmation prompt before overwriting trellis/
 # @example  wp-ops trellis/updater/trellis-updater
+# @example  wp-ops trellis/updater/trellis-updater --yes
 # @doc      trellis/updater/README.md
 
 set -e  # Exit on error
+
+SKIP_CONFIRM=0
+for arg in "$@"; do
+  case "$arg" in
+    --yes|-y)
+      SKIP_CONFIRM=1
+      ;;
+  esac
+done
 
 # Set your project slug here like example.com
 PROJECT="site.com"
@@ -40,6 +54,19 @@ echo "=== Trellis Updater for $PROJECT ==="
 echo "Project: $PROJECT_DIR"
 echo "Backup: $BACKUP_DIR"
 echo ""
+
+# Confirm before rewriting any files — a backup exists afterward, but nothing
+# previews the change first, so make the destructive step explicit.
+if [ "$SKIP_CONFIRM" -eq 1 ]; then
+  echo "Skipping confirmation (--yes)."
+else
+  read -p "This will overwrite files in $TRELLIS_DIR. Continue? (y/N) " -n 1 -r
+  echo ""
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Aborted. No changes made."
+    exit 1
+  fi
+fi
 
 # Step 1: Create backup directory
 mkdir -p $BACKUP_DIR

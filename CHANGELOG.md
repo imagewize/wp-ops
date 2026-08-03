@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.32.0] - 2026-08-03
+
+### Added
+
+- **scripts/woocommerce**, **trellis/updater** - the two mutating commands `docs/wp-ops-recommendations.md`'s Gap 7 audit flagged with no dry-run and no confirmation prompt now have both. `create-product-variations.sh` takes `-d`/`--dry-run` (matching `batch-resize.sh`'s convention): it builds each `wp wc product_variation create` invocation either way, but only prints it instead of running it over `trellis vm shell` when the flag is set, so the full attribute cross-product can be previewed with no VM round trip. `trellis-updater.sh` now prompts `This will overwrite files in $TRELLIS_DIR. Continue? (y/N)` before it starts backing up and rewriting the Trellis directory; `-y`/`--yes` (matching `db-pull.sh`'s convention) skips it for non-interactive use. Both scripts' manifest headers gained a `@flag` line so the new flags surface in `--help` and the interactive picker in both CLIs; `go/internal/catalog/catalog.json` regenerated, `go/scripts/parity-check.sh` still 8/8.
+
 ## [3.31.0] - 2026-08-03
 
 ### Added
