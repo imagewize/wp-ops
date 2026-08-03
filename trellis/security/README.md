@@ -45,6 +45,7 @@ This directory contains documentation and configurations for securing WordPress 
 | **fail2ban** | Automatic IP blocking for brute force attacks | Zero (once configured) | [FAIL2BAN.md](./FAIL2BAN.md) |
 | **Manual IP blocks** | Permanent Nginx-level IP blocking | Manual updates required | [MANUAL-IP-BLOCKING.md](./MANUAL-IP-BLOCKING.md) |
 | **IP reputation lookup** | Verify an IP is actually malicious before blocking it | Run as needed | [check-ips.sh](#ip-reputation-checking) |
+| **Deny-list audit** | Bulk-check every IP already in `deny-ips.conf.j2` and flag stale ones | Run periodically | [check-deny-ips.sh](#deny-list-auditing) |
 | **Security scanners** | Malware detection for WordPress | Run weekly/monthly | [wp-cli/security](../../wp-cli/security/) |
 
 ---
@@ -210,6 +211,28 @@ A high `score` (AbuseIPDB's 0-100 confidence rating) with recent, numerous
 `reports` supports a manual block. A `score` of 0 with no reports is a strong
 signal the IP is not actually malicious (a shared NAT gateway, a legitimate
 crawler, etc.) — don't block it.
+
+---
+
+## Deny-list Auditing
+
+`check-deny-ips.sh` bulk-checks every individual IP already in a Trellis
+project's `nginx-includes/all/deny-ips.conf.j2` against AbuseIPDB, so blocks
+that are no longer warranted (score dropped to 0, no recent reports) are easy
+to spot. CIDR subnet entries are skipped — AbuseIPDB checks single IPs, not
+ranges — and reported as a count instead. Uses the same `trellis/security/.env`
+as `check-ips.sh`.
+
+```bash
+# Compact summary (score, reports, lastSeen per IP)
+TRELLIS_DIR=/path/to/trellis ./trellis/security/check-deny-ips.sh
+
+# Full JSON output per IP, via check-ips.sh
+TRELLIS_DIR=/path/to/trellis ./trellis/security/check-deny-ips.sh --full
+
+# Via wp-ops
+TRELLIS_DIR=/path/to/trellis wp-ops trellis/security/check-deny-ips
+```
 
 ---
 
