@@ -191,13 +191,13 @@ convention is what's awkward." Verified 2026-08-03: the same complaint applies
 to nine more Ansible playbooks, and a related-but-distinct one applies to five
 `scripts/*.sh` commands that have no wrapper of any kind yet.
 
-### 6a. Ansible playbooks still needing `-e site=... -e env=...`
+### 6a. Ansible playbooks still needing `-e site=... -e env=...` — done, 2026-08-03
 
-Every one of these takes exactly the `site`/`env` pair `db-pull` used to
+Every one of these took exactly the `site`/`env` pair `db-pull` used to
 require, resolved from `docs/wp-ops-recommendations.md`'s own catalog
 (`./wp-ops --json`, filtered to `.yml` scripts):
 
-| Command | Extra args | Today |
+| Command | Extra args | Before |
 |---------|-----------|-------|
 | `trellis/backup/database-backup` | — | `wp-ops trellis/backup/database-backup -e site=example.com -e env=production` |
 | `trellis/backup/database-push` | — | `wp-ops trellis/backup/database-push -e site=example.com -e env=staging` |
@@ -211,6 +211,37 @@ require, resolved from `docs/wp-ops-recommendations.md`'s own catalog
 
 (`trellis/backup/database-pull` is the tenth — already fixed by `db-pull.sh`,
 Gap 2.)
+
+**Done, 2026-08-03 — a generic translator, not nine bespoke scripts.** These
+nine playbooks work fine as-is; the only complaint was calling convention, so
+rewriting each as its own `.sh` (à la `db-pull.sh`/`db-backup.sh`) would have
+forked Ansible's logic into duplicate shell code for zero functional gain —
+against `go-mcp-parity.md`'s "the scripts are the single source of truth"
+decision. Instead, every `.yml` command's manifest already declares its
+`@arg`/`@flag` names (Phase A rollout group 2), so the executor itself now
+translates positional args against that declaration: required `@arg` entries
+are consumed positionally in manifest order into `-e name=value`; anything
+after that is read as `--name value` / `--name=value` against the declared
+`@flag` names into more `-e name=value` pairs. `wp-ops database-backup
+example.com production` and `wp-ops security-scan example.com production
+--hours 48 --threshold 50` both now work. The legacy explicit form keeps
+working unchanged — if the first raw arg already starts with `-` (i.e. `-e
+key=value ...`), nothing is translated, so no existing invocation (docs,
+muscle memory, other tooling) breaks.
+
+Implemented once in each CLI: `build_playbook_args()` in `wp-ops` (bash),
+`BuildPlaybookArgs()` in `go/internal/exec/ansible.go` (Go), both called from
+the same place the raw args used to be passed straight to
+`ansible-playbook`/`RunPlaybook`. Covers all nine playbooks (and any future
+`.yml` command with manifest args) from one change per CLI, not nine. Note
+the short command names above (`database-backup`, `security-scan`, ...)
+already worked before this — bare-basename resolution has always resolved
+them to their full catalog key (see "The verbose-path premise is false"); a
+`@key`/`@alias` directive giving them a *second*, different registered name
+was considered again while doing this work and rejected for the same reason
+the original `@key` proposal was: it would duplicate catalog entries in
+`list`/`--json` and risk `go/scripts/parity-check.sh` drift, for no gain over
+the exact-match basename resolution that already exists.
 
 ### 6b. `scripts/*.sh` commands with no wrapper at all — manual SSH pipe every time
 
@@ -347,9 +378,11 @@ follow-up.
    permission dead end. Same shape and value as Gap 2. **Done.**
 5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap. **Done.**
 6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
-7. **Gap 6, remaining items** — the other eight `-e`-style playbooks and four
-   unwrapped server scripts. Same mechanical pattern as `db-backup`; lower
-   priority since they're used less often.
+7. **Gap 6, remaining items** — 6a (the nine `-e`-style playbooks) **done**,
+   via a generic positional-arg translator rather than nine bespoke scripts.
+   6b (four unwrapped server scripts) remains — different shape, since there's
+   no underlying playbook to translate against; needs either real wrapper
+   scripts or M5's `--on <env>` SSH dispatch.
 8. **Gap 7** — `--dry-run` for `create-product-variations.sh`; a confirmation
    prompt for `trellis-updater.sh`. Small, isolated fixes.
 

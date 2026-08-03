@@ -10,7 +10,8 @@
 # @flag     hours       optional  {24}  How many hours of log history to scan
 # @flag     threshold   optional  {100}  Requests-per-IP alert threshold
 # @flag     log_path    optional  {/path/to/access.log}  Override the default per-site access log path
-# @example  wp-ops trellis/monitoring/security-scan -e site=example.com -e env=production
+# @example  wp-ops security-scan example.com production
+# @example  wp-ops security-scan example.com production --hours 48 --threshold 50
 # @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:

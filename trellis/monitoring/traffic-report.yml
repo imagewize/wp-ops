@@ -9,7 +9,8 @@
 # @arg      env         required  {production|staging|development}  Target environment
 # @flag     hours      optional  {24}  How many hours of log history to include
 # @flag     log_path   optional  {/path/to/access.log}  Override the default per-site access log path
-# @example  wp-ops trellis/monitoring/traffic-report -e site=example.com -e env=production
+# @example  wp-ops traffic-report example.com production
+# @example  wp-ops traffic-report example.com production --hours 48
 # @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:

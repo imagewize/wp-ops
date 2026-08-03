@@ -1056,6 +1056,89 @@ require_trellis_dir() {
     return 0
 }
 
+# Translates positional CLI args into ansible-playbook "-e name=value" extra
+# vars using the command's manifest @arg/@flag declarations, so e.g.
+# "wp-ops database-backup example.com production" becomes "-e
+# site=example.com -e env=production" — the same ergonomics db-pull.sh/
+# db-backup.sh already have, without a bespoke script per playbook (see
+# docs/wp-ops-recommendations.md, Gap 6a).
+#
+# Required @arg entries are consumed positionally, in manifest order.
+# Anything after that is read as "--name value" or "--name=value" against
+# the declared @flag names. If the first raw arg already looks like a flag
+# (starts with "-"), nothing is translated — the caller is using the raw
+# "-e key=value [...]" form directly, which keeps working unchanged, same
+# as a command with no manifest @arg entries at all.
+#
+# Leaves the result in the global array PLAYBOOK_ARGS. Returns 1 (with an
+# error already printed) on a missing required argument or a flag with no
+# value.
+build_playbook_args() {
+    local command_key="$1"
+    shift
+    PLAYBOOK_ARGS=("$@")
+
+    [[ $# -eq 0 ]] && return 0
+    [[ "$1" == -* ]] && return 0
+    has_manifest "$command_key" || return 0
+
+    local manifest_args
+    manifest_args=$(manifest_get_all "$command_key" "arg")
+    [[ -z "$manifest_args" ]] && return 0
+
+    PLAYBOOK_ARGS=()
+    local line
+
+    while IFS= read -r line; do
+        manifest_parse_param_line "$line"
+        if [[ $# -eq 0 || "$1" == -* ]]; then
+            echo "${RED}${CROSS} Missing required argument <${_MP_NAME}> (${_MP_DESC})${RESET}" >&2
+            echo "" >&2
+            echo "Usage: wp-ops ${command_key} $(playbook_positional_usage "$command_key")" >&2
+            return 1
+        fi
+        PLAYBOOK_ARGS+=("-e" "${_MP_NAME}=$1")
+        shift
+    done <<< "$manifest_args"
+
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == --* ]]; then
+            local flag_name="${1#--}"
+            local flag_value
+            if [[ "$flag_name" == *=* ]]; then
+                flag_value="${flag_name#*=}"
+                flag_name="${flag_name%%=*}"
+                shift
+            else
+                if [[ $# -lt 2 ]]; then
+                    echo "${RED}${CROSS} Flag --${flag_name} needs a value${RESET}" >&2
+                    return 1
+                fi
+                flag_value="$2"
+                shift 2
+            fi
+            PLAYBOOK_ARGS+=("-e" "${flag_name}=${flag_value}")
+        else
+            PLAYBOOK_ARGS+=("$1")
+            shift
+        fi
+    done
+
+    return 0
+}
+
+# "<site> <env>"-style usage fragment for build_playbook_args' missing-argument error.
+playbook_positional_usage() {
+    local command_key="$1"
+    local manifest_args line out=""
+    manifest_args=$(manifest_get_all "$command_key" "arg")
+    while IFS= read -r line; do
+        manifest_parse_param_line "$line"
+        out="${out}<${_MP_NAME}> "
+    done <<< "$manifest_args"
+    echo "${out% }"
+}
+
 execute_playbook() {
     local command_key="$1"
     local script_path="$2"
@@ -1086,10 +1169,12 @@ execute_playbook() {
         return 1
     fi
 
+    build_playbook_args "$command_key" "$@" || return 1
+
     require_trellis_dir || return 1
 
     local exit_code=0
-    (cd "$TRELLIS_DIR" && ansible-playbook "$script_path" "$@") || exit_code=$?
+    (cd "$TRELLIS_DIR" && ansible-playbook "$script_path" "${PLAYBOOK_ARGS[@]}") || exit_code=$?
 
     if [[ -t 1 ]]; then
         echo ""

@@ -9,7 +9,8 @@
 # @arg      env         required  {production|staging|development}  Target environment
 # @flag     email      optional  {alerts@example.com}  Address to send monitoring alerts to
 # @flag     log_path   optional  {/path/to/access.log}  Override the default per-site access log path
-# @example  wp-ops trellis/monitoring/setup-monitoring -e site=example.com -e env=production
+# @example  wp-ops setup-monitoring example.com production
+# @example  wp-ops setup-monitoring example.com production --email alerts@example.com
 # @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
