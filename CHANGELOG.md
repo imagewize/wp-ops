@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.27.0] - 2026-08-03
+
+### Added
+
+- **scripts/monitoring** - `ttfb-test.sh`: runs `curl` against a URL 5 times, averages TTFB/DNS/connect/SSL timings, rates the result against Google's Core Web Vitals TTFB benchmarks, and writes a detailed report with optimization recommendations to `audits/`. Adapted from `seo-strategy/tools/scripts/ttfb-test.sh`, generalized off the hardcoded `imagewize.com` default URL — the URL is now a required argument.
+- **scripts/monitoring** - `remote-ttfb-ua.sh`: runs `curl` on the server itself over SSH (so local network distance doesn't skew the measurement), once per URL for each of the default, Googlebot, AhrefsBot, and Screaming Frog user agents. Adapted from `seo-strategy/tools/scripts/remote-ttfb-ua.sh`, generalized off the hardcoded `web@imagewize.com` SSH host and default URL list — both are now required arguments. Placed under `scripts/monitoring/` rather than `wordpress-utilities/speed-optimization/` (as `docs/wp-ops-recommendations.md` Gap 5 originally suggested) because the CLI treats every file under `wordpress-utilities/` as a copy-paste-into-a-theme reference snippet and never executes it; the speed-optimization README stays the docs home via `@doc`.
+- **wp-cli/content-creation** - `import-page-draft.sh`: updates an *existing* WordPress page's content from an HTML draft, locally and/or in production, stripping Blade `{{-- ... --}}` doc-comments before import. Complements `page-creation.sh`, which only creates new pages. Adapted from `seo-strategy/tools/scripts/import-page-draft.sh`, generalized off the hardcoded `imagewize.com` paths — site name is now a positional argument, and the local Trellis/Bedrock checkout dirs come from `TRELLIS_DIR`/`SITE_DIR` env vars, matching `db-pull.sh`'s convention.
+- **trellis/security** - `check-deny-ips.sh`: bulk-checks every individual IP already in a Trellis project's `deny-ips.conf.j2` against AbuseIPDB, so blocks that are no longer warranted (score dropped to 0, no recent reports) are easy to spot; CIDR subnet entries are skipped and reported as a count instead, since AbuseIPDB checks single IPs, not ranges. Adapted from `imagewize.com/scripts/check-deny-ips.sh`, generalized off the hardcoded conf path (now `TRELLIS_DIR`-relative) and dropped the original's hand-picked, site-specific hardcoded subnet IP list in favor of actually skipping subnets, matching what the script's own comment already claimed it did. Reuses `check-ips.sh`'s existing `trellis/security/.env` instead of introducing a second env file.
+
+All four address the "Take" rows of Gap 5 in `docs/wp-ops-recommendations.md`, and are manifest-annotated and resolve by basename in both the bash and Go CLIs (`go/scripts/parity-check.sh` passes 8/8; `catalog.json` regenerated).
+
 ## [3.26.0] - 2026-08-03
 
 ### Added
