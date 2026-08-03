@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 import { loadRegistry, resolveSiteEnv } from "./registry.js";
 import { runDbBackup } from "./tools/dbBackup.js";
 import { runSecurityScan } from "./tools/securityScan.js";
@@ -7,11 +7,37 @@ import { isReadOnlyWpCommand, runWpCli } from "./tools/wpCli.js";
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 
+// Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
+// by the client/model before the call is ever made, instead of costing a full round trip
+// (loadRegistry() is cheap, so doing this once at server start is fine). Falls back to
+// plain z.string() if the registry can't be loaded yet (e.g. sites.json not created) or
+// is empty — the real, more informative error still surfaces from resolveSiteEnv() at
+// call time either way. Trade-off: registry edits need a server restart to pick up new
+// keys, same as for stdio transport in general.
+function buildSiteEnvSchemas(): { site: ZodTypeAny; env: ZodTypeAny } {
+  try {
+    const registry = loadRegistry();
+    const siteKeys = Object.keys(registry);
+    if (siteKeys.length === 0) {
+      return { site: z.string(), env: z.string() };
+    }
+    const envKeys = Array.from(new Set(siteKeys.flatMap((site) => Object.keys(registry[site]))));
+    return {
+      site: z.enum(siteKeys as [string, ...string[]]),
+      env: envKeys.length > 0 ? z.enum(envKeys as [string, ...string[]]) : z.string(),
+    };
+  } catch {
+    return { site: z.string(), env: z.string() };
+  }
+}
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "wp-ops",
     version: "0.1.0",
   });
+
+  const { site: siteSchema, env: envSchema } = buildSiteEnvSchemas();
 
   server.tool(
     "security_scan",
@@ -19,8 +45,8 @@ export function createServer(): McpServer {
       "against a configured site/environment. Targeted (~2s) checks common WP-specific threats; " +
       "general (~3s) is a deeper malware sweep. Use 'both' after a suspected compromise.",
     {
-      site: z.string().describe('Site key from the wp-ops site registry (config/sites.json), e.g. "example.com"'),
-      env: z.string().describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
       mode: z
         .enum(["targeted", "general", "both"])
         .default("targeted")
@@ -46,8 +72,8 @@ export function createServer(): McpServer {
       "written to disk on the remote host. Saves to a local backups directory " +
       "(default ~/wp-ops-backups/<site>/<env>/, override with WP_OPS_BACKUP_DIR).",
     {
-      site: z.string().describe('Site key from the wp-ops site registry (config/sites.json), e.g. "example.com"'),
-      env: z.string().describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
     },
     async ({ site, env }) => {
       try {
@@ -74,8 +100,8 @@ export function createServer(): McpServer {
       "run immediately; anything else — updates, deletes, installs, search-replace, eval, etc. — requires " +
       "confirm: true, which should only be set after the user has explicitly approved that specific command.",
     {
-      site: z.string().describe('Site key from the wp-ops site registry (config/sites.json), e.g. "example.com"'),
-      env: z.string().describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
       args: z
         .array(z.string())
         .min(1)
@@ -119,8 +145,8 @@ export function createServer(): McpServer {
         .min(1)
         .optional()
         .describe('URL(s) to audit, e.g. ["https://example.com", "https://example.com/about/"]'),
-      site: z.string().optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: z.string().optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
       checkWww: z
         .boolean()
         .default(true)
@@ -194,8 +220,8 @@ export function createServer(): McpServer {
       "Returns count of pages with/without schema and which schema types are present. Pass either `siteUrl` or `site`+`env`.",
     {
       siteUrl: z.string().optional().describe('Site URL to audit, e.g. "https://example.com"'),
-      site: z.string().optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: z.string().optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
+      site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.optional().describe('Environment key for that site, e.g. "development", "staging", "production"'),
       pages: z
         .array(z.string())
         .optional()

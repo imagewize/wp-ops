@@ -21,11 +21,31 @@ const SAFE_READ_VERBS = new Set([
   "check-update",
   "doctor",
   "export",
+  "size",
+  "tables",
+  "verify-checksums",
+  "pluck",
 ]);
 
+// Commands where the read/write verb is the third token rather than the second, because
+// the second token names a sub-resource rather than a verb (e.g. "wp cron event list").
+// Kept as an explicit per-command allowlist rather than blindly checking args[2] for every
+// command, since args[2] is often an arbitrary caller-supplied value (an option name, a
+// post ID, ...) that could coincidentally collide with a SAFE_READ_VERBS entry.
+const NESTED_RESOURCE_VERBS: Record<string, Set<string>> = {
+  cron: new Set(["event", "schedule"]),
+};
+
 export function isReadOnlyWpCommand(args: string[]): boolean {
-  const verb = args[1];
-  return verb !== undefined && SAFE_READ_VERBS.has(verb);
+  const [command, verbOrResource, thirdToken] = args;
+  if (verbOrResource !== undefined && SAFE_READ_VERBS.has(verbOrResource)) {
+    return true;
+  }
+  const nestedResources = command !== undefined ? NESTED_RESOURCE_VERBS[command] : undefined;
+  if (nestedResources && verbOrResource !== undefined && nestedResources.has(verbOrResource)) {
+    return thirdToken !== undefined && SAFE_READ_VERBS.has(thirdToken);
+  }
+  return false;
 }
 
 function runLocal(args: string[], localPath: string, wpBin: string, phpBin?: string): Promise<ExecResult> {

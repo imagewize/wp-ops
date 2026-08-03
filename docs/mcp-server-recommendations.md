@@ -5,7 +5,7 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v3.23.2 (2026-08-01)
+> **Status:** Up to date as of v3.24.0 (2026-08-03) — items 1-8 done.
 
 ## Current state
 
@@ -38,63 +38,87 @@ Observed setup gaps:
 
 ## Quick wins — no code changes
 
-1. **Register the server user-scoped.**
+1. **Register the server user-scoped.** ✅ *Documented*
    `claude mcp add --scope user wp-ops ...` or add the `mcpServers` block to
    `~/.claude.json`. The registry is central, so the tools shouldn't only exist
    inside the example.com project. Any session — including in wp-ops itself —
    can then run audits or WP-CLI against any registered site.
+   
+   *Updated `mcp-server/README.md` to recommend user-scoped as the default.*
 
-2. **Add more sites to `sites.json`.**
+2. **Add more sites to `sites.json`.** ✅ *Template ready*
    Plain WordPress installs (e.g. `client`) work today via `localPath` —
    nothing in `wpCli.ts` assumes Bedrock; `--path` is arbitrary. Remote non-Trellis
    hosts work too as long as `wp` is on the remote PATH.
+   
+   *`config/sites.example.json` already includes `client.nl` (shared hosting with
+   custom `wpBin`/`phpBin`) and `static-site` (URL-only) examples.*
 
-3. **Mention the MCP tools in each site's CLAUDE.md.**
+3. **Mention the MCP tools in each site's CLAUDE.md.** ✅ *Template provided*
    Without that, Claude keeps reaching for raw `wp` / `trellis vm shell` bash
    commands — more permission prompts, more trial-and-error tokens. One line like
    "prefer the `wp-ops` MCP tools (`wp_cli`, `security_scan`, …) with site key
    `example.com`" changes the default behavior.
+   
+   *Added CLAUDE.md integration template to `mcp-server/README.md` Usage Tips.*
 
-4. **Pre-approve the read-only tools** in `~/.claude/settings.json` permissions:
+4. **Pre-approve the read-only tools** in `~/.claude/settings.json` permissions: ✅ *Documented*
    `mcp__wp-ops__redirect_audit`, `mcp__wp-ops__schema_audit`,
    `mcp__wp-ops__security_scan`, `mcp__wp-ops__wp_cli`. The write-guard already
    lives server-side (`confirm: true`), so prompting again client-side for reads is
    pure friction.
+   
+   *Added Permissions section to `mcp-server/README.md` with the exact config.*
 
 ## Server improvements for non-Bedrock / non-WordPress sites
 
-5. **Per-entry `wpBin`/`phpBin` override in the registry schema.**
+5. **Per-entry `wpBin`/`phpBin` override in the registry schema.** ✅ *Already implemented*
    The security docs (`wp-cli/security/README.md`) call out cPanel/Plesk hosts
    where the binary is `/opt/plesk/php/8.2/bin/php` and WP-CLI may be
-   `~/wp-cli.phar`. Right now `runRemote` hardcodes `wp`, so shared-hosting sites
-   can't be registered. This is the single change that opens the MCP up to every
-   non-Trellis client site.
+   `~/wp-cli.phar`.
 
-6. **Add a `url` field per site/env; let audits accept `site`/`env`.**
+   *`registry.ts`'s `envEntrySchema` already has `wpBin`/`phpBin`, and
+   `resolveWpBin`/`resolvePhpBin` are threaded through `runLocal`/`runRemote`/`runVm`
+   in `tools/wpCli.ts` — this landed in `c665424`, before this doc's items 1-4 pass.
+   `config/sites.example.json`'s `client.nl` entry demonstrates it.*
+
+6. **Add a `url` field per site/env; let audits accept `site`/`env`.** ✅ *Already implemented*
    `redirect_audit` and `schema_audit` are platform-agnostic (pure curl), making
-   them the entry point for Jekyll and static sites — but today full URLs must be
-   retyped. With `"url": "https://client.nl"` in the registry, "run a
-   redirect audit on client production" becomes one unambiguous call. Static
-   sites would register with *only* a `url` (the schema's refine currently requires
-   a path/host — relax it for URL-only entries).
+   them the entry point for Jekyll and static sites.
+
+   *`registry.ts`'s schema already has `url` and its `refine` accepts a URL-only
+   entry (also from `c665424`). `server.ts`'s `redirect_audit`/`schema_audit` tools
+   already accept `site`+`env` and resolve the URL from the registry entry, falling
+   back to the raw `urls`/`siteUrl` params. `config/sites.example.json`'s
+   `static-site` entry demonstrates a URL-only registration.*
 
 ## Token and time savings
 
-7. **Put the site keys in the tool schema.**
+7. **Put the site keys in the tool schema.** ✅ *Done*
    `site`/`env` are free-form `z.string()`, so a wrong guess costs a failed round
-   trip (the error lists known sites, but that's a full extra tool call). Since
-   `loadRegistry()` is cheap, build the schema at server start with
-   `z.enum(Object.keys(registry))` — valid keys land in the tool definition the
-   model sees, and mistakes drop to near zero. Trade-off: registry edits need a
-   server restart, which is already true in practice for stdio.
+   trip (the error lists known sites, but that's a full extra tool call).
 
-8. **Expand the read-only allowlist — every miss costs two tool calls.**
-   `isReadOnlyWpCommand` only checks `args[1]`, so genuinely read-only commands
-   like `wp cron event list` (`args[1] === "event"`), `wp config get`,
-   `wp db size`, `wp db tables`, `wp core verify-checksums`, `wp option pluck`
-   all fail, get re-sent with `confirm: true`, and burn a round trip plus a user
-   approval each time. Either check the verb at position 1 *or* 2, or allowlist
-   known read-only `command + subcommand` pairs.
+   *`server.ts`'s new `buildSiteEnvSchemas()` builds `z.enum(...)` for both `site`
+   (from the registry's top-level keys) and `env` (the union of env keys across all
+   sites) once at server start, and every tool's `site`/`env` params use it. Falls
+   back to plain `z.string()` if the registry can't be loaded yet or is empty, so a
+   fresh install without `sites.json` still starts. Trade-off: registry edits need a
+   server restart, as expected for stdio.*
+
+8. **Expand the read-only allowlist — every miss costs two tool calls.** ✅ *Done*
+   `isReadOnlyWpCommand` only checked `args[1]`, so genuinely read-only commands
+   like `wp cron event list` (`args[1] === "event"`), `wp db size`, `wp db tables`,
+   `wp core verify-checksums`, `wp option pluck` all failed, got re-sent with
+   `confirm: true`, and burned a round trip plus a user approval each time.
+
+   *`tools/wpCli.ts`: `SAFE_READ_VERBS` gained `size`/`tables`/`verify-checksums`/`pluck`.
+   For the `wp cron event list` shape — where the verb is the *third* token because
+   the second names a sub-resource, not an action — a new `NESTED_RESOURCE_VERBS`
+   allowlist (currently just `cron: [event, schedule]`) checks the third token
+   instead. Deliberately not a blind "check args[1] OR args[2]": args[2] is often an
+   arbitrary caller-supplied value (an option name, a post ID) that could
+   coincidentally collide with a safe verb — e.g. `wp option update list <value>`
+   must stay gated even though its third token is `list`.*
 
 9. **Cap and compact tool output.**
    `wp_cli` returns stdout verbatim — `wp post list` on a big site can dump tens
@@ -123,10 +147,10 @@ Observed setup gaps:
 
 ## Suggested order of work
 
-1. Items 1–4: config-only, doable immediately.
-2. Items 5–6: opens up all non-Trellis and static sites.
-3. Items 7–8: biggest recurring token savers.
-4. Items 9–11: output compaction and new tools.
+1. ✅ Items 1–4: config-only, doable immediately.
+2. ✅ Items 5–6: opens up all non-Trellis and static sites (turned out to already be implemented).
+3. ✅ Items 7–8: biggest recurring token savers.
+4. Items 9–11: output compaction and new tools — remaining.
 
 ---
 
