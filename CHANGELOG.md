@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.25.0] - 2026-08-03
+
+### Added
+
+- **mcp-server** - `mcp-server/run.sh`: new stdio-safe launcher for `mcpServers` client registration. Rebuilds `dist/` only when `src/*.ts` is newer (or `dist/index.js` is missing), sends build output to stderr, then `exec`s `node dist/index.js` so stdout carries nothing but the MCP JSON-RPC stream. Replaces registering a bare `node dist/index.js` directly, which never rebuilds, and avoids `npm start`, which risks mixing npm's own log lines into stdout ahead of the server's first message and corrupting stdio framing.
+- **mcp-server** - `mcp-server/package.json`: added a `prestart` script (`tsc`) so `npm start` always rebuilds first. `start.sh` now relies on this instead of an explicit `npm run build` step.
+
+### Fixed
+
+- **mcp-server** - The MCP server's user-scoped registration in `~/.claude.json` pointed at `node dist/index.js` directly, so `src/*.ts` edits were silently ignored by already-registered clients until someone remembered to run `npm run build` by hand. Confirmed `dist/index.js` had in fact gone stale relative to `src/server.ts` and `src/tools/wpCli.ts` — the running server was missing the 3.24.0 enum-schema and read-only-allowlist work despite the changelog marking it done. Rebuilt, and repointed the registration at `mcp-server/run.sh`.
+- **docs** - `docs/mcp-server-recommendations.md`: corrected several stale observations found while investigating the above — the server *was* already registered true user-scoped (not project-scoped as the doc claimed), and `config/sites.json` already covers `aseonomics.com`/`imagewize.com`/`demo.imagewize.com` (not just example.com). Documented the stale-build failure mode and its fix.
+- **go** - `go/internal/catalog/gen/main.go`: the catalog generator's `filepath.WalkDir` never excluded any directory by name, so adding `mcp-server/run.sh` and regenerating on a machine with `mcp-server/node_modules`/`mcp-server/dist` present (both gitignored, both matched by the `mcp-server` category's `.js` extension filter) inflated `catalog.json` from 66 entries to 1298 — every dependency and build-output `.js` file got scanned as if it were a discoverable command. A fresh CI checkout never has those directories, so this was latent rather than previously triggered. New `excludedDirs` map (`node_modules`, `dist`, `.git`) makes the walk `filepath.SkipDir` into them regardless of local dev state; regenerated `catalog.json` is back to a correct 67 entries (66 + `mcp-server/run`).
+- **go** - `go/internal/catalog/catalog_test.go`: `TestLoad`'s hardcoded entry-count assertion bumped 66 → 67 for the new `mcp-server/run` command.
+
+### Changed
+
+- **docs** - `CLAUDE.md`, `AGENTS.md`: AI co-authorship (`Co-Authored-By` trailers for Claude or Mistral) is now permitted in commit messages in this repo — previously explicitly disallowed.
+
 ## [3.24.0] - 2026-08-03
 
 ### Added

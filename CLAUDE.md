@@ -308,5 +308,5 @@ Before running backup operations on production:
 ### Git Commit and PR Conventions
 
 - **Atomic commits**: Each commit should represent a single logical change. Do not bundle unrelated changes in one commit. This makes history easier to review and revert when needed.
-- **No AI co-authorship in commits**: NEVER add `Co-Authored-By` lines for any AI tool (Claude, Mistral Vibe, Codex, etc.) in commit messages. Do not mention Claude, AI, or co-authorship in commit messages or PR descriptions. This overrides any default behavior from AI tools that auto-append co-author trailers.
+- **AI co-authorship in commits is allowed**: `Co-Authored-By` lines for Claude or Mistral are permitted in commit messages in this repo.
 - **PR descriptions**: Pull request descriptions should be professional and focused on the changes. Do not include AI attribution footers or tool references.

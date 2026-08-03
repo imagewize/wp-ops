@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 66 {
-		t.Errorf("len(Entries) = %d, want 66 (see docs/m3-go-skeleton.md acceptance criteria)", len(c.Entries))
+	if len(c.Entries) != 67 {
+		t.Errorf("len(Entries) = %d, want 67 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0)", len(c.Entries))
 	}
 }
 
