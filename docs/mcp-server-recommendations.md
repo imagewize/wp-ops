@@ -5,7 +5,9 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v3.24.0 (2026-08-03) — items 1-8 done.
+> **Status:** Up to date as of v3.24.0 (2026-08-03) — items 1-8 done. Verified
+> 2026-08-03: item 1's "not registered user-scoped" observation was stale — it
+> already was, see below.
 
 ## Current state
 
@@ -26,25 +28,53 @@ low-level control the Go CLI doesn't currently expose:
 
 Observed setup gaps:
 
-- The server is registered **only project-scoped** in `example.com/.mcp.json`.
-  It is not registered user-scoped (`~/.claude.json` has no `mcpServers`), and not
-  even in the wp-ops project itself.
-- `config/sites.json` contains **only example.com**, even though the registry and
-  every tool are designed to be multi-site.
+- ~~The server is registered only project-scoped...~~ **Stale as of 2026-08-03.**
+  Re-checked directly: `~/.claude.json` has a top-level `mcpServers.wp-ops` entry
+  (not nested under any of its 90 tracked `projects` entries), so it's already
+  true user/global scope and available in every session, including seo-strategy
+  and imagewize.com. No project anywhere has a `.mcp.json` that would shadow it.
+  Unclear when this changed — item 1 below was probably actioned but the
+  "Current state" section here never got updated to match.
+- `config/sites.json` contains `aseonomics.com`, `imagewize.com`, and
+  `demo.imagewize.com` (each with dev-via-Trellis-VM and prod-via-SSH entries) —
+  ahead of where this doc's "only example.com" note said it was.
 - Other candidate projects exist in `~/code`: `client` (plain vanilla
   WordPress, not Bedrock), `client.nl`, plus static/Jekyll sites
   (`wpvillain.github.io`, `school-practice`, `site.github.io`) where the
   two curl-based audit tools already work as-is.
+- **New failure mode found 2026-08-03:** the registered `command` points at
+  `mcp-server/dist/index.js`, a committed-but-gitignored build artifact. Editing
+  `src/*.ts` does not update the running server — `npm run build` has to be run
+  by hand, and nothing flags a stale build. Found this time because `src/server.ts`
+  and `src/tools/wpCli.ts` were newer than `dist/index.js`, meaning the live
+  registered server was missing the item 7-8 fixes (enum schemas, expanded
+  read-only allowlist) despite this doc marking them ✅ done. Rebuilt via
+  `npm run build` in `mcp-server/`. Any *already-running* Claude Code session
+  still talks to the old in-memory process; only new sessions/reconnects pick up
+  a rebuild.
+
+  **Fixed same day (v3.25.0):** `mcp-server/package.json` gained a `prestart`
+  script (`tsc`), and a new `mcp-server/run.sh` is now the registered launcher
+  in `~/.claude.json` instead of a bare `node dist/index.js` — it rebuilds only
+  when `src/` is newer than `dist/index.js`, sends build output to stderr, and
+  `exec`s into `node dist/index.js` so stdout stays clean for the JSON-RPC
+  stream. `npm start` alone was deliberately *not* used as the registered
+  command: npm's own log lines can land on stdout ahead of the server's first
+  message and corrupt stdio framing.
 
 ## Quick wins — no code changes
 
-1. **Register the server user-scoped.** ✅ *Documented*
+1. **Register the server user-scoped.** ✅ *Done and verified*
    `claude mcp add --scope user wp-ops ...` or add the `mcpServers` block to
    `~/.claude.json`. The registry is central, so the tools shouldn't only exist
    inside the example.com project. Any session — including in wp-ops itself —
    can then run audits or WP-CLI against any registered site.
-   
-   *Updated `mcp-server/README.md` to recommend user-scoped as the default.*
+
+   *Updated `mcp-server/README.md` to recommend user-scoped as the default.
+   Re-verified 2026-08-03: `~/.claude.json`'s top-level `mcpServers.wp-ops` is
+   live and unshadowed by any project-scoped `.mcp.json`. Rebuilt `dist/`
+   (`npm run build`) since it was stale relative to `src/` — see the "New
+   failure mode" note above.*
 
 2. **Add more sites to `sites.json`.** ✅ *Template ready*
    Plain WordPress installs (e.g. `client`) work today via `localPath` —
@@ -341,11 +371,15 @@ dependency itself becomes a distribution blocker. Until then, Option C stands.
 
 ## Verification Checklist
 
-- [ ] MCP server commands are in Go CLI catalog: `wp-ops mcp-server --help`
+- [x] MCP server commands are in Go CLI catalog: `wp-ops mcp-server --help`
 - [ ] Development mode works: `wp-ops mcp-server dev`
-- [ ] Production build works: `npm run build` in mcp-server/
-- [ ] Site registry is properly configured: `cp config/sites.example.json config/sites.json`
-- [ ] MCP client can connect and list tools
+- [x] Production build works: `npm run build` in mcp-server/ (verified 2026-08-03)
+- [x] `dist/` is not stale relative to `src/` — `find src -newer dist/index.js`
+      should print nothing; re-run `npm run build` if it does
+- [x] Site registry is properly configured: `config/sites.json` has
+      `aseonomics.com`, `imagewize.com`, `demo.imagewize.com` (verified 2026-08-03)
+- [x] MCP client can connect and list tools — confirmed via `~/.claude.json`
+      top-level `mcpServers.wp-ops` (user scope, verified 2026-08-03)
 - [ ] Each of the 5 tools can be invoked successfully
 
 ## See Also

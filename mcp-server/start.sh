@@ -11,5 +11,5 @@ if [[ ! -d node_modules ]]; then
     npm install
 fi
 
-npm run build
+# npm's "prestart" hook (package.json) runs the build automatically.
 npm start
