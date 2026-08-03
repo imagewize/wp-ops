@@ -5,7 +5,7 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v3.34.0 (2026-08-03) — items 1-11 done (all items
+> **Status:** Up to date as of v3.35.0 (2026-08-03) — items 1-11 done (all items
 > in this document). Verified 2026-08-03: item 1's "not registered user-scoped"
 > observation was stale — it already was, see below.
 
