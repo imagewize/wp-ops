@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.30.2] - 2026-08-03
+
+### Fixed
+
+- **go** - `wp-ops <trellis-playbook-command> site env` (e.g. `files-pull`, `database-pull`, `quick-status`) failed with `Error processing keyword 'remote_user': 'web_user' is undefined` (or any other var normally set in the project's `group_vars/`) on every real Trellis project, because Ansible resolves `group_vars`/`host_vars` relative to the *directory containing the playbook file actually being executed* — not the current working directory and not the inventory's directory. `RunPlaybook` (`go/internal/exec/ansible.go`) ran these playbooks straight from wherever they physically live (the wp-ops Homebrew cask's own asset cache, e.g. `~/Library/Caches/wp-ops/assets-<version>/trellis/backup/files-pull.yml`), so the project's `group_vars/` — where `web_user`, PHP version, etc. are defined — was never loaded, even though `cmd.Dir` was correctly set to `$TRELLIS_DIR` and inventory/`-e site=`/`-e env=` resolution all looked fine (which is what made this easy to miss: only vars sourced from `group_vars/` were affected). Added `stagePlaybookInProjectDir`, which copies the entry playbook — and, recursively, any same-directory file it references via `import_playbook:` (only `variable-check.yml` today, across every `trellis/backup/*.yml` and `trellis/monitoring/*.yml` command) — into `$TRELLIS_DIR` itself under randomized `.wp-ops-run-*` names before running, rewriting the `import_playbook:` references to match, and removing every staged file afterward (`defer cleanup()`); a `sweepStalePlaybookStaging` pass at the start of each run also clears any leftovers from a prior run that was killed before it could clean up after itself. `RunPlaybook` now runs the staged copy instead of the original path.
+
+Found while diagnosing why `wp-ops files-pull imagewize.com production` failed on a real Trellis project (imagewize.com) despite `TRELLIS_DIR` being set correctly — confirmed by reproducing the same failure with a trivial `debug: msg="{{ web_user }}"` playbook run from outside the project (`UNDEFINED`) versus the identical file copied directly into the project directory (`web`), and again one directory level deep inside the project (still `UNDEFINED` — Ansible does not walk up looking for `group_vars/`, confirming the fix has to place the copy at the project root, not merely somewhere inside it).
+
 ## [3.30.1] - 2026-08-03
 
 ### Fixed

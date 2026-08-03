@@ -1,6 +1,8 @@
 package exec
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -161,6 +163,109 @@ func TestBuildPlaybookArgs_NoManifestArgsPassesThrough(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, raw) {
 		t.Errorf("got %v, want unchanged %v", got, raw)
+	}
+}
+
+func TestStagePlaybookInProjectDir_CopiesEntryAndImportedSibling(t *testing.T) {
+	srcDir := t.TempDir()
+	trellisDir := t.TempDir()
+
+	writeFile(t, filepath.Join(srcDir, "variable-check.yml"), "# variable-check\n")
+	writeFile(t, filepath.Join(srcDir, "files-pull.yml"), strings.Join([]string{
+		"---",
+		"- import_playbook: variable-check.yml",
+		"  vars:",
+		"    playbook: files-pull.yml",
+		"",
+		"- name: Pull uploads",
+		"  hosts: web",
+		"",
+	}, "\n"))
+
+	entryPath, cleanup, err := stagePlaybookInProjectDir(trellisDir, filepath.Join(srcDir, "files-pull.yml"))
+	if err != nil {
+		t.Fatalf("stagePlaybookInProjectDir: %v", err)
+	}
+	defer cleanup()
+
+	if filepath.Dir(entryPath) != trellisDir {
+		t.Errorf("entry path %s not staged inside trellisDir %s", entryPath, trellisDir)
+	}
+
+	entryContent, err := os.ReadFile(entryPath)
+	if err != nil {
+		t.Fatalf("reading staged entry: %v", err)
+	}
+	if strings.Contains(string(entryContent), "import_playbook: variable-check.yml") {
+		t.Errorf("staged entry still references the unstaged sibling name:\n%s", entryContent)
+	}
+
+	matches, _ := filepath.Glob(filepath.Join(trellisDir, stagedPlaybookPrefix+"*variable-check.yml"))
+	if len(matches) != 1 {
+		t.Fatalf("expected exactly one staged variable-check.yml copy, got %v", matches)
+	}
+
+	// The rewritten import_playbook line must point at that exact staged sibling.
+	if !strings.Contains(string(entryContent), "import_playbook: "+filepath.Base(matches[0])) {
+		t.Errorf("staged entry does not reference staged sibling %s:\n%s", filepath.Base(matches[0]), entryContent)
+	}
+}
+
+func TestStagePlaybookInProjectDir_CleanupRemovesStagedFiles(t *testing.T) {
+	srcDir := t.TempDir()
+	trellisDir := t.TempDir()
+
+	writeFile(t, filepath.Join(srcDir, "variable-check.yml"), "# variable-check\n")
+	writeFile(t, filepath.Join(srcDir, "files-pull.yml"), "- import_playbook: variable-check.yml\n")
+
+	_, cleanup, err := stagePlaybookInProjectDir(trellisDir, filepath.Join(srcDir, "files-pull.yml"))
+	if err != nil {
+		t.Fatalf("stagePlaybookInProjectDir: %v", err)
+	}
+
+	before, _ := filepath.Glob(filepath.Join(trellisDir, stagedPlaybookPrefix+"*"))
+	if len(before) != 2 {
+		t.Fatalf("expected 2 staged files before cleanup, got %d: %v", len(before), before)
+	}
+
+	cleanup()
+
+	after, _ := filepath.Glob(filepath.Join(trellisDir, stagedPlaybookPrefix+"*"))
+	if len(after) != 0 {
+		t.Errorf("expected 0 staged files after cleanup, got %d: %v", len(after), after)
+	}
+}
+
+func TestStagePlaybookInProjectDir_NoImports(t *testing.T) {
+	srcDir := t.TempDir()
+	trellisDir := t.TempDir()
+
+	writeFile(t, filepath.Join(srcDir, "quick-status.yml"), "- name: check\n  hosts: web\n")
+
+	entryPath, cleanup, err := stagePlaybookInProjectDir(trellisDir, filepath.Join(srcDir, "quick-status.yml"))
+	if err != nil {
+		t.Fatalf("stagePlaybookInProjectDir: %v", err)
+	}
+	defer cleanup()
+
+	content, err := os.ReadFile(entryPath)
+	if err != nil {
+		t.Fatalf("reading staged entry: %v", err)
+	}
+	if !strings.Contains(string(content), "hosts: web") {
+		t.Errorf("staged content unexpectedly altered:\n%s", content)
+	}
+}
+
+func TestSweepStalePlaybookStaging_RemovesLeftoversFromPriorRun(t *testing.T) {
+	trellisDir := t.TempDir()
+	stale := filepath.Join(trellisDir, stagedPlaybookPrefix+"abc123-files-pull.yml")
+	writeFile(t, stale, "stale content")
+
+	sweepStalePlaybookStaging(trellisDir)
+
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Errorf("expected stale staged file to be removed, stat err = %v", err)
 	}
 }
 
