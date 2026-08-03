@@ -7,7 +7,7 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging}  Remote environment to push to
-# @example  wp-ops trellis/backup/database-push -e site=example.com -e env=staging
+# @example  wp-ops database-push example.com staging
 # @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:

@@ -7,7 +7,7 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging}  Remote environment to pull from
-# @example  wp-ops trellis/backup/database-pull -e site=example.com -e env=production
+# @example  wp-ops database-pull example.com production
 # @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:

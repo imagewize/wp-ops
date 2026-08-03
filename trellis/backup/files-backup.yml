@@ -7,7 +7,7 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging|development}  Target environment
-# @example  wp-ops trellis/backup/files-backup -e site=example.com -e env=production
+# @example  wp-ops files-backup example.com production
 # @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.29.0] - 2026-08-03
+
+### Added
+
+- **wp-ops**, **go** - a generic positional-argument translator for `trellis/**/*.yml` (Ansible playbook) commands: `build_playbook_args()` in `wp-ops` (bash), `BuildPlaybookArgs()` in `go/internal/exec/ansible.go` (Go). Every `.yml` command's manifest already declares its `@arg`/`@flag` names, so the executor now consumes required `@arg` entries positionally, in manifest order, into `-e name=value`, then reads anything after that as `--name value` / `--name=value` against the declared `@flag` names into more `-e name=value` pairs — `wp-ops database-backup example.com production` and `wp-ops security-scan example.com production --hours 48 --threshold 50` both now work, matching `db-backup`/`db-pull`'s ergonomics without a bespoke script per playbook. The legacy explicit `-e key=value [...]` form keeps working unchanged: if the first raw arg already starts with `-`, nothing is translated. Covers all ten `trellis/backup/*.yml` and `trellis/monitoring/*.yml` commands from one change per CLI.
+
+### Changed
+
+- **trellis/backup**, **trellis/monitoring** - `@example` lines updated to the new positional form across `database-backup.yml`, `database-push.yml`, `database-pull.yml`, `files-backup.yml`, `files-pull.yml`, `files-push.yml`, `quick-status.yml`, `security-scan.yml`, `traffic-report.yml`, `setup-monitoring.yml`; the four with optional `@flag`s gained a second example demonstrating `--flag value` usage. `catalog.json` regenerated; `go/scripts/parity-check.sh` passes 8/8.
+- **docs** - `docs/wp-ops-recommendations.md`: marked Gap 6a done, with a note on why this was one generic translator rather than nine bespoke scripts (per `go-mcp-parity.md`'s "the scripts are the single source of truth" decision), and why a `@key`/`@alias` short-name directive was considered again and rejected for the same reason the original `@key` proposal was — bare-basename resolution already gives every one of these commands its short name today.
+
+Addresses Gap 6a of `docs/wp-ops-recommendations.md`.
+
 ## [3.28.0] - 2026-08-03
 
 ### Added

@@ -1999,7 +1999,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/database-backup -e site=example.com -e env=production"
+      "wp-ops database-backup example.com production"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2038,7 +2038,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/database-pull -e site=example.com -e env=production"
+      "wp-ops database-pull example.com production"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2077,7 +2077,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/database-push -e site=example.com -e env=staging"
+      "wp-ops database-push example.com staging"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2117,7 +2117,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/files-backup -e site=example.com -e env=production"
+      "wp-ops files-backup example.com production"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2156,7 +2156,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/files-pull -e site=example.com -e env=production"
+      "wp-ops files-pull example.com production"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2195,7 +2195,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/backup/files-push -e site=example.com -e env=staging"
+      "wp-ops files-push example.com staging"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
@@ -2245,7 +2245,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/monitoring/quick-status -e site=example.com -e env=production"
+      "wp-ops quick-status example.com production",
+      "wp-ops quick-status example.com production --log_path /var/log/custom.log"
     ],
     "manifest_category": "monitoring",
     "display_category": "trellis",
@@ -2311,7 +2312,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/monitoring/security-scan -e site=example.com -e env=production"
+      "wp-ops security-scan example.com production",
+      "wp-ops security-scan example.com production --hours 48 --threshold 50"
     ],
     "manifest_category": "monitoring",
     "display_category": "trellis",
@@ -2369,7 +2371,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/monitoring/setup-monitoring -e site=example.com -e env=production"
+      "wp-ops setup-monitoring example.com production",
+      "wp-ops setup-monitoring example.com production --email alerts@example.com"
     ],
     "manifest_category": "monitoring",
     "display_category": "trellis",
@@ -2427,7 +2430,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/monitoring/traffic-report -e site=example.com -e env=production"
+      "wp-ops traffic-report example.com production",
+      "wp-ops traffic-report example.com production --hours 48"
     ],
     "manifest_category": "monitoring",
     "display_category": "trellis",
