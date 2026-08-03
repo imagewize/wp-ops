@@ -100,7 +100,6 @@ scripts/monitoring/security-monitor
 scripts/monitoring/ai-bot-monitor
 scripts/monitoring/error-monitor
 scripts/monitoring/run-monitoring
-scripts/backup/db-backup
 scripts/backup/site-backup
 "
 
@@ -108,8 +107,10 @@ scripts/backup/site-backup
 # because the Ansible playbooks under trellis/backup/ do the same job *and*
 # retrieve the archive to this machine, which is usually what someone reaching
 # for a backup from their workstation actually wants.
+#
+# db-backup isn't in this list: it's @runs local now — it SSHes out and
+# streams straight to this machine, the same shape as db-pull.
 BACKUP_COMMANDS="
-scripts/backup/db-backup
 scripts/backup/site-backup
 "
 
@@ -168,7 +169,6 @@ server_side_example_args() {
     case "$1" in
         scripts/monitoring/error-monitor) echo "example.com 48" ;;
         scripts/monitoring/run-monitoring) echo "24 example.com" ;;
-        scripts/backup/db-backup) echo "example.com production" ;;
         scripts/backup/site-backup) echo "example.com" ;;
         *) echo "/srv/www/example.com/logs/access.log 24" ;;
     esac
@@ -1324,12 +1324,8 @@ print_server_side_guidance() {
         echo "${DIM}That leaves the archive on the server. To back up *and* retrieve a copy${RESET}"
         echo "${DIM}to this machine in one step, use the Ansible playbooks instead:${RESET}"
         echo ""
-        if [[ "$command_key" == "scripts/backup/db-backup" ]]; then
-            echo "${DIM}  wp-ops trellis/backup/database-pull -e site=example.com -e env=production${RESET}"
-        else
-            echo "${DIM}  wp-ops trellis/backup/database-pull -e site=example.com -e env=production${RESET}"
-            echo "${DIM}  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production${RESET}"
-        fi
+        echo "${DIM}  wp-ops trellis/backup/database-pull -e site=example.com -e env=production${RESET}"
+        echo "${DIM}  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production${RESET}"
         return 0
     fi
 

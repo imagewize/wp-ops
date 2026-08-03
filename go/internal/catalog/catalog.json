@@ -2,12 +2,12 @@
   {
     "category": "scripts",
     "key": "scripts/backup/db-backup",
-    "description": "Back up a Trellis site database with WP-CLI, gzip it, and prune backups older than 30 days",
+    "description": "Back up a remote site's database over SSH straight to your machine",
     "script_path": "scripts/backup/db-backup.sh",
-    "runs_on": "server",
-    "runs": "server",
+    "runs_on": "local",
+    "runs": "local",
     "requires": [
-      "wp"
+      "ssh"
     ],
     "doc": "trellis/backup/README.md",
     "args": [
@@ -16,24 +16,41 @@
         "required_raw": "optional",
         "required": false,
         "default": "example.com",
-        "description": "Site directory under /srv/www",
-        "raw": "site-name    optional  {example.com}  Site directory under /srv/www"
+        "description": "Site name under /srv/www, as in wordpress_sites.yml",
+        "raw": "site-name    optional  {example.com}  Site name under /srv/www, as in wordpress_sites.yml"
       },
       {
-        "name": "backup-type",
+        "name": "environment",
         "required_raw": "optional",
         "required": false,
         "choices": [
           "production",
-          "staging",
-          "development"
+          "staging"
         ],
-        "description": "Backup type",
-        "raw": "backup-type  optional  {production|staging|development}  Backup type"
+        "description": "Remote environment to back up",
+        "raw": "environment  optional  {production|staging}  Remote environment to back up"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "SSH host to back up from (default: site-name)",
+        "raw": "--host       optional  {example.com}  SSH host to back up from (default: site-name)"
+      },
+      {
+        "name": "--dest",
+        "required_raw": "optional",
+        "required": false,
+        "default": "database_backup",
+        "description": "Local destination directory",
+        "raw": "--dest       optional  {database_backup}  Local destination directory"
       }
     ],
     "examples": [
-      "ssh web@example.com 'bash -s' \u003c db-backup.sh example.com production"
+      "wp-ops db-backup example.com production"
     ],
     "manifest_category": "backup",
     "display_category": "scripts",

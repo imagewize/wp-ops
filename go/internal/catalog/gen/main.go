@@ -94,7 +94,6 @@ var serverSideFallback = map[string]bool{
 	"scripts/monitoring/ai-bot-monitor":   true,
 	"scripts/monitoring/error-monitor":    true,
 	"scripts/monitoring/run-monitoring":   true,
-	"scripts/backup/db-backup":            true,
 	"scripts/backup/site-backup":          true,
 }
 

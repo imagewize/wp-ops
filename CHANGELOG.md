@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.27.1] - 2026-08-03
+
+### Fixed
+
+- **scripts/backup** - `db-backup.sh` wrote its export to `/srv/backups/<site>/database` on the remote server, but a stock Trellis box provisions and `chown`s `/srv/www`, never `/srv/backups` itself — the `web` user the script runs as couldn't `mkdir` there, so the script failed on every Trellis server's first run, not just the one it was caught on (`imagewize.com`). Rebuilt as a local wrapper: it SSHes into the site's own web directory (already `web`-writable) and streams `wp db export - | gzip` straight into a local `database_backup/` directory, the same pattern `db-pull.sh` and the MCP `db_backup` tool (`mcp-server/src/tools/dbBackup.ts`) already use — no remote temp file is ever written, so there's nothing to clean up server-side either.
+
+### Changed
+
+- **scripts/backup** - `db-backup.sh` is now `@runs local` (was `server`) and no longer needs the `ssh web@example.com 'bash -s' < db-backup.sh` invocation — `wp-ops db-backup example.com production` runs it directly, matching `db-pull.sh`'s calling convention. New `--host`/`--dest` flags; the `backup-type` argument's `development` choice was dropped (development is already local — running `wp db export` directly needs no SSH hop) in favor of `environment` (`production`/`staging`). `trellis/backup/database-backup.yml` is unchanged and still the right tool for automated/Ansible-native backups.
+- **wp-ops**, **go** - Removed `scripts/backup/db-backup` from the now-stale hardcoded server-side command lists (`BACKUP_COMMANDS`/`SERVER_SIDE_COMMANDS` in `wp-ops`, `backupCommands` in `go/cmd/serverside.go`, `serverSideFallback` in `go/internal/catalog/gen/main.go`) now that its manifest declares `@runs local` directly — `wp-ops`'s `is_server_side_command()` already prefers the manifest over these lists, but leaving stale entries there was misleading. `catalog.json` regenerated; `go/scripts/parity-check.sh` passes 8/8.
+- **docs** - `docs/wp-ops-recommendations.md`: marked Gap 6's `db-backup` item done. `trellis/backup/README.md`: added a "Direct Shell Script Method" subsection under Database Backup pointing at the new script, mirroring the existing one under Database Pull.
+
+Addresses Gap 6 of `docs/wp-ops-recommendations.md`.
+
 ## [3.27.0] - 2026-08-03
 
 ### Added

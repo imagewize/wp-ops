@@ -251,6 +251,21 @@ playbook does (never touching `/srv/backups`), fetch to local
 `trellis/backup/database-backup.yml` for the same reason `database-pull.yml`
 was kept: it's still the right tool for Ansible-native workflows.
 
+**Done, 2026-08-03.** `scripts/backup/db-backup.sh` is now `@runs local`
+(previously `server`) — positional args (`wp-ops db-backup example.com
+production`), `--host`/`--dest` flags. Deviates from "fetch, then delete the
+remote temp file" in favor of `db-pull.sh`'s own streaming pattern: `ssh ...
+'wp db export -' | gzip > local-file`, so there is no remote temp file to
+create or clean up in the first place — same approach the MCP `db_backup`
+tool (`mcp-server/src/tools/dbBackup.ts`) already used. `wp-ops` and the Go
+CLI both read `runs_on`/`requires` off the manifest already (bash's
+`is_server_side_command()` checks `@runs` before its hardcoded command
+lists), so flipping the header line was sufficient in both places once the
+now-stale command lists (`BACKUP_COMMANDS`/`SERVER_SIDE_COMMANDS` in
+`wp-ops`, `backupCommands` in `go/cmd/serverside.go`,
+`serverSideFallback` in `go/internal/catalog/gen/main.go`) were cleaned up
+and `catalog.json` regenerated. `go/scripts/parity-check.sh` passes 8/8.
+
 The remaining 6a playbooks and 6b scripts are lower-value repeats of the same
 fix — worth doing, but `db-pull.sh` and (once built) `db-backup.sh` between
 them cover the two highest-frequency operations already.
@@ -264,7 +279,7 @@ them cover the two highest-frequency operations already.
 2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value. **Done.**
 3. **Gap 5 "Take" rows** — four scripts, mechanical work. **Done (2026-08-03).**
 4. **Gap 6, `db-backup`** — positional wrapper + fixes the `/srv/backups`
-   permission dead end. Same shape and value as Gap 2; do this next.
+   permission dead end. Same shape and value as Gap 2. **Done.**
 5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap.
 6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
 7. **Gap 6, remaining items** — the other eight `-e`-style playbooks and four

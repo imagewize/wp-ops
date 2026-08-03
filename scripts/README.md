@@ -21,7 +21,7 @@ This directory contains utility scripts organized into functional areas:
 ```
 scripts/
 ├── backup/                      # Backup automation scripts
-│   ├── db-backup.sh            # Database-only backup with URL replacement
+│   ├── db-backup.sh            # Back up a remote database over SSH straight to your machine
 │   ├── db-pull.sh              # Pull a remote database into development via SSH
 │   └── site-backup.sh          # Complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
@@ -1159,68 +1159,40 @@ site restores the released code.
 
 ## Backup Scripts
 
-### db-backup.sh (196 lines)
+### db-backup.sh
 
-Trellis-aware database backup with optional URL replacement for staging/development environments.
+Backs up a remote site's database over SSH, straight to your machine. Runs on your machine — no `trellis vm shell` or VM dependency, unlike `db-pull.sh`; it just SSHes directly to the site's own web directory.
 
 #### Features
 
-- **WP-CLI Based Export**:
-  - `--add-drop-table` for clean imports
-  - `--single-transaction` for InnoDB consistency
-  - `--default-character-set=utf8mb4` for proper encoding
-  - Automatic gzip compression
-
-- **Backup Metadata**:
-  - Creates `.txt` info file with:
-    - WordPress version
-    - Database name, size, table count
-    - Charset information
-    - Backup timestamp
-
-- **URL Replacement** (for non-production):
-  - **Staging**: Replaces `.com` with `.staging.com`
-  - **Development**: Generates `.test` URL variants
-  - Creates separate backup file with replaced URLs
-
-- **Retention Policy**:
-  - 30-day automatic cleanup
-  - Removes old `.sql.gz` and `.txt` files
-
-- **Colored Logging**:
-  - Timestamps on all messages
-  - Color-coded output (green=success, red=error, yellow=warning)
+- **No remote temp file**: streams `wp db export - --path=web/wp` over SSH directly into `gzip`, writing straight to a local file
+- **Never touches `/srv/backups`**: a stock Trellis box provisions and `chown`s `/srv/www`, never `/srv/backups` itself, so the old version of this script (which wrote there) failed with a permission error on every site's first run. SSHing into the already-`web`-writable web directory instead sidesteps that entirely.
+- **Local retention**: prunes this site's own backups in the destination directory older than 30 days
 
 #### Usage
 
 ```bash
-# Production backup (no URL replacement)
+# Backup production
 ./db-backup.sh example.com production
 
-# Staging backup (with URL replacement)
-./db-backup.sh demo.example.com staging
+# Backup staging, from a host that differs from the site key
+./db-backup.sh example.com staging --host staging.example.com
 
-# Development backup (with URL replacement)
-./db-backup.sh example.com development
+# Custom local destination directory
+./db-backup.sh example.com production --dest ~/backups/example.com
 ```
+
+Backing up `development` is already local — just run `wp db export --path=web/wp` directly; no SSH hop needed.
+
+Via wp-ops: `wp-ops db-backup example.com production`.
+
+For automated/repeatable backups instead, use `trellis/backup/database-backup.yml` (`wp-ops trellis database-backup -e site=example.com -e env=production`). See [trellis/backup/README.md](../trellis/backup/README.md) for the tradeoffs.
 
 #### Output Files
 
 ```
-/srv/backups/example.com/database/
-├── production_db_20251231_120000.sql.gz
-├── staging_db_with_urls_20251231_120000.sql.gz
-└── backup_info_20251231_120000.txt
-```
-
-#### Directory Structure
-
-```bash
-/srv/backups/{site}/
-└── database/
-    ├── {env}_db_{timestamp}.sql.gz
-    ├── {env}_db_with_urls_{timestamp}.sql.gz  # staging/dev only
-    └── backup_info_{timestamp}.txt
+database_backup/
+└── example_com_production_2026_08_03_14_30_00.sql.gz
 ```
 
 ---
@@ -2098,10 +2070,18 @@ tail -f /home/web/monitoring/webhook.log
 
 ### Backup Automation
 
-```bash
-# Daily database backup at 2 AM
-0 2 * * * /srv/scripts/backup/db-backup.sh example.com production > /var/log/db-backup.log 2>&1
+`db-backup.sh` runs on your machine, not the server (it SSHes out), so it
+doesn't belong in a server crontab. For scheduled/automated database
+backups, use the Ansible playbook instead:
 
+```bash
+# Daily database backup at 2 AM, from wherever the playbook is scheduled
+0 2 * * * cd /path/to/trellis && ansible-playbook /path/to/wp-ops/trellis/backup/database-backup.yml -e site=example.com -e env=production > /var/log/db-backup.log 2>&1
+```
+
+`site-backup.sh` is still server-side and belongs in the server's own crontab:
+
+```bash
 # Weekly full site backup on Sundays at 3 AM
 0 3 * * 0 /srv/scripts/backup/site-backup.sh example.com > /var/log/site-backup.log 2>&1
 

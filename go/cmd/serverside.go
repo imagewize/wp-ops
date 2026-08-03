@@ -26,8 +26,11 @@ import (
 // playbooks under trellis/backup/ do the same job *and* retrieve the archive,
 // which is usually what someone reaching for a backup from their workstation
 // actually wants.
+//
+// db-backup isn't in this list: it's @runs local now — it SSHes out and
+// streams straight to this machine, the same shape as db-pull. See
+// docs/wp-ops-recommendations.md Gap 6.
 var backupCommands = map[string]bool{
-	"scripts/backup/db-backup":   true,
 	"scripts/backup/site-backup": true,
 }
 
@@ -51,8 +54,6 @@ func serverSideExampleArgs(key string) string {
 		return "example.com 48"
 	case "scripts/monitoring/run-monitoring":
 		return "24 example.com"
-	case "scripts/backup/db-backup":
-		return "example.com production"
 	case "scripts/backup/site-backup":
 		return "example.com"
 	default:
@@ -146,9 +147,7 @@ func printServerSideGuidance(w io.Writer, e catalog.Entry) {
 		fmt.Fprintln(w, "to this machine in one step, use the Ansible playbooks instead:")
 		fmt.Fprintln(w)
 		fmt.Fprintln(w, "  wp-ops trellis/backup/database-pull -e site=example.com -e env=production")
-		if e.Key != "scripts/backup/db-backup" {
-			fmt.Fprintln(w, "  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production")
-		}
+		fmt.Fprintln(w, "  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production")
 		return
 	}
 
