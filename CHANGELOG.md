@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.35.1] - 2026-08-03
+
+### Fixed
+
+- **scripts/backup** - `db-pull.sh` required `TRELLIS_DIR` to already be exported and hard-failed otherwise, unlike the Go `wp-ops trellis <playbook>` path (e.g. `files-pull`, which only exists as an Ansible playbook) which auto-detects a Trellis project from the current directory and confirms before using it. Ported the same walk-up detection and interactive confirmation (`detect_trellis_dir`/`confirm_trellis_dir`, mirroring `go/internal/detect`'s `TrellisDir`/`Confirm`) into `db-pull.sh` itself, so it now only demands an explicit `export TRELLIS_DIR=...` when no project can be found nearby or the session is non-interactive.
+
 ## [3.35.0] - 2026-08-03
 
 ### Added
