@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.35.0] - 2026-08-03
+
+### Changed
+
+- **README** - reworded the `TRELLIS_DIR`/`WP_SITE_DIR` section to lead with the existing auto-detection behavior (wp-ops walks up from the current directory and asks before using what it finds) rather than presenting the explicit `export` as a hard prerequisite; the variables are only required when running from outside the project or non-interactively.
+
+## [3.34.0] - 2026-08-03
+
+### Added
+
+- **mcp-server** - `wp_cli` tool output is now capped at 15,000 characters (`truncateWpCliOutput()` in `tools/wpCli.ts`), addressing item 9 of `docs/mcp-server-recommendations.md`: a big `wp post list` on a large site could otherwise dump tens of KB straight into an agent's context. The truncation notice hints at `--format=count` / `--fields=` / `--posts_per_page=` to narrow the command instead. Applied only at the `wp_cli` tool's call site in `server.ts` — `urlAudit.ts`'s own `runWpCli` calls (search-replace previews) are already small, curated reports and stay untruncated.
+- **mcp-server** - `redirect_audit` and `schema_audit` both gained a `summary: boolean` parameter (item 9): when true, pages that fully pass — the same categories each tool already scores into its pass/fail counts — or already have schema are omitted from the per-page detail and replaced with a single "N page(s) omitted" line, cutting typical output on multi-page audits by more than half.
+
+### Changed
+
+- **mcp-server** - `wp_cli`, `redirect_audit`, `schema_audit`, and `url_audit` tool descriptions trimmed from 3–4 sentences to 1–2 (item 10 of `docs/mcp-server-recommendations.md`), since user-scope registration loads all five tool descriptions into every session in every project. The confirm-gating detail `wp_cli`'s description used to spell out is still fully covered by the runtime error already thrown when a mutating command is called without `confirm: true`, so no information was lost.
+- **docs** - `docs/mcp-server-recommendations.md`: marked items 9 and 10 done.
+
 ## [3.33.0] - 2026-08-03
 
 ### Changed

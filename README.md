@@ -50,7 +50,12 @@ Run `wp-ops doctor` first — it reports which of the external tools these scrip
 
 `wp-ops init` (Go CLI only) installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after `brew install` — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
 
-Two categories need environment variables pointing at a real project before their commands work:
+Two categories resolve their project directory from an environment variable — but you
+don't need to export it by hand if you're standing inside the project: wp-ops detects
+it by walking up from your current directory and asks before using what it finds.
+Setting the variable explicitly is only required when you're running from elsewhere
+(e.g. from this repo's own directory) or non-interactively (CI, cron), where there's
+no prompt to confirm a detected guess:
 
 ```bash
 # Ansible playbooks (wp-ops trellis <playbook>) need a Trellis project's ansible.cfg/inventory/group_vars
@@ -63,7 +68,8 @@ wp-ops wp-cli scanner-wrapper
 wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 ```
 
-If either variable is unset, wp-ops looks for the project by walking up from your current directory and asks before using what it finds — it never guesses silently, and non-interactive runs require the variable to be set explicitly. Detection deliberately only matches a project you're actually standing inside, so an unrelated Trellis checkout sitting next to your current repo won't be picked up.
+Detection deliberately only matches a project you're actually standing inside, so an
+unrelated Trellis checkout sitting next to your current repo won't be picked up.
 
 `nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts; `wp-ops nginx` lists those documents instead of commands.
 
