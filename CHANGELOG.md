@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.25.1] - 2026-08-03
+
+### Fixed
+
+- **wp-ops** - `discover_commands()`'s `find` (the bash CLI's command-discovery walk) had the identical bug just fixed in the Go catalog generator: no exclusion for `node_modules`/`dist`/`.git`, so a machine with `mcp-server/node_modules` or `mcp-server/dist` present (both gitignored; a fresh checkout never has them, so this was latent) would scan every dependency and build-output file as a discoverable command. A doc-search `find` elsewhere in the same script already excluded `*/node_modules/*`/`*/vendor/*`/`*/.git/*` — `discover_commands()`'s own `find` just never got the same treatment. Added the matching `! -path` exclusions. `go/scripts/parity-check.sh` now passes 8/8 (previously would have failed the `--json list` field-for-field comparison, since the Go side — fixed in 3.25.0 — reported 67 while bash reported 1298+).
+
 ## [3.25.0] - 2026-08-03
 
 ### Added

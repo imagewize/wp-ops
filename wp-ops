@@ -641,7 +641,7 @@ discover_commands() {
                 category_commands="${category_commands},${command_key}"
             fi
 
-        done < <(find "$category_dir" -type f \( "${name_matchers[@]}" \) ! -name "wp-ops" ! -name "variable-check.yml" ! -name "transient-debug-browser.php" -print0)
+        done < <(find "$category_dir" -type f \( "${name_matchers[@]}" \) ! -path "*/node_modules/*" ! -path "*/dist/*" ! -path "*/.git/*" ! -name "wp-ops" ! -name "variable-check.yml" ! -name "transient-debug-browser.php" -print0)
         
         # Write category line
         if [[ -n "$category_commands" ]]; then
