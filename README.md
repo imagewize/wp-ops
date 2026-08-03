@@ -81,7 +81,7 @@ When `wp-ops search` finds no command for a term, it checks the documentation an
 Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the log monitors, which read `/srv/www/<site>/logs/` and `/var/log/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
 
 ```bash
-ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
 ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 48
 ```
 

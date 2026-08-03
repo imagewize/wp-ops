@@ -99,7 +99,7 @@ scripts/monitoring/traffic-monitor
 scripts/monitoring/security-monitor
 scripts/monitoring/ai-bot-monitor
 scripts/monitoring/error-monitor
-scripts/monitoring/run-monitoring
+scripts/monitoring/monitor
 scripts/backup/site-backup
 "
 
@@ -145,7 +145,7 @@ ${command_key}
 # argument. For these, "I already have a copy of the log here" is a meaningful
 # thing to say, and they're the ones that need gawk to parse the combined-format
 # timestamp. error-monitor reads a fixed set of system log paths for a domain and
-# filters them with plain awk, and run-monitoring's first argument is an hour
+# filters them with plain awk, and monitor's first argument is an hour
 # count — neither has a log file you could hand it locally.
 ACCESS_LOG_COMMANDS="
 scripts/monitoring/traffic-monitor
@@ -168,7 +168,7 @@ ${command_key}
 server_side_example_args() {
     case "$1" in
         scripts/monitoring/error-monitor) echo "example.com 48" ;;
-        scripts/monitoring/run-monitoring) echo "24 example.com" ;;
+        scripts/monitoring/monitor) echo "24 example.com" ;;
         scripts/backup/site-backup) echo "example.com" ;;
         *) echo "/srv/www/example.com/logs/access.log 24" ;;
     esac
@@ -1491,7 +1491,7 @@ execute_command() {
                 # on the server (run it), absent on a workstation. An explicit
                 # readable file argument is an intentional "I have the log here"
                 # — honoured for the commands that actually take a log path
-                # (error-monitor's first argument is a domain, run-monitoring's
+                # (error-monitor's first argument is a domain, monitor's
                 # is an hour count), and only where GNU date exists to run it,
                 # since otherwise it dies several screens in on `date: illegal
                 # option`.
@@ -1911,8 +1911,8 @@ run_doctor() {
     echo ""
 
     # The log monitors (traffic/security/ai-bot) read /srv/www/<site>/logs/
-    # directly and use GNU `date -d`, and run-monitoring.sh is invoked as
-    # `ssh host 'bash -s' < run-monitoring.sh`. They execute on the server, so
+    # directly and use GNU `date -d`, and monitor.sh is invoked as
+    # `ssh host 'bash -s' < monitor.sh`. They execute on the server, so
     # checking their dependencies against this machine would be misleading.
     echo "${BOLD}Server-side${RESET} ${DIM}(not checked here — these run on the server)${RESET}"
     printf "  ${DIM}%s %-18s %s${RESET}\n" "·" "gawk" "time filtering in the Nginx log monitors"

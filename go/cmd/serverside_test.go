@@ -107,7 +107,7 @@ func TestServerSideGuard(t *testing.T) {
 		},
 		{
 			// error-monitor's first argument is a domain and
-			// run-monitoring's is an hour count, so a file argument must not
+			// monitor's is an hour count, so a file argument must not
 			// be mistaken for a log they can read locally.
 			name:        "non-access-log command ignores a real file argument",
 			entry:       serverEntry("scripts/monitoring/error-monitor"),
@@ -229,8 +229,8 @@ func TestPrintServerSideGuidanceVariants(t *testing.T) {
 			wantAbsent: []string{"Already have a log file"},
 		},
 		{
-			name:    "run-monitoring gets the gawk note but no local-file offer",
-			key:     "scripts/monitoring/run-monitoring",
+			name:    "monitor gets the gawk note but no local-file offer",
+			key:     "scripts/monitoring/monitor",
 			gnuDate: true,
 			wantContain: []string{
 				"24 example.com",
@@ -271,7 +271,7 @@ func TestPrintServerSideGuidanceVariants(t *testing.T) {
 func TestServerSideExampleArgs(t *testing.T) {
 	tests := map[string]string{
 		"scripts/monitoring/error-monitor":    "example.com 48",
-		"scripts/monitoring/run-monitoring":   "24 example.com",
+		"scripts/monitoring/monitor":          "24 example.com",
 		"scripts/backup/site-backup":          "example.com",
 		"scripts/monitoring/traffic-monitor":  "/srv/www/example.com/logs/access.log 24",
 		"scripts/monitoring/security-monitor": "/srv/www/example.com/logs/access.log 24",

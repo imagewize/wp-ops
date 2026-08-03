@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.33.0] - 2026-08-03
+
+### Changed
+
+- **scripts/monitoring** - `run-monitoring.sh` renamed to `monitor.sh` (Gap 1 of `docs/wp-ops-recommendations.md`) — the one genuinely opaque script name in the catalog; nothing about "run-monitoring" suggested it was the combined traffic/security/AI-bot/error report. `wp-ops monitor` (and `wp-ops scripts/monitoring/monitor`) now resolves via the existing basename resolution, no new directive or alias needed. Every reference to the old key/filename was swept alongside the rename: `wp-ops` (bash — `SERVER_SIDE_COMMANDS`, `server_side_example_args`, doctor/guard prose), `go/cmd/serverside.go` and its tests, `go/internal/catalog/gen/main.go`'s `serverSideFallback` map (`catalog.json` regenerated), and the current-state docs `README.md`/`scripts/README.md`. `go/scripts/parity-check.sh` still 8/8.
+
 ## [3.32.0] - 2026-08-03
 
 ### Added

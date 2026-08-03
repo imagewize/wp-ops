@@ -6,19 +6,19 @@
 # and error-monitor.sh, and saves timestamped reports to an output directory.
 #
 # Usage:
-#   ssh web@example.com 'bash -s' < ./run-monitoring.sh [hours] [domain]
-#   ./run-monitoring.sh 24              # Run locally on production server
+#   ssh web@example.com 'bash -s' < ./monitor.sh [hours] [domain]
+#   ./monitor.sh 24                     # Run locally on production server
 #
 # Examples:
 #   # From local machine (recommended):
-#   ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh
+#   ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
 #
 #   # For a different site on the same server:
-#   ssh web@example.com 'bash -s' < scripts/monitoring/run-monitoring.sh 24 othersite.com
+#   ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh 24 othersite.com
 #
 #   # On production server:
 #   cd /srv/www/example.com/current
-#   ./run-monitoring.sh 24
+#   ./monitor.sh 24
 #
 # @desc     Run traffic, security, AI-bot, and error monitoring together and save timestamped reports
 # @category monitoring
@@ -26,8 +26,8 @@
 # @requires gawk
 # @arg      hours   optional  {24}  How many hours back to analyze
 # @arg      domain  optional  {example.com}  Site domain
-# @example  ssh web@example.com 'bash -s' < run-monitoring.sh
-# @example  ssh web@example.com 'bash -s' < run-monitoring.sh 24 othersite.com
+# @example  ssh web@example.com 'bash -s' < monitor.sh
+# @example  ssh web@example.com 'bash -s' < monitor.sh 24 othersite.com
 # @doc      trellis/monitoring/README.md
 
 set -e

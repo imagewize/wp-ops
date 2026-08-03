@@ -37,7 +37,7 @@ var backupCommands = map[string]bool{
 // accessLogCommands ports ACCESS_LOG_COMMANDS (wp-ops:149): the subset taking
 // an Nginx *access* log path as their first argument, for which "I already
 // have a copy of the log here" is a meaningful thing to say. error-monitor's
-// first argument is a domain and run-monitoring's is an hour count, so
+// first argument is a domain and monitor's is an hour count, so
 // neither has a log file you could hand it locally.
 var accessLogCommands = map[string]bool{
 	"scripts/monitoring/traffic-monitor":  true,
@@ -52,7 +52,7 @@ func serverSideExampleArgs(key string) string {
 	switch key {
 	case "scripts/monitoring/error-monitor":
 		return "example.com 48"
-	case "scripts/monitoring/run-monitoring":
+	case "scripts/monitoring/monitor":
 		return "24 example.com"
 	case "scripts/backup/site-backup":
 		return "example.com"
