@@ -153,10 +153,10 @@ should stay where they are.
 
 | Script | From | Verdict |
 |--------|------|---------|
-| `pull-db.sh` | imagewize.com | **Take** — see Gap 2 |
-| `import-page-draft.sh` | seo-strategy | **Take** — updates an existing page from an HTML draft; complements `page-creation.sh`, which only creates |
-| `ttfb-test.sh`, `remote-ttfb-ua.sh` | seo-strategy | **Take** — `wordpress-utilities/speed-optimization/` documents TTFB measurement but ships no runnable script |
-| `check-deny-ips.sh` | imagewize.com | **Take** — verifies `deny-ips.conf.j2` entries against AbuseIPDB; natural fit beside `trellis/security/`. Needs an API key, so gate on the key being set |
+| `pull-db.sh` | imagewize.com | **Take** — see Gap 2. Done. |
+| `import-page-draft.sh` | seo-strategy | **Take** — updates an existing page from an HTML draft; complements `page-creation.sh`, which only creates. Done (`wp-cli/content-creation/import-page-draft.sh`, 2026-08-03) |
+| `ttfb-test.sh`, `remote-ttfb-ua.sh` | seo-strategy | **Take** — `wordpress-utilities/speed-optimization/` documents TTFB measurement but ships no runnable script. Done (`scripts/monitoring/ttfb-test.sh`, `remote-ttfb-ua.sh`, 2026-08-03 — placed under `scripts/monitoring/`, not `wordpress-utilities/`: the CLI treats everything under `wordpress-utilities/` as a copy-paste snippet and never executes it) |
+| `check-deny-ips.sh` | imagewize.com | **Take** — verifies `deny-ips.conf.j2` entries against AbuseIPDB; natural fit beside `trellis/security/`. Needs an API key, so gate on the key being set. Done (`trellis/security/check-deny-ips.sh`, 2026-08-03) |
 | `bulk-add-alt-text.sh` | seo-strategy | **Consider** — genuinely reusable accessibility fix, but check how much is imagewize-specific first |
 | `orphan-pages-audit-local.sh` | seo-strategy | **Consider** — useful SEO audit; wp-ops has `404-checker.sh` and `redirect-check.sh` but no internal-link audit |
 | `svg-to-png.sh`, `svg-to-jpg.sh` | seo-strategy | **Consider** — small, fits `scripts/images/` cleanly |
@@ -174,14 +174,102 @@ generalized to arguments, as was done for `run-monitoring.sh`.
 
 ---
 
+## Gap 6: two more calling-convention sore spots, same shape as Gap 2
+
+Gap 2 fixed one instance of "the underlying playbook works, but the calling
+convention is what's awkward." Verified 2026-08-03: the same complaint applies
+to nine more Ansible playbooks, and a related-but-distinct one applies to five
+`scripts/*.sh` commands that have no wrapper of any kind yet.
+
+### 6a. Ansible playbooks still needing `-e site=... -e env=...`
+
+Every one of these takes exactly the `site`/`env` pair `db-pull` used to
+require, resolved from `docs/wp-ops-recommendations.md`'s own catalog
+(`./wp-ops --json`, filtered to `.yml` scripts):
+
+| Command | Extra args | Today |
+|---------|-----------|-------|
+| `trellis/backup/database-backup` | — | `wp-ops trellis/backup/database-backup -e site=example.com -e env=production` |
+| `trellis/backup/database-push` | — | `wp-ops trellis/backup/database-push -e site=example.com -e env=staging` |
+| `trellis/backup/files-backup` | — | `wp-ops trellis/backup/files-backup -e site=example.com -e env=production` |
+| `trellis/backup/files-pull` | — | `wp-ops trellis/backup/files-pull -e site=example.com -e env=production` |
+| `trellis/backup/files-push` | — | `wp-ops trellis/backup/files-push -e site=example.com -e env=staging` |
+| `trellis/monitoring/quick-status` | `log_path` (optional) | `wp-ops trellis/monitoring/quick-status -e site=example.com -e env=production` |
+| `trellis/monitoring/security-scan` | `hours`, `threshold` (optional) | `wp-ops trellis/monitoring/security-scan -e site=example.com -e env=production` |
+| `trellis/monitoring/traffic-report` | `hours` (optional) | `wp-ops trellis/monitoring/traffic-report -e site=example.com -e env=production` |
+| `trellis/monitoring/setup-monitoring` | `email` (optional) | `wp-ops trellis/monitoring/setup-monitoring -e site=example.com -e env=production` |
+
+(`trellis/backup/database-pull` is the tenth — already fixed by `db-pull.sh`,
+Gap 2.)
+
+### 6b. `scripts/*.sh` commands with no wrapper at all — manual SSH pipe every time
+
+These are `runs_on: server` scripts with no Ansible playbook or positional
+wrapper resolving site → host for them, so today's only path is hand-building
+an SSH pipe (`wp-ops <name>` without `--help` prints the exact incantation,
+but it still has to be copy-pasted per site/env each time):
+
+| Command | Today |
+|---------|-------|
+| `scripts/backup/db-backup` | `ssh web@example.com 'bash -s' < scripts/backup/db-backup.sh example.com production` |
+| `scripts/backup/site-backup` | `ssh web@example.com 'bash -s' < scripts/backup/site-backup.sh example.com` |
+| `scripts/monitoring/ai-bot-monitor` | `ssh web@example.com 'bash -s' < scripts/monitoring/ai-bot-monitor.sh` |
+| `scripts/monitoring/error-monitor` | `ssh web@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com` |
+| `scripts/monitoring/updown-webhook-handler` | `ssh web@example.com 'bash -s' < scripts/monitoring/updown-webhook-handler.sh example.com` |
+
+(`traffic-monitor.sh`, `security-monitor.sh`, and `run-monitoring.sh` are the
+same shape but are excluded here — they already have an Ansible-playbook
+front end in 6a: `traffic-report`, `security-scan`, and `setup-monitoring`
+respectively resolve site/env into the right log path and run these for you.)
+
+### `db-backup` specifically has a second, sharper problem
+
+Investigated 2026-08-03 while trying to back up `imagewize.com`:
+`scripts/backup/db-backup.sh` writes to `/srv/backups/<site>/database`, but
+`/srv` is `root:root 755` on a stock Trellis box — Trellis provisions and
+`chown`s `/srv/www`, never `/srv` itself or `/srv/backups`. The `web` user the
+script runs as can't `mkdir` there, so the script fails on every
+Trellis server until someone with root creates `/srv/backups` by hand once.
+This isn't specific to imagewize.com; it'll hit any site's first `db-backup`
+run.
+
+`trellis/backup/database-backup.yml` doesn't have this problem — it exports
+into `{{ project_web_dir }}` (`/srv/www/<site>/current`, already
+`web`-writable), fetches the file locally, then deletes the remote copy. That
+sidestepping is the template to copy.
+
+**Recommendation:** `db-backup` is the highest-value single item here —
+it's the one Gap 2's own reasoning applies to most directly (a script that
+already works is one calling-convention change from being genuinely
+ergonomic), and it currently has both problems 6a and 6b's items have
+separately: no positional wrapper *and* a broken default write path. Build
+`scripts/backup/db-backup.sh` v2 the way `db-pull.sh` was built from
+`pull-db.sh` — SSH straight into the remote site's own web dir like the
+playbook does (never touching `/srv/backups`), fetch to local
+`database_backup/`, delete the remote temp file, positional args
+(`wp-ops db-backup example.com production`). Keep
+`trellis/backup/database-backup.yml` for the same reason `database-pull.yml`
+was kept: it's still the right tool for Ansible-native workflows.
+
+The remaining 6a playbooks and 6b scripts are lower-value repeats of the same
+fix — worth doing, but `db-pull.sh` and (once built) `db-backup.sh` between
+them cover the two highest-frequency operations already.
+
+---
+
 ## Suggested order
 
 1. **Gap 3** — delete the stale seo-strategy monitoring fork. Costs nothing, stops
    the divergence that produced the false "missing tools" list.
 2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value. **Done.**
-3. **Gap 5 "Take" rows** — four scripts, mechanical work.
-4. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap.
-5. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
+3. **Gap 5 "Take" rows** — four scripts, mechanical work. **Done (2026-08-03).**
+4. **Gap 6, `db-backup`** — positional wrapper + fixes the `/srv/backups`
+   permission dead end. Same shape and value as Gap 2; do this next.
+5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap.
+6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to.
+7. **Gap 6, remaining items** — the other eight `-e`-style playbooks and four
+   unwrapped server scripts. Same mechanical pattern as `db-backup`; lower
+   priority since they're used less often.
 
 Deliberately not queued: `@key` or any new manifest directive (premise false, and
 per [go-mcp-parity.md](go-mcp-parity.md) any new directive must land in both
