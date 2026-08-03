@@ -323,13 +323,28 @@ ansible-playbook files-pull.yml -e site=example.com -e env=production
 
 # Pull staging uploads to development
 ansible-playbook files-pull.yml -e site=example.com -e env=staging
+
+# Mirror production exactly, deleting local uploads production no longer has
+ansible-playbook files-pull.yml -e site=example.com -e env=production -e delete=yes
+
+# Same via the wp-ops CLI
+wp-ops files-pull example.com production
+wp-ops files-pull example.com production --delete yes
 ```
 
 **What it does:**
-- Creates backup of current development uploads
-- Creates archive of uploads from remote environment
-- Downloads and extracts to development
-- Cleans up temporary files
+- Syncs the remote `shared/uploads/` into the development site's `web/app/uploads/` over rsync
+- Additive by default (`--delete no`): files that exist only locally are left alone, so dev-only uploads and media since deleted on the remote survive the pull
+- Reads the development path from `group_vars/development/wordpress_sites.yml` (`local_path`)
+
+**`--delete yes`** adds rsync's `--delete`, making the local directory an exact mirror of the remote. Local-only files are removed. This is destructive on the development side only — it never touches the remote — but there is no confirmation prompt, so check what would go first:
+
+```bash
+# Dry run: list exactly what a mirror pull would delete or transfer
+rsync -a --dry-run --itemize-changes \
+  web@example.com:/srv/www/example.com/shared/uploads/ \
+  /path/to/site/web/app/uploads/
+```
 
 **Note:** Cannot pull from development to development (will abort with error).
 

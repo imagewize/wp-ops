@@ -2155,8 +2155,19 @@
         "raw": "env   required  {production|staging}  Remote environment to pull from"
       }
     ],
+    "flags": [
+      {
+        "name": "delete",
+        "required_raw": "optional",
+        "required": false,
+        "default": "no",
+        "description": "yes = mirror the remote exactly, deleting local uploads the remote no longer has",
+        "raw": "delete  optional  {no}  yes = mirror the remote exactly, deleting local uploads the remote no longer has"
+      }
+    ],
     "examples": [
-      "wp-ops files-pull example.com production"
+      "wp-ops files-pull example.com production",
+      "wp-ops files-pull example.com production --delete yes"
     ],
     "manifest_category": "backup",
     "display_category": "trellis",
