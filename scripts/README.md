@@ -33,7 +33,9 @@ scripts/
 │   ├── convert-to-webp.sh      # JPG to WebP conversion with center-crop (Facebook OG)
 │   ├── make-square-webp.sh     # Pad an image onto a square canvas and export as WebP
 │   ├── openverse_search.py     # Search Openverse for CC-licensed images
-│   └── openverse_download.py   # Download Openverse image URLs, optionally converting to WebP
+│   ├── openverse_download.py   # Download Openverse image URLs, optionally converting to WebP
+│   ├── svg-to-jpg.sh           # Render design SVGs to JPG via librsvg (native size or forced)
+│   └── svg-to-png.sh           # Render design SVGs to PNG via librsvg (lossless, best for text)
 ├── misc/                        # Miscellaneous utilities
 │   ├── convert-screenshot-for-claude.sh  # Convert PNG screenshots to JPEG for Claude Code compatibility
 │   ├── find-and-replace-files.sh     # Batch find and replace files across directory trees
@@ -48,6 +50,7 @@ scripts/
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
+│   ├── traffic-by-country.sh   # Filter Nginx logs by visitor country (geoip2fast) and show real visits
 │   ├── cf7-smoke-test.js             # Playwright CF7 form submission smoke test
 │   ├── updown-webhook-handler.sh     # Webhook event handler
 │   └── updown-webhook-receiver.php   # Webhook HTTP receiver
@@ -102,6 +105,13 @@ scripts/
 # Download Openverse image URLs and convert to WebP
 ./scripts/images/openverse_download.py --url https://example.com/photo.jpg --convert-webp
 
+# Render design SVGs to JPG (native size, or forced to a platform spec)
+./scripts/images/svg-to-jpg.sh designs/linkedin
+./scripts/images/svg-to-jpg.sh -w 1920 -h 1080 designs/mastodon
+
+# Render design SVGs to PNG (lossless — prefer for banners with text or logos)
+./scripts/images/svg-to-png.sh designs/linkedin
+
 # Create GitHub PR with AI description
 ./scripts/git/create-pr.sh main "Add feature name"
 
@@ -143,6 +153,10 @@ cd ~/code/my-plugin
 
 # Scan for security threats
 ./scripts/monitoring/security-monitor.sh /srv/www/example.com/logs/access.log 24
+
+# Show real page visits from a given country (pulls the log over SSH)
+./scripts/monitoring/traffic-by-country.sh --host web@example.com NL
+./scripts/monitoring/traffic-by-country.sh -q --hours 24 --pattern "/contact/" US
 
 # Analyze AI crawler traffic
 ./scripts/monitoring/ai-bot-monitor.sh /srv/www/example.com/logs/access.log 24
