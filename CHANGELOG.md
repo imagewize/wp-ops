@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-08-04
+
+### Added
+
+- **scripts/release/release-theme.sh** - Mistral Vibe joins claude and codex as
+  an AI backend (`--ai=vibe`, `VIBE_COMMAND`, `VIBE_CLI_ARGS`). This existed only
+  in the imagewize.com fork of the script and was never upstreamed, so it would
+  have been lost when that fork was deleted. `create-pr.sh` already supported
+  vibe; `release-theme.sh` did not.
+
+  Vibe takes the prompt as an argument rather than on stdin and writes its own
+  errors to stdout, so its branch does not capture stderr separately the way the
+  claude and codex branches do. Default args are `-p` unless `VIBE_CLI_ARGS` is
+  set.
+
+### Known inconsistency
+
+`scripts/release/release-plugin.sh` is release-theme's sibling and still offers
+only claude and codex. Nothing depended on vibe there, so it was left alone
+rather than changed speculatively — worth aligning if vibe becomes a regular
+part of the release flow.
+
 ## [4.1.0] - 2026-08-04
 
 ### Added
