@@ -1,6 +1,6 @@
-// Command wp-ops is a Go rewrite of the bash wp-ops CLI wrapper. It reads the
-// same manifest-annotated scripts as the bash version; see
-// docs/m3-go-skeleton.md at the repo root for scope and status.
+// Command wp-ops discovers and runs the manifest-annotated scripts,
+// playbooks, and snippets in this repo. See docs/cli-ux-plan.md at the repo
+// root for architecture.
 package main
 
 import (

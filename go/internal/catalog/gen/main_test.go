@@ -330,23 +330,22 @@ func TestFindRepoRoot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("findRepoRoot(): %v", err)
 	}
-	for _, want := range []string{"wp-ops", "go.mod", "scripts"} {
+	for _, want := range []string{"go.mod", "scripts"} {
 		if _, err := os.Stat(filepath.Join(root, want)); err != nil {
 			t.Errorf("repo root %s is missing %s: %v", root, want, err)
 		}
 	}
 }
 
-// TestExcludedFilenames pins the exclusion set to bash's
-// `! -name ...` filters — each of these is a real file that would otherwise
-// be discovered as a bogus command.
+// TestExcludedFilenames pins the exclusion set — each of these is a real
+// file that would otherwise be discovered as a bogus command.
 func TestExcludedFilenames(t *testing.T) {
-	for _, name := range []string{"wp-ops", "variable-check.yml", "transient-debug-browser.php"} {
+	for _, name := range []string{"variable-check.yml", "transient-debug-browser.php"} {
 		if !excludedFilenames[name] {
 			t.Errorf("%s should be excluded from discovery", name)
 		}
 	}
-	if len(excludedFilenames) != 3 {
-		t.Errorf("got %d exclusions, want 3 — bash's filter list has not changed", len(excludedFilenames))
+	if len(excludedFilenames) != 2 {
+		t.Errorf("got %d exclusions, want 2 — the filter list has not changed", len(excludedFilenames))
 	}
 }

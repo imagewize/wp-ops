@@ -1,6 +1,13 @@
 # ADR: Bash CLI, Go CLI, and MCP Server Coexistence
 
-> **Status:** Accepted — 2026-08-03
+> **Status:** Superseded — 2026-08-04 (v4.0.0)
+> **Update (2026-08-04, v4.0.0):** The bash CLI (`./wp-ops`) and its
+> installer (`install.sh`) are deleted — see CHANGELOG.md 4.0.0. The
+> decision below to keep three interfaces coexisting, and to verify the Go
+> CLI against bash via `go/scripts/parity-check.sh` (also deleted), are now
+> historical. Two interfaces remain: the Go CLI and the MCP server.
+>
+> **Accepted:** 2026-08-03
 > **Supersedes:** an earlier draft of this file that proposed an `@key` manifest
 > directive for short command names. That proposal was withdrawn — the problem it
 > solved does not exist (see [wp-ops-recommendations.md](wp-ops-recommendations.md),

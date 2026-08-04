@@ -1,5 +1,11 @@
 # CLI UX Plan: Command Manifest + Go Rewrite
 
+> **Status (2026-08-04):** **4.0.0 shipped** — the bash CLI (`./wp-ops`) and
+> its installer (`install.sh`) are deleted, per this document's own Risks
+> section ("the bash implementation is deleted only at 4.0.0"). The Go CLI
+> (`go/`) is now the only CLI. See CHANGELOG.md 4.0.0 and
+> [go-mcp-parity.md](go-mcp-parity.md)'s superseded-status update.
+>
 > **Status (2026-07-31):** M1 shipped in 3.10.0 and is merged to `main`
 > (`feature/cli-manifest-phase-a`, PR #134) — manifest spec, bash parser,
 > `wp-ops manifest lint`, and the first two command groups

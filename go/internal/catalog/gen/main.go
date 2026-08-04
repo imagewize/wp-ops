@@ -25,10 +25,11 @@ import (
 	"github.com/imagewize/wp-ops/go/internal/manifest"
 )
 
-// excludedFilenames mirrors discover_commands()'s
-// `! -name "wp-ops" ! -name "variable-check.yml" ! -name "transient-debug-browser.php"`.
+// excludedFilenames skips files that would otherwise be discovered as
+// bogus commands: an imported (not standalone) Ansible playbook, and a
+// diagnostic script meant to be pasted into a browser console rather than
+// run as a command.
 var excludedFilenames = map[string]bool{
-	"wp-ops":                      true,
 	"variable-check.yml":          true,
 	"transient-debug-browser.php": true,
 }
@@ -336,17 +337,31 @@ func cleanDescription(description, filename string) string {
 // findRepoRoot locates the repo root from this source file's own path
 // (go/internal/catalog/gen/main.go is always four directories below repo
 // root), independent of the working directory `go generate` happens to run
-// with.
+// with. Sanity-checked against go.mod's module declaration rather than a
+// marker file, so a relocated or renamed checkout still resolves correctly.
 func findRepoRoot() (string, error) {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return "", fmt.Errorf("could not determine gen's own source path")
 	}
 	root := filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", "..", "..", ".."))
-	if _, err := os.Stat(filepath.Join(root, "wp-ops")); err != nil {
-		return "", fmt.Errorf("resolved repo root %s doesn't contain wp-ops: %w", root, err)
+	if !isWpOpsModule(filepath.Join(root, "go.mod")) {
+		return "", fmt.Errorf("resolved repo root %s doesn't look like the wp-ops module", root)
 	}
 	return root, nil
+}
+
+// isWpOpsModule reports whether goModPath is this repo's own go.mod, i.e.
+// its module declaration is exactly "module github.com/imagewize/wp-ops" —
+// not merely present, so an unrelated Go project's go.mod isn't mistaken
+// for it.
+func isWpOpsModule(goModPath string) bool {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return false
+	}
+	firstLine := strings.SplitN(string(data), "\n", 2)[0]
+	return strings.TrimSpace(firstLine) == "module github.com/imagewize/wp-ops"
 }
 
 func fatalf(format string, args ...interface{}) {

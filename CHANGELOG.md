@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-08-04
+
+### Removed
+
+- **BREAKING** - the bash CLI (`wp-ops`, ~2,400 lines at the repo root) and
+  its installer (`install.sh`) are deleted. The Go CLI (`go/`, installable
+  via `brew install imagewize/tap/wp-ops` or built from source) reached
+  full parity with the bash implementation at M4 (v3.23.1) and is now the
+  only CLI — this was the planned 4.0.0 removal flagged in
+  `docs/cli-ux-plan.md`'s Risks section. `docs/go-mcp-parity.md`'s
+  "keep three interfaces" decision is superseded; two remain (Go CLI, MCP
+  server).
+- **.github/workflows/manifest-lint.yml** - ran `./wp-ops manifest lint`,
+  which no longer exists. Redundant with `go-build.yml`'s "Generate
+  catalog" step, which already fails the build on a malformed manifest via
+  `manifest.Lint()`.
+- **go/scripts/parity-check.sh** - diffed bash vs. Go CLI output; nothing
+  left to diff against.
+
+### Changed
+
+- **README** - reframed around the Go CLI as the only CLI: dropped the
+  "Go rewrite" framing and bash-specific fzf/`install.sh` instructions,
+  added a "build from source" fallback (`go build -o wp-ops ./go`) for
+  users without Homebrew.
+- **docs** - `docs/go-mcp-parity.md` and `docs/cli-ux-plan.md` both gained
+  status notes marking the bash CLI's removal against their earlier
+  "deleted only at 4.0.0" / "verified against bash" language.
+- **go/main.go** - package doc comment no longer describes the binary as
+  "a rewrite of the bash wp-ops CLI wrapper".
+
 ## [3.35.1] - 2026-08-03
 
 ### Fixed

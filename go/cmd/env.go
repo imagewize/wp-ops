@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	assets "github.com/imagewize/wp-ops"
 	"github.com/imagewize/wp-ops/go/internal/catalog"
@@ -36,8 +37,7 @@ func mustCatalog() *catalog.Catalog {
 //  1. WP_OPS_ROOT — a development override, pointing at a live checkout.
 //  2. A live checkout, found by walking up from the running binary's own
 //     (symlink-resolved) location, then from the working directory, looking
-//     for the repo's marker files (the bash "wp-ops" script alongside a
-//     root "go.mod").
+//     for a root "go.mod" declaring the wp-ops module.
 //  3. The embedded asset tree (github.com/imagewize/wp-ops's assets.FS),
 //     extracted to a per-version cache directory on first run. This is the
 //     only source available to a binary installed via `brew install
@@ -157,10 +157,8 @@ func embeddedVersion() string {
 
 func findRepoRootFrom(dir string) (string, bool) {
 	for i := 0; i < 8 && dir != "" && dir != string(filepath.Separator); i++ {
-		if info, err := os.Stat(filepath.Join(dir, "wp-ops")); err == nil && !info.IsDir() {
-			if info, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil && !info.IsDir() {
-				return dir, true
-			}
+		if isWpOpsModule(filepath.Join(dir, "go.mod")) {
+			return dir, true
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -169,4 +167,17 @@ func findRepoRootFrom(dir string) (string, bool) {
 		dir = parent
 	}
 	return "", false
+}
+
+// isWpOpsModule reports whether goModPath is this repo's own go.mod, i.e.
+// its module declaration is exactly "module github.com/imagewize/wp-ops" —
+// not merely present, so an unrelated Go project's go.mod sitting nearby
+// isn't mistaken for it.
+func isWpOpsModule(goModPath string) bool {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return false
+	}
+	firstLine := strings.SplitN(string(data), "\n", 2)[0]
+	return strings.TrimSpace(firstLine) == "module github.com/imagewize/wp-ops"
 }
