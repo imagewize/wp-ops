@@ -21,16 +21,17 @@ wp-ops is a CLI for WordPress operations — deployments, database and files bac
 
 ## wp-ops CLI
 
-The single entry point for everything in this repo — a Cobra binary that auto-discovers commands across every category, groups them by subdirectory, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
+The single entry point for everything in this repo — a single binary that auto-discovers commands across every category, groups them by subdirectory, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
 
 ```bash
 # Recommended: Homebrew
 brew install imagewize/tap/wp-ops
 wp-ops init                  # install shell completions (one-time)
 
-# Without Homebrew, build from source:
+# Without Homebrew, build from source (needs Go 1.26+):
 git clone https://github.com/imagewize/wp-ops.git && cd wp-ops
-go build -o wp-ops ./go && mv wp-ops /usr/local/bin/   # or anywhere on your PATH
+go build -o wp-ops ./go
+sudo mv wp-ops /usr/local/bin/   # or ~/.local/bin, or anywhere on your PATH
 wp-ops init
 
 wp-ops                       # interactive picker
@@ -43,6 +44,8 @@ wp-ops docs oom              # search the guides, not just the commands
 wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
+
+The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
 
 `wp-ops` with no arguments opens an interactive picker: categories first, then a fuzzy-filterable command list with a live preview pane (usage, args, examples) — no `fzf` dependency.
 
@@ -172,6 +175,7 @@ Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Cl
 ## Requirements
 
 - **Core**: Git, Bash, rsync
+- **Building from source**: Go 1.26+ (not needed if you install via Homebrew — the binary ships prebuilt)
 - **Tool-specific**: See individual docs for Ansible, WP-CLI, ImageMagick, etc.
 
 ## License

@@ -33,7 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README** - reframed around the Go CLI as the only CLI: dropped the
   "Go rewrite" framing and bash-specific fzf/`install.sh` instructions,
   added a "build from source" fallback (`go build -o wp-ops ./go`) for
-  users without Homebrew.
+  users without Homebrew. That fallback needs `sudo` to write to
+  `/usr/local/bin` (root-owned on stock macOS), and Go 1.26+ is now listed
+  under Requirements — previously the no-Homebrew path was `install.sh`,
+  which needed no toolchain. Also notes that the clone can be deleted after
+  building, since the scripts are embedded in the binary.
 - **docs** - `docs/go-mcp-parity.md` and `docs/cli-ux-plan.md` both gained
   status notes marking the bash CLI's removal against their earlier
   "deleted only at 4.0.0" / "verified against bash" language.
