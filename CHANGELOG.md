@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-08-04
+
+### Removed
+
+- **BREAKING** - the bash CLI (`wp-ops`, ~2,400 lines at the repo root) and
+  its installer (`install.sh`) are deleted. The Go CLI (`go/`, installable
+  via `brew install imagewize/tap/wp-ops` or built from source) reached
+  full parity with the bash implementation at M4 (v3.23.1) and is now the
+  only CLI — this was the planned 4.0.0 removal flagged in
+  `docs/cli-ux-plan.md`'s Risks section. `docs/go-mcp-parity.md`'s
+  "keep three interfaces" decision is superseded; two remain (Go CLI, MCP
+  server).
+- **.github/workflows/manifest-lint.yml** - ran `./wp-ops manifest lint`,
+  which no longer exists. Redundant with `go-build.yml`'s "Generate
+  catalog" step, which already fails the build on a malformed manifest via
+  `manifest.Lint()`.
+- **go/scripts/parity-check.sh** - diffed bash vs. Go CLI output; nothing
+  left to diff against.
+- **`wp-ops doctor`'s `fzf` check** - listed `fzf` as an optional helper
+  ("fuzzy command picker in the bash CLI"). The Bubble Tea picker has its
+  own fuzzy filtering built in, so doctor was advertising a tool nothing in
+  the repo uses.
+
+### Changed
+
+- **README** - reframed around the Go CLI as the only CLI: dropped the
+  "Go rewrite" framing and bash-specific fzf/`install.sh` instructions,
+  added a "build from source" fallback (`go build -o wp-ops ./go`) for
+  users without Homebrew. That fallback needs `sudo` to write to
+  `/usr/local/bin` (root-owned on stock macOS), and Go 1.26+ is now listed
+  under Requirements — previously the no-Homebrew path was `install.sh`,
+  which needed no toolchain. Also notes that the clone can be deleted after
+  building, since the scripts are embedded in the binary.
+- **docs** - `docs/go-mcp-parity.md` and `docs/cli-ux-plan.md` both gained
+  status notes marking the bash CLI's removal against their earlier
+  "deleted only at 4.0.0" / "verified against bash" language.
+- **go/main.go** - package doc comment no longer describes the binary as
+  "a rewrite of the bash wp-ops CLI wrapper".
+
+### Fixed
+
+- **README's scripts count** - said "27 standalone Bash/PHP/Python
+  utilities"; `scripts/` holds 39 (33 Bash, 3 Node, 2 Python, 1 PHP),
+  38 of which the CLI exposes as commands — `updown-webhook-receiver.php`
+  is deployed to a webserver rather than run from the CLI, but is
+  documented in `scripts/README.md` alongside the rest. The count had
+  drifted since 3.35.0 and the language list never mentioned Node.
+
 ## [3.35.1] - 2026-08-03
 
 ### Fixed

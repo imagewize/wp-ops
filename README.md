@@ -4,7 +4,7 @@
 </div>
 
 <div align="center">
-Tools, scripts, and guides for modern WordPress development & devops—optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
+wp-ops is a CLI for WordPress operations — deployments, database and files backup, security scanning, monitoring, and content workflows — backed by manifest-driven scripts, Ansible playbooks, and guides, optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
 </div>
 
 ## Contents
@@ -21,17 +21,18 @@ Tools, scripts, and guides for modern WordPress development & devops—optimized
 
 ## wp-ops CLI
 
-A single entry point for everything in this repo. Auto-discovers commands across every category and groups them by subdirectory.
-
-> A Go rewrite of this CLI (`go/`) is feature-complete and installable — same manifest-driven commands, a real Cobra binary, generated shell completions, and a Bubble Tea interactive picker with no `fzf` dependency. See [docs/cli-ux-plan.md](docs/cli-ux-plan.md) for the plan and current milestone status.
+The single entry point for everything in this repo — a single binary that auto-discovers commands across every category, groups them by subdirectory, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
 
 ```bash
-# Recommended: Homebrew (installs the Go binary)
+# Recommended: Homebrew
 brew install imagewize/tap/wp-ops
 wp-ops init                  # install shell completions (one-time)
 
-# Without Homebrew, the bash CLI:
-./install.sh                 # add wp-ops to your PATH (one-time)
+# Without Homebrew, build from source (needs Go 1.26+):
+git clone https://github.com/imagewize/wp-ops.git && cd wp-ops
+go build -o wp-ops ./go
+sudo mv wp-ops /usr/local/bin/   # or ~/.local/bin, or anywhere on your PATH
+wp-ops init
 
 wp-ops                       # interactive picker
 wp-ops --help                # list all categories
@@ -44,11 +45,13 @@ wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
 
-`wp-ops` with no arguments opens an interactive picker. In the bash CLI, install [fzf](https://github.com/junegunn/fzf) (`brew install fzf`) and it becomes a fuzzy search over every command with the script's header as a live preview; without fzf it falls back to a numbered category → command menu. The Go CLI's picker (Bubble Tea) has this built in — no `fzf` dependency either way.
+The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
+
+`wp-ops` with no arguments opens an interactive picker: categories first, then a fuzzy-filterable command list with a live preview pane (usage, args, examples) — no `fzf` dependency.
 
 Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
 
-`wp-ops init` (Go CLI only) installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after `brew install` — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
+`wp-ops init` installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after install — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
 
 Two categories resolve their project directory from an environment variable — but you
 don't need to export it by hand if you're standing inside the project: wp-ops detects
@@ -140,7 +143,7 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 ## Scripts
 
-27 standalone Bash/PHP/Python utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
+39 standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
 | Category | Includes | Docs |
 |------|-------------|------|
@@ -172,6 +175,7 @@ Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Cl
 ## Requirements
 
 - **Core**: Git, Bash, rsync
+- **Building from source**: Go 1.26+ (not needed if you install via Homebrew — the binary ships prebuilt)
 - **Tool-specific**: See individual docs for Ansible, WP-CLI, ImageMagick, etc.
 
 ## License

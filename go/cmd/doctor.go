@@ -62,7 +62,6 @@ var doctorSections = []doctorSection{
 	}},
 	{"Helpers", []binCheck{
 		{"jq", "JSON parsing in several scripts", false},
-		{"fzf", "fuzzy command picker in the bash CLI", false},
 	}},
 }
 
