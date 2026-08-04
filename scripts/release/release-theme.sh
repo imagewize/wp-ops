@@ -5,7 +5,7 @@
 # Supports both demo/ and site/ Bedrock installations
 #
 # Usage:
-#   ./release-theme.sh <theme-name> <version> [--commit] [--ai=claude|codex]
+#   ./release-theme.sh <theme-name> <version> [--commit] [--ai=claude|codex|vibe]
 #   ./release-theme.sh elayne 1.2.5          # Demo site theme
 #   ./release-theme.sh nynaeve 1.0.0 --commit # Main site theme
 #
@@ -18,7 +18,7 @@
 # 6. Optionally commits changes with standardized message
 #
 # Requirements:
-# - claude or codex CLI installed and authenticated
+# - claude, codex, or vibe CLI installed and authenticated
 # - git repository with main branch
 #
 # @desc     Bump theme version and generate an AI changelog entry (Claude or Codex)
@@ -28,7 +28,7 @@
 # @arg      theme-name  required  {elayne}  Theme slug (demo/ or site/ Bedrock installation)
 # @arg      version     required  {1.2.5}  New theme version
 # @flag     --commit    optional  {}  Auto-commit the version bump and changelog
-# @flag     --ai        optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)
+# @flag     --ai        optional  {claude|codex|vibe}  AI CLI to use (default: claude, or the only one installed)
 # @example  wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit
 
 set -e  # Exit on error
@@ -43,6 +43,7 @@ NC='\033[0m' # No Color
 # CLI command names can be overridden via environment if needed
 CLAUDE_COMMAND=${CLAUDE_COMMAND:-claude}
 CODEX_COMMAND=${CODEX_COMMAND:-codex}
+VIBE_COMMAND=${VIBE_COMMAND:-vibe}
 
 # Parse options
 AUTO_COMMIT=false
@@ -64,7 +65,7 @@ while [ $# -gt 0 ]; do
             AI_TOOL_SPECIFIED=true
             shift
         else
-            echo -e "${RED}Error: --ai requires a value (claude or codex).${NC}"
+            echo -e "${RED}Error: --ai requires a value (claude, codex or vibe).${NC}"
             exit 1
         fi
         ;;
@@ -77,8 +78,8 @@ done
 set -- "${ARGS[@]}"
 
 AI_TOOL=$(echo "$AI_TOOL" | tr '[:upper:]' '[:lower:]')
-if [ "$AI_TOOL" != "claude" ] && [ "$AI_TOOL" != "codex" ]; then
-    echo -e "${RED}Error: Unsupported AI tool '$AI_TOOL'. Use 'claude' or 'codex'.${NC}"
+if [ "$AI_TOOL" != "claude" ] && [ "$AI_TOOL" != "codex" ] && [ "$AI_TOOL" != "vibe" ]; then
+    echo -e "${RED}Error: Unsupported AI tool '$AI_TOOL'. Use 'claude', 'codex', or 'vibe'.${NC}"
     exit 1
 fi
 
@@ -86,9 +87,10 @@ fi
 AVAILABLE_AI_TOOLS=()
 command -v "$CLAUDE_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("claude")
 command -v "$CODEX_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("codex")
+command -v "$VIBE_COMMAND" &> /dev/null && AVAILABLE_AI_TOOLS+=("vibe")
 
 if [ ${#AVAILABLE_AI_TOOLS[@]} -eq 0 ]; then
-    echo -e "${RED}Error: No AI CLI found (checked for '$CLAUDE_COMMAND' and '$CODEX_COMMAND').${NC}"
+    echo -e "${RED}Error: No AI CLI found (checked for '$CLAUDE_COMMAND', '$CODEX_COMMAND', and '$VIBE_COMMAND').${NC}"
     exit 1
 fi
 
@@ -126,10 +128,16 @@ if [ "$AI_TOOL" = "codex" ] && ! command -v "$CODEX_COMMAND" &> /dev/null; then
     exit 1
 fi
 
+if [ "$AI_TOOL" = "vibe" ] && ! command -v "$VIBE_COMMAND" &> /dev/null; then
+    echo -e "${RED}Error: Vibe CLI is required but not installed${NC}"
+    echo "Install with: npm install -g @vibehq/vibe"
+    exit 1
+fi
+
 # Check if theme name argument is provided
 if [ -z "$1" ]; then
     echo -e "${RED}Error: Theme name and version required${NC}"
-    echo "Usage: $0 <theme-name> <version> [--commit] [--ai=claude|codex]"
+    echo "Usage: $0 <theme-name> <version> [--commit] [--ai=claude|codex|vibe]"
     echo "Example: $0 elayne 1.2.5"
     echo "Example: $0 moiraine 2.1.0 --commit --ai=codex"
     exit 1
@@ -138,7 +146,7 @@ fi
 # Check if version argument is provided
 if [ -z "$2" ]; then
     echo -e "${RED}Error: Version number required${NC}"
-    echo "Usage: $0 <theme-name> <version> [--commit] [--ai=claude|codex]"
+    echo "Usage: $0 <theme-name> <version> [--commit] [--ai=claude|codex|vibe]"
     echo "Example: $0 elayne 1.2.5"
     exit 1
 fi
@@ -279,6 +287,21 @@ if [ "$AI_TOOL" = "codex" ]; then
         AI_RESPONSE=$(cat "$AI_TMP_OUTPUT")
     fi
     rm -f "$AI_TMP_OUTPUT"
+elif [ "$AI_TOOL" = "vibe" ]; then
+    AI_COMMAND="$VIBE_COMMAND"
+    AI_ARGS=()
+    if [ -n "${VIBE_CLI_ARGS:-}" ]; then
+        # shellcheck disable=SC2206
+        AI_ARGS=($VIBE_CLI_ARGS)
+    else
+        AI_ARGS=(-p)
+    fi
+    # Vibe takes the prompt as an argument rather than on stdin, and writes its
+    # own errors to stdout, so there is no separate stderr capture here.
+    set +e
+    AI_RESPONSE=$("$AI_COMMAND" "${AI_ARGS[@]}" "$AI_PROMPT" --output text 2>&1)
+    AI_EXIT_CODE=$?
+    set -e
 else
     AI_COMMAND="$CLAUDE_COMMAND"
     AI_ARGS=()

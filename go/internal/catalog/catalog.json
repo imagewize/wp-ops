@@ -2017,10 +2017,11 @@
         "required": false,
         "choices": [
           "claude",
-          "codex"
+          "codex",
+          "vibe"
         ],
         "description": "AI CLI to use (default: claude, or the only one installed)",
-        "raw": "--ai        optional  {claude|codex}  AI CLI to use (default: claude, or the only one installed)"
+        "raw": "--ai        optional  {claude|codex|vibe}  AI CLI to use (default: claude, or the only one installed)"
       }
     ],
     "examples": [
