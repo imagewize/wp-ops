@@ -63,10 +63,10 @@ type Entry struct {
 	// scripts/** subcategories big enough to warrant their own top-level
 	// group (Phase F option 4, docs/cli-ux-plan.md): "monitoring", "images",
 	// "patterns", "release" (see gen/main.go's promotedScriptCategories).
-	// Deliberately kept separate from Category so --json (printJSON,
-	// parity-check.sh) stays byte-for-byte identical to bash's
-	// directory-based "category" field — bash has no equivalent of this
-	// split and isn't getting one before it's retired at 4.0.0.
+	// Deliberately kept separate from Category so --json (printJSON) keeps
+	// reporting the directory-based "category" field it has always
+	// reported: that output is a stable contract for external tooling, and
+	// this human-facing split must not leak into it.
 	DisplayCategory string `json:"display_category"`
 	Annotated       bool   `json:"annotated"`
 }

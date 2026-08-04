@@ -137,12 +137,12 @@ func TestDisplayCategoriesIncludesScriptsSplit(t *testing.T) {
 	}
 }
 
-// TestCommandsInDisplayPreservesCategoryForJSON is the parity guarantee
+// TestCommandsInDisplayPreservesCategoryForJSON is the stability guarantee
 // behind the DisplayCategory split: --json (printJSON) reads Categories()/
-// CommandsIn() directly and must stay byte-for-byte identical to bash's
-// directory-based grouping (go/scripts/parity-check.sh), so splitting
-// "scripts" for human-facing views must never touch the underlying
-// Category field or the byCategory grouping it drives.
+// CommandsIn() directly and must keep reporting the directory-based
+// grouping external tooling depends on, so splitting "scripts" for
+// human-facing views must never touch the underlying Category field or the
+// byCategory grouping it drives.
 func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	c, err := Load()
 	if err != nil {
