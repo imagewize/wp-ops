@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 72 {
-		t.Errorf("len(Entries) = %d, want 72 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0)", len(c.Entries))
+	if len(c.Entries) != 76 {
+		t.Errorf("len(Entries) = %d, want 76 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0)", len(c.Entries))
 	}
 }
 
@@ -150,8 +150,8 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	}
 
 	scriptsRaw := c.CommandsIn("scripts")
-	if len(scriptsRaw) != 38 {
-		t.Errorf("CommandsIn(scripts) = %d entries, want 38 (directory-based grouping must be unaffected by the display split; +2 for ttfb-test/remote-ttfb-ua added in 3.27.0)", len(scriptsRaw))
+	if len(scriptsRaw) != 41 {
+		t.Errorf("CommandsIn(scripts) = %d entries, want 41 (directory-based grouping must be unaffected by the display split; +2 for ttfb-test/remote-ttfb-ua added in 3.27.0, +3 for svg-to-jpg/svg-to-png/traffic-by-country added in 4.1.0)", len(scriptsRaw))
 	}
 	for _, e := range scriptsRaw {
 		if e.Category != "scripts" {
@@ -165,8 +165,8 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	}
 
 	monitoring := c.CommandsInDisplay("monitoring")
-	if len(monitoring) != 12 {
-		t.Errorf("CommandsInDisplay(monitoring) = %d entries, want 12 (+2 for ttfb-test/remote-ttfb-ua added in 3.27.0)", len(monitoring))
+	if len(monitoring) != 13 {
+		t.Errorf("CommandsInDisplay(monitoring) = %d entries, want 13 (+2 for ttfb-test/remote-ttfb-ua added in 3.27.0, +1 for traffic-by-country added in 4.1.0)", len(monitoring))
 	}
 	for _, e := range monitoring {
 		if e.Category != "scripts" {

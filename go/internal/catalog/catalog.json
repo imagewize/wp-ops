@@ -677,6 +677,124 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/images/svg-to-jpg",
+    "description": "Export design SVGs to JPG with librsvg, at native size or forced dimensions",
+    "script_path": "scripts/images/svg-to-jpg.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "rsvg-convert",
+      "magick"
+    ],
+    "args": [
+      {
+        "name": "target",
+        "required_raw": "optional",
+        "required": false,
+        "default": "designs/linkedin",
+        "description": "Directory or .svg file to export (repeatable)",
+        "raw": "target  optional  {designs/linkedin}  Directory or .svg file to export (repeatable)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "-w",
+        "required_raw": "optional",
+        "required": false,
+        "default": "1920",
+        "description": "Output width in px",
+        "raw": "-w      optional  {1920}  Output width in px"
+      },
+      {
+        "name": "-h",
+        "required_raw": "optional",
+        "required": false,
+        "default": "1080",
+        "description": "Output height in px",
+        "raw": "-h      optional  {1080}  Output height in px"
+      },
+      {
+        "name": "-s",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2",
+        "description": "Scale multiplier; ignored if -w/-h given",
+        "raw": "-s      optional  {2}  Scale multiplier; ignored if -w/-h given"
+      },
+      {
+        "name": "-q",
+        "required_raw": "optional",
+        "required": false,
+        "default": "90",
+        "description": "JPEG quality 1-100",
+        "raw": "-q      optional  {90}  JPEG quality 1-100"
+      }
+    ],
+    "examples": [
+      "wp-ops svg-to-jpg designs/linkedin",
+      "wp-ops svg-to-jpg -w 1920 -h 1080 designs/mastodon"
+    ],
+    "manifest_category": "images",
+    "display_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/images/svg-to-png",
+    "description": "Export design SVGs to PNG with librsvg — lossless, best for text/logo banners",
+    "script_path": "scripts/images/svg-to-png.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "rsvg-convert",
+      "magick"
+    ],
+    "args": [
+      {
+        "name": "target",
+        "required_raw": "optional",
+        "required": false,
+        "default": "designs/linkedin",
+        "description": "Directory or .svg file to export (repeatable)",
+        "raw": "target  optional  {designs/linkedin}  Directory or .svg file to export (repeatable)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "-w",
+        "required_raw": "optional",
+        "required": false,
+        "default": "1584",
+        "description": "Output width in px",
+        "raw": "-w      optional  {1584}  Output width in px"
+      },
+      {
+        "name": "-h",
+        "required_raw": "optional",
+        "required": false,
+        "default": "396",
+        "description": "Output height in px",
+        "raw": "-h      optional  {396}  Output height in px"
+      },
+      {
+        "name": "-s",
+        "required_raw": "optional",
+        "required": false,
+        "default": "2",
+        "description": "Scale multiplier; ignored if -w/-h given",
+        "raw": "-s      optional  {2}  Scale multiplier; ignored if -w/-h given"
+      }
+    ],
+    "examples": [
+      "wp-ops svg-to-png designs/linkedin",
+      "wp-ops svg-to-png -w 1584 -h 396 designs/linkedin/banner.svg"
+    ],
+    "manifest_category": "images",
+    "display_category": "images",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/misc/convert-screenshot-for-claude",
     "description": "Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)",
     "script_path": "scripts/misc/convert-screenshot-for-claude.sh",
@@ -1254,6 +1372,96 @@
     ],
     "examples": [
       "wp-ops scripts/monitoring/server-monitor web@example.com"
+    ],
+    "manifest_category": "monitoring",
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/monitoring/traffic-by-country",
+    "description": "Filter a server's Nginx access log by visitor country and show real page visits",
+    "script_path": "scripts/monitoring/traffic-by-country.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh",
+      "python3",
+      "geoip2fast"
+    ],
+    "doc": "scripts/README.md",
+    "args": [
+      {
+        "name": "country-code",
+        "required_raw": "optional",
+        "required": false,
+        "default": "NL",
+        "description": "Two-letter ISO country code to filter for",
+        "raw": "country-code  optional  {NL}  Two-letter ISO country code to filter for"
+      },
+      {
+        "name": "date-filter",
+        "required_raw": "optional",
+        "required": false,
+        "default": "29/May/2026",
+        "description": "Only lines matching this date string",
+        "raw": "date-filter   optional  {29/May/2026}  Only lines matching this date string"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to pull logs from",
+        "raw": "--host        optional  {web@example.com}  SSH user@host to pull logs from"
+      },
+      {
+        "name": "--log",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/logs/access.log",
+        "description": "Nginx access log path on the server",
+        "raw": "--log         optional  {/srv/www/example.com/logs/access.log}  Nginx access log path on the server"
+      },
+      {
+        "name": "--quick",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Only pull the last 10,000 log lines",
+        "raw": "--quick       optional  Only pull the last 10,000 log lines"
+      },
+      {
+        "name": "--pattern",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "/nl-",
+          "/dutch-"
+        ],
+        "description": "Only count requests whose URL matches this regex",
+        "raw": "--pattern     optional  {/nl-|/dutch-}  Only count requests whose URL matches this regex"
+      },
+      {
+        "name": "--hours",
+        "required_raw": "optional",
+        "required": false,
+        "default": "24",
+        "description": "Only pull the last N hours (implies --quick)",
+        "raw": "--hours       optional  {24}  Only pull the last N hours (implies --quick)"
+      },
+      {
+        "name": "--show-bots",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Include bot traffic instead of filtering it out",
+        "raw": "--show-bots   optional  Include bot traffic instead of filtering it out"
+      }
+    ],
+    "examples": [
+      "wp-ops traffic-by-country --host web@example.com NL",
+      "wp-ops traffic-by-country -q --hours 24 --pattern \"/contact/\" US"
     ],
     "manifest_category": "monitoring",
     "display_category": "monitoring",
@@ -2812,6 +3020,59 @@
     ],
     "examples": [
       "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "display_category": "wp-cli",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/orphan-links-audit",
+    "description": "Find published posts/pages that no other content links to internally",
+    "script_path": "wp-cli/seo/orphan-links-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/current",
+        "description": "Site root on the server",
+        "raw": "--site-path  optional  {/srv/www/example.com/current}  Site root on the server"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output     optional  {audits}  Output directory"
+      }
+    ],
+    "examples": [
+      "wp-ops orphan-links-audit --host web@example.com",
+      "wp-ops orphan-links-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
     "display_category": "wp-cli",
