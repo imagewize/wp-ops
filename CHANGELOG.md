@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `manifest.Lint()`.
 - **go/scripts/parity-check.sh** - diffed bash vs. Go CLI output; nothing
   left to diff against.
+- **`wp-ops doctor`'s `fzf` check** - listed `fzf` as an optional helper
+  ("fuzzy command picker in the bash CLI"). The Bubble Tea picker has its
+  own fuzzy filtering built in, so doctor was advertising a tool nothing in
+  the repo uses.
 
 ### Changed
 
