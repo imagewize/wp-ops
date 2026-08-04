@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **go/main.go** - package doc comment no longer describes the binary as
   "a rewrite of the bash wp-ops CLI wrapper".
 
+### Fixed
+
+- **README's scripts count** - said "27 standalone Bash/PHP/Python
+  utilities"; `scripts/` holds 39 (33 Bash, 3 Node, 2 Python, 1 PHP),
+  38 of which the CLI exposes as commands — `updown-webhook-receiver.php`
+  is deployed to a webserver rather than run from the CLI, but is
+  documented in `scripts/README.md` alongside the rest. The count had
+  drifted since 3.35.0 and the language list never mentioned Node.
+
 ## [3.35.1] - 2026-08-03
 
 ### Fixed

@@ -143,7 +143,7 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 ## Scripts
 
-27 standalone Bash/PHP/Python utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
+39 standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
 | Category | Includes | Docs |
 |------|-------------|------|
