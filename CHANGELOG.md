@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-08-04
+
+### Added
+
+Four commands adopted from `seo-strategy/tools/scripts/`, generalized off
+imagewize-specific hardcodes. That repo had accumulated ~32 scripts, 16 of them
+forks of scripts already here; these four were the ones with no wp-ops
+equivalent, so they move up before the forks get deleted.
+
+- **scripts/images/svg-to-jpg.sh** - renders design SVGs to JPG next to their
+  source via librsvg (accurate font/gradient rendering) plus ImageMagick to
+  encode. Takes a directory or individual `.svg` files. `-w`/`-h` force output
+  dimensions for a platform spec (e.g. Mastodon's 1920x1080), `-s` scales by a
+  multiplier for high-DPI, `-q` sets quality. Since the source is vector,
+  upscaling is lossless.
+- **scripts/images/svg-to-png.sh** - the same, to PNG. Prefer it for any banner
+  or card carrying text or a logo — JPG compression blurs fine text edges, which
+  shows up on wordmarks and URL strips. Gained `-w`/`-h`/`-s` in the move; the
+  original was native-size only.
+- **scripts/monitoring/traffic-by-country.sh** - pulls an Nginx access log over
+  SSH, resolves every unique client IP through `geoip2fast`, and reports only
+  the requests from one country, with bots, static assets, attack probes, Tor
+  exits, and redirect/404 responses filtered out. Answers "did anyone from NL
+  actually read the page after that outreach batch went out?" `--quick`/`--hours`
+  bound how much log gets pulled; `--pattern` narrows to a URL regex.
+- **wp-cli/seo/orphan-links-audit.sh** - finds published posts/pages that no
+  other content links to, as a single SQL query. This is the inbound-link
+  sibling of the existing `orphan-pages-audit.sh`, which only checks navigation
+  menus — a page can sit in the nav with zero in-content links, or be linked
+  from a dozen posts while absent from every menu, so the two are worth running
+  together. Runs locally or against production over `--host`. Link detection is
+  a slug substring match, so the output is a shortlist to review rather than a
+  verdict; the script and README both say so.
+
+### Changed
+
+- **wp-cli/seo/README.md** - the orphan-pages "Important Note" pointed at
+  Screaming Frog/Ahrefs/Sitebulb for "filter for pages with 0 internal links".
+  That is now `orphan-links-audit.sh`, so the note points there first and keeps
+  the external crawlers as the step beyond both scripts.
+
+### Fixed
+
+- **go/internal/catalog/catalog_test.go** - count expectations updated for the
+  four new commands (72→76 entries, scripts 38→41, monitoring display 12→13),
+  following the existing running-tally comment convention.
+
 ## [4.0.0] - 2026-08-04
 
 ### Removed

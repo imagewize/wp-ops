@@ -20,6 +20,7 @@ wp-cli/seo/
 ├── schema-audit.sh           # Schema markup validation across key pages
 ├── blog-audit.sh             # Blog content categorization and quality analysis
 ├── orphan-pages-audit.sh     # Find pages not linked from navigation menus
+├── orphan-links-audit.sh     # Find pages nothing else links to in its content
 └── README.md                 # This file
 ```
 
@@ -293,17 +294,10 @@ cd /srv/www/example.com/current
 
 ### Important Note
 
-This script provides a **basic** orphaned page detection. For comprehensive analysis:
-
-1. **Recommended Tools:**
-   - Screaming Frog SEO Spider
-   - Ahrefs Site Audit
-   - Sitebulb
-
-2. **Full Detection Method:**
-   - Crawl the entire site
-   - Filter for pages with 0 internal links
-   - Export and compare with WordPress page inventory
+This script only looks at **navigation menus**. For the in-content view — pages
+nothing else links to — run `orphan-links-audit.sh` (section 6) alongside it.
+For a full external crawl, Screaming Frog SEO Spider, Ahrefs Site Audit, or
+Sitebulb still go further than either script.
 
 ### Output Files
 
@@ -316,6 +310,53 @@ This script provides a **basic** orphaned page detection. For comprehensive anal
 - Consider creating a sitemap page
 - Use breadcrumb navigation
 - Review and update navigation structure regularly
+
+---
+
+## 6. Orphan Links Audit
+
+**Script:** `orphan-links-audit.sh`
+
+Identifies published posts and pages that **no other content links to**. This is
+the inbound-link sibling of `orphan-pages-audit.sh` — the two answer different
+questions and are both worth running. A page can sit in the nav and still have
+zero in-content links, or be linked from a dozen posts while absent from every
+menu.
+
+### Features
+
+- Single SQL query — no crawl, no external tool
+- Counts inbound references per published post/page, keeps the zeroes
+- Runs locally or over SSH against production
+- CSV export with ID, title, type, date, and URL
+
+### Usage
+
+```bash
+# Against production over SSH
+./wp-cli/seo/orphan-links-audit.sh --host web@example.com
+
+# Locally, from a Bedrock site directory
+cd /srv/www/example.com/current
+./wp-cli/seo/orphan-links-audit.sh --path web/wp --output reports/seo
+```
+
+### Caveat
+
+Link detection is a substring match of each page's slug against other published
+`post_content`. A slug that appears as plain text counts as a link, and a page
+linked only by ID (or by a slug-less shortlink) reads as orphaned. Treat the
+output as a shortlist to review, not a verdict.
+
+### Output Files
+
+- `audits/orphan-links-[timestamp].csv` - Pages with zero inbound internal links
+
+### Recommendations
+
+- Work the list newest-first — recent posts are the ones most likely never linked
+- Add links from topically related posts, not from a generic index page
+- Re-run after a linking pass to confirm the count dropped
 
 ---
 
