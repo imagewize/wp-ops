@@ -2746,8 +2746,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/updater/trellis-updater",
-      "wp-ops trellis/updater/trellis-updater --yes"
+      "TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater",
+      "wp-ops trellis-updater --yes"
     ],
     "manifest_category": "updater",
     "display_category": "trellis",

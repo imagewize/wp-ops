@@ -8,7 +8,14 @@
 # for secrets and custom config. Also flags upstream changes to excluded
 # files so you don't miss fixes worth cherry-picking.
 #
-# Edit the PROJECT variable below before running.
+# The trellis/ directory is taken from $TRELLIS_DIR, the same variable the
+# playbook commands use. If it isn't set, this walks up from the current
+# directory the way `detect.TrellisDir` does -- so running from inside a trellis
+# repo, or from the project root above it, just works.
+#
+# Editing this file to set a project is no longer required, and would not have
+# survived anyway when run through `wp-ops`, which executes it from a
+# version-stamped cache directory that is replaced on every upgrade.
 #
 # Options:
 #   --yes, -y      Skip the confirmation prompt before overwriting trellis/
@@ -18,8 +25,8 @@
 # @runs     local
 # @requires git
 # @flag     --yes  optional  {}  Skip the confirmation prompt before overwriting trellis/
-# @example  wp-ops trellis/updater/trellis-updater
-# @example  wp-ops trellis/updater/trellis-updater --yes
+# @example  TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater
+# @example  wp-ops trellis-updater --yes
 # @doc      trellis/updater/README.md
 
 set -e  # Exit on error
@@ -33,20 +40,100 @@ for arg in "$@"; do
   esac
 done
 
-# Set your project slug here like example.com
-PROJECT="site.com"
+# Resolve the trellis/ directory. $TRELLIS_DIR wins, matching the playbook
+# commands; otherwise walk up from the current directory. Two shapes count as a
+# hit, the same two detect.TrellisDir recognizes: the directory *is* trellis/
+# (ansible.cfg + group_vars/ sit directly in it), or it contains one.
+# Walks up from the current directory looking for a Trellis project. Two shapes
+# count: the directory *is* trellis/ (ansible.cfg + group_vars/ inside it), or a
+# parent holds trellis/ansible.cfg — the latter trusted only when we started in
+# that parent, or the directory walked up through is that parent's own Bedrock
+# site (web/wp/), so a sibling checkout that merely happens to sit near an
+# unrelated trellis/ isn't picked up by accident.
+# Same implementation as scripts/backup/db-pull.sh; mirrors
+# go/internal/detect.TrellisDir.
+detect_trellis_dir() {
+    local start="$PWD"
+    local dir="$start"
+    local previous="$start"
 
-# Paths based on project
-PROJECT_DIR=~/code/$PROJECT
-TRELLIS_DIR=$PROJECT_DIR/trellis
+    while [[ -n "$dir" && "$dir" != "/" && "$dir" != "$HOME" ]]; do
+        if [[ -f "$dir/ansible.cfg" && -d "$dir/group_vars" ]]; then
+            echo "$dir"
+            return 0
+        fi
+
+        if [[ -f "$dir/trellis/ansible.cfg" ]]; then
+            if [[ "$dir" == "$start" || -d "$previous/web/wp" ]]; then
+                echo "$dir/trellis"
+                return 0
+            fi
+        fi
+
+        previous="$dir"
+        dir="$(dirname "$dir")"
+    done
+
+    return 1
+}
+
+# Confirms an auto-detected TRELLIS_DIR before using it — this backs a
+# destructive operation (it rsyncs over trellis/), so a non-interactive session
+# refuses to guess rather than silently proceeding.
+# Mirrors go/internal/detect.Confirm.
+confirm_trellis_dir() {
+    local detected="$1"
+
+    if [[ ! -t 0 || ! -t 1 ]]; then
+        echo "TRELLIS_DIR is not set." >&2
+        echo "" >&2
+        echo "Detected a candidate at $detected, but wp-ops won't assume it" >&2
+        echo "non-interactively. Set it explicitly:" >&2
+        echo "" >&2
+        echo "  export TRELLIS_DIR=$detected" >&2
+        echo "" >&2
+        return 1
+    fi
+
+    echo "TRELLIS_DIR is not set."
+    echo "Detected from the current directory: $detected"
+    echo ""
+    read -p "Use it for this command? [y/N] " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        return 0
+    fi
+
+    echo "Cancelled. Set it explicitly instead:"
+    echo ""
+    echo "  export TRELLIS_DIR=/path/to/your/project"
+    echo ""
+    return 1
+}
+
+if [ -z "${TRELLIS_DIR:-}" ]; then
+    if detected=$(detect_trellis_dir); then
+        confirm_trellis_dir "$detected" || exit 1
+        TRELLIS_DIR="$detected"
+    else
+        echo "ERROR: TRELLIS_DIR is not set and no Trellis project was found." >&2
+        echo "  Run this from inside a Trellis project, or set it explicitly:" >&2
+        echo "    export TRELLIS_DIR=/path/to/your/trellis" >&2
+        exit 1
+    fi
+fi
+
+PROJECT_DIR="$(cd "$TRELLIS_DIR/.." && pwd)"
+PROJECT="$(basename "$PROJECT_DIR")"
 BACKUP_DIR=~/trellis-backup-$(date +%Y%m%d_%H%M%S)
 TEMP_DIR=~/trellis-temp
 DIFF_DIR=~/trellis-diff
 
 # Verify project exists
-if [ ! -d "$PROJECT_DIR" ]; then
-  echo "ERROR: Project directory not found: $PROJECT_DIR"
-  echo "Please update the PROJECT variable in this script"
+if [ ! -d "$TRELLIS_DIR" ]; then
+  echo "ERROR: Trellis directory not found: $TRELLIS_DIR"
+  echo "Set TRELLIS_DIR to your trellis/ directory"
   exit 1
 fi
 

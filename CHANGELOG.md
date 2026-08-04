@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.1] - 2026-08-04
+
+### Fixed
+
+- **trellis/updater/trellis-updater.sh** - the script hardcoded
+  `PROJECT="site.com"` and instructed you to edit the file before running. That
+  is impossible through the CLI: `wp-ops` executes scripts from a
+  version-stamped cache directory (`~/Library/Caches/wp-ops/assets-<version>/`)
+  that is replaced on every upgrade, so any edit is silently discarded. The
+  command was effectively unusable as installed.
+
+  It now resolves `trellis/` from `$TRELLIS_DIR` — the same variable the
+  playbook commands use — falling back to `detect_trellis_dir()` /
+  `confirm_trellis_dir()`, the pair already used by `scripts/backup/db-pull.sh`
+  and mirroring `go/internal/detect`. `PROJECT` and `PROJECT_DIR` are derived
+  from the resolved directory rather than assumed to live under `~/code`.
+
+  This matters beyond convenience: the naive "walk up until you see a trellis/"
+  approach picks up an unrelated sibling checkout — from `~/code/seo-strategy`
+  it would find `~/code/trellis` and rsync into the wrong project. The shared
+  helper guards against that (a parent holding `trellis/` is trusted only when
+  you started there, or came up through its own Bedrock site), stops at `$HOME`,
+  and refuses to guess non-interactively since the operation overwrites
+  `trellis/`.
+
 ## [4.2.0] - 2026-08-04
 
 ### Added
