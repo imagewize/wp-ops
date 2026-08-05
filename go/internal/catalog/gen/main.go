@@ -66,24 +66,15 @@ func extensionsFor(category string) map[string]bool {
 // consulted for a command with no @runs at all (today, that's just
 // mcp-server/dev and mcp-server/start, neither of which is in this list, so
 // it never fires; ported for exactness, matching is_server_side_command()'s
-// own fallback order).
-// promotedScriptCategories are the @category values under scripts/** with
-// enough commands (4+) to warrant their own top-level DisplayCategory
-// (Phase F option 4, docs/cli-ux-plan.md) rather than staying folded into
-// "scripts" alongside backup/git/misc/sync/woocommerce (2-3 commands each).
-var promotedScriptCategories = map[string]bool{
-	"monitoring": true,
-	"images":     true,
-	"patterns":   true,
-	"release":    true,
-}
+// own fallback order.
 
 // displayCategoryFor computes catalog.Entry.DisplayCategory: the manifest's
-// own @category value for a promoted scripts/** subcategory, otherwise the
-// directory category unchanged. See DisplayCategory's doc comment for why
-// this is kept separate from Category.
+// own @category value when present and non-empty, otherwise the directory
+// category unchanged. See DisplayCategory's doc comment for why this is kept
+// separate from Category. This implements Option C1 from
+// docs/category-organization.md: group by domain (@category) everywhere.
 func displayCategoryFor(category, manifestCategory string) string {
-	if category == "scripts" && promotedScriptCategories[manifestCategory] {
+	if manifestCategory != "" {
 		return manifestCategory
 	}
 	return category
@@ -161,6 +152,7 @@ func main() {
 				DisplayCategory:  displayCategoryFor(category, cmd.Category),
 				Key:              key,
 				ScriptPath:       rel,
+				Platform:         cmd.Platform,
 				Runs:             cmd.Runs,
 				Requires:         cmd.Requires,
 				Doc:              cmd.Doc,

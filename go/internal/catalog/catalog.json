@@ -53,7 +53,7 @@
       "wp-ops db-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -117,7 +117,8 @@
       "wp-ops db-pull network.example.com production --multisite --yes"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -145,7 +146,8 @@
       "ssh web@example.com 'bash -s' \u003c site-backup.sh example.com"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -223,7 +225,7 @@
       "wp-ops scripts/git/create-pr main \"Add new feature\" --no-ai"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -274,7 +276,7 @@
       "wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -301,7 +303,7 @@
       "wp-ops scripts/git/git-log-oneline 20"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -388,6 +390,7 @@
       "wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -827,7 +830,7 @@
       "wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -902,7 +905,7 @@
       "wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -977,7 +980,7 @@
       "wp-ops scripts/misc/post-count --ssh web@example.com --year 2026"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -2127,7 +2130,7 @@
       "wp-ops scripts/sync/rsync-package-to-site theme my-theme"
     ],
     "manifest_category": "sync",
-    "display_category": "scripts",
+    "display_category": "sync",
     "annotated": true
   },
   {
@@ -2153,7 +2156,7 @@
       "wp-ops scripts/sync/rsync-theme --dry-run"
     ],
     "manifest_category": "sync",
-    "display_category": "scripts",
+    "display_category": "sync",
     "annotated": true
   },
   {
@@ -2181,7 +2184,7 @@
       "wp-ops scripts/woocommerce/create-product-variations --dry-run"
     ],
     "manifest_category": "woocommerce",
-    "display_category": "scripts",
+    "display_category": "woocommerce",
     "annotated": true
   },
   {
@@ -2221,7 +2224,8 @@
       "wp-ops database-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2260,7 +2264,7 @@
       "wp-ops database-pull example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2299,7 +2303,7 @@
       "wp-ops database-push example.com staging"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2339,7 +2343,7 @@
       "wp-ops files-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2389,7 +2393,7 @@
       "wp-ops files-pull example.com production --delete yes"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2428,7 +2432,7 @@
       "wp-ops files-push example.com staging"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2479,7 +2483,7 @@
       "wp-ops quick-status example.com production --log_path /var/log/custom.log"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2546,7 +2550,7 @@
       "wp-ops security-scan example.com production --hours 48 --threshold 50"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2605,7 +2609,7 @@
       "wp-ops setup-monitoring example.com production --email alerts@example.com"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2664,7 +2668,7 @@
       "wp-ops traffic-report example.com production --hours 48"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2694,7 +2698,7 @@
       "wp-ops trellis/security/check-deny-ips --full"
     ],
     "manifest_category": "security",
-    "display_category": "trellis",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2722,7 +2726,7 @@
       "wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8"
     ],
     "manifest_category": "security",
-    "display_category": "trellis",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2750,7 +2754,7 @@
       "wp-ops trellis-updater --yes"
     ],
     "manifest_category": "updater",
-    "display_category": "trellis",
+    "display_category": "updater",
     "annotated": true
   },
   {
@@ -2815,7 +2819,7 @@
       "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
     ],
     "manifest_category": "content-creation",
-    "display_category": "wp-cli",
+    "display_category": "content-creation",
     "annotated": true
   },
   {
@@ -2859,7 +2863,7 @@
       "wp-ops wp-cli/content-creation/page-creation about-page-content.html \"About\" about"
     ],
     "manifest_category": "content-creation",
-    "display_category": "wp-cli",
+    "display_category": "content-creation",
     "annotated": true
   },
   {
@@ -2877,7 +2881,7 @@
       "wp-ops wp-cli/diagnostics/diagnostic-transients"
     ],
     "manifest_category": "diagnostics",
-    "display_category": "wp-cli",
+    "display_category": "diagnostics",
     "annotated": true
   },
   {
@@ -2895,7 +2899,7 @@
       "wp-ops wp-cli/diagnostics/list-posts-count"
     ],
     "manifest_category": "diagnostics",
-    "display_category": "wp-cli",
+    "display_category": "diagnostics",
     "annotated": true
   },
   {
@@ -2923,7 +2927,7 @@
       "wp-ops wp-cli/security/scanner-general"
     ],
     "manifest_category": "security",
-    "display_category": "wp-cli",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2951,7 +2955,8 @@
       "wp-ops wp-cli/security/scanner-targeted"
     ],
     "manifest_category": "security",
-    "display_category": "wp-cli",
+    "platform": "wordpress",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2979,7 +2984,7 @@
       "wp-ops wp-cli/security/scanner-wrapper"
     ],
     "manifest_category": "security",
-    "display_category": "wp-cli",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -3023,7 +3028,7 @@
       "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3076,7 +3081,7 @@
       "wp-ops orphan-links-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3120,7 +3125,7 @@
       "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3164,7 +3169,7 @@
       "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3207,7 +3212,7 @@
       "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3253,7 +3258,7 @@
       "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
     ],
     "manifest_category": "seo",
-    "display_category": "wp-cli",
+    "display_category": "seo",
     "annotated": true
   },
   {
@@ -3326,7 +3331,7 @@
       "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
     ],
     "manifest_category": "wp-cli-config",
-    "display_category": "bedrock",
+    "display_category": "wp-cli-config",
     "annotated": true
   },
   {
@@ -3337,7 +3342,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
     "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "display_category": "age-verification",
     "annotated": true
   },
   {
@@ -3348,7 +3353,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
     "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "display_category": "age-verification",
     "annotated": true
   },
   {
@@ -3359,7 +3364,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
     "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "display_category": "age-verification",
     "annotated": true
   },
   {
@@ -3370,7 +3375,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/snippets/admin-user-creation-wpcli.md",
     "manifest_category": "snippets",
-    "display_category": "wordpress-utilities",
+    "display_category": "snippets",
     "annotated": true
   },
   {
@@ -3381,34 +3386,54 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
     "manifest_category": "snippets",
-    "display_category": "wordpress-utilities",
+    "display_category": "snippets",
     "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/dev",
-    "description": "Run the wp-ops MCP server in development mode (tsx, no build step)",
+    "description": "Install dependencies and start the MCP server in development mode",
     "script_path": "mcp-server/dev.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/run",
-    "description": "Rebuild if stale, then exec the MCP server for stdio transport.",
+    "description": "Rebuild if stale and start the MCP server for stdio transport",
     "script_path": "mcp-server/run.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm",
+      "node"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/start",
-    "description": "Build and start the wp-ops MCP server",
+    "description": "Build and start the MCP server",
     "script_path": "mcp-server/start.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm",
+      "node"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   }
 ]

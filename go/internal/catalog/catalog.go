@@ -57,6 +57,10 @@ type Entry struct {
 	// for parity and for later phases to use, not currently consumed by any
 	// wp-ops subcommand.
 	ManifestCategory string `json:"manifest_category,omitempty"`
+	// Platform is the @platform directive's value ("trellis", "wordpress", or "any")
+	// indicating what stack a command needs to run against. Used for filtering
+	// commands by platform compatibility.
+	Platform string `json:"platform,omitempty"`
 	// DisplayCategory is the grouping used by every human-facing surface —
 	// list.go's category views, the interactive picker, and the per-category
 	// Cobra commands (dispatch.go). It equals Category except for the
@@ -198,6 +202,51 @@ func (c *Catalog) Search(term string) []Entry {
 	return out
 }
 
+// FilterByPlatform returns a new Catalog containing only entries that match
+// the specified platform. If platform is empty, returns the original catalog.
+// This implements the @platform filtering for Option C2 from
+// docs/category-organization.md.
+func (c *Catalog) FilterByPlatform(platform string) *Catalog {
+	if platform == "" {
+		return c
+	}
+
+	var filteredEntries []Entry
+	for _, entry := range c.Entries {
+		if entry.Platform == platform {
+			filteredEntries = append(filteredEntries, entry)
+		}
+	}
+
+	// Create a new catalog with the filtered entries
+	filtered := &Catalog{
+		Entries:           filteredEntries,
+		byKey:             make(map[string]Entry, len(filteredEntries)),
+		byCategory:        make(map[string][]Entry),
+		byDisplayCategory: make(map[string][]Entry),
+	}
+
+	for _, e := range filteredEntries {
+		filtered.byKey[e.Key] = e
+		filtered.byCategory[e.Category] = append(filtered.byCategory[e.Category], e)
+		filtered.byDisplayCategory[e.DisplayCategory] = append(filtered.byDisplayCategory[e.DisplayCategory], e)
+	}
+
+	// Sort the indexed entries the same way Load() does
+	for cat := range filtered.byCategory {
+		sort.Slice(filtered.byCategory[cat], func(i, j int) bool {
+			return filtered.byCategory[cat][i].Key < filtered.byCategory[cat][j].Key
+		})
+	}
+	for cat := range filtered.byDisplayCategory {
+		sort.Slice(filtered.byDisplayCategory[cat], func(i, j int) bool {
+			return filtered.byDisplayCategory[cat][i].Key < filtered.byDisplayCategory[cat][j].Key
+		})
+	}
+
+	return filtered
+}
+
 // Categories lists the category directories to scan, in curated
 // (most-used-first) display order — a direct port of bash's CATEGORIES
 // array. Shared between the generator (task 3) and the catalog's own
@@ -215,58 +264,97 @@ var Categories = []string{
 
 // DisplayOrder lists DisplayCategory names in curated (most-used-first)
 // order — the DisplayCategory counterpart to Categories, consumed by
-// Catalog.DisplayCategories(). "scripts" keeps the subcategories too small
-// to warrant their own top-level group (Phase F option 4,
-// docs/cli-ux-plan.md: backup, git, misc, sync, woocommerce — 11 commands
-// combined); monitoring/images/patterns/release split out right after it
-// since each has enough commands (4+) to stand alone. See gen/main.go's
-// promotedScriptCategories for the threshold.
+// Catalog.DisplayCategories(). Now uses domain-based grouping from
+// @category directives (Option C1 from docs/category-organization.md),
+// replacing the previous directory-based split. Order is approximate
+// command count descending, with related domains grouped together.
 var DisplayOrder = []string{
-	"scripts",
 	"monitoring",
+	"backup",
 	"images",
+	"seo",
 	"patterns",
+	"security",
 	"release",
-	"trellis",
-	"wp-cli",
+	"git",
+	"sync",
+	"content-creation",
+	"diagnostics",
+	"woocommerce",
+	"misc",
+	"updater",
+	"wp-cli-config",
+	"snippets",
+	"age-verification",
 	"bedrock",
 	"nginx",
 	"wordpress-utilities",
 	"troubleshooting",
 	"mcp-server",
+	"scripts",
+	"trellis",
+	"wp-cli",
 }
 
-// CategoryDisplayNames mirrors bash's CATEGORY_DISPLAY_NAMES, parallel to
-// Categories, plus the DisplayOrder-only entries split out of "scripts".
+// CategoryDisplayNames mirrors bash's CATEGORY_DISPLAY_NAMES, plus the
+// domain-based categories from @category directives (Option C1). Keys are
+// the @category values (or directory names as fallback).
 var CategoryDisplayNames = map[string]string{
-	"scripts":             "Scripts",
 	"monitoring":          "Monitoring",
+	"backup":              "Backup",
 	"images":              "Images",
+	"seo":                 "SEO",
 	"patterns":            "Patterns",
+	"security":            "Security",
 	"release":             "Release",
-	"trellis":             "Trellis",
-	"wp-cli":              "WP-CLI",
+	"git":                 "Git",
+	"sync":                "Sync",
+	"content-creation":    "Content Creation",
+	"diagnostics":         "Diagnostics",
+	"woocommerce":         "WooCommerce",
+	"misc":                "Misc",
+	"updater":             "Updater",
+	"wp-cli-config":       "WP-CLI Config",
+	"snippets":            "Snippets",
+	"age-verification":    "Age Verification",
 	"bedrock":             "Bedrock",
 	"nginx":               "Nginx",
 	"wordpress-utilities": "WordPress Utilities",
 	"troubleshooting":     "Troubleshooting",
 	"mcp-server":          "MCP Server",
+	"scripts":             "Scripts",
+	"trellis":             "Trellis",
+	"wp-cli":              "WP-CLI",
 }
 
 // CategoryBlurbs is a one-line summary per category — shown alongside its
 // command count in cmd's compact `list` view and ui's picker category-select
-// stage. Phase F, docs/cli-ux-plan.md. Lives here (not in cmd) so both `cmd`
-// and `internal/ui` can use the same text without either importing the
-// other.
+// stage. Phase F, docs/cli-ux-plan.md. Now uses domain-based descriptions for
+// @category values (Option C1 from docs/category-organization.md).
 var CategoryBlurbs = map[string]string{
-	"scripts":             "Backup, git, sync, and other one-off utility scripts",
 	"monitoring":          "Log monitoring, uptime checks, and traffic analysis",
+	"backup":              "Database and file backups — Ansible and shell",
 	"images":              "Image resizing, WebP/AVIF conversion, and Openverse downloads",
+	"seo":                 "Redirect audits, sitemap and schema checks",
 	"patterns":            "Block pattern screenshots and format conversion",
+	"security":            "Malware scanning, fail2ban, and IP blocking",
 	"release":             "WordPress plugin/theme release and asset upload automation",
-	"trellis":             "Trellis provisioning, backups, and Ansible playbook commands",
-	"wp-cli":              "WordPress diagnostics, audits, and WP-CLI-driven tools",
+	"git":                 "Git operations and workflow automation",
+	"sync":                "File and database synchronization utilities",
+	"content-creation":    "Content creation and import utilities",
+	"diagnostics":         "WordPress diagnostics and troubleshooting",
+	"woocommerce":         "WooCommerce-specific tools and utilities",
+	"misc":                "Miscellaneous utilities and helpers",
+	"updater":             "Trellis and WordPress core updater utilities",
+	"wp-cli-config":       "WP-CLI configuration and management",
+	"snippets":            "Code snippets and reusable components",
+	"age-verification":    "Age verification and content restriction utilities",
 	"bedrock":             "Bedrock/Composer pattern validation",
+	"nginx":               "Nginx configuration and server management",
 	"wordpress-utilities": "Reusable snippets copied into WordPress projects",
-	"mcp-server":          "MCP server dev/start commands",
+	"troubleshooting":     "Troubleshooting guides and diagnostic tools",
+	"mcp-server":          "MCP server development and runtime commands",
+	"scripts":             "General utility scripts and automation",
+	"trellis":             "Trellis provisioning and Ansible playbook commands",
+	"wp-cli":              "WordPress diagnostics, audits, and WP-CLI-driven tools",
 }

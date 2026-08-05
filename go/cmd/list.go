@@ -13,19 +13,21 @@ import (
 )
 
 var allFlag bool
+var platformFlag string
 
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List every command by category",
 	RunE: func(cc *cobra.Command, args []string) error {
 		c := mustCatalog()
+		filtered := c.FilterByPlatform(platformFlag)
 		switch {
 		case jsonFlag:
-			printJSON(c)
+			printJSON(filtered)
 		case allFlag:
-			printAllCommands(c)
+			printAllCommands(filtered)
 		default:
-			printCategorizedList(c)
+			printCategorizedList(filtered)
 		}
 		return nil
 	},
@@ -34,6 +36,7 @@ var listCmd = &cobra.Command{
 func init() {
 	listCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
 	listCmd.Flags().BoolVar(&allFlag, "all", false, "List every command in every category, with descriptions")
+	listCmd.Flags().StringVar(&platformFlag, "platform", "", "Filter by platform: trellis, wordpress, any")
 	rootCmd.AddCommand(listCmd)
 }
 

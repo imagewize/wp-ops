@@ -49,6 +49,7 @@ type Command struct {
 	Key      string
 	Desc     string
 	Category string
+	Platform string
 	Runs     string
 	Requires []string
 	Args     []Arg
@@ -94,7 +95,7 @@ var (
 // docblock) is silently ignored, matching bash's case statement.
 var directivesHandled = map[string]bool{
 	"@desc": true, "@category": true, "@runs": true, "@requires": true,
-	"@doc": true, "@example": true, "@arg": true, "@flag": true,
+	"@doc": true, "@example": true, "@arg": true, "@flag": true, "@platform": true,
 }
 
 // DirectiveLines returns every recognized "@directive value" line found in
@@ -188,6 +189,10 @@ func Parse(key, scriptPath string) (*Command, error) {
 		case "@category":
 			if cmd.Category == "" {
 				cmd.Category = value
+			}
+		case "@platform":
+			if cmd.Platform == "" {
+				cmd.Platform = value
 			}
 		case "@runs":
 			if cmd.Runs == "" {

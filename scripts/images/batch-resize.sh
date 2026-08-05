@@ -28,6 +28,7 @@
 #
 # @desc     Batch resize and center-crop images for featured images
 # @category images
+# @platform any
 # @runs     local
 # @requires magick
 # @arg      files      required  {*.png}  One or more input image files

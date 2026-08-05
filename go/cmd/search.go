@@ -5,7 +5,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/imagewize/wp-ops/go/internal/catalog"
 )
+
+var platformSearchFlag string
 
 var searchCmd = &cobra.Command{
 	Use:   "search <term>",
@@ -22,6 +26,7 @@ var searchCmd = &cobra.Command{
 }
 
 func init() {
+	searchCmd.Flags().StringVar(&platformSearchFlag, "platform", "", "Filter by platform: trellis, wordpress, any")
 	rootCmd.AddCommand(searchCmd)
 }
 
@@ -30,7 +35,15 @@ func init() {
 // (wp-ops:1582-1586).
 func runSearch(term string) {
 	c := mustCatalog()
-	matches := c.Search(term)
+	var matches []catalog.Entry
+	
+	if platformSearchFlag != "" {
+		// Filter by platform first, then search
+		filtered := c.FilterByPlatform(platformSearchFlag)
+		matches = filtered.Search(term)
+	} else {
+		matches = c.Search(term)
+	}
 
 	if len(matches) == 0 {
 		fmt.Printf("No commands match '%s'.\n\n", term)
@@ -50,6 +63,10 @@ func runSearch(term string) {
 		tag := ""
 		if m.RunsOn == "server" {
 			tag = "(server) "
+		}
+		// Add platform tag if filtering by platform
+		if m.Platform != "" && platformSearchFlag != "" {
+			tag += "[" + m.Platform + "] "
 		}
 		fmt.Printf("  %-40s %s%s\n", m.Key, tag, m.Description)
 	}
