@@ -202,6 +202,21 @@ func (c *Catalog) Search(term string) []Entry {
 	return out
 }
 
+// Platforms enumerates every legal @platform value, in narrowing-to-widening
+// order. Option C2 of docs/category-organization.md: this is the axis a
+// directory name can't encode — "will this run against the site in front of
+// me" — and it deliberately has three values rather than two, since needing
+// *a* WordPress (any host) is a different constraint from needing a Trellis
+// project specifically.
+//
+//	trellis    needs a Trellis project, vault, /srv/www, or the trellis CLI
+//	wordpress  any WP install — Valet, Herd, cPanel, Bedrock, Trellis
+//	any        no WordPress involved
+//
+// Distinct from @requires (which names binaries) and @runs (which says where
+// a command executes, not what stack it needs).
+var Platforms = []string{"trellis", "wordpress", "any"}
+
 // FilterByPlatform returns a new Catalog containing only entries that match
 // the specified platform. If platform is empty, returns the original catalog.
 // This implements the @platform filtering for Option C2 from
@@ -264,97 +279,83 @@ var Categories = []string{
 
 // DisplayOrder lists DisplayCategory names in curated (most-used-first)
 // order — the DisplayCategory counterpart to Categories, consumed by
-// Catalog.DisplayCategories(). Now uses domain-based grouping from
-// @category directives (Option C1 from docs/category-organization.md),
-// replacing the previous directory-based split. Order is approximate
-// command count descending, with related domains grouped together.
+// Catalog.DisplayCategories(). These are @category (domain) values, not
+// directories: Option C1 of docs/category-organization.md drops the old
+// directory-based split so all 9 backup commands group together whether
+// they live under scripts/ or trellis/. Ordered by command count
+// descending, with the "misc" catch-all last within its tier.
+//
+// Singletons were merged into neighbours rather than left as one-command
+// groups (the second of the two policies docs/category-organization.md
+// leaves open): patterns + content-creation + wp-cli-config → "content",
+// age-verification → "snippets", woocommerce + updater → "misc".
+//
+// Directory names (scripts, trellis, wp-cli, …) deliberately do NOT appear
+// here — they'd render as empty groups. They survive only as the hidden
+// back-compat aliases dispatch.go registers from Categories.
 var DisplayOrder = []string{
 	"monitoring",
 	"backup",
+	"content",
 	"images",
 	"seo",
-	"patterns",
 	"security",
+	"snippets",
+	"misc",
 	"release",
 	"git",
-	"sync",
-	"content-creation",
-	"diagnostics",
-	"woocommerce",
-	"misc",
-	"updater",
-	"wp-cli-config",
-	"snippets",
-	"age-verification",
-	"bedrock",
-	"nginx",
-	"wordpress-utilities",
-	"troubleshooting",
 	"mcp-server",
-	"scripts",
-	"trellis",
-	"wp-cli",
+	"diagnostics",
+	"sync",
 }
 
-// CategoryDisplayNames mirrors bash's CATEGORY_DISPLAY_NAMES, plus the
-// domain-based categories from @category directives (Option C1). Keys are
-// the @category values (or directory names as fallback).
+// CategoryDisplayNames maps a category key to its human-facing name. Covers
+// both DisplayOrder's domain categories (the grouped views) and Categories'
+// directory names, which dispatch.go's hidden back-compat aliases still
+// print as a header ("Trellis Commands:").
 var CategoryDisplayNames = map[string]string{
-	"monitoring":          "Monitoring",
-	"backup":              "Backup",
-	"images":              "Images",
-	"seo":                 "SEO",
-	"patterns":            "Patterns",
-	"security":            "Security",
-	"release":             "Release",
-	"git":                 "Git",
-	"sync":                "Sync",
-	"content-creation":    "Content Creation",
-	"diagnostics":         "Diagnostics",
-	"woocommerce":         "WooCommerce",
-	"misc":                "Misc",
-	"updater":             "Updater",
-	"wp-cli-config":       "WP-CLI Config",
-	"snippets":            "Snippets",
-	"age-verification":    "Age Verification",
+	// Domain categories — DisplayOrder.
+	"monitoring":  "Monitoring",
+	"backup":      "Backup",
+	"content":     "Content",
+	"images":      "Images",
+	"seo":         "SEO",
+	"security":    "Security",
+	"snippets":    "Snippets",
+	"misc":        "Misc",
+	"release":     "Release",
+	"git":         "Git",
+	"mcp-server":  "MCP Server",
+	"diagnostics": "Diagnostics",
+	"sync":        "Sync",
+
+	// Directory categories — Categories, used by the hidden aliases.
+	"scripts":             "Scripts",
+	"trellis":             "Trellis",
+	"wp-cli":              "WP-CLI",
 	"bedrock":             "Bedrock",
 	"nginx":               "Nginx",
 	"wordpress-utilities": "WordPress Utilities",
 	"troubleshooting":     "Troubleshooting",
-	"mcp-server":          "MCP Server",
-	"scripts":             "Scripts",
-	"trellis":             "Trellis",
-	"wp-cli":              "WP-CLI",
 }
 
 // CategoryBlurbs is a one-line summary per category — shown alongside its
 // command count in cmd's compact `list` view and ui's picker category-select
-// stage. Phase F, docs/cli-ux-plan.md. Now uses domain-based descriptions for
-// @category values (Option C1 from docs/category-organization.md).
+// stage. Phase F, docs/cli-ux-plan.md. Keyed by DisplayOrder's domain
+// categories only; the directory aliases are hidden and never render a
+// blurb.
 var CategoryBlurbs = map[string]string{
-	"monitoring":          "Log monitoring, uptime checks, and traffic analysis",
-	"backup":              "Database and file backups — Ansible and shell",
-	"images":              "Image resizing, WebP/AVIF conversion, and Openverse downloads",
-	"seo":                 "Redirect audits, sitemap and schema checks",
-	"patterns":            "Block pattern screenshots and format conversion",
-	"security":            "Malware scanning, fail2ban, and IP blocking",
-	"release":             "WordPress plugin/theme release and asset upload automation",
-	"git":                 "Git operations and workflow automation",
-	"sync":                "File and database synchronization utilities",
-	"content-creation":    "Content creation and import utilities",
-	"diagnostics":         "WordPress diagnostics and troubleshooting",
-	"woocommerce":         "WooCommerce-specific tools and utilities",
-	"misc":                "Miscellaneous utilities and helpers",
-	"updater":             "Trellis and WordPress core updater utilities",
-	"wp-cli-config":       "WP-CLI configuration and management",
-	"snippets":            "Code snippets and reusable components",
-	"age-verification":    "Age verification and content restriction utilities",
-	"bedrock":             "Bedrock/Composer pattern validation",
-	"nginx":               "Nginx configuration and server management",
-	"wordpress-utilities": "Reusable snippets copied into WordPress projects",
-	"troubleshooting":     "Troubleshooting guides and diagnostic tools",
-	"mcp-server":          "MCP server development and runtime commands",
-	"scripts":             "General utility scripts and automation",
-	"trellis":             "Trellis provisioning and Ansible playbook commands",
-	"wp-cli":              "WordPress diagnostics, audits, and WP-CLI-driven tools",
+	"monitoring":  "Log monitoring, uptime checks, and traffic analysis",
+	"backup":      "Database and file backups — Ansible and shell",
+	"content":     "Block pattern screenshots, page creation, and pattern validation",
+	"images":      "Image resizing, WebP/AVIF conversion, and Openverse downloads",
+	"seo":         "Redirect, schema, and orphan-content audits",
+	"security":    "Malware scanning, fail2ban, and IP blocking",
+	"snippets":    "Reusable PHP/JS/CSS copied into WordPress projects",
+	"misc":        "Trellis updater, WooCommerce variations, and one-off utilities",
+	"release":     "WordPress plugin/theme release and asset upload automation",
+	"git":         "PR creation, repo traffic stats, and git log helpers",
+	"mcp-server":  "MCP server development and runtime commands",
+	"diagnostics": "WordPress transient and post-count diagnostics",
+	"sync":        "rsync a theme or package into a site",
 }

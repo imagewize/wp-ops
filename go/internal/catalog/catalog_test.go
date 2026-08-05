@@ -106,18 +106,19 @@ func TestCategoriesSkipsEmpty(t *testing.T) {
 	}
 }
 
-// TestDisplayCategoriesIncludesScriptsSplit covers Phase F option 4
-// (docs/cli-ux-plan.md): the scripts/** subcategories promoted to their own
-// DisplayCategory must show up in DisplayCategories(), same emptiness rule
-// as Categories().
-func TestDisplayCategoriesIncludesScriptsSplit(t *testing.T) {
+// TestDisplayCategoriesAreDomains covers Option C1
+// (docs/category-organization.md): DisplayCategories() reports @category
+// domains, not directories, subject to the same emptiness rule as
+// Categories(). The directory names must not appear — they'd render as
+// empty groups now that every command's domain tag wins.
+func TestDisplayCategoriesAreDomains(t *testing.T) {
 	c, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 
 	cats := c.DisplayCategories()
-	for _, want := range []string{"monitoring", "images", "patterns", "release"} {
+	for _, want := range []string{"monitoring", "backup", "content", "images", "seo", "security"} {
 		found := false
 		for _, got := range cats {
 			if got == want {
@@ -125,13 +126,15 @@ func TestDisplayCategoriesIncludesScriptsSplit(t *testing.T) {
 			}
 		}
 		if !found {
-			t.Errorf("DisplayCategories() = %v, want it to include split-out category %q", cats, want)
+			t.Errorf("DisplayCategories() = %v, want it to include domain category %q", cats, want)
 		}
 	}
-	for _, want := range []string{"nginx", "troubleshooting"} {
+	// "mcp-server" is deliberately absent from this list: it's the one name
+	// that is both a directory and a domain, so it legitimately appears.
+	for _, want := range []string{"scripts", "trellis", "wp-cli", "bedrock", "wordpress-utilities", "nginx", "troubleshooting"} {
 		for _, got := range cats {
 			if got == want {
-				t.Errorf("DisplayCategories() included docs-only category %q, want excluded", want)
+				t.Errorf("DisplayCategories() included directory category %q, want excluded (domains only)", want)
 			}
 		}
 	}
@@ -159,18 +162,39 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 		}
 	}
 
-	scriptsDisplay := c.CommandsInDisplay("scripts")
-	if len(scriptsDisplay) != 12 {
-		t.Errorf("CommandsInDisplay(scripts) = %d entries, want 12 (backup, git, misc, sync, woocommerce)", len(scriptsDisplay))
+	// Post-Option-C1 the directory name is no longer a display category at
+	// all: every scripts/** command groups under its own @category domain.
+	if got := c.CommandsInDisplay("scripts"); len(got) != 0 {
+		t.Errorf("CommandsInDisplay(scripts) = %d entries, want 0 (directories are no longer display categories)", len(got))
 	}
 
-	monitoring := c.CommandsInDisplay("monitoring")
-	if len(monitoring) != 13 {
-		t.Errorf("CommandsInDisplay(monitoring) = %d entries, want 13 (+2 for ttfb-test/remote-ttfb-ua added in 3.27.0, +1 for traffic-by-country added in 4.1.0)", len(monitoring))
-	}
-	for _, e := range monitoring {
-		if e.Category != "scripts" {
-			t.Errorf("CommandsInDisplay(monitoring) entry %q has Category = %q, want scripts (DisplayCategory must not leak into Category)", e.Key, e.Category)
+	// The invariant the whole DisplayCategory split exists to protect, now
+	// stated directly rather than via a category that happened to be
+	// single-directory: Category is always the key's leading path segment,
+	// whatever DisplayCategory the entry was grouped under.
+	for _, e := range c.Entries {
+		wantCategory, _, ok := strings.Cut(e.Key, "/")
+		if !ok {
+			t.Errorf("entry %q has no directory segment in its key", e.Key)
+			continue
 		}
+		if e.Category != wantCategory {
+			t.Errorf("entry %q has Category = %q, want %q (DisplayCategory %q must not leak into Category)",
+				e.Key, e.Category, wantCategory, e.DisplayCategory)
+		}
+	}
+
+	// Option C1's headline case: "backup" draws from two directories at
+	// once, which is exactly what the old scripts-only rule prevented.
+	backup := c.CommandsInDisplay("backup")
+	if len(backup) != 9 {
+		t.Errorf("CommandsInDisplay(backup) = %d entries, want 9 (3 under scripts/, 6 under trellis/)", len(backup))
+	}
+	dirs := make(map[string]int)
+	for _, e := range backup {
+		dirs[e.Category]++
+	}
+	if dirs["scripts"] != 3 || dirs["trellis"] != 6 {
+		t.Errorf("backup display group spans %v, want 3 scripts + 6 trellis", dirs)
 	}
 }

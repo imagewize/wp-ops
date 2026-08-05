@@ -44,21 +44,65 @@ func registerCatalogCommands(c *catalog.Catalog) {
 		rootCmd.AddCommand(leaf)
 	}
 
-	for _, category := range c.DisplayCategories() {
-		cat := category // capture
+	addCategory := func(scope categoryScope, hidden bool) {
 		catCmd := &cobra.Command{
-			Use:                cat,
-			Short:              fmt.Sprintf("%s commands", catalog.CategoryDisplayNames[cat]),
+			Use:                scope.name,
+			Short:              fmt.Sprintf("%s commands", catalog.CategoryDisplayNames[scope.name]),
 			DisableFlagParsing: true,
+			Hidden:             hidden,
 			Args:               cobra.ArbitraryArgs,
 			RunE: func(cc *cobra.Command, args []string) error {
-				runCategory(mustCatalog(), cat, args)
+				runCategory(mustCatalog(), scope, args)
 				return nil
 			},
-			ValidArgsFunction: categoryBasenameCompletions(cat),
+			ValidArgsFunction: categoryBasenameCompletions(scope),
 		}
 		rootCmd.AddCommand(catCmd)
 	}
+
+	registered := make(map[string]bool)
+	for _, category := range c.DisplayCategories() {
+		registered[category] = true
+		addCategory(displayScope(category), false)
+	}
+
+	// Hidden back-compat aliases for the directory names. Option C1
+	// (docs/category-organization.md) moved the visible grouping from
+	// directories to @category domains, which would otherwise have deleted
+	// `wp-ops trellis <playbook>` and `wp-ops wp-cli <script>` — forms the
+	// README and three years of muscle memory still use. Hidden so
+	// `wp-ops --help` presents one grouping rather than two competing ones.
+	// Skips any directory whose name is already a domain group ("mcp-server"
+	// is both), since Cobra can't hold two commands under one name.
+	for _, category := range c.Categories() {
+		if registered[category] {
+			continue
+		}
+		addCategory(directoryScope(category), true)
+	}
+}
+
+// categoryScope tells a category-level Cobra command which entries it owns.
+// Two kinds exist, and they partition the catalog differently: the visible
+// domain groups from DisplayOrder match on Entry.DisplayCategory, while the
+// hidden directory aliases match on Entry.Category. Keeping this behind one
+// type is what lets runCategory and the completion function serve both
+// without knowing which they were handed.
+type categoryScope struct {
+	name    string
+	members func(*catalog.Catalog) []catalog.Entry
+}
+
+func displayScope(name string) categoryScope {
+	return categoryScope{name: name, members: func(c *catalog.Catalog) []catalog.Entry {
+		return c.CommandsInDisplay(name)
+	}}
+}
+
+func directoryScope(name string) categoryScope {
+	return categoryScope{name: name, members: func(c *catalog.Catalog) []catalog.Entry {
+		return c.CommandsIn(name)
+	}}
 }
 
 // categoryBasenameCompletions backs `wp-ops <category> <TAB>` completion:
@@ -68,12 +112,12 @@ func registerCatalogCommands(c *catalog.Catalog) {
 // belongs to the underlying script's own argv). ValidArgsFunction is called
 // once per positional slot regardless of DisableFlagParsing, so this only
 // needs to guard on "am I completing the first arg after the category".
-func categoryBasenameCompletions(cat string) func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func categoryBasenameCompletions(scope categoryScope) func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		entries := mustCatalog().CommandsInDisplay(cat)
+		entries := scope.members(mustCatalog())
 		seen := make(map[string]bool, len(entries))
 		basenames := make([]string, 0, len(entries))
 		for _, e := range entries {
@@ -118,10 +162,10 @@ func rootBasenameCompletions(cc *cobra.Command, args []string, toComplete string
 // main()'s "wp-ops <category> <command>" branch (wp-ops:2246-2283):
 // preferring a basename match inside the category, falling back to the
 // whole catalog when the category has no match at all.
-func runCategory(c *catalog.Catalog, category string, args []string) {
+func runCategory(c *catalog.Catalog, scope categoryScope, args []string) {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		printCategoryCommands(c, category)
-		fmt.Printf("Usage: wp-ops %s <command> [args...]\n", category)
+		printCategoryCommands(scope.name, scope.members(c))
+		fmt.Printf("Usage: wp-ops %s <command> [args...]\n", scope.name)
 		return
 	}
 
@@ -136,9 +180,13 @@ func runCategory(c *catalog.Catalog, category string, args []string) {
 	}
 
 	matches := c.FindByBasename(candidate)
+	owned := make(map[string]bool)
+	for _, e := range scope.members(c) {
+		owned[e.Key] = true
+	}
 	var inCategory []catalog.Entry
 	for _, m := range matches {
-		if m.DisplayCategory == category {
+		if owned[m.Key] {
 			inCategory = append(inCategory, m)
 		}
 	}

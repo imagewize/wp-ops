@@ -55,7 +55,7 @@ func printCategorizedList(c *catalog.Catalog) {
 	}
 
 	fmt.Println()
-	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops trellis')")
+	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops backup')")
 	fmt.Println("Run 'wp-ops list --all' to see every command with its description")
 	fmt.Println("Run 'wp-ops search <term>' to find a command")
 	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
@@ -82,8 +82,7 @@ func printAllCommands(c *catalog.Catalog) {
 	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
 }
 
-func printCategoryCommands(c *catalog.Catalog, category string) {
-	entries := c.CommandsInDisplay(category)
+func printCategoryCommands(category string, entries []catalog.Entry) {
 	if len(entries) == 0 {
 		fmt.Printf("No commands found in category: %s\n", catalog.CategoryDisplayNames[category])
 		return

@@ -53,6 +53,7 @@
       "wp-ops db-backup example.com production"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -225,6 +226,7 @@
       "wp-ops scripts/git/create-pr main \"Add new feature\" --no-ai"
     ],
     "manifest_category": "git",
+    "platform": "any",
     "display_category": "git",
     "annotated": true
   },
@@ -276,6 +278,7 @@
       "wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet"
     ],
     "manifest_category": "git",
+    "platform": "any",
     "display_category": "git",
     "annotated": true
   },
@@ -303,6 +306,7 @@
       "wp-ops scripts/git/git-log-oneline 20"
     ],
     "manifest_category": "git",
+    "platform": "any",
     "display_category": "git",
     "annotated": true
   },
@@ -450,6 +454,7 @@
       "wp-ops scripts/images/convert-to-webp input.jpg output.webp 82 800 419"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -519,6 +524,7 @@
       "wp-ops scripts/images/make-square-webp input.webp output.webp --left-pad 200 --size 2000"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -592,6 +598,7 @@
       "wp-ops scripts/images/openverse_download --url https://example.com/img.jpg --convert-webp"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -675,6 +682,7 @@
       "wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -738,6 +746,7 @@
       "wp-ops svg-to-jpg -w 1920 -h 1080 designs/mastodon"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -793,6 +802,7 @@
       "wp-ops svg-to-png -w 1584 -h 396 designs/linkedin/banner.svg"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -830,6 +840,7 @@
       "wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png"
     ],
     "manifest_category": "misc",
+    "platform": "any",
     "display_category": "misc",
     "annotated": true
   },
@@ -905,6 +916,7 @@
       "wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh"
     ],
     "manifest_category": "misc",
+    "platform": "any",
     "display_category": "misc",
     "annotated": true
   },
@@ -980,6 +992,7 @@
       "wp-ops scripts/misc/post-count --ssh web@example.com --year 2026"
     ],
     "manifest_category": "misc",
+    "platform": "wordpress",
     "display_category": "misc",
     "annotated": true
   },
@@ -1044,6 +1057,7 @@
       "wp-ops scripts/monitoring/404-checker --mode spider https://example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1088,6 +1102,7 @@
       "ssh web@example.com 'bash -s' \u003c ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1149,6 +1164,7 @@
       "wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name \"QA Bot\""
     ],
     "manifest_category": "monitoring",
+    "platform": "wordpress",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1190,6 +1206,7 @@
       "ssh root@example.com 'bash -s' \u003c error-monitor.sh example.com 48"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1227,6 +1244,7 @@
       "ssh web@example.com 'bash -s' \u003c monitor.sh 24 othersite.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1253,6 +1271,7 @@
       "wp-ops scripts/monitoring/redirect-check https://example.com/old-page/"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1289,6 +1308,7 @@
       "wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1341,6 +1361,7 @@
       "ssh web@example.com 'bash -s' \u003c security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1377,6 +1398,7 @@
       "wp-ops scripts/monitoring/server-monitor web@example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1467,6 +1489,7 @@
       "wp-ops traffic-by-country -q --hours 24 --pattern \"/contact/\" US"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1511,6 +1534,7 @@
       "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1540,6 +1564,7 @@
       "wp-ops scripts/monitoring/ttfb-test https://example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1576,6 +1601,7 @@
       "ssh web@example.com 'bash -s' \u003c updown-webhook-handler.sh example.com down"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1619,8 +1645,9 @@
     "examples": [
       "wp-ops scripts/patterns/center-screenshots ./screenshots 900 600"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1687,8 +1714,9 @@
     "examples": [
       "wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1715,8 +1743,9 @@
     "examples": [
       "PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "wordpress",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1792,8 +1821,9 @@
     "examples": [
       "wp-ops scripts/patterns/screenshot-url http://example.test/my-page/ --out=pattern.png"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1828,8 +1858,9 @@
     "examples": [
       "wp-ops scripts/patterns/trim-screenshots ./screenshots 900"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1928,6 +1959,7 @@
       "wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build \"npm ci \u0026\u0026 npx webpack\""
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -1975,6 +2007,7 @@
       "wp-ops scripts/release/release-plugin 2.5.3 --commit"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2031,6 +2064,7 @@
       "wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2074,6 +2108,7 @@
       "wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2130,6 +2165,7 @@
       "wp-ops scripts/sync/rsync-package-to-site theme my-theme"
     ],
     "manifest_category": "sync",
+    "platform": "any",
     "display_category": "sync",
     "annotated": true
   },
@@ -2156,6 +2192,7 @@
       "wp-ops scripts/sync/rsync-theme --dry-run"
     ],
     "manifest_category": "sync",
+    "platform": "any",
     "display_category": "sync",
     "annotated": true
   },
@@ -2183,8 +2220,9 @@
       "wp-ops scripts/woocommerce/create-product-variations",
       "wp-ops scripts/woocommerce/create-product-variations --dry-run"
     ],
-    "manifest_category": "woocommerce",
-    "display_category": "woocommerce",
+    "manifest_category": "misc",
+    "platform": "trellis",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -2264,6 +2302,7 @@
       "wp-ops database-pull example.com production"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -2303,6 +2342,7 @@
       "wp-ops database-push example.com staging"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -2343,6 +2383,7 @@
       "wp-ops files-backup example.com production"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -2393,6 +2434,7 @@
       "wp-ops files-pull example.com production --delete yes"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -2432,6 +2474,7 @@
       "wp-ops files-push example.com staging"
     ],
     "manifest_category": "backup",
+    "platform": "trellis",
     "display_category": "backup",
     "annotated": true
   },
@@ -2483,6 +2526,7 @@
       "wp-ops quick-status example.com production --log_path /var/log/custom.log"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2550,6 +2594,7 @@
       "wp-ops security-scan example.com production --hours 48 --threshold 50"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2609,6 +2654,7 @@
       "wp-ops setup-monitoring example.com production --email alerts@example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2668,6 +2714,7 @@
       "wp-ops traffic-report example.com production --hours 48"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2698,6 +2745,7 @@
       "wp-ops trellis/security/check-deny-ips --full"
     ],
     "manifest_category": "security",
+    "platform": "trellis",
     "display_category": "security",
     "annotated": true
   },
@@ -2726,6 +2774,7 @@
       "wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8"
     ],
     "manifest_category": "security",
+    "platform": "trellis",
     "display_category": "security",
     "annotated": true
   },
@@ -2753,8 +2802,9 @@
       "TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater",
       "wp-ops trellis-updater --yes"
     ],
-    "manifest_category": "updater",
-    "display_category": "updater",
+    "manifest_category": "misc",
+    "platform": "trellis",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -2818,8 +2868,9 @@
       "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673",
       "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
     ],
-    "manifest_category": "content-creation",
-    "display_category": "content-creation",
+    "manifest_category": "content",
+    "platform": "trellis",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -2862,8 +2913,9 @@
     "examples": [
       "wp-ops wp-cli/content-creation/page-creation about-page-content.html \"About\" about"
     ],
-    "manifest_category": "content-creation",
-    "display_category": "content-creation",
+    "manifest_category": "content",
+    "platform": "trellis",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -2881,6 +2933,7 @@
       "wp-ops wp-cli/diagnostics/diagnostic-transients"
     ],
     "manifest_category": "diagnostics",
+    "platform": "wordpress",
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -2899,6 +2952,7 @@
       "wp-ops wp-cli/diagnostics/list-posts-count"
     ],
     "manifest_category": "diagnostics",
+    "platform": "trellis",
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -2927,6 +2981,7 @@
       "wp-ops wp-cli/security/scanner-general"
     ],
     "manifest_category": "security",
+    "platform": "wordpress",
     "display_category": "security",
     "annotated": true
   },
@@ -2984,6 +3039,7 @@
       "wp-ops wp-cli/security/scanner-wrapper"
     ],
     "manifest_category": "security",
+    "platform": "wordpress",
     "display_category": "security",
     "annotated": true
   },
@@ -3028,6 +3084,7 @@
       "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3081,6 +3138,7 @@
       "wp-ops orphan-links-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3125,6 +3183,7 @@
       "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3169,6 +3228,7 @@
       "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3212,6 +3272,7 @@
       "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3258,6 +3319,7 @@
       "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
     ],
     "manifest_category": "seo",
+    "platform": "wordpress",
     "display_category": "seo",
     "annotated": true
   },
@@ -3330,8 +3392,9 @@
     "examples": [
       "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
     ],
-    "manifest_category": "wp-cli-config",
-    "display_category": "wp-cli-config",
+    "manifest_category": "content",
+    "platform": "wordpress",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -3341,8 +3404,9 @@
     "script_path": "wordpress-utilities/age-verification/age-verification.js",
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "age-verification",
+    "manifest_category": "snippets",
+    "platform": "wordpress",
+    "display_category": "snippets",
     "annotated": true
   },
   {
@@ -3352,8 +3416,9 @@
     "script_path": "wordpress-utilities/age-verification/footer.php",
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "age-verification",
+    "manifest_category": "snippets",
+    "platform": "wordpress",
+    "display_category": "snippets",
     "annotated": true
   },
   {
@@ -3363,8 +3428,9 @@
     "script_path": "wordpress-utilities/age-verification/modal.css",
     "runs_on": "local",
     "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "age-verification",
+    "manifest_category": "snippets",
+    "platform": "wordpress",
+    "display_category": "snippets",
     "annotated": true
   },
   {
@@ -3375,6 +3441,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/snippets/admin-user-creation-wpcli.md",
     "manifest_category": "snippets",
+    "platform": "wordpress",
     "display_category": "snippets",
     "annotated": true
   },
@@ -3386,6 +3453,7 @@
     "runs_on": "local",
     "doc": "wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
     "manifest_category": "snippets",
+    "platform": "wordpress",
     "display_category": "snippets",
     "annotated": true
   },

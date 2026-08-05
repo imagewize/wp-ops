@@ -101,11 +101,12 @@ func TestRunsOnFor(t *testing.T) {
 	}
 }
 
-// TestDisplayCategoryFor covers the Phase F option 4 split
-// (docs/cli-ux-plan.md): scripts/** subcategories with 4+ commands get
-// promoted to their own DisplayCategory, everything else — including
-// other categories' own @category tags, e.g. trellis/backup/*.yml also
-// using "backup" — stays untouched.
+// TestDisplayCategoryFor covers Option C1 (docs/category-organization.md):
+// @category wins for every command regardless of which directory it lives
+// in, so a domain spread across two directories groups as one. The old
+// Phase F rule — promotion only for scripts/** subcategories with 4+
+// commands — is retired; the directory is now only the fallback for a
+// command carrying no @category at all.
 func TestDisplayCategoryFor(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -113,25 +114,28 @@ func TestDisplayCategoryFor(t *testing.T) {
 		manifestCategory string
 		want             string
 	}{
-		{"promoted scripts subcategory: monitoring", "scripts", "monitoring", "monitoring"},
-		{"promoted scripts subcategory: images", "scripts", "images", "images"},
-		{"promoted scripts subcategory: patterns", "scripts", "patterns", "patterns"},
-		{"promoted scripts subcategory: release", "scripts", "release", "release"},
-		{"non-promoted scripts subcategory stays scripts: backup", "scripts", "backup", "scripts"},
-		{"non-promoted scripts subcategory stays scripts: woocommerce", "scripts", "woocommerce", "scripts"},
-		{"scripts file with no @category at all", "scripts", "", "scripts"},
+		{"scripts subcategory: monitoring", "scripts", "monitoring", "monitoring"},
+		{"scripts subcategory: images", "scripts", "images", "images"},
+		{"scripts subcategory: content", "scripts", "content", "content"},
+		{"scripts subcategory: release", "scripts", "release", "release"},
 		{
-			// trellis/backup/*.yml also tags "@category backup" — must not be
-			// swept into the scripts-only "backup" grouping (there isn't one;
-			// "backup" was never promoted) nor otherwise affected, since
-			// promotion only ever applies within category == "scripts".
-			"non-scripts category is never overridden, even with a matching manifest tag",
-			"trellis", "backup", "trellis",
+			// The Option C1 payoff: scripts/backup/* and trellis/backup/*
+			// both tag "@category backup" and must land in one group. Under
+			// the old scripts-only rule these split into "scripts" and
+			// "trellis", which is what made `wp-ops backup` impossible.
+			"small scripts subcategory is no longer held back: backup",
+			"scripts", "backup", "backup",
 		},
 		{
-			"non-scripts category with a promoted-looking manifest tag is still untouched",
-			"trellis", "monitoring", "trellis",
+			"non-scripts directory now honours its manifest tag too",
+			"trellis", "backup", "backup",
 		},
+		{
+			"the same domain from a third directory joins the same group",
+			"wp-cli", "security", "security",
+		},
+		{"file with no @category at all falls back to its directory", "scripts", "", "scripts"},
+		{"fallback applies outside scripts as well", "trellis", "", "trellis"},
 	}
 
 	for _, tt := range tests {
