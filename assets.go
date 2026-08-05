@@ -22,5 +22,5 @@ package assets
 
 import "embed"
 
-//go:embed scripts trellis wp-cli bedrock wordpress-utilities nginx troubleshooting mcp-server docs README.md CLAUDE.md CHANGELOG.md LICENSE.md
+//go:embed scripts trellis wp-cli wordpress-utilities mcp-server docs README.md CLAUDE.md CHANGELOG.md LICENSE.md
 var FS embed.FS

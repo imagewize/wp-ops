@@ -652,7 +652,7 @@ hexdump -C scanner-targeted.php | head -n 2
 - **[SECURITY-GUIDE.md](SECURITY-GUIDE.md)** - Complete usage guide with examples
 - **[SCANNER-SUMMARY.md](SCANNER-SUMMARY.md)** - Quick reference for busy developers
 - **[wp-cli/diagnostics/](../diagnostics/)** - WordPress diagnostic tools
-- **[troubleshooting/](../../troubleshooting/)** - Server and WordPress troubleshooting guides
+- **[troubleshooting/](../../docs/troubleshooting/)** - Server and WordPress troubleshooting guides
 - **[trellis/backup/](../../trellis/backup/)** - Backup operations before security cleanup
 
 ---

@@ -17,11 +17,9 @@ on:
       - 'scripts/**'
       - 'trellis/**'
       - 'wp-cli/**'
-      - 'bedrock/**'
-      - 'nginx/**'
       - 'wordpress-utilities/**'
-      - 'troubleshooting/**'
       - 'mcp-server/**'
+      - 'docs/**'
   pull_request:
     branches: [main]
     paths:
@@ -30,11 +28,9 @@ on:
       - 'scripts/**'
       - 'trellis/**'
       - 'wp-cli/**'
-      - 'bedrock/**'
-      - 'nginx/**'
       - 'wordpress-utilities/**'
-      - 'troubleshooting/**'
       - 'mcp-server/**'
+      - 'docs/**'
 
 jobs:
   build:

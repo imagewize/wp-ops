@@ -53,7 +53,7 @@ func extensionsFor(category string) map[string]bool {
 		exts[".yml"] = true
 	case "scripts":
 		exts[".py"] = true
-	case "wp-cli", "bedrock":
+	case "wp-cli":
 		exts[".php"] = true
 	case "wordpress-utilities":
 		exts[".php"] = true

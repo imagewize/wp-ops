@@ -86,7 +86,7 @@ wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 Detection deliberately only matches a project you're actually standing inside, so an
 unrelated Trellis checkout sitting next to your current repo won't be picked up.
 
-`nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts, so they have no commands and no category of their own — reach them through `wp-ops docs` instead.
+`docs/nginx/`, `docs/troubleshooting/`, and `docs/bedrock/` hold guides and config templates rather than runnable scripts, so they carry no commands and no CLI category — reach them through `wp-ops docs` instead.
 
 A good deal of what this repo knows is written down rather than scripted, so `wp-ops docs` searches the prose the way `wp-ops search` searches the catalog:
 
@@ -131,8 +131,8 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| **Local Package Development** | Test an in-development plugin/theme branch in a Bedrock site via a Composer `path` repository, before tagging a release | [→](bedrock/local-package-development/README.md) |
-| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp pattern validate` command for canonicalizing block pattern files | [→](bedrock/wp-cli-config/README.md) |
+| **Local Package Development** | Test an in-development plugin/theme branch in a Bedrock site via a Composer `path` repository, before tagging a release | [→](docs/bedrock/local-package-development/README.md) |
+| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp pattern validate` command for canonicalizing block pattern files | [→](docs/bedrock/wp-cli-config/README.md) |
 
 ## WP-CLI
 
@@ -149,9 +149,9 @@ wp-ops wordpress-utilities footer > footer.php   # redirect into your theme
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| **Image Optimization** | WebP/AVIF configuration with automatic format serving | [→](nginx/image-optimization/README.md) |
-| **Browser Caching** | Optimal static asset caching configuration | [→](nginx/browser-caching/README.md) |
-| **Redirects** | Redirect configuration for SEO and URL management | [→](nginx/redirects/README.md) |
+| **Image Optimization** | WebP/AVIF configuration with automatic format serving | [→](docs/nginx/image-optimization/README.md) |
+| **Browser Caching** | Optimal static asset caching configuration | [→](docs/nginx/browser-caching/README.md) |
+| **Redirects** | Redirect configuration for SEO and URL management | [→](docs/nginx/redirects/README.md) |
 
 ## Scripts
 
@@ -182,7 +182,7 @@ Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Cl
 
 | Tool | Description | Docs |
 |------|-------------|------|
-| **Server Diagnostics** | Diagnose PHP-FPM, MariaDB, and server issues | [→](troubleshooting/README.md) |
+| **Server Diagnostics** | Diagnose PHP-FPM, MariaDB, and server issues | [→](docs/troubleshooting/README.md) |
 
 ## Requirements
 

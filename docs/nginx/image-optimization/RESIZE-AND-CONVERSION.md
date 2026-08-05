@@ -226,7 +226,7 @@ This approach:
 
 ### Using the convert-to-webp.sh Script
 
-For convenience, use the [`scripts/images/convert-to-webp.sh`](../../scripts/images/convert-to-webp.sh) script which wraps this workflow:
+For convenience, use the [`scripts/images/convert-to-webp.sh`](../../../scripts/images/convert-to-webp.sh) script which wraps this workflow:
 
 ```bash
 # Basic usage (800x419 default, 1.91:1 aspect ratio for Facebook OG)
@@ -239,7 +239,7 @@ For convenience, use the [`scripts/images/convert-to-webp.sh`](../../scripts/ima
 ./scripts/images/convert-to-webp.sh input.jpg featured-image.webp 90 1200 630
 ```
 
-See the [scripts README](../../scripts/README.md#convert-to-webpsh) for full documentation.
+See the [scripts README](../../../scripts/README.md#convert-to-webpsh) for full documentation.
 
 ## Converting to AVIF
 

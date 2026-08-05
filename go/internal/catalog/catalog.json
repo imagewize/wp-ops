@@ -2122,7 +2122,7 @@
     "requires": [
       "rsync"
     ],
-    "doc": "bedrock/local-package-development/README.md",
+    "doc": "docs/bedrock/local-package-development/README.md",
     "args": [
       {
         "name": "kind",
@@ -2920,6 +2920,80 @@
   },
   {
     "category": "wp-cli",
+    "key": "wp-cli/content-creation/wp-cli-pattern-validate",
+    "description": "Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()",
+    "script_path": "wp-cli/content-creation/wp-cli-pattern-validate.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "docs/bedrock/wp-cli-config/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "required",
+        "required": true,
+        "default": "web/app/themes/theme-name/patterns/",
+        "description": "Pattern file or directory (recursive)",
+        "raw": "path               required  {web/app/themes/theme-name/patterns/}  Pattern file or directory (recursive)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--fix",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Rewrite files in-place with the canonical output",
+        "raw": "--fix              optional  {}  Rewrite files in-place with the canonical output"
+      },
+      {
+        "name": "--diff",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Print a unified diff for files that need changes",
+        "raw": "--diff             optional  {}  Print a unified diff for files that need changes"
+      },
+      {
+        "name": "--log",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/",
+        "raw": "--log              optional  {}  Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/"
+      },
+      {
+        "name": "--log-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "docs/pattern-logs",
+        "description": "Override the log directory",
+        "raw": "--log-dir          optional  {docs/pattern-logs}  Override the log directory"
+      },
+      {
+        "name": "--compliance",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also run project-specific compliance checks",
+        "raw": "--compliance       optional  {}  Also run project-specific compliance checks"
+      },
+      {
+        "name": "--compliance-only",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip Gutenberg validation, only run compliance checks",
+        "raw": "--compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks"
+      }
+    ],
+    "examples": [
+      "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
+    ],
+    "manifest_category": "content",
+    "platform": "wordpress",
+    "display_category": "content",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
     "key": "wp-cli/diagnostics/diagnostic-transients",
     "description": "Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)",
     "script_path": "wp-cli/diagnostics/diagnostic-transients.php",
@@ -3321,80 +3395,6 @@
     "manifest_category": "seo",
     "platform": "wordpress",
     "display_category": "seo",
-    "annotated": true
-  },
-  {
-    "category": "bedrock",
-    "key": "bedrock/wp-cli-config/wp-cli-pattern-validate",
-    "description": "Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()",
-    "script_path": "bedrock/wp-cli-config/wp-cli-pattern-validate.php",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "bedrock/wp-cli-config/README.md",
-    "args": [
-      {
-        "name": "path",
-        "required_raw": "required",
-        "required": true,
-        "default": "web/app/themes/theme-name/patterns/",
-        "description": "Pattern file or directory (recursive)",
-        "raw": "path               required  {web/app/themes/theme-name/patterns/}  Pattern file or directory (recursive)"
-      }
-    ],
-    "flags": [
-      {
-        "name": "--fix",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Rewrite files in-place with the canonical output",
-        "raw": "--fix              optional  {}  Rewrite files in-place with the canonical output"
-      },
-      {
-        "name": "--diff",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Print a unified diff for files that need changes",
-        "raw": "--diff             optional  {}  Print a unified diff for files that need changes"
-      },
-      {
-        "name": "--log",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/",
-        "raw": "--log              optional  {}  Write per-pattern diffs and a summary to docs/pattern-logs/\u003cdate\u003e/"
-      },
-      {
-        "name": "--log-dir",
-        "required_raw": "optional",
-        "required": false,
-        "default": "docs/pattern-logs",
-        "description": "Override the log directory",
-        "raw": "--log-dir          optional  {docs/pattern-logs}  Override the log directory"
-      },
-      {
-        "name": "--compliance",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Also run project-specific compliance checks",
-        "raw": "--compliance       optional  {}  Also run project-specific compliance checks"
-      },
-      {
-        "name": "--compliance-only",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Skip Gutenberg validation, only run compliance checks",
-        "raw": "--compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks"
-      }
-    ],
-    "examples": [
-      "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
-    ],
-    "manifest_category": "content",
-    "platform": "wordpress",
-    "display_category": "content",
     "annotated": true
   },
   {

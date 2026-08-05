@@ -79,9 +79,9 @@ func TestFormatWPCLIHelp_RequireCommand(t *testing.T) {
 	if err != nil {
 		t.Fatalf("catalog.Load: %v", err)
 	}
-	e, ok := c.Lookup("bedrock/wp-cli-config/wp-cli-pattern-validate")
+	e, ok := c.Lookup("wp-cli/content-creation/wp-cli-pattern-validate")
 	if !ok {
-		t.Fatal("bedrock/wp-cli-config/wp-cli-pattern-validate not found in catalog")
+		t.Fatal("wp-cli/content-creation/wp-cli-pattern-validate not found in catalog")
 	}
 
 	help := FormatWPCLIHelp(e, "/srv/www/example.com/current", "pattern validate")

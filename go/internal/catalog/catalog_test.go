@@ -97,7 +97,11 @@ func TestCategoriesSkipsEmpty(t *testing.T) {
 	}
 
 	cats := c.Categories()
-	for _, want := range []string{"nginx", "troubleshooting"} {
+	// Option D moved these three under docs/ and dropped them from
+	// Categories outright — nginx and troubleshooting never carried a
+	// command, and bedrock became documentation once its one command moved
+	// to wp-cli/. Still asserted so re-adding one without commands is caught.
+	for _, want := range []string{"nginx", "troubleshooting", "bedrock"} {
 		for _, got := range cats {
 			if got == want {
 				t.Errorf("Categories() included docs-only category %q, want excluded (no runnable commands)", want)

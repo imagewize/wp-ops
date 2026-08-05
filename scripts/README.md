@@ -1163,7 +1163,7 @@ SITE_ROOT=~/code/example.com/staging/web/app \
 #### Alternative
 
 A Composer `path` repository (see
-[bedrock/local-package-development](../bedrock/local-package-development/README.md))
+[bedrock/local-package-development](../docs/bedrock/local-package-development/README.md))
 is the better fit when you want Composer itself to resolve the package and you are
 happy editing the site's `composer.json`. This script suits a *pinned* dependency
 you would rather leave alone. Either way, `composer update vendor/package` on the

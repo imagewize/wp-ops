@@ -15,10 +15,11 @@ implementation detail rather than the thing `wp-ops list` shows you.
 ### Changed
 
 - **BREAKING** - **`wp-ops patterns` is now `wp-ops content`.** The category
-  absorbed `wp-cli/content-creation/` and `bedrock/`'s pattern validator, so
+  absorbed `wp-cli/content-creation/` and the pattern validator, so
   screenshotting a pattern, creating the page it goes on, and validating the
-  file all live in one group. This is the only removed command form; see
-  Deprecated for the directory categories, which survive.
+  file all live in one group. This is the only removed *category* form; see
+  Deprecated for the directory categories, which survive, and Option D below
+  for the one command key that moved.
 
 - **Categories group by `@category` (domain), not by directory.**
   `displayCategoryFor()` previously honoured the manifest tag only for
@@ -114,12 +115,56 @@ implementation detail rather than the thing `wp-ops list` shows you.
 
 - **README** - `wp-ops nginx` was documented as listing `nginx/`'s guides. It
   never did: categories with zero commands are skipped at registration, so the
-  command has always errored. `nginx/` and `troubleshooting/` are reachable
-  through `wp-ops docs`.
+  command has always errored. Those guides are reachable through
+  `wp-ops docs`, and Option D below removes the dead category outright.
 
 - **`wp-ops list`'s footer** pointed at `wp-ops trellis` as the example
   category, which the domain regrouping would have turned into a broken
   suggestion printed by the tool itself.
+
+- **The catalog generator's `-out` flag** documented itself as "relative to
+  the catalog package directory" but resolved against the working directory.
+  Under `go generate` the two coincide, so this only bit a manual run:
+  `go run ./internal/catalog/gen` from `go/` wrote a stray, untracked
+  `go/catalog.json` and left the real embedded catalog stale — which reads as
+  the generator having done nothing. It now resolves from its own source path,
+  the same working-directory-independent trick `findRepoRoot()` already used.
+
+### Option D — doc-only trees moved under `docs/`
+
+- **BREAKING** - **`bedrock/wp-cli-config/wp-cli-pattern-validate` is now
+  `wp-cli/content-creation/wp-cli-pattern-validate`.** The basename form
+  (`wp-ops wp-cli-pattern-validate`) is unchanged, so only the full-key
+  invocation moves. Its `@category` was already `content`, which is what made
+  `wp-cli/content-creation/` the obvious home — it now sits beside
+  `page-creation` and `import-page-draft`.
+
+- **`nginx/` → `docs/nginx/`, `troubleshooting/` → `docs/troubleshooting/`,
+  `bedrock/` → `docs/bedrock/`.** All three were pure documentation sitting at
+  top level next to command directories, and all three appeared in the curated
+  `Categories` order where they were skipped on every pass for having zero
+  commands. `bedrock/` became documentation the moment its one command left.
+  `wp-ops docs` is unaffected — it walks every `.md` in the repo rather than a
+  category list — and `wp-ops nginx` / `wp-ops bedrock` were already
+  unreachable, so nothing that previously worked stops working.
+
+  Note `nginx/` was never purely `.md`: it carries four `.conf.j2` templates
+  copied into a Trellis `nginx-includes/` directory, and `bedrock/` a
+  reference `wp-cli.yml`. These moved with the guides that describe them
+  rather than being split off — `browser-caching/README.md` and
+  `assets-expiry.conf.j2` are one unit.
+
+- **`.github/workflows/go-build.yml`** - the removed directories are replaced
+  in both path-filter blocks by `docs/**`, which also closes a pre-existing
+  gap: `docs/` has always been embedded into the binary by `assets.go` but
+  never triggered a build when it changed.
+
+- **Inbound links** - 16 markdown links across `README.md`, `AGENTS.md`,
+  `scripts/README.md`, `wordpress-utilities/README.md`, `trellis/security/`,
+  `wp-cli/migration/`, `wp-cli/security/`, and the moved files' own relative
+  paths. `CLAUDE.md`'s repository structure gains a `docs/` section
+  describing the split: design docs as loose `.md` at the top level,
+  operational guides in subdirectories.
 
 ## [4.2.1] - 2026-08-04
 

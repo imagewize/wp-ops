@@ -227,7 +227,7 @@ When adding new utilities:
 These utilities complement other tools in the wp-ops repository:
 
 - **[wp-cli/](../wp-cli/)** - WordPress command-line operations
-- **[nginx/](../nginx/)** - Web server configurations for performance
+- **[nginx/](../docs/nginx/)** - Web server configurations for performance
 - **[scripts/](../scripts/)** - Automation and deployment scripts
 - **[trellis/](../trellis/)** - Server provisioning and deployment
 
@@ -240,7 +240,7 @@ These utilities are provided as-is for use in WordPress projects. Refer to indiv
 For issues or questions:
 - Review the specific utility's README.md
 - Check WordPress Codex and plugin documentation
-- Consult related troubleshooting guides in [../troubleshooting/](../troubleshooting/)
+- Consult related troubleshooting guides in [../troubleshooting/](../docs/troubleshooting/)
 
 ---
 

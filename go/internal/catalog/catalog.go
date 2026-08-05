@@ -266,14 +266,15 @@ func (c *Catalog) FilterByPlatform(platform string) *Catalog {
 // (most-used-first) display order — a direct port of bash's CATEGORIES
 // array. Shared between the generator (task 3) and the catalog's own
 // Categories() method so the two can't drift.
+// Option D of docs/category-organization.md removed three entries here:
+// "nginx" and "troubleshooting" carried zero commands and were skipped on
+// every pass, and "bedrock" became documentation once its one command moved
+// to wp-cli/. All three now live under docs/.
 var Categories = []string{
 	"scripts",
 	"trellis",
 	"wp-cli",
-	"bedrock",
-	"nginx",
 	"wordpress-utilities",
-	"troubleshooting",
 	"mcp-server",
 }
 
@@ -333,10 +334,7 @@ var CategoryDisplayNames = map[string]string{
 	"scripts":             "Scripts",
 	"trellis":             "Trellis",
 	"wp-cli":              "WP-CLI",
-	"bedrock":             "Bedrock",
-	"nginx":               "Nginx",
 	"wordpress-utilities": "WordPress Utilities",
-	"troubleshooting":     "Troubleshooting",
 }
 
 // CategoryBlurbs is a one-line summary per category — shown alongside its

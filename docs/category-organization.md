@@ -1,9 +1,10 @@
 # Category Organization: directories, display categories, and what `wp-ops` shows
 
-> **Status:** Option C **shipped** 2026-08-05 (C1 and C2 together, no files
-> moved). Option D and the `wp-db-backup.sh` follow-up are still open — see
-> [What shipped](#what-shipped) at the foot of this document for the two
-> decisions the analysis left open and how they were settled.
+> **Status:** Options C and D **shipped** 2026-08-05. The
+> `wp-db-backup.sh` follow-up and the `wordpress-utilities/` question are
+> still open — see [What shipped](#what-shipped) at the foot of this
+> document for the decisions the analysis left open and how they were
+> settled.
 > **Problem:** The repo's top-level directories try to encode three different
 > axes at once — *mechanism* (bash/Ansible/PHP), *platform* (Trellis-only vs
 > host-agnostic), and *domain* (backup/monitoring/security) — and a directory
@@ -375,7 +376,7 @@ for the code that reads it, and splitting keeps each diff reviewable.
 
 ## What shipped
 
-Steps 2-4 landed together on 2026-08-05. Steps 5-7 (Option D, `wp-db-backup.sh`,
+Steps 2-5 landed together on 2026-08-05. Steps 6-7 (`wp-db-backup.sh`,
 `wordpress-utilities/`) remain open.
 
 **The two open decisions, settled.**
@@ -407,3 +408,28 @@ a real display category in 4.2.1 and is now `wp-ops content`.
 --platform wordpress` returns 19 commands in 7 groups and **zero backup
 commands** — §C2's worked example, holding for real rather than by accident of
 missing tags. Step 6 closes it.
+
+### Option D
+
+`nginx/` → `docs/nginx/`, `troubleshooting/` → `docs/troubleshooting/`,
+`bedrock/` → `docs/bedrock/`, and `bedrock/`'s one command to
+`wp-cli/content-creation/` (joining `page-creation` and `import-page-draft`
+under the same `content` domain). All three names are gone from `Categories`,
+so the curated order no longer carries entries that are skipped on every pass.
+
+Two wrinkles the analysis didn't cover, both minor:
+
+- **`nginx/` is not purely documentation.** It carries four `.conf.j2`
+  templates that get copied into a Trellis `nginx-includes/` directory — the
+  "0 commands, 5 docs" count only measured `.md`. They moved with their
+  guides rather than being split off: `browser-caching/README.md` and
+  `assets-expiry.conf.j2` are one unit, and separating them to keep `docs/`
+  pure `.md` would cost more than the impurity does. Same for
+  `bedrock/wp-cli-config/wp-cli.yml`.
+- **`assets.go` and the CI path filters** both enumerate these directories.
+  The `go-build.yml` filters gained `docs/**` in place of the three removed
+  entries, which also closes a pre-existing gap: `docs/` has always been
+  embedded in the binary but never triggered a build.
+
+`wp-ops docs` was unaffected, as predicted — it walks every `.md` in the repo
+rather than a category list.
