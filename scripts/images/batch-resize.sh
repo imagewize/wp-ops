@@ -39,7 +39,7 @@
 # @flag     --quality  optional  {85}  Quality for jpg/webp, 1-100
 # @flag     --dry-run  optional  {}  Show what would be done without processing
 # @flag     --delete   optional  {}  Delete original files after successful conversion
-# @example  wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png
+# @example  wp-ops batch-resize -w 1200 -H 630 *.png
 
 set -euo pipefail
 

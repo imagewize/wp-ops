@@ -33,7 +33,7 @@
 # @flag     --dry-run    optional  {}  Show what would be done without making changes
 # @flag     --list       optional  {}  List found files without replacing
 # @flag     --size       optional  {}  Also show file sizes in listing
-# @example  wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh
+# @example  wp-ops find-and-replace-files -l -s create-pr.sh
 # @doc      scripts/misc/README-FIND-AND-REPLACE.md
 
 set -euo pipefail

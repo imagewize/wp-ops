@@ -29,7 +29,7 @@
 # @runs     local
 # @requires git
 # @arg      n  optional  {10}  Number of commits to show
-# @example  wp-ops scripts/git/git-log-oneline 20
+# @example  wp-ops git-log-oneline 20
 
 set -euo pipefail
 

@@ -301,8 +301,8 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/git/create-pr --ai=claude",
-      "wp-ops scripts/git/create-pr main \"Add new feature\" --no-ai"
+      "wp-ops create-pr --ai=claude",
+      "wp-ops create-pr main \"Add new feature\" --no-ai"
     ],
     "manifest_category": "git",
     "platform": "any",
@@ -354,7 +354,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet"
+      "wp-ops gh-traffic imagewize/nynaeve --quiet"
     ],
     "manifest_category": "git",
     "platform": "any",
@@ -382,7 +382,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/git/git-log-oneline 20"
+      "wp-ops git-log-oneline 20"
     ],
     "manifest_category": "git",
     "platform": "any",
@@ -470,7 +470,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png"
+      "wp-ops batch-resize -w 1200 -H 630 *.png"
     ],
     "manifest_category": "images",
     "platform": "any",
@@ -600,7 +600,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/images/make-square-webp input.webp output.webp --left-pad 200 --size 2000"
+      "wp-ops make-square-webp input.webp output.webp --left-pad 200 --size 2000"
     ],
     "manifest_category": "images",
     "platform": "any",
@@ -674,7 +674,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/images/openverse_download --url https://example.com/img.jpg --convert-webp"
+      "wp-ops openverse_download --url https://example.com/img.jpg --convert-webp"
     ],
     "manifest_category": "images",
     "platform": "any",
@@ -758,7 +758,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10"
+      "wp-ops openverse_search sunset --license cc0 --limit 10"
     ],
     "manifest_category": "images",
     "platform": "any",
@@ -916,7 +916,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png"
+      "wp-ops convert-screenshot-for-claude .playwright/screenshots/test.png"
     ],
     "manifest_category": "misc",
     "platform": "any",
@@ -992,7 +992,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh"
+      "wp-ops find-and-replace-files -l -s create-pr.sh"
     ],
     "manifest_category": "misc",
     "platform": "any",
@@ -1068,7 +1068,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/misc/post-count --ssh web@example.com --year 2026"
+      "wp-ops post-count --ssh web@example.com --year 2026"
     ],
     "manifest_category": "misc",
     "platform": "wordpress",
@@ -1132,8 +1132,8 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/404-checker https://example.com",
-      "wp-ops scripts/monitoring/404-checker --mode spider https://example.com"
+      "wp-ops 404-checker https://example.com",
+      "wp-ops 404-checker --mode spider https://example.com"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
@@ -1240,7 +1240,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name \"QA Bot\""
+      "wp-ops cf7-smoke-test https://example.com/contact/ --name \"QA Bot\""
     ],
     "manifest_category": "monitoring",
     "platform": "wordpress",
@@ -1347,7 +1347,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/redirect-check https://example.com/old-page/"
+      "wp-ops redirect-check https://example.com/old-page/"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
@@ -1384,7 +1384,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/"
+      "wp-ops remote-ttfb-ua web@example.com https://example.com/"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
@@ -1474,7 +1474,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/server-monitor web@example.com"
+      "wp-ops server-monitor web@example.com"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
@@ -1640,7 +1640,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/monitoring/ttfb-test https://example.com"
+      "wp-ops ttfb-test https://example.com"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
@@ -1722,7 +1722,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/patterns/center-screenshots ./screenshots 900 600"
+      "wp-ops center-screenshots ./screenshots 900 600"
     ],
     "manifest_category": "content",
     "platform": "any",
@@ -1820,7 +1820,7 @@
       }
     ],
     "examples": [
-      "PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark"
+      "PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops screenshot-patterns hero-dark"
     ],
     "manifest_category": "content",
     "platform": "wordpress",
@@ -1898,7 +1898,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/patterns/screenshot-url http://example.test/my-page/ --out=pattern.png"
+      "wp-ops screenshot-url http://example.test/my-page/ --out=pattern.png"
     ],
     "manifest_category": "content",
     "platform": "any",
@@ -1935,7 +1935,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/patterns/trim-screenshots ./screenshots 900"
+      "wp-ops trim-screenshots ./screenshots 900"
     ],
     "manifest_category": "content",
     "platform": "any",
@@ -2035,7 +2035,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build \"npm ci \u0026\u0026 npx webpack\""
+      "wp-ops deploy-plugin-wporg warder-cookie-consent --build \"npm ci \u0026\u0026 npx webpack\""
     ],
     "manifest_category": "release",
     "platform": "any",
@@ -2083,7 +2083,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/release/release-plugin 2.5.3 --commit"
+      "wp-ops release-plugin 2.5.3 --commit"
     ],
     "manifest_category": "release",
     "platform": "any",
@@ -2140,7 +2140,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit"
+      "wp-ops release-theme nynaeve 1.0.0 --commit"
     ],
     "manifest_category": "release",
     "platform": "any",
@@ -2184,7 +2184,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1"
+      "wp-ops upload-release-asset imagewize/warder-cookie-consent v1.3.1"
     ],
     "manifest_category": "release",
     "platform": "any",
@@ -2241,7 +2241,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/sync/rsync-package-to-site theme my-theme"
+      "wp-ops rsync-package-to-site theme my-theme"
     ],
     "manifest_category": "sync",
     "platform": "any",
@@ -2268,7 +2268,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/sync/rsync-theme --dry-run"
+      "wp-ops rsync-theme --dry-run"
     ],
     "manifest_category": "sync",
     "platform": "any",
@@ -2296,8 +2296,8 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/woocommerce/create-product-variations",
-      "wp-ops scripts/woocommerce/create-product-variations --dry-run"
+      "wp-ops create-product-variations",
+      "wp-ops create-product-variations --dry-run"
     ],
     "manifest_category": "misc",
     "platform": "trellis",
@@ -2820,8 +2820,8 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/security/check-deny-ips",
-      "wp-ops trellis/security/check-deny-ips --full"
+      "wp-ops check-deny-ips",
+      "wp-ops check-deny-ips --full"
     ],
     "manifest_category": "security",
     "platform": "trellis",
@@ -2850,7 +2850,7 @@
       }
     ],
     "examples": [
-      "wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8"
+      "wp-ops check-ips 1.2.3.4 5.6.7.8"
     ],
     "manifest_category": "security",
     "platform": "trellis",
@@ -2944,8 +2944,8 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673",
-      "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
+      "wp-ops import-page-draft draft.html 7673",
+      "wp-ops import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
     ],
     "manifest_category": "content",
     "platform": "trellis",
@@ -2990,7 +2990,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/content-creation/page-creation about-page-content.html \"About\" about"
+      "wp-ops page-creation about-page-content.html \"About\" about"
     ],
     "manifest_category": "content",
     "platform": "trellis",
@@ -3064,7 +3064,7 @@
       }
     ],
     "examples": [
-      "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
+      "wp-ops wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
     ],
     "manifest_category": "content",
     "platform": "wordpress",
@@ -3083,7 +3083,7 @@
     ],
     "doc": "wp-cli/diagnostics/README.md",
     "examples": [
-      "wp-ops wp-cli/diagnostics/diagnostic-transients"
+      "wp-ops diagnostic-transients"
     ],
     "manifest_category": "diagnostics",
     "platform": "wordpress",
@@ -3102,7 +3102,7 @@
     ],
     "doc": "wp-cli/diagnostics/README.md",
     "examples": [
-      "wp-ops wp-cli/diagnostics/list-posts-count"
+      "wp-ops list-posts-count"
     ],
     "manifest_category": "diagnostics",
     "platform": "trellis",
@@ -3210,7 +3210,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/security/scanner-general"
+      "wp-ops scanner-general"
     ],
     "manifest_category": "security",
     "platform": "wordpress",
@@ -3239,7 +3239,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/security/scanner-targeted"
+      "wp-ops scanner-targeted"
     ],
     "manifest_category": "security",
     "platform": "wordpress",
@@ -3268,7 +3268,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/security/scanner-wrapper"
+      "wp-ops scanner-wrapper"
     ],
     "manifest_category": "security",
     "platform": "wordpress",
@@ -3313,7 +3313,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
+      "wp-ops blog-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
@@ -3496,7 +3496,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
+      "wp-ops orphan-pages-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
@@ -3541,7 +3541,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
+      "wp-ops page-audit --path web/wp --output reports/seo"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
@@ -3585,7 +3585,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
+      "wp-ops redirect-audit --url https://example.com --verbose"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
@@ -3632,7 +3632,7 @@
       }
     ],
     "examples": [
-      "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
+      "wp-ops schema-audit https://example.com --pages /,/services/,/contact/"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",

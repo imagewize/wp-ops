@@ -46,7 +46,7 @@
 # @arg      package-slug  required  {my-plugin}  Plugin/theme directory slug at the destination
 # @arg      source-dir    optional  {.}  Package working tree (default: current directory)
 # @flag     --dry-run     optional  {}  Preview the sync without writing anything
-# @example  wp-ops scripts/sync/rsync-package-to-site theme my-theme
+# @example  wp-ops rsync-package-to-site theme my-theme
 # @doc      docs/bedrock/local-package-development/README.md
 set -euo pipefail
 

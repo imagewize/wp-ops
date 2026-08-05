@@ -17,7 +17,7 @@
 # @requires ssh
 # @arg      ssh-target            required  {web@example.com}  SSH target to connect to
 # @arg      php-fpm-pool-pattern  optional  {php-fpm: pool}  Pattern to match PHP-FPM pool processes
-# @example  wp-ops scripts/monitoring/server-monitor web@example.com
+# @example  wp-ops server-monitor web@example.com
 # @doc      trellis/monitoring/README.md
 
 set -euo pipefail

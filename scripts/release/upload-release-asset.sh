@@ -20,7 +20,7 @@
 # @arg      github-repo  required  {imagewize/warder-cookie-consent}  GitHub repo in owner/repo form
 # @arg      tag          required  {v1.3.1}  Release tag to attach the asset to
 # @arg      zip-name     optional  {warder-cookie-consent.zip}  Output zip filename (default: derived from repo slug)
-# @example  wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1
+# @example  wp-ops upload-release-asset imagewize/warder-cookie-consent v1.3.1
 
 set -e
 

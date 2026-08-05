@@ -35,7 +35,7 @@
 # @runs     local
 # @requires node
 # @arg      pattern-slug  required  {hero-dark}  Pattern slug(s) to screenshot (repeatable)
-# @example  PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark
+# @example  PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops screenshot-patterns hero-dark
 # @doc      scripts/patterns/README.md
 
 set -euo pipefail

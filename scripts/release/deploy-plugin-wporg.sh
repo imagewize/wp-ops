@@ -63,7 +63,7 @@ err()  { echo -e "${RED}✗ $1${NC}" >&2; }
 # @flag     --message     optional  {"Release <version>"}  Commit message
 # @flag     --commit      optional  {}  Actually run svn ci (prompts for SVN password)
 # @flag     --force       optional  {}  Allow re-deploying a tag that already exists
-# @example  wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build "npm ci && npx webpack"
+# @example  wp-ops deploy-plugin-wporg warder-cookie-consent --build "npm ci && npx webpack"
 ok()   { echo -e "${GREEN}  ✓ $1${NC}"; }
 info() { echo -e "${BLUE}$1${NC}"; }
 warn() { echo -e "${YELLOW}⚠ $1${NC}"; }

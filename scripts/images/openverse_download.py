@@ -13,7 +13,7 @@
 # @flag     --quality       optional  {75}  WebP quality
 # @flag     --resize        optional  {0}  Resize width (0 to skip)
 # @flag     --keep-original optional  {}  Keep the original file after WebP conversion
-# @example  wp-ops scripts/images/openverse_download --url https://example.com/img.jpg --convert-webp
+# @example  wp-ops openverse_download --url https://example.com/img.jpg --convert-webp
 
 import argparse
 import os
