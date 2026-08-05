@@ -145,6 +145,31 @@ func TestLint_MalformedCommandReportsEveryProblem(t *testing.T) {
 	}
 }
 
+// TestLint_PlatformValues guards the @platform directive added for Option C2
+// (docs/category-organization.md). A typo has to fail the build: caught here
+// it's one message, caught later the command silently vanishes from every
+// --platform filter, which reads as "no such command" rather than "bad tag".
+func TestLint_PlatformValues(t *testing.T) {
+	for _, tc := range []struct {
+		platform string
+		wantErr  bool
+	}{
+		{"trellis", false},
+		{"wordpress", false},
+		{"any", false},
+		{"", false}, // absent is legal; the directive is optional
+		{"Trellis", true},
+		{"agnostic", true},
+		{"wp", true},
+	} {
+		cmd := &Command{Key: "test/cmd", Desc: "a description", Platform: tc.platform}
+		errs := Lint(cmd, "../../..")
+		if gotErr := len(errs) > 0; gotErr != tc.wantErr {
+			t.Errorf("Lint(@platform %q) errors = %v, want error: %v", tc.platform, errs, tc.wantErr)
+		}
+	}
+}
+
 func TestDirectiveLines_StopsAtLine80(t *testing.T) {
 	// Sanity check on the head-80 boundary using an existing fixture — all
 	// its directives are well within the first 80 lines.

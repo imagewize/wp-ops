@@ -243,6 +243,19 @@ func Lint(cmd *Command, repoRoot string) []string {
 		}
 	}
 
+	// Spelled out here rather than shared with catalog.Platforms, matching
+	// how @runs' values are handled: manifest is the lower layer and
+	// importing catalog would invert the dependency. A typo caught here
+	// fails the build; caught later it silently drops the command out of
+	// every --platform filter.
+	if cmd.Platform != "" {
+		switch cmd.Platform {
+		case "trellis", "wordpress", "any":
+		default:
+			errs = append(errs, fmt.Sprintf("%s: @platform '%s' must be trellis, wordpress, or any", cmd.Key, cmd.Platform))
+		}
+	}
+
 	for _, p := range append(append([]Param{}, cmd.Args...), cmd.Flags...) {
 		if p.Name == "" || p.RequiredRaw == "" {
 			errs = append(errs, fmt.Sprintf("%s: malformed '%s' (expected: name required|optional {choices-or-default} description)", cmd.Key, p.Raw))
