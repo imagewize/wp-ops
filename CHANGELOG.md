@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **The two `convert-to-webp` commands were renamed to `jpg-to-webp` and
+  `png-to-webp`**, in `scripts/images/` and `scripts/patterns/` respectively.
+  They were the catalog's only basename collision, which meant they were the
+  only two commands `wp-ops <name>` could not resolve and the only two whose
+  usage line still printed a full key with directory separators
+  (`Usage: wp-ops scripts/patterns/convert-to-webp [input-file] [options]`) —
+  5.1.0's short-name work correctly declines to abbreviate an ambiguous name.
+  Renaming removes the ambiguity at its source rather than teaching the CLI to
+  paper over it, and the new names say which format each one consumes, which
+  the shared name never did: one center-crops a JPG to the Facebook OG ratio
+  via `cwebp`, the other batch-converts `pattern-*.png` screenshots via
+  `sharp`. Every basename in the catalog is now unique, so every usage line
+  names a command that resolves if pasted back.
+
+  Callers and docs were updated with them (`screenshot-patterns.sh`, both
+  `README.md` files, `docs/nginx/image-optimization/RESIZE-AND-CONVERSION.md`).
+  Any script invoking the old filenames needs the same rename.
+
 ## [5.1.0] - 2026-08-05
 
 The interactive picker stops behaving like a separate application. It renders

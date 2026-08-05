@@ -26,7 +26,7 @@ Back up a Trellis site database with WP-CLI, gzip it, and prune backups older th
 Bare-basename resolution across the whole catalog already exists in both CLIs —
 bash `wp-ops:2262-2281`, Go `go/cmd/root.go:95-104` — with ambiguity detection and
 did-you-mean suggestions. Every script the earlier draft proposed annotating
-(`db-backup`, `site-backup`, `batch-resize`, `convert-to-webp`,
+(`db-backup`, `site-backup`, `batch-resize`, `jpg-to-webp`,
 `make-square-webp`, `page-creation`) already resolves by short name.
 
 `@key` would also have registered each alias as a second `COMMAND_FILE` entry,
@@ -192,7 +192,7 @@ should stay where they are.
 | `traffic-analysis.sh` | imagewize.com | **Skip** — superseded by `scripts/monitoring/traffic-monitor.sh` |
 | `backup-db.sh` | imagewize.com | **Skip** — superseded by `scripts/backup/db-backup.sh` |
 | `capture-pattern-screenshots*.sh`, `center-*`, `trim-*` | imagewize.com | **Skip** — superseded by `scripts/patterns/screenshot-patterns.sh` |
-| `convert-images.sh` | imagewize.com | **Skip** — theme-specific; `scripts/images/convert-to-webp.sh` covers it |
+| `convert-images.sh` | imagewize.com | **Skip** — theme-specific; `scripts/images/jpg-to-webp.sh` covers it |
 | `sync-min.sh` | imagewize.com | **Skip** — specific to the `min` package checkout; `bedrock/local-package-development/` documents the general pattern |
 | `run-remote-audits.sh`, `init-client-repo.sh` | seo-strategy | **Skip** — workflow glue tied to the seo-strategy repo layout |
 
