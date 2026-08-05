@@ -22,6 +22,7 @@
 #
 # @desc     Run traffic, security, AI-bot, and error monitoring together and save timestamped reports
 # @category monitoring
+# @platform trellis
 # @runs     server
 # @requires gawk
 # @arg      hours   optional  {24}  How many hours back to analyze

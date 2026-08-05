@@ -26,6 +26,7 @@
  *
  * @desc     Temporary admin user creation snippet for functions.php (remove after use)
  * @category snippets
+ * @platform wordpress
  * @doc      wordpress-utilities/snippets/admin-user-creation-wpcli.md
  */
 

@@ -25,6 +25,7 @@
 #
 # @desc     Show the last N git commits as compact one-liners
 # @category git
+# @platform any
 # @runs     local
 # @requires git
 # @arg      n  optional  {10}  Number of commits to show

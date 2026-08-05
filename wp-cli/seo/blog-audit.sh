@@ -16,6 +16,7 @@
 #
 # @desc     Analyze blog posts for content categorization and quality metrics
 # @category seo
+# @platform wordpress
 # @runs     local
 # @requires wp
 # @flag     --path      optional  {web/wp}  WordPress path for WP-CLI

@@ -22,6 +22,7 @@
 #
 # @desc     Bump plugin version and generate an AI changelog entry (Claude or Codex)
 # @category release
+# @platform any
 # @runs     local
 # @requires claude
 # @arg      version    required  {2.5.3}  New plugin version

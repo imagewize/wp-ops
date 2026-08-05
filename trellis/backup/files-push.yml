@@ -3,6 +3,7 @@
 #
 # @desc     Push development's uploads directory to a remote environment via rsync
 # @category backup
+# @platform trellis
 # @runs     local
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml

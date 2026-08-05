@@ -15,6 +15,7 @@
 #
 # @desc     Measure TTFB for a URL over several requests and write a report with recommendations
 # @category monitoring
+# @platform any
 # @runs     local
 # @requires curl bc
 # @arg      url  required  {https://example.com}  URL to test

@@ -30,7 +30,8 @@
 #   npx playwright install chromium
 #
 # @desc     Screenshot WordPress block patterns end-to-end (temp page, Playwright capture, WebP convert)
-# @category patterns
+# @category content
+# @platform wordpress
 # @runs     local
 # @requires node
 # @arg      pattern-slug  required  {hero-dark}  Pattern slug(s) to screenshot (repeatable)

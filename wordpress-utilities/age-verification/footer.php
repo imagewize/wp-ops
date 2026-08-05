@@ -11,7 +11,8 @@
  * wp_enqueue_style('age-verification-modal', get_template_directory_uri() . '/age-verification/modal.css');
  *
  * @desc     Age verification modal HTML template (ACF-driven button content)
- * @category age-verification
+ * @category snippets
+ * @platform wordpress
  * @doc      wordpress-utilities/age-verification/README.md
  */
 

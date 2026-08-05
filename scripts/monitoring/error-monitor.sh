@@ -24,6 +24,7 @@
 #
 # @desc     Surface errors from Nginx, PHP-FPM, WordPress, MySQL, and systemd for a domain
 # @category monitoring
+# @platform trellis
 # @runs     server
 # @arg      domain       optional  {example.com}  Site domain (used to find /srv/www/<domain>/logs/)
 # @arg      hours        optional  {24}  How many hours back to analyze

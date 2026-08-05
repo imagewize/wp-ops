@@ -20,6 +20,7 @@
 #
 # @desc     Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)
 # @category misc
+# @platform any
 # @runs     local
 # @requires convert
 # @arg      png-file  required  {test-screenshot.png}  PNG file to convert

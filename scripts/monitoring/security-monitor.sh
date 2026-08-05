@@ -12,6 +12,7 @@
 #
 # @desc     Detect malicious activity (wp-login/xmlrpc abuse, high-volume IPs) in an Nginx access log
 # @category monitoring
+# @platform trellis
 # @runs     server
 # @requires gawk
 # @arg      log_file        optional  {/srv/www/example.com/logs/access.log}  Nginx access log path

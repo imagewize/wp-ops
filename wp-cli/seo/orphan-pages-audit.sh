@@ -16,6 +16,7 @@
 #
 # @desc     Find WordPress pages that exist but aren't linked from navigation menus
 # @category seo
+# @platform wordpress
 # @runs     local
 # @requires wp
 # @flag     --path      optional  {web/wp}  WordPress path for WP-CLI

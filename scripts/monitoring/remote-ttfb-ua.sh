@@ -16,6 +16,7 @@
 #
 # @desc     Measure TTFB from the server itself, across multiple user agents (default, Googlebot, AhrefsBot, Screaming Frog)
 # @category monitoring
+# @platform any
 # @runs     local
 # @requires ssh
 # @arg      ssh-host  required  {web@example.com}  SSH user@host to run curl from

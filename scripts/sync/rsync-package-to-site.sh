@@ -39,6 +39,7 @@
 # manifest block is placed after that range to avoid altering its output.
 # @desc     Rsync a plugin/theme working copy into a Bedrock site for testing unreleased changes
 # @category sync
+# @platform any
 # @runs     local
 # @requires rsync
 # @arg      kind          required  {plugin|theme}  Package type

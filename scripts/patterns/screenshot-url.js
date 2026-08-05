@@ -24,7 +24,8 @@
  *   node screenshot-url.js http://example.test/ --out=full.png --full-page --width=1920 --height=1080
  *
  * @desc     Screenshot a URL with Playwright, targeting a CSS selector or the full page
- * @category patterns
+ * @category content
+ * @platform any
  * @runs     local
  * @requires node
  * @arg      url         required  {http://example.test/my-page/}  URL to screenshot

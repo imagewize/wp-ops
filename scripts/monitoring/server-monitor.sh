@@ -12,6 +12,7 @@
 #
 # @desc     Live CPU, memory, disk, and PHP-FPM process snapshot of a server over SSH
 # @category monitoring
+# @platform any
 # @runs     local
 # @requires ssh
 # @arg      ssh-target            required  {web@example.com}  SSH target to connect to

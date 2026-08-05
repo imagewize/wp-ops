@@ -5,6 +5,7 @@
 #
 # @desc     Convert a JPG to WebP with center-crop (Facebook OG ratio by default)
 # @category images
+# @platform any
 # @runs     local
 # @requires cwebp
 # @arg      input   required  {input.jpg}  Source JPG file

@@ -18,6 +18,7 @@
 #
 # @desc     Audit redirect chains: HTTPS pages, HTTP->HTTPS, and www canonicalization
 # @category seo
+# @platform wordpress
 # @runs     local
 # @requires curl
 # @flag     --url      required  {https://example.com}  URL to test (repeatable)

@@ -14,6 +14,7 @@
 #
 # @desc     Upload a zipped plugin/theme as a GitHub Release asset (for when the release workflow didn't trigger)
 # @category release
+# @platform any
 # @runs     local
 # @requires gh
 # @arg      github-repo  required  {imagewize/warder-cookie-consent}  GitHub repo in owner/repo form

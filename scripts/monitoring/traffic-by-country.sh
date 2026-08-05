@@ -36,6 +36,7 @@
 #
 # @desc     Filter a server's Nginx access log by visitor country and show real page visits
 # @category monitoring
+# @platform trellis
 # @runs     local
 # @requires ssh python3 geoip2fast
 # @arg      country-code  optional  {NL}  Two-letter ISO country code to filter for

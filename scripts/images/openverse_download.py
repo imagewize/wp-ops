@@ -3,6 +3,7 @@
 #
 # @desc     Download Openverse image URLs (single, repeated, or from a manifest file) and optionally convert to WebP
 # @category images
+# @platform any
 # @runs     local
 # @requires python3
 # @flag     --url           optional  {https://...}  Image URL (repeatable)

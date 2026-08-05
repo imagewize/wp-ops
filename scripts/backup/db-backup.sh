@@ -22,6 +22,7 @@
 #
 # @desc     Back up a remote site's database over SSH straight to your machine
 # @category backup
+# @platform trellis
 # @runs     local
 # @requires ssh
 # @arg      site-name    optional  {example.com}  Site name under /srv/www, as in wordpress_sites.yml

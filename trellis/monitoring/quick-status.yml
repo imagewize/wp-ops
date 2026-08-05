@@ -3,6 +3,7 @@
 #
 # @desc     Quick health check for a site: recent status codes, errors, and service status
 # @category monitoring
+# @platform trellis
 # @runs     local
 # @requires ansible-playbook
 # @arg      site       required  {example.com}  Site name as in wordpress_sites.yml

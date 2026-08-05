@@ -3,6 +3,7 @@
 #
 # @desc     Pad an image onto a square canvas and export it as WebP
 # @category images
+# @platform any
 # @runs     local
 # @requires magick
 # @arg      input           required  {input.webp}  Source image

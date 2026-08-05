@@ -14,6 +14,7 @@
 #
 # @desc     Check a site's internal links for broken (4xx/5xx) responses
 # @category monitoring
+# @platform any
 # @runs     local
 # @requires curl
 # @arg      site-url  required  {https://example.com}  Site to check

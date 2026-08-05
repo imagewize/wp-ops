@@ -14,6 +14,7 @@
  *
  * @desc     Run both targeted and general malware scanners in sequence
  * @category security
+ * @platform wordpress
  * @runs     local
  * @requires wp
  * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
