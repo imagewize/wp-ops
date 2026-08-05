@@ -5,6 +5,122 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-08-05
+
+Implements Option C of `docs/category-organization.md`: the catalog now groups
+by **domain** and filters by **platform**, both as manifest metadata. No files
+moved and no command keys changed — the directory layout is now an
+implementation detail rather than the thing `wp-ops list` shows you.
+
+### Changed
+
+- **BREAKING** - **`wp-ops patterns` is now `wp-ops content`.** The category
+  absorbed `wp-cli/content-creation/` and `bedrock/`'s pattern validator, so
+  screenshotting a pattern, creating the page it goes on, and validating the
+  file all live in one group. This is the only removed command form; see
+  Deprecated for the directory categories, which survive.
+
+- **Categories group by `@category` (domain), not by directory.**
+  `displayCategoryFor()` previously honoured the manifest tag only for
+  `scripts/**` subcategories with 4+ commands, so `Monitoring` meant
+  *`scripts/monitoring` only* and the four `trellis/monitoring` playbooks sat
+  under `Trellis`. Now every command's `@category` wins.
+
+  The concrete payoff: **`wp-ops backup` lists all nine backup commands** —
+  three shell scripts under `scripts/backup/` and six Ansible playbooks under
+  `trellis/backup/` — which the two-directory split made impossible. Same for
+  `security` (3 under `wp-cli/`, 2 under `trellis/`) and `monitoring` (13 + 4).
+  41% of the catalog previously lived in a domain no single directory
+  contained.
+
+  `wp-ops list` goes from 10 directory-ish groups to 13 domain groups:
+  Monitoring (17), Backup (9), Content (8), Images (7), SEO (6), Security (5),
+  Snippets (5), Misc (5), Release (4), Git (3), MCP Server (3), Diagnostics
+  (2), Sync (2).
+
+- **Singletons merged into neighbours** rather than left as one-command groups
+  or swept into a catch-all. Dropping the promotion threshold would otherwise
+  have produced `WooCommerce (1)`, `Updater (1)`, and `WP-CLI Config (1)` as
+  top-level entries. The merges: `patterns` + `content-creation` +
+  `wp-cli-config` → `content`; `age-verification` → `snippets`; `woocommerce`
+  + `updater` → `misc`. The rejected alternative — a 4+ threshold with the
+  rest in `Misc` — would have bucketed 20 commands across ten unrelated
+  domains, which is less navigable than the split it replaced.
+
+- **13 `@category` values normalized.** The tags the analysis flagged as
+  directory echoes rather than domains (`wp-cli-config`, `age-verification`,
+  `updater`) are the same ones the merges absorbed.
+
+- **`wp-ops search` badges every result with its platform**, e.g.
+  `scripts/backup/db-backup  [trellis]  Back up a remote site's database…`.
+  Suppressed under `--platform`, where every row would carry the same value.
+
+- **The interactive picker** shows the platform tag per row, faint so it stays
+  subordinate to `(server)`. Domain grouping puts an Ansible playbook directly
+  above a plain-WP shell script under one header, which is exactly where the
+  row needs to say which stack it wants.
+
+### Added
+
+- **`@platform` manifest directive**, on all 76 commands. Three values, because
+  two aren't enough — `scripts/images/batch-resize.sh` needs no WordPress at
+  all, while `wp-cli/security/scanner-targeted.php` needs *a* WordPress but no
+  Trellis, and calling both "agnostic" answers the wrong question:
+
+  | Value | Means | Count |
+  | --- | --- | ---: |
+  | `trellis` | Needs a Trellis project, vault, `/srv/www`, or the `trellis` CLI | 27 |
+  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 19 |
+  | `any` | No WordPress involved | 30 |
+
+  Deliberately its own field rather than derived from `@requires`, which names
+  binaries and breaks in both directions: `scripts/backup/db-backup.sh`
+  declares only `@requires ssh` yet hard-codes `/srv/www` and `web@host`, while
+  `@requires wp` says nothing about whether the target must be Trellis. Also
+  distinct from `@runs local|server`, which says where a command *executes*,
+  not what stack it needs.
+
+- **`--platform` filter on `wp-ops list` and `wp-ops search`.**
+  `wp-ops list --platform wordpress` answers "what can I run against this
+  site" for a non-Trellis host. An unknown value is rejected up front rather
+  than silently filtering to nothing, which would read as "no such commands
+  exist" instead of "no such platform".
+
+  This makes a real coverage hole **visible rather than closing it**:
+  `--platform wordpress` returns 19 commands and **zero backup commands**, because
+  all nine assume Trellis. Previously `wp-ops backup` listed all nine happily
+  and you found out by running one. A `wp-db-backup.sh` tagged `wordpress` is
+  the tracked follow-up.
+
+- **`catalog.Platforms`** as the single source of truth for legal values,
+  shared by the flag usage strings and the validator so `list` and `search`
+  can't drift.
+
+- **`manifest.Lint()` validates `@platform`**, alongside its existing `@runs`
+  check, so a typo fails the build (`go generate ./...` in `go-build.yml`)
+  rather than silently dropping that command out of every `--platform` filter.
+
+### Deprecated
+
+- **Directory categories are now hidden aliases.** `wp-ops trellis
+  database-backup`, `wp-ops wp-cli scanner-wrapper`, `wp-ops scripts
+  db-backup`, `wp-ops bedrock wp-cli-pattern-validate`, and `wp-ops
+  wordpress-utilities <snippet>` all still resolve — they're registered from
+  the directory grouping rather than the display grouping, and hidden from
+  `--help` so the CLI presents one set of categories instead of two competing
+  ones. Prefer the domain form (`wp-ops backup database-backup`).
+
+### Fixed
+
+- **README** - `wp-ops nginx` was documented as listing `nginx/`'s guides. It
+  never did: categories with zero commands are skipped at registration, so the
+  command has always errored. `nginx/` and `troubleshooting/` are reachable
+  through `wp-ops docs`.
+
+- **`wp-ops list`'s footer** pointed at `wp-ops trellis` as the example
+  category, which the domain regrouping would have turned into a broken
+  suggestion printed by the tool itself.
+
 ## [4.2.1] - 2026-08-04
 
 ### Fixed

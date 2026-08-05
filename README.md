@@ -36,14 +36,26 @@ wp-ops init
 
 wp-ops                       # interactive picker
 wp-ops --help                # list all categories
-wp-ops trellis --help        # list commands in one category
+wp-ops backup --help         # list commands in one category
 wp-ops <category> <command> [args...]
 
 wp-ops search webp           # find a command by name or description
+wp-ops list --platform wordpress   # only what runs on any WordPress site
 wp-ops docs oom              # search the guides, not just the commands
 wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
+
+Categories group by **domain**, not by directory: `wp-ops backup` lists all nine
+backup commands whether they're Ansible playbooks under `trellis/` or shell scripts
+under `scripts/`. The directory names still work as aliases (`wp-ops trellis
+database-backup`), they're just no longer how the catalog presents itself.
+
+Every command also carries a **platform** — `trellis` (needs a Trellis project),
+`wordpress` (any WP install: Valet, Herd, cPanel, Bedrock, Trellis), or `any` (no
+WordPress involved). `wp-ops search` badges each result with it, and
+`wp-ops list --platform <value>` filters to what will actually run against the site
+in front of you.
 
 The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
 
@@ -74,7 +86,7 @@ wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 Detection deliberately only matches a project you're actually standing inside, so an
 unrelated Trellis checkout sitting next to your current repo won't be picked up.
 
-`nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts; `wp-ops nginx` lists those documents instead of commands.
+`nginx/` and `troubleshooting/` contain guides and Nginx config templates rather than runnable scripts, so they have no commands and no category of their own — reach them through `wp-ops docs` instead.
 
 A good deal of what this repo knows is written down rather than scripted, so `wp-ops docs` searches the prose the way `wp-ops search` searches the catalog:
 

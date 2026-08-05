@@ -1,6 +1,9 @@
 # Category Organization: directories, display categories, and what `wp-ops` shows
 
-> **Status:** Analysis — 2026-08-05. Nothing has been moved or renamed.
+> **Status:** Option C **shipped** 2026-08-05 (C1 and C2 together, no files
+> moved). Option D and the `wp-db-backup.sh` follow-up are still open — see
+> [What shipped](#what-shipped) at the foot of this document for the two
+> decisions the analysis left open and how they were settled.
 > **Problem:** The repo's top-level directories try to encode three different
 > axes at once — *mechanism* (bash/Ansible/PHP), *platform* (Trellis-only vs
 > host-agnostic), and *domain* (backup/monitoring/security) — and a directory
@@ -367,3 +370,40 @@ for the code that reads it, and splitting keeps each diff reviewable.
 7. **Revisit `wordpress-utilities/`** separately — the question there is
    whether its entries are commands at all, which is a different problem from
    this one.
+
+---
+
+## What shipped
+
+Steps 2-4 landed together on 2026-08-05. Steps 5-7 (Option D, `wp-db-backup.sh`,
+`wordpress-utilities/`) remain open.
+
+**The two open decisions, settled.**
+
+*Singletons* (§C1, decision 1) — merged into neighbours rather than folded into
+a catch-all `Misc`. The 4+ threshold was rejected because it would have swept
+20 commands across ten unrelated domains into one bucket, which is less
+navigable than the split it replaces. The merges: `patterns` +
+`content-creation` + `wp-cli-config` → **`content`**; `age-verification` →
+**`snippets`**; `woocommerce` + `updater` → **`misc`**. Thirteen `@category`
+values changed; 76 gained `@platform`. Result is 13 groups, none below 2
+commands.
+
+*`@category` normalization* (§C1, decision 2) — the directory-echo tags the
+analysis flagged (`wp-cli-config`, `age-verification`, `updater`) are exactly
+the ones the merges absorbed, so normalization and de-singleton-ing turned out
+to be the same edit rather than two.
+
+**One thing the analysis missed.** Dropping the directory names from
+`DisplayOrder` also deletes the per-category Cobra commands built from it —
+`wp-ops trellis <playbook>`, `wp-ops wp-cli <script>`, `wp-ops bedrock
+<script>`, all documented in `README.md`. They now survive as **hidden
+back-compat aliases** registered from `Categories` (directory grouping) rather
+than `DisplayOrder` (domain grouping), so `--help` presents one grouping while
+the old forms keep resolving. `wp-ops patterns` is the single casualty: it was
+a real display category in 4.2.1 and is now `wp-ops content`.
+
+**The Valet coverage hole is now visible, as predicted.** `wp-ops list
+--platform wordpress` returns 19 commands in 7 groups and **zero backup
+commands** — §C2's worked example, holding for real rather than by accident of
+missing tags. Step 6 closes it.
