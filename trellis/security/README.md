@@ -180,7 +180,7 @@ echo 'ABUSEIPDB_KEY=your_key_here' > trellis/security/.env
 ./trellis/security/check-ips.sh 203.0.113.50 198.51.100.25
 
 # Via wp-ops
-wp-ops trellis/security/check-ips 203.0.113.50
+wp-ops check-ips 203.0.113.50
 ```
 
 ### Requirements
@@ -231,7 +231,7 @@ TRELLIS_DIR=/path/to/trellis ./trellis/security/check-deny-ips.sh
 TRELLIS_DIR=/path/to/trellis ./trellis/security/check-deny-ips.sh --full
 
 # Via wp-ops
-TRELLIS_DIR=/path/to/trellis wp-ops trellis/security/check-deny-ips
+TRELLIS_DIR=/path/to/trellis wp-ops check-deny-ips
 ```
 
 ---

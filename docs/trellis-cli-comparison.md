@@ -146,8 +146,9 @@ These are real divergences, not gaps to close blindly:
 
 Both are cheap to fix and both show up next to trellis's equivalents:
 
-1. **Help echoes the internal key, not what you typed.**
-   `wp-ops db-backup --help` prints `Usage: wp-ops scripts/backup/db-backup
+1. **Help echoes the internal key, not what you typed.** *(Fixed in 5.1.0 —
+   past tense below describes the state at the time of comparison.)*
+   `wp-ops db-backup --help` printed `Usage: wp-ops scripts/backup/db-backup
    [args...]`. trellis prints `Usage: trellis deploy [options] ENVIRONMENT
    [SITE]`. Two issues: the full key is shown where the user typed a
    basename, and `[args...]` is a placeholder where the manifest already

@@ -228,7 +228,7 @@ func BuildPlaybookArgs(e catalog.Entry, rawArgs []string) ([]string, error) {
 		if i >= len(rawArgs) || strings.HasPrefix(rawArgs[i], "-") {
 			return nil, fmt.Errorf(
 				"missing required argument <%s> (%s)\n\nUsage: wp-ops %s %s",
-				a.Name, a.Description, e.Key, positionalUsage(e),
+				a.Name, a.Description, e.CommandName(), positionalUsage(e),
 			)
 		}
 		built = append(built, "-e", a.Name+"="+rawArgs[i])
@@ -284,7 +284,7 @@ func FormatHelp(e catalog.Entry, trellisDir string) string {
 
 	if !e.Annotated {
 		var b strings.Builder
-		fmt.Fprintf(&b, "Usage: wp-ops %s -e site=<site> -e env=<development|staging|production> [-e key=value ...]\n\n", e.Key)
+		fmt.Fprintf(&b, "Usage: wp-ops %s -e site=<site> -e env=<development|staging|production> [-e key=value ...]\n\n", e.CommandName())
 		fmt.Fprintf(&b, "Description: %s\n\n", e.Description)
 		fmt.Fprintf(&b, "Playbook: %s\n", e.ScriptPath)
 		fmt.Fprintln(&b, "Runs via ansible-playbook against the Trellis project at $TRELLIS_DIR")

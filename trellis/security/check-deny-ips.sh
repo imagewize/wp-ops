@@ -64,7 +64,7 @@ if [[ "${1:-}" == "--full" ]]; then
     echo "Error: wp-ops not found on PATH." >&2
     exit 1
   fi
-  echo "$IPS" | xargs wp-ops trellis/security/check-ips
+  echo "$IPS" | xargs wp-ops check-ips
   exit 0
 fi
 
