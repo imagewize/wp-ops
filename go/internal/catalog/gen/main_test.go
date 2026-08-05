@@ -31,7 +31,6 @@ func TestExtensionsFor(t *testing.T) {
 		{"scripts", []string{".sh", ".js", ".py"}},
 		{"trellis", []string{".sh", ".js", ".yml"}},
 		{"wp-cli", []string{".sh", ".js", ".php"}},
-		{"wordpress-utilities", []string{".sh", ".js", ".php", ".css"}},
 		{"mcp-server", []string{".sh", ".js"}},
 		// Not in Categories since Option D moved it under docs/, but the
 		// default set is still what an unrecognized category falls back to.
@@ -56,11 +55,11 @@ func TestExtensionsFor(t *testing.T) {
 	if extensionsFor("trellis")[".py"] {
 		t.Error("trellis should not match .py — only scripts/ holds standalone Python")
 	}
-	if extensionsFor("wordpress-utilities")[".yml"] {
+	if extensionsFor("wp-cli")[".yml"] {
 		t.Error("only trellis should match .yml (other categories' .yml is config data)")
 	}
 	if extensionsFor("scripts")[".php"] {
-		t.Error("only wp-cli/wordpress-utilities should match .php")
+		t.Error("only wp-cli should match .php")
 	}
 }
 

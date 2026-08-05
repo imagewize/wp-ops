@@ -4,7 +4,7 @@
 - **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
 - **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
 - **scripts/** - Utilities: `backup/`, `monitoring/`, `git/create-pr.sh`, `release/release-theme.sh`, `sync/rsync-theme.sh`
-- **docs/** - Design docs at the top level; guides in subdirectories: `nginx/` (server configs), `troubleshooting/` (server/WP), `bedrock/` (Composer workflows)
+- **docs/** - Design docs at the top level; guides in subdirectories: `nginx/` (server configs), `troubleshooting/` (server/WP), `bedrock/` (Composer workflows), `wordpress-utilities/` (copy-paste components)
 - **Root docs**: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`, `LICENSE.md`
 - Keep new tools self-contained: add to appropriate category with a concise `README.md` and example configs.
 
@@ -51,7 +51,7 @@
 
 ## Context for Tasks
 Before starting, identify:
-1. Which category the task belongs to (trellis, wp-cli, scripts, wordpress-utilities, mcp-server, or docs for guide-only changes)
+1. Which category the task belongs to (trellis, wp-cli, scripts, mcp-server, or docs for guide-only changes)
 2. Relevant existing files and conventions in that category
 3. Whether changes need companion updates to documentation
 

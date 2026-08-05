@@ -190,7 +190,7 @@ Bulk-create WooCommerce product variations via WP-CLI. Generates all combination
 - **Configurable via Environment Variables**: Product ID, price, attributes, Trellis VM settings
 - **Trellis VM Compatible**: Uses `trellis vm shell` with configurable workdir and URL
 - **Success/Failure Tracking**: Counts created and failed variations with detailed output
-- **Companion Documentation**: See [`wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md`](wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md) for attribute setup
+- **Companion Documentation**: See [`wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md`](../docs/wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md) for attribute setup
 
 #### Configuration
 

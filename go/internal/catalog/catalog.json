@@ -1285,7 +1285,7 @@
     "requires": [
       "ssh"
     ],
-    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "ssh-host",
@@ -1549,7 +1549,7 @@
       "curl",
       "bc"
     ],
-    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "url",
@@ -2206,7 +2206,7 @@
     "requires": [
       "trellis"
     ],
-    "doc": "wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md",
+    "doc": "docs/wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md",
     "flags": [
       {
         "name": "--dry-run",
@@ -3032,6 +3032,85 @@
   },
   {
     "category": "wp-cli",
+    "key": "wp-cli/security/admin-user-create",
+    "description": "Create a temporary WordPress administrator with a generated password",
+    "script_path": "wp-cli/security/admin-user-create.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "docs/wordpress-utilities/snippets/admin-user-creation-wpcli.md",
+    "args": [
+      {
+        "name": "username",
+        "required_raw": "required",
+        "required": true,
+        "default": "temp_admin",
+        "description": "Username for the new administrator",
+        "raw": "username  required  {temp_admin}  Username for the new administrator"
+      },
+      {
+        "name": "email",
+        "required_raw": "required",
+        "required": true,
+        "default": "temp@example.com",
+        "description": "Email address for the new administrator",
+        "raw": "email     required  {temp@example.com}  Email address for the new administrator"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--role",
+        "required_raw": "optional",
+        "required": false,
+        "default": "administrator",
+        "description": "Role to assign",
+        "raw": "--role       optional  {administrator}  Role to assign"
+      },
+      {
+        "name": "--password",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Password to set (default: generated)",
+        "raw": "--password   optional  Password to set (default: generated)"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/var/www/example.com",
+        "description": "Site root on the server, required with --host",
+        "raw": "--site-path  optional  {/var/www/example.com}  Site root on the server, required with --host"
+      }
+    ],
+    "examples": [
+      "wp-ops admin-user-create temp_admin temp@example.com",
+      "wp-ops admin-user-create --path web/wp recovery recovery@example.com"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "display_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
     "key": "wp-cli/security/scanner-general",
     "description": "Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)",
     "script_path": "wp-cli/security/scanner-general.php",
@@ -3156,6 +3235,90 @@
     ],
     "examples": [
       "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/noindex-expired-posts",
+    "description": "Set Yoast's noindex on published posts whose expiry date has passed",
+    "script_path": "wp-cli/seo/noindex-expired-posts.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "docs/wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
+    "flags": [
+      {
+        "name": "--meta-key",
+        "required_raw": "optional",
+        "required": false,
+        "default": "_post_expiry_date",
+        "description": "Expiry date meta key",
+        "raw": "--meta-key   optional  {_post_expiry_date}  Expiry date meta key"
+      },
+      {
+        "name": "--category",
+        "required_raw": "optional",
+        "required": false,
+        "default": "12,34",
+        "description": "Comma-separated category IDs to limit to",
+        "raw": "--category   optional  {12,34}  Comma-separated category IDs to limit to"
+      },
+      {
+        "name": "--post-type",
+        "required_raw": "optional",
+        "required": false,
+        "default": "post",
+        "description": "Post type to scan",
+        "raw": "--post-type  optional  {post}  Post type to scan"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show what would change without writing",
+        "raw": "--dry-run    optional  Show what would change without writing"
+      },
+      {
+        "name": "--revert",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Clear noindex from posts no longer expired",
+        "raw": "--revert     optional  Clear noindex from posts no longer expired"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/var/www/example.com",
+        "description": "Site root on the server, required with --host",
+        "raw": "--site-path  optional  {/var/www/example.com}  Site root on the server, required with --host"
+      }
+    ],
+    "examples": [
+      "wp-ops noindex-expired-posts --dry-run",
+      "wp-ops noindex-expired-posts --category 12,34 --path web/wp"
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
@@ -3395,66 +3558,6 @@
     "manifest_category": "seo",
     "platform": "wordpress",
     "display_category": "seo",
-    "annotated": true
-  },
-  {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/age-verification",
-    "description": "Cookie-based age verification modal script (jQuery)",
-    "script_path": "wordpress-utilities/age-verification/age-verification.js",
-    "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "snippets",
-    "platform": "wordpress",
-    "display_category": "snippets",
-    "annotated": true
-  },
-  {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/footer",
-    "description": "Age verification modal HTML template (ACF-driven button content)",
-    "script_path": "wordpress-utilities/age-verification/footer.php",
-    "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "snippets",
-    "platform": "wordpress",
-    "display_category": "snippets",
-    "annotated": true
-  },
-  {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/modal",
-    "description": "CSS styles for the age verification modal",
-    "script_path": "wordpress-utilities/age-verification/modal.css",
-    "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "snippets",
-    "platform": "wordpress",
-    "display_category": "snippets",
-    "annotated": true
-  },
-  {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/snippets/admin-user-creation",
-    "description": "Temporary admin user creation snippet for functions.php (remove after use)",
-    "script_path": "wordpress-utilities/snippets/admin-user-creation.php",
-    "runs_on": "local",
-    "doc": "wordpress-utilities/snippets/admin-user-creation-wpcli.md",
-    "manifest_category": "snippets",
-    "platform": "wordpress",
-    "display_category": "snippets",
-    "annotated": true
-  },
-  {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/snippets/post-expiry-noindex",
-    "description": "Auto-noindex posts past their expiry date via Yoast's wpseo_robots filter",
-    "script_path": "wordpress-utilities/snippets/post-expiry-noindex.php",
-    "runs_on": "local",
-    "doc": "wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
-    "manifest_category": "snippets",
-    "platform": "wordpress",
-    "display_category": "snippets",
     "annotated": true
   },
   {

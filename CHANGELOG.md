@@ -34,10 +34,9 @@ implementation detail rather than the thing `wp-ops list` shows you.
   41% of the catalog previously lived in a domain no single directory
   contained.
 
-  `wp-ops list` goes from 10 directory-ish groups to 13 domain groups:
-  Monitoring (17), Backup (9), Content (8), Images (7), SEO (6), Security (5),
-  Snippets (5), Misc (5), Release (4), Git (3), MCP Server (3), Diagnostics
-  (2), Sync (2).
+  `wp-ops list` goes from 10 directory-ish groups to 12 domain groups:
+  Monitoring (17), Backup (9), Content (8), Images (7), SEO (7), Security (6),
+  Misc (5), Release (4), Git (3), MCP Server (3), Diagnostics (2), Sync (2).
 
 - **Singletons merged into neighbours** rather than left as one-command groups
   or swept into a catch-all. Dropping the promotion threshold would otherwise
@@ -46,7 +45,8 @@ implementation detail rather than the thing `wp-ops list` shows you.
   `wp-cli-config` → `content`; `age-verification` → `snippets`; `woocommerce`
   + `updater` → `misc`. The rejected alternative — a 4+ threshold with the
   rest in `Misc` — would have bucketed 20 commands across ten unrelated
-  domains, which is less navigable than the split it replaced.
+  domains, which is less navigable than the split it replaced. (The
+  `snippets` group that merge produced is gone again — see step 7 below.)
 
 - **13 `@category` values normalized.** The tags the analysis flagged as
   directory echoes rather than domains (`wp-cli-config`, `age-verification`,
@@ -63,7 +63,7 @@ implementation detail rather than the thing `wp-ops list` shows you.
 
 ### Added
 
-- **`@platform` manifest directive**, on all 76 commands. Three values, because
+- **`@platform` manifest directive**, on every command. Three values, because
   two aren't enough — `scripts/images/batch-resize.sh` needs no WordPress at
   all, while `wp-cli/security/scanner-targeted.php` needs *a* WordPress but no
   Trellis, and calling both "agnostic" answers the wrong question:
@@ -71,7 +71,7 @@ implementation detail rather than the thing `wp-ops list` shows you.
   | Value | Means | Count |
   | --- | --- | ---: |
   | `trellis` | Needs a Trellis project, vault, `/srv/www`, or the `trellis` CLI | 27 |
-  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 19 |
+  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 16 |
   | `any` | No WordPress involved | 30 |
 
   Deliberately its own field rather than derived from `@requires`, which names
@@ -88,7 +88,7 @@ implementation detail rather than the thing `wp-ops list` shows you.
   exist" instead of "no such platform".
 
   This makes a real coverage hole **visible rather than closing it**:
-  `--platform wordpress` returns 19 commands and **zero backup commands**, because
+  `--platform wordpress` returns 16 commands and **zero backup commands**, because
   all nine assume Trellis. Previously `wp-ops backup` listed all nine happily
   and you found out by running one. A `wp-db-backup.sh` tagged `wordpress` is
   the tracked follow-up.
@@ -165,6 +165,58 @@ implementation detail rather than the thing `wp-ops list` shows you.
   paths. `CLAUDE.md`'s repository structure gains a `docs/` section
   describing the split: design docs as loose `.md` at the top level,
   operational guides in subdirectories.
+
+### Step 7 — `wordpress-utilities/` entries are no longer commands
+
+The last open question from `docs/category-organization.md`: whether that
+tree's five "commands" were commands at all. They weren't — one was a
+stylesheet, one an HTML template, and the CLI already routed the whole
+directory to a separate print-or-copy executor rather than running anything.
+Two of them described operations that WP-CLI can just do, so those became
+real commands and the rest became documentation.
+
+- **BREAKING** - **the five `wordpress-utilities/*` entries are gone from the
+  catalog**, along with `wp-ops wordpress-utilities <snippet>`. The files
+  themselves are unchanged at `docs/wordpress-utilities/`, reachable with
+  `wp-ops docs`. Catalog count goes 76 → 73.
+
+- **Added: `wp-cli/security/admin-user-create`** (`@platform wordpress`) -
+  replaces the `admin-user-creation.php` snippet, which asked you to paste
+  credentials into `functions.php` and remember to delete the block
+  afterwards. Nothing is written to a file now: the password is generated with
+  `openssl`, printed once, and the matching `wp user delete` line is printed
+  with it. Refuses to run if the username or email already exists. Works
+  locally or over `--host`/`--site-path`, and appends `--path` only when you
+  pass it, so a plain Valet/Herd/`public_html` install isn't forced into
+  Bedrock's `web/wp` layout.
+
+- **Added: `wp-cli/seo/noindex-expired-posts`** (`@platform wordpress`) -
+  writes Yoast's `_yoast_wpseo_meta-robots-noindex` on published posts whose
+  `_post_expiry_date` has passed, in one `wp post list` query rather than a
+  per-post read. The `post-expiry-noindex.php` snippet evaluated the same
+  condition through Yoast's `wpseo_robots` filter on every front-end request;
+  stamping the meta instead makes the result visible in wp-admin, independent
+  of the filter being installed, and runnable from cron. `--dry-run` prints
+  the affected posts as a table, `--revert` clears the flag from posts whose
+  date moved back into the future.
+
+  The snippet is **not** redundant and stays in `docs/`: it also renders the
+  "Noindex After Date" meta box that sets `_post_expiry_date` in the first
+  place. Keep it for the editor UI; use the command to apply the outcome.
+
+- **Removed: `internal/exec/snippet.go`** and its tests (~130 lines) — the
+  print/`--copy`/`--path` executor, plus the `wordpress-utilities/` prefix
+  branch in `executeEntry` that was checked ahead of the `.php` branch. It had
+  no remaining callers. This drops `--copy` (clipboard) as a feature;
+  `wp-ops <command> --where` already covered `--path`, and the clipboard case
+  is `cat "$(wp-ops docs -l <term> | head -1)" | pbcopy`.
+
+- **`wordpress-utilities` is dropped from `Categories`**, `assets.go`'s embed
+  list, and the CI path filters — the same treatment Option D gave the other
+  three, and for the same reason: with no commands left it would have been a
+  fourth entry the catalog walked past every time. The `Snippets` display
+  group disappears with it (it was exactly those five entries), and `SEO` and
+  `Security` each gain one from the new commands.
 
 ## [4.2.1] - 2026-08-04
 

@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 76 {
-		t.Errorf("len(Entries) = %d, want 76 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0)", len(c.Entries))
+	if len(c.Entries) != 73 {
+		t.Errorf("len(Entries) = %d, want 73 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0, -5 for wordpress-utilities' reference files demoted to docs in 5.0.0, +2 for admin-user-create/noindex-expired-posts replacing two of them)", len(c.Entries))
 	}
 }
 
@@ -101,7 +101,7 @@ func TestCategoriesSkipsEmpty(t *testing.T) {
 	// Categories outright — nginx and troubleshooting never carried a
 	// command, and bedrock became documentation once its one command moved
 	// to wp-cli/. Still asserted so re-adding one without commands is caught.
-	for _, want := range []string{"nginx", "troubleshooting", "bedrock"} {
+	for _, want := range []string{"nginx", "troubleshooting", "bedrock", "wordpress-utilities"} {
 		for _, got := range cats {
 			if got == want {
 				t.Errorf("Categories() included docs-only category %q, want excluded (no runnable commands)", want)

@@ -22,7 +22,7 @@
 # @arg      ssh-host  required  {web@example.com}  SSH user@host to run curl from
 # @arg      url       required  {https://example.com}  URL to test (repeatable)
 # @example  wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/
-# @doc      wordpress-utilities/speed-optimization/README.md
+# @doc      docs/wordpress-utilities/speed-optimization/README.md
 
 set -euo pipefail
 

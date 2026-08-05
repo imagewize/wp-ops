@@ -17,7 +17,6 @@ on:
       - 'scripts/**'
       - 'trellis/**'
       - 'wp-cli/**'
-      - 'wordpress-utilities/**'
       - 'mcp-server/**'
       - 'docs/**'
   pull_request:
@@ -28,7 +27,6 @@ on:
       - 'scripts/**'
       - 'trellis/**'
       - 'wp-cli/**'
-      - 'wordpress-utilities/**'
       - 'mcp-server/**'
       - 'docs/**'
 

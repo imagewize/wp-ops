@@ -230,14 +230,6 @@ func executeEntry(e catalog.Entry, args []string) int {
 		return executeAnsible(e, args, isHelp)
 	}
 
-	// Checked before the .php branch below: wordpress-utilities/* snippets
-	// are reference files, several of them .php, so the category prefix
-	// must win over the extension or they'd be run through WP-CLI instead
-	// of printed/copied.
-	if strings.HasPrefix(e.Key, "wordpress-utilities/") {
-		return executeSnippet(e, args, isHelp)
-	}
-
 	if ext == ".php" {
 		return executeWPCLI(e, args, isHelp)
 	}
@@ -339,23 +331,6 @@ func executeWPCLI(e catalog.Entry, args []string, isHelp bool) int {
 	}
 	printCompletionBanner(e.Key, code)
 	return code
-}
-
-func executeSnippet(e catalog.Entry, args []string, isHelp bool) int {
-	if isHelp {
-		fmt.Print(wpexec.FormatSnippetHelp(e))
-		return 0
-	}
-
-	root, err := repoRoot()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	scriptPath := filepath.Join(root, e.ScriptPath)
-	tty := detect.IsTerminal(os.Stdout)
-
-	return wpexec.RunSnippet(os.Stdout, os.Stderr, e, scriptPath, args, tty)
 }
 
 func printCompletionBanner(key string, code int) {

@@ -274,7 +274,6 @@ var Categories = []string{
 	"scripts",
 	"trellis",
 	"wp-cli",
-	"wordpress-utilities",
 	"mcp-server",
 }
 
@@ -289,7 +288,9 @@ var Categories = []string{
 // Singletons were merged into neighbours rather than left as one-command
 // groups (the second of the two policies docs/category-organization.md
 // leaves open): patterns + content-creation + wp-cli-config → "content",
-// age-verification → "snippets", woocommerce + updater → "misc".
+// woocommerce + updater → "misc". The "snippets" group those merges also
+// produced is gone again — step 7 of the same document demoted every
+// wordpress-utilities reference file to docs/.
 //
 // Directory names (scripts, trellis, wp-cli, …) deliberately do NOT appear
 // here — they'd render as empty groups. They survive only as the hidden
@@ -301,7 +302,6 @@ var DisplayOrder = []string{
 	"images",
 	"seo",
 	"security",
-	"snippets",
 	"misc",
 	"release",
 	"git",
@@ -322,7 +322,6 @@ var CategoryDisplayNames = map[string]string{
 	"images":      "Images",
 	"seo":         "SEO",
 	"security":    "Security",
-	"snippets":    "Snippets",
 	"misc":        "Misc",
 	"release":     "Release",
 	"git":         "Git",
@@ -331,10 +330,9 @@ var CategoryDisplayNames = map[string]string{
 	"sync":        "Sync",
 
 	// Directory categories — Categories, used by the hidden aliases.
-	"scripts":             "Scripts",
-	"trellis":             "Trellis",
-	"wp-cli":              "WP-CLI",
-	"wordpress-utilities": "WordPress Utilities",
+	"scripts": "Scripts",
+	"trellis": "Trellis",
+	"wp-cli":  "WP-CLI",
 }
 
 // CategoryBlurbs is a one-line summary per category — shown alongside its
@@ -347,9 +345,8 @@ var CategoryBlurbs = map[string]string{
 	"backup":      "Database and file backups — Ansible and shell",
 	"content":     "Block pattern screenshots, page creation, and pattern validation",
 	"images":      "Image resizing, WebP/AVIF conversion, and Openverse downloads",
-	"seo":         "Redirect, schema, and orphan-content audits",
-	"security":    "Malware scanning, fail2ban, and IP blocking",
-	"snippets":    "Reusable PHP/JS/CSS copied into WordPress projects",
+	"seo":         "Redirect, schema, orphan-content audits, and noindex management",
+	"security":    "Malware scanning, fail2ban, IP blocking, and admin recovery",
 	"misc":        "Trellis updater, WooCommerce variations, and one-off utilities",
 	"release":     "WordPress plugin/theme release and asset upload automation",
 	"git":         "PR creation, repo traffic stats, and git log helpers",

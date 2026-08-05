@@ -95,7 +95,7 @@ Each utility is self-contained and can be integrated independently:
 
 ### Via wp-ops
 
-These files are reference snippets, not runnable scripts, so the [`wp-ops`](../README.md) CLI prints or copies them instead of executing them:
+These files are reference snippets, not runnable scripts, so the [`wp-ops`](../../README.md) CLI prints or copies them instead of executing them:
 
 ```bash
 wp-ops wordpress-utilities --help     # list all snippets
@@ -226,10 +226,10 @@ When adding new utilities:
 
 These utilities complement other tools in the wp-ops repository:
 
-- **[wp-cli/](../wp-cli/)** - WordPress command-line operations
-- **[nginx/](../docs/nginx/)** - Web server configurations for performance
-- **[scripts/](../scripts/)** - Automation and deployment scripts
-- **[trellis/](../trellis/)** - Server provisioning and deployment
+- **[wp-cli/](../../wp-cli/)** - WordPress command-line operations
+- **[nginx/](../nginx/)** - Web server configurations for performance
+- **[scripts/](../../scripts/)** - Automation and deployment scripts
+- **[trellis/](../../trellis/)** - Server provisioning and deployment
 
 ## License
 
@@ -240,7 +240,7 @@ These utilities are provided as-is for use in WordPress projects. Refer to indiv
 For issues or questions:
 - Review the specific utility's README.md
 - Check WordPress Codex and plugin documentation
-- Consult related troubleshooting guides in [../troubleshooting/](../docs/troubleshooting/)
+- Consult related troubleshooting guides in [../troubleshooting/](../troubleshooting/)
 
 ---
 

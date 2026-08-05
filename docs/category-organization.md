@@ -1,8 +1,8 @@
 # Category Organization: directories, display categories, and what `wp-ops` shows
 
-> **Status:** Options C and D **shipped** 2026-08-05. The
-> `wp-db-backup.sh` follow-up and the `wordpress-utilities/` question are
-> still open — see [What shipped](#what-shipped) at the foot of this
+> **Status:** Options C and D **shipped** 2026-08-05, along with the
+> `wordpress-utilities/` question (step 7). Only `wp-db-backup.sh` (step 6)
+> remains open — see [What shipped](#what-shipped) at the foot of this
 > document for the decisions the analysis left open and how they were
 > settled.
 > **Problem:** The repo's top-level directories try to encode three different
@@ -376,8 +376,8 @@ for the code that reads it, and splitting keeps each diff reviewable.
 
 ## What shipped
 
-Steps 2-5 landed together on 2026-08-05. Steps 6-7 (`wp-db-backup.sh`,
-`wordpress-utilities/`) remain open.
+Steps 2-5 and 7 landed on 2026-08-05. Step 6 (`wp-db-backup.sh`) remains
+open — it wants a real non-Trellis host to be written against.
 
 **The two open decisions, settled.**
 
@@ -433,3 +433,35 @@ Two wrinkles the analysis didn't cover, both minor:
 
 `wp-ops docs` was unaffected, as predicted — it walks every `.md` in the repo
 rather than a category list.
+
+### Step 7 — `wordpress-utilities/`
+
+Answered: **they were not commands.** One of the five was a stylesheet, one an
+HTML template, and `executeEntry` already tested for the `wordpress-utilities/`
+prefix *before* its `.php` branch so they'd be printed rather than run — the
+repo maintained a whole separate executor for the only five entries that
+didn't execute.
+
+The split was decided by what each file actually is, not by file type:
+
+- **Reference material → `docs/wordpress-utilities/`.** The age-verification
+  component (JS + PHP template + CSS) is something you paste into a theme;
+  there is no command hiding in it.
+- **Operations → real WP-CLI commands.** The two remaining PHP snippets
+  described things WP-CLI can do directly, so they became
+  `wp-cli/security/admin-user-create` and `wp-cli/seo/noindex-expired-posts`,
+  both `@platform wordpress`.
+
+`post-expiry-noindex.php` is the interesting case: it doesn't fully reduce to
+a command. Its `wpseo_robots` filter and its "Noindex After Date" meta box are
+genuinely runtime concerns, and the meta box is what writes the date the
+command reads. The snippet stays in `docs/` for the editor UI; the command
+applies the outcome in bulk and can run from cron. Complementary, not
+redundant.
+
+With all five gone the directory had no commands left, so it followed
+`nginx/`, `troubleshooting/`, and `bedrock/` under `docs/` and out of
+`Categories` — otherwise Option D would have cleaned up three dead entries
+and immediately created a fourth. `internal/exec/snippet.go` and its tests
+went with it (~130 lines, no remaining callers), which costs the `--copy`
+clipboard helper; `--where` already covered `--path`.

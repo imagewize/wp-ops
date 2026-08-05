@@ -38,17 +38,13 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities
     - `scripts/misc/find-and-replace-files.sh` - Batch find-and-replace files across projects
-- **wordpress-utilities/** - Reusable WordPress components and utilities
-  - `wordpress-utilities/age-verification/` - Cookie-based age verification system with modal and ACF integration
-  - `wordpress-utilities/analytics/` - Analytics implementation and detection (Google Analytics, Matomo)
-  - `wordpress-utilities/snippets/` - Small PHP snippets and WP-CLI command references
-  - `wordpress-utilities/speed-optimization/` - Performance testing and TTFB analysis tools (curl, wget)
 - **docs/** - Documentation. Design and planning docs sit at the top level as
   loose `.md` files; the subdirectories are operational guides, which carry no
   runnable commands and so have no CLI category of their own:
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (guides plus the `.conf.j2` templates they describe)
   - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)
   - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup
+  - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `age-verification/`, `analytics/`, `snippets/`, `speed-optimization/`
 
 ## Key Technologies
 
