@@ -13,6 +13,16 @@ Compared against `trellis-cli` at `/Users/jasperfrumau/code/trellis-cli`
 > that its architecture summary is sound but its central recommendation
 > proposes a feature the CLI already ships.
 
+> **Status (2026-08-05): acted on in 5.1.0.** Section 6's Option 1 shipped —
+> the picker renders inline, capped at 20 rows — along with the single-column
+> browse list and post-selection detail block that came out of reviewing the
+> result. Rough edge #1 in §5 (the usage line naming an internal key) is fixed
+> everywhere — the picker and `wp-ops <command> --help` for every executor
+> type. Sections 1–5 describe the code **as it was before** that change and are
+> kept as the analysis that motivated it; §2's "Bare invocation (TTY)" row,
+> §1's `tea.WithAltScreen()` snippet, and §5's rough edge #1 no longer match
+> the code. Still open: §5's rough edge #2, the missing deprecation channel.
+
 ## 1. The one difference that produced the screenshots
 
 `trellis` with no arguments prints help to stdout and exits. `wp-ops` with no
