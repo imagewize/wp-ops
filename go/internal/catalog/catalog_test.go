@@ -249,3 +249,54 @@ func TestLoad_ShortNameUniqueBasenames(t *testing.T) {
 		}
 	}
 }
+
+// exampleCommandToken returns the token an @example tells the reader to type:
+// the word after "wp-ops", skipping any leading VAR=value environment prefixes
+// (screenshot-patterns' example opens with two). Returns "" for an example that
+// is not a wp-ops invocation at all, which the caller skips.
+func exampleCommandToken(ex string) string {
+	fields := strings.Fields(ex)
+	for i, f := range fields {
+		if f != "wp-ops" {
+			// Only an environment assignment may precede the binary.
+			if eq := strings.Index(f, "="); eq > 0 && !strings.ContainsAny(f[:eq], "/-.") {
+				continue
+			}
+			return ""
+		}
+		if i+1 < len(fields) {
+			return fields[i+1]
+		}
+		return ""
+	}
+	return ""
+}
+
+// TestExamplesNameTheCommand pins the other half of what a user reads. The
+// usage line is generated from ShortName, so it cannot be wrong; an @example is
+// prose copied verbatim out of a shell comment, and prose goes stale at every
+// rename. An example whose command token is not this entry's ShortName either
+// names an internal key that the usage line three rows above just contradicted,
+// or — as wp-cli-pattern-validate's did between 5.0.0 and 5.1.1 — names a
+// category that no longer exists at all.
+//
+// Deliberately not enforced: that an example mentions only its own command.
+// check-deny-ips legitimately pipes into check-ips, and banning that would need
+// a whitelist. The first-token rule covers the actual bug.
+func TestExamplesNameTheCommand(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	for _, e := range c.Entries {
+		for _, ex := range e.Examples {
+			tok := exampleCommandToken(ex)
+			if tok == "" || tok == e.ShortName {
+				continue
+			}
+			t.Errorf("%s: example names %q, but this command is typed as %q\n    %s",
+				e.Key, tok, e.ShortName, ex)
+		}
+	}
+}
