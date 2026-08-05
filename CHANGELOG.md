@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.3] - 2026-08-05
+
+### Fixed
+
+- **The picker's detail view never said a `.php`/`.yml` command needed a
+  project on disk.** `--help` for wp-cli and Trellis commands already appends
+  a trailer stating the command runs against `$WP_SITE_DIR`/`$TRELLIS_DIR`
+  (`FormatWPCLIHelp`/`FormatHelp`), but `exec.DetailBody` — the block the
+  interactive picker shows once a command is chosen, before prompting for
+  arguments — has no such trailer. A command annotated `@runs local`, like
+  `scanner-targeted`, gave no hint it needed anything beyond what's on
+  `$PATH` until you actually ran it and hit "`WP_SITE_DIR` is not set."
+  `DetailBody`'s meta line now adds `Runs locally against $WP_SITE_DIR` for
+  `.php` commands and `Runs locally against $TRELLIS_DIR` for `.yml`
+  playbooks, keyed off the same file extension `executeEntry`
+  (`cmd/dispatch.go`) already dispatches the executor on, so it can't drift.
+  Plain `.sh`/`.js` scripts, most of which are self-contained, are unaffected.
+
+- **`scanner-targeted.php`'s six helper functions had undocumented parameter
+  and return types** (intelephense `P1132`). Added `@param`/`@return`
+  docblocks to `color_text`, `output`, `build_file_list`, `scan_file`,
+  `format_bytes`, and `display_results`, matching this file's existing
+  doc-comment style rather than introducing native type hints the rest of
+  the script doesn't use.
+
 ## [5.1.2] - 2026-08-05
 
 ### Fixed
