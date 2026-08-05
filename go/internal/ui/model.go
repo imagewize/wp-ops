@@ -240,8 +240,7 @@ func (m *Model) syncDetail() {
 	if m.selected.Key == "" {
 		return
 	}
-	body := wrapBlock(
-		wpexec.DetailBody(m.selected, m.displayName(m.selected)), m.detail.Width)
+	body := wrapBlock(wpexec.DetailBody(m.selected), m.detail.Width)
 	m.detail.SetContent(body)
 	m.detail.Height = detailHeight(body, m.viewportHeight())
 	m.detail.YOffset = 0
@@ -293,24 +292,6 @@ func wrapBlock(s string, width int) string {
 	return strings.Join(out, "\n")
 }
 
-// displayName is what to call a command in its usage line: the bare basename
-// a user can type, unless two commands in different categories share it (say
-// a scripts/ and a trellis/ "database-backup"), in which case only the full
-// key is unambiguous — and printing a usage line that would hit dispatch.go's
-// "ambiguous command" error would be worse than printing a longer one.
-func (m Model) displayName(e catalog.Entry) string {
-	base := filepath.Base(e.Key)
-	seen := 0
-	for _, other := range m.all {
-		if filepath.Base(other.Key) == base {
-			seen++
-		}
-	}
-	if seen > 1 {
-		return e.Key
-	}
-	return base
-}
 
 func (m *Model) cursorEntry() int {
 	if m.cursor >= len(m.filtered) {

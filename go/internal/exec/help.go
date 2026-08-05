@@ -34,18 +34,15 @@ func PreviewBody(e catalog.Entry) string {
 
 // UsageLine renders a real usage line — "Usage: wp-ops db-backup [site-name]
 // [environment] [options]" — from a command's declared @arg/@flag manifest,
-// under whatever name the caller wants the command to answer to. name is a
-// parameter rather than derived from e because the right answer differs by
-// caller: the picker shows the basename a user can actually type, while a
-// context that can't guarantee the basename is unambiguous must fall back to
-// the full key.
+// naming the command the way a user would type it (Entry.CommandName) rather
+// than by its internal catalog key.
 //
 // This is the shape trellis-cli's per-command Help() hand-writes ("Usage:
 // trellis deploy [options] ENVIRONMENT [SITE]"); here it's derived, so it
 // can't drift from the arguments the command actually documents.
-func UsageLine(e catalog.Entry, name string) string {
+func UsageLine(e catalog.Entry) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Usage: wp-ops %s", name)
+	fmt.Fprintf(&b, "Usage: wp-ops %s", e.CommandName())
 
 	for _, a := range e.Args {
 		if a.Required {
@@ -74,9 +71,9 @@ func UsageLine(e catalog.Entry, name string) string {
 // to answer "site-url:"). Requires/platform/server-side facts collapse onto
 // one meta line — they used to be per-row tags in the browse list, where
 // they wrapped and broke the column alignment at any realistic pane width.
-func DetailBody(e catalog.Entry, name string) string {
+func DetailBody(e catalog.Entry) string {
 	var b strings.Builder
-	b.WriteString(UsageLine(e, name))
+	b.WriteString(UsageLine(e))
 	b.WriteString("\n\n")
 
 	if e.Description != "" {
@@ -135,13 +132,13 @@ func DetailBody(e catalog.Entry, name string) string {
 // the executor-specific trailer bash appends after it.
 func writeManifestHelpBody(b *strings.Builder, e catalog.Entry) {
 	if !e.Annotated {
-		fmt.Fprintf(b, "Usage: wp-ops %s [args...]\n\n", e.Key)
+		fmt.Fprintf(b, "%s\n\n", UsageLine(e))
 		fmt.Fprintf(b, "Description: %s\n\n", e.Description)
 		fmt.Fprintf(b, "Script: %s\n", e.ScriptPath)
 		return
 	}
 
-	fmt.Fprintf(b, "Usage: wp-ops %s [args...]\n\n", e.Key)
+	fmt.Fprintf(b, "%s\n\n", UsageLine(e))
 
 	if e.Description != "" {
 		fmt.Fprintf(b, "%s\n\n", e.Description)

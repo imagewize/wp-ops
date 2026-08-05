@@ -11,6 +11,7 @@ import (
 func helpTestEntry() catalog.Entry {
 	return catalog.Entry{
 		Key:         "scripts/monitoring/404-checker",
+		ShortName:   "404-checker",
 		ScriptPath:  "scripts/monitoring/404-checker.sh",
 		Description: "Check a site's internal links for broken responses",
 		Annotated:   true,
@@ -30,19 +31,22 @@ func helpTestEntry() catalog.Entry {
 // required arguments in angle brackets, optional in square, and a single
 // "[options]" standing in for the flag list rather than spelling it out.
 func TestUsageLine_RequiredAndOptional(t *testing.T) {
-	got := UsageLine(helpTestEntry(), "404-checker")
+	got := UsageLine(helpTestEntry())
 	want := "Usage: wp-ops 404-checker <site-url> [depth] [options]"
 	if got != want {
 		t.Errorf("UsageLine() = %q, want %q", got, want)
 	}
 }
 
-// TestUsageLine_UsesGivenName is the whole reason name is a parameter: the
-// picker shows the basename a user can type, not the internal catalog key.
-func TestUsageLine_UsesGivenName(t *testing.T) {
+// TestUsageLine_FallsBackToKey — a basename shared by two commands has no
+// unambiguous short form (dispatch reports those as ambiguous rather than
+// picking one), so Load leaves ShortName as the full key and the usage line
+// prints something that still resolves.
+func TestUsageLine_FallsBackToKey(t *testing.T) {
 	e := helpTestEntry()
-	if got := UsageLine(e, e.Key); !strings.Contains(got, "wp-ops scripts/monitoring/404-checker ") {
-		t.Errorf("UsageLine() with full key = %q, want it to use the key verbatim", got)
+	e.ShortName = e.Key
+	if got := UsageLine(e); !strings.Contains(got, "wp-ops scripts/monitoring/404-checker ") {
+		t.Errorf("UsageLine() with a colliding basename = %q, want the full key", got)
 	}
 }
 
@@ -50,7 +54,7 @@ func TestUsageLine_UsesGivenName(t *testing.T) {
 // ones taking nothing: both still forward a free-text argv, so the usage
 // line has to say so rather than implying the command accepts no arguments.
 func TestUsageLine_NoDeclaredParams(t *testing.T) {
-	got := UsageLine(catalog.Entry{Key: "mcp-server/dev"}, "dev")
+	got := UsageLine(catalog.Entry{Key: "mcp-server/dev", ShortName: "dev"})
 	want := "Usage: wp-ops dev [args...]"
 	if got != want {
 		t.Errorf("UsageLine() = %q, want %q", got, want)
@@ -67,7 +71,7 @@ func TestUsageLine_NoDeclaredParams(t *testing.T) {
 func TestDetailBody_SectionOrder(t *testing.T) {
 	e := helpTestEntry()
 	e.Examples = []string{"wp-ops 404-checker https://example.com"}
-	body := DetailBody(e, "404-checker")
+	body := DetailBody(e)
 
 	requires := strings.Index(body, "Requires: curl")
 	examples := strings.Index(body, "Examples:")
@@ -92,7 +96,7 @@ func TestDetailBody_MetaLineCarriesRowTags(t *testing.T) {
 	e.Platform = "trellis"
 	e.RunsOn = "server"
 
-	body := DetailBody(e, "404-checker")
+	body := DetailBody(e)
 	for _, want := range []string{"Requires: curl", "Platform: trellis", "Runs on the server"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("DetailBody() missing %q:\n%s", want, body)
@@ -104,7 +108,7 @@ func TestDetailBody_MetaLineCarriesRowTags(t *testing.T) {
 // implementation detail at the moment someone is about to type "site-url:",
 // and the block competes for a bounded number of rows.
 func TestDetailBody_OmitsScriptPath(t *testing.T) {
-	if body := DetailBody(helpTestEntry(), "404-checker"); strings.Contains(body, "404-checker.sh") {
+	if body := DetailBody(helpTestEntry()); strings.Contains(body, "404-checker.sh") {
 		t.Errorf("DetailBody() leaked the script path:\n%s", body)
 	}
 }

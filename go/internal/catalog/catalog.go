@@ -73,6 +73,34 @@ type Entry struct {
 	// this human-facing split must not leak into it.
 	DisplayCategory string `json:"display_category"`
 	Annotated       bool   `json:"annotated"`
+	// ShortName is the shortest form that unambiguously resolves to this
+	// entry: its basename ("db-backup") when no other command shares it, and
+	// the full key otherwise. Computed by Load rather than stored in
+	// catalog.json — it is a property of the catalog as a whole, not of the
+	// file gen discovered, so persisting it would let it go stale the moment
+	// a colliding command is added. Read it through CommandName.
+	ShortName string `json:"-"`
+}
+
+// CommandName is what to call this entry when addressing a user: the name
+// they can actually type. Falls back to the full key for an Entry built
+// outside Load (tests, and the picker's hand-built models) — longer, but
+// never wrong, since a full key always resolves.
+func (e Entry) CommandName() string {
+	if e.ShortName != "" {
+		return e.ShortName
+	}
+	return e.Key
+}
+
+// basename is the last "/"-separated segment of a command key. Keys are
+// always repo-relative and always use "/", so this deliberately does not go
+// through path/filepath, whose separator is platform-dependent.
+func basename(key string) string {
+	if i := strings.LastIndex(key, "/"); i >= 0 {
+		return key[i+1:]
+	}
+	return key
 }
 
 // RequiresString joins Requires the way bash's manifest_get "requires"
@@ -98,6 +126,21 @@ func Load() (*Catalog, error) {
 	var entries []Entry
 	if err := json.Unmarshal(catalogJSON, &entries); err != nil {
 		return nil, fmt.Errorf("catalog: embedded catalog.json is corrupt: %w", err)
+	}
+
+	// A basename shared by two commands in different categories (dispatch.go
+	// reports those as ambiguous rather than picking one) can't stand in for
+	// either, so only the unique ones become a ShortName.
+	basenameCount := make(map[string]int, len(entries))
+	for _, e := range entries {
+		basenameCount[basename(e.Key)]++
+	}
+	for i := range entries {
+		if b := basename(entries[i].Key); basenameCount[b] == 1 {
+			entries[i].ShortName = b
+		} else {
+			entries[i].ShortName = entries[i].Key
+		}
 	}
 
 	c := &Catalog{
@@ -176,11 +219,10 @@ func (c *Catalog) CommandsInDisplay(category string) []Entry {
 // FindByBasename returns every entry whose key's final path segment matches
 // basename — the set candidate list for ambiguous short-form resolution
 // (e.g. "wp-ops db-backup" when only "scripts/backup/db-backup" exists).
-func (c *Catalog) FindByBasename(basename string) []Entry {
+func (c *Catalog) FindByBasename(name string) []Entry {
 	var out []Entry
 	for _, e := range c.Entries {
-		segs := strings.Split(e.Key, "/")
-		if segs[len(segs)-1] == basename {
+		if basename(e.Key) == name {
 			out = append(out, e)
 		}
 	}

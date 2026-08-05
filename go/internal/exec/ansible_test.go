@@ -25,7 +25,9 @@ func TestFormatHelp_AnnotatedPlaybook(t *testing.T) {
 	help := FormatHelp(e, "/srv/trellis-project")
 
 	for _, want := range []string{
-		"Usage: wp-ops trellis/backup/database-backup [args...]",
+		// Real positionals under the name a user types, not the catalog key
+		// with an "[args...]" placeholder — see UsageLine.
+		"Usage: wp-ops database-backup <site> <env>",
 		e.Description,
 		"Arguments:",
 		"site",
