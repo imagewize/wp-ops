@@ -3,6 +3,7 @@
 #
 # @desc     Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv
 # @category diagnostics
+# @platform trellis
 # @runs     local
 # @requires ssh
 # @example  wp-ops wp-cli/diagnostics/list-posts-count

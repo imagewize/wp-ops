@@ -34,6 +34,7 @@
 #
 # @desc     Export design SVGs to PNG with librsvg — lossless, best for text/logo banners
 # @category images
+# @platform any
 # @runs     local
 # @requires rsvg-convert magick
 # @arg      target  optional  {designs/linkedin}  Directory or .svg file to export (repeatable)

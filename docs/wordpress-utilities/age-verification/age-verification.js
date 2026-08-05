@@ -5,7 +5,8 @@
  * content blocks based on the visitor's declared age.
  *
  * @desc     Cookie-based age verification modal script (jQuery)
- * @category age-verification
+ * @category snippets
+ * @platform wordpress
  * @doc      wordpress-utilities/age-verification/README.md
  */
 jQuery(document).ready(function () {

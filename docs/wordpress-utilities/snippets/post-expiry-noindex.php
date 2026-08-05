@@ -20,6 +20,7 @@
  *
  * @desc     Auto-noindex posts past their expiry date via Yoast's wpseo_robots filter
  * @category snippets
+ * @platform wordpress
  * @doc      wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md
  */
 

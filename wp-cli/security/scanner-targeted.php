@@ -28,6 +28,7 @@
  *
  * @desc     Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)
  * @category security
+ * @platform wordpress
  * @runs     local
  * @requires wp
  * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)

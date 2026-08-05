@@ -23,6 +23,7 @@
 #
 # @desc     Find (and optionally replace) multiple copies of a file across projects
 # @category misc
+# @platform any
 # @runs     local
 # @requires find
 # @arg      filename     required  {create-pr.sh}  Name of file to search for

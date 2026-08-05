@@ -49,6 +49,7 @@ type Command struct {
 	Key      string
 	Desc     string
 	Category string
+	Platform string
 	Runs     string
 	Requires []string
 	Args     []Arg
@@ -94,7 +95,7 @@ var (
 // docblock) is silently ignored, matching bash's case statement.
 var directivesHandled = map[string]bool{
 	"@desc": true, "@category": true, "@runs": true, "@requires": true,
-	"@doc": true, "@example": true, "@arg": true, "@flag": true,
+	"@doc": true, "@example": true, "@arg": true, "@flag": true, "@platform": true,
 }
 
 // DirectiveLines returns every recognized "@directive value" line found in
@@ -189,6 +190,10 @@ func Parse(key, scriptPath string) (*Command, error) {
 			if cmd.Category == "" {
 				cmd.Category = value
 			}
+		case "@platform":
+			if cmd.Platform == "" {
+				cmd.Platform = value
+			}
 		case "@runs":
 			if cmd.Runs == "" {
 				cmd.Runs = value
@@ -235,6 +240,19 @@ func Lint(cmd *Command, repoRoot string) []string {
 		case "local", "server", "either":
 		default:
 			errs = append(errs, fmt.Sprintf("%s: @runs '%s' must be local, server, or either", cmd.Key, cmd.Runs))
+		}
+	}
+
+	// Spelled out here rather than shared with catalog.Platforms, matching
+	// how @runs' values are handled: manifest is the lower layer and
+	// importing catalog would invert the dependency. A typo caught here
+	// fails the build; caught later it silently drops the command out of
+	// every --platform filter.
+	if cmd.Platform != "" {
+		switch cmd.Platform {
+		case "trellis", "wordpress", "any":
+		default:
+			errs = append(errs, fmt.Sprintf("%s: @platform '%s' must be trellis, wordpress, or any", cmd.Key, cmd.Platform))
 		}
 	}
 

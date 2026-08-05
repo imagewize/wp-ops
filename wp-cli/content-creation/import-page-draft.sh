@@ -24,7 +24,8 @@
 # import needs neither.
 #
 # @desc     Update an existing WordPress page from an HTML draft, locally and/or in production
-# @category content-creation
+# @category content
+# @platform trellis
 # @runs     local
 # @requires ssh trellis
 # @arg      draft-file   required  {draft.html}  Local HTML draft with block markup

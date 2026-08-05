@@ -34,6 +34,7 @@
  *
  * @desc     Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)
  * @category security
+ * @platform wordpress
  * @runs     local
  * @requires wp
  * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)

@@ -3,6 +3,7 @@
 #
 # @desc     Search the Openverse image API and print matching results
 # @category images
+# @platform any
 # @runs     local
 # @requires python3
 # @arg      query            required  {sunset}  Search query

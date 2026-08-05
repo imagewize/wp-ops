@@ -13,6 +13,12 @@
 #     this shell with the node process so stdout carries only the MCP stream.
 #
 # Usage: point mcpServers.wp-ops.command at this script's absolute path
+#
+# @desc     Rebuild if stale and start the MCP server for stdio transport
+# @category mcp-server
+# @platform any
+# @runs     local
+# @requires npm node
 # (no args needed).
 
 set -e

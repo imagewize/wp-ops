@@ -20,13 +20,14 @@
 #     See: wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
 # @desc     Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell
-# @category woocommerce
+# @category misc
+# @platform trellis
 # @runs     local
 # @requires trellis
 # @flag     --dry-run  optional  {}  Print the planned wp wc product_variation create commands without running them
 # @example  wp-ops scripts/woocommerce/create-product-variations
 # @example  wp-ops scripts/woocommerce/create-product-variations --dry-run
-# @doc      wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
+# @doc      docs/wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
 
 set -euo pipefail

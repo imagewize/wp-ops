@@ -15,6 +15,7 @@
  *
  * @desc     Playwright smoke test verifying CF7 submissions still work after an Nginx rate-limit deploy
  * @category monitoring
+ * @platform wordpress
  * @runs     local
  * @requires node
  * @arg      contact-page-url  required  {https://example.com/contact/}  Contact page URL to test

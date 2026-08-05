@@ -3,6 +3,7 @@
 #
 # @desc     Back up a site's uploads directory from any environment (development/staging/production)
 # @category backup
+# @platform trellis
 # @runs     local
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml

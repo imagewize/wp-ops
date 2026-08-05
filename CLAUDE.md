@@ -14,18 +14,11 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `trellis/provision/` - Provisioning guides and command reference
   - `trellis/security/` - fail2ban WordPress protection and manual IP blocking guides
   - `trellis/updater/` - Safe Trellis update scripts
-- **bedrock/** - Bedrock/Composer development workflows
-  - `bedrock/local-package-development/` - Test a local plugin/theme branch in a Bedrock site via a Composer `path` repository
-  - `bedrock/wp-cli-config/` - Standard `wp-cli.yml` for Bedrock path setup and `wp pattern validate` command for canonicalizing block pattern files
 - **wp-cli/** - WordPress command-line operations
-  - `wp-cli/content-creation/` - WP-CLI content creation and block patterns
+  - `wp-cli/content-creation/` - WP-CLI content creation, block patterns, and the `wp pattern validate` command
   - `wp-cli/diagnostics/` - WordPress diagnostic tools
   - `wp-cli/migration/` - WordPress migration documentation and URL update methods
   - `wp-cli/security/` - Malware detection and security scanning
-- **nginx/** - Web server configurations
-  - `nginx/browser-caching/` - Browser caching configuration
-  - `nginx/image-optimization/` - WebP/AVIF configuration and guides
-  - `nginx/redirects/` - SEO and URL redirect management
 - **scripts/** - General utility scripts
   - `scripts/backup/` - Standalone backup shell scripts
   - `scripts/monitoring/` - Monitoring helper scripts
@@ -45,12 +38,13 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities
     - `scripts/misc/find-and-replace-files.sh` - Batch find-and-replace files across projects
-- **wordpress-utilities/** - Reusable WordPress components and utilities
-  - `wordpress-utilities/age-verification/` - Cookie-based age verification system with modal and ACF integration
-  - `wordpress-utilities/analytics/` - Analytics implementation and detection (Google Analytics, Matomo)
-  - `wordpress-utilities/snippets/` - Small PHP snippets and WP-CLI command references
-  - `wordpress-utilities/speed-optimization/` - Performance testing and TTFB analysis tools (curl, wget)
-- **troubleshooting/** - Server and WordPress troubleshooting guides
+- **docs/** - Documentation. Design and planning docs sit at the top level as
+  loose `.md` files; the subdirectories are operational guides, which carry no
+  runnable commands and so have no CLI category of their own:
+  - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (guides plus the `.conf.j2` templates they describe)
+  - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)
+  - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup
+  - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `age-verification/`, `analytics/`, `snippets/`, `speed-optimization/`
 
 ## Key Technologies
 

@@ -39,6 +39,7 @@
 # manifest block is placed after that range to avoid altering its output.
 # @desc     Rsync a plugin/theme working copy into a Bedrock site for testing unreleased changes
 # @category sync
+# @platform any
 # @runs     local
 # @requires rsync
 # @arg      kind          required  {plugin|theme}  Package type
@@ -46,7 +47,7 @@
 # @arg      source-dir    optional  {.}  Package working tree (default: current directory)
 # @flag     --dry-run     optional  {}  Preview the sync without writing anything
 # @example  wp-ops scripts/sync/rsync-package-to-site theme my-theme
-# @doc      bedrock/local-package-development/README.md
+# @doc      docs/bedrock/local-package-development/README.md
 set -euo pipefail
 
 usage() {

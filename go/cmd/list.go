@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,19 +14,45 @@ import (
 )
 
 var allFlag bool
+var platformFlag string
+
+// platformFlagUsage is shared by `list` and `search` so the two can't drift
+// from each other or from catalog.Platforms.
+var platformFlagUsage = "Filter by platform: " + strings.Join(catalog.Platforms, ", ")
+
+// validatePlatform rejects an unknown --platform value up front. Without it
+// a typo silently filters the catalog down to nothing, which reads as "no
+// such commands exist" rather than "no such platform".
+func validatePlatform(platform string) error {
+	if platform == "" {
+		return nil
+	}
+	for _, p := range catalog.Platforms {
+		if platform == p {
+			return nil
+		}
+	}
+	return fmt.Errorf("wp-ops: unknown platform %q — expected one of: %s",
+		platform, strings.Join(catalog.Platforms, ", "))
+}
 
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List every command by category",
 	RunE: func(cc *cobra.Command, args []string) error {
 		c := mustCatalog()
+		if err := validatePlatform(platformFlag); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		filtered := c.FilterByPlatform(platformFlag)
 		switch {
 		case jsonFlag:
-			printJSON(c)
+			printJSON(filtered)
 		case allFlag:
-			printAllCommands(c)
+			printAllCommands(filtered)
 		default:
-			printCategorizedList(c)
+			printCategorizedList(filtered)
 		}
 		return nil
 	},
@@ -34,6 +61,7 @@ var listCmd = &cobra.Command{
 func init() {
 	listCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
 	listCmd.Flags().BoolVar(&allFlag, "all", false, "List every command in every category, with descriptions")
+	listCmd.Flags().StringVar(&platformFlag, "platform", "", platformFlagUsage)
 	rootCmd.AddCommand(listCmd)
 }
 
@@ -52,8 +80,9 @@ func printCategorizedList(c *catalog.Catalog) {
 	}
 
 	fmt.Println()
-	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops trellis')")
+	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops backup')")
 	fmt.Println("Run 'wp-ops list --all' to see every command with its description")
+	fmt.Println("Run 'wp-ops list --platform wordpress' to see only what runs on any WP site")
 	fmt.Println("Run 'wp-ops search <term>' to find a command")
 	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
 	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
@@ -79,8 +108,7 @@ func printAllCommands(c *catalog.Catalog) {
 	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
 }
 
-func printCategoryCommands(c *catalog.Catalog, category string) {
-	entries := c.CommandsInDisplay(category)
+func printCategoryCommands(category string, entries []catalog.Entry) {
 	if len(entries) == 0 {
 		fmt.Printf("No commands found in category: %s\n", catalog.CategoryDisplayNames[category])
 		return

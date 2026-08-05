@@ -1583,11 +1583,11 @@ wp redis enable
 
 ### 3. Configure Browser Caching
 
-See the [Browser Caching Guide](../../nginx/browser-caching/README.md) in this repository.
+See the [Browser Caching Guide](../../docs/nginx/browser-caching/README.md) in this repository.
 
 ### 4. Optimize Images
 
-See the [Image Optimization Guide](../../nginx/image-optimization/README.md) for WebP/AVIF support.
+See the [Image Optimization Guide](../../docs/nginx/image-optimization/README.md) for WebP/AVIF support.
 
 ### 5. Set Up Monitoring
 

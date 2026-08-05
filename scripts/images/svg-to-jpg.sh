@@ -36,6 +36,7 @@
 #
 # @desc     Export design SVGs to JPG with librsvg, at native size or forced dimensions
 # @category images
+# @platform any
 # @runs     local
 # @requires rsvg-convert magick
 # @arg      target  optional  {designs/linkedin}  Directory or .svg file to export (repeatable)

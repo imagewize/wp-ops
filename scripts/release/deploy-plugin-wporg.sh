@@ -50,6 +50,7 @@ err()  { echo -e "${RED}✗ $1${NC}" >&2; }
 # manifest block is placed after that range to avoid altering its output.
 # @desc     Publish a plugin from its git working tree to the WordPress.org SVN repository
 # @category release
+# @platform any
 # @runs     local
 # @requires svn
 # @arg      slug     required  {warder-cookie-consent}  WordPress.org plugin slug

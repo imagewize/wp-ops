@@ -8,6 +8,7 @@
 #
 # @desc     Fetch and display GitHub repository traffic statistics (14-day window)
 # @category git
+# @platform any
 # @runs     local
 # @requires gh
 # @arg      owner/repo  required  {imagewize/nynaeve}  GitHub repository

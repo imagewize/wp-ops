@@ -40,6 +40,7 @@
 
 # @desc     Count published WordPress posts by year (or month), locally or over SSH
 # @category misc
+# @platform wordpress
 # @runs     local
 # @requires wp
 # @flag     --year     optional  {2026}  Only this year — prints a single total

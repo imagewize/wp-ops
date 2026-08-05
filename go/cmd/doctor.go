@@ -41,7 +41,7 @@ var doctorSections = []doctorSection{
 		{"curl", "redirect checks, 404 checks, webhooks", true},
 	}},
 	{"WordPress & Trellis", []binCheck{
-		{"wp", "WP-CLI scripts (wp-cli/, bedrock/)", false},
+		{"wp", "WP-CLI scripts (wp-cli/)", false},
 		{"ansible-playbook", "Trellis playbooks (trellis/)", false},
 		{"trellis", "Trellis CLI", false},
 		{"composer", "Bedrock dependency management", false},
@@ -94,7 +94,7 @@ func runDoctor() int {
 
 	fmt.Println("Environment")
 	checkEnvDir("TRELLIS_DIR", "needed by trellis/ playbooks", detect.TrellisDir)
-	checkEnvDir("WP_SITE_DIR", "needed by wp-cli/ and bedrock/ scripts", detect.WPSiteDir)
+	checkEnvDir("WP_SITE_DIR", "needed by wp-cli/ scripts", detect.WPSiteDir)
 	fmt.Println()
 
 	c := mustCatalog()

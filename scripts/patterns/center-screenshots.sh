@@ -11,7 +11,8 @@
 #   ./center-screenshots.sh ./screenshots 900 600
 #
 # @desc     Center pattern screenshots on a fixed canvas in place (backs up originals first)
-# @category patterns
+# @category content
+# @platform any
 # @runs     local
 # @requires magick
 # @arg      screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots

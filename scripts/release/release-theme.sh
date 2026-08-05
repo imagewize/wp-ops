@@ -23,6 +23,7 @@
 #
 # @desc     Bump theme version and generate an AI changelog entry (Claude or Codex)
 # @category release
+# @platform any
 # @runs     local
 # @requires claude
 # @arg      theme-name  required  {elayne}  Theme slug (demo/ or site/ Bedrock installation)

@@ -3,6 +3,7 @@
 #
 # @desc     Generate a traffic analysis report from a site's Nginx access log
 # @category monitoring
+# @platform trellis
 # @runs     local
 # @requires ansible-playbook
 # @arg      site        required  {example.com}  Site name as in wordpress_sites.yml

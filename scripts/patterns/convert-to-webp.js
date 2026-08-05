@@ -23,7 +23,8 @@
  *   node convert-to-webp.js --all --dir=./screenshots --quality=90
  *
  * @desc     Convert PNG pattern screenshots to WebP using sharp
- * @category patterns
+ * @category content
+ * @platform any
  * @runs     local
  * @requires node
  * @arg      input-file     optional  {pattern-hero-dark.png}  Single PNG to convert (omit when using --all)

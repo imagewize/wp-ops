@@ -23,6 +23,7 @@
 #
 # @desc     Pull a remote site's database into development via SSH, with URL search-replace
 # @category backup
+# @platform trellis
 # @runs     local
 # @requires trellis
 # @arg      site-name    optional  {example.com}  Site name as in wordpress_sites.yml

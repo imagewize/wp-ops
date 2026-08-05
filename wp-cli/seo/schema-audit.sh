@@ -15,6 +15,7 @@
 #
 # @desc     Check key pages for schema markup and validate implementation
 # @category seo
+# @platform wordpress
 # @runs     local
 # @requires curl
 # @arg      site-url  required  {https://example.com}  Site URL to check

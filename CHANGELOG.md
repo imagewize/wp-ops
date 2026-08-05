@@ -5,6 +5,264 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] - 2026-08-05
+
+Implements Option C of `docs/category-organization.md`: the catalog now groups
+by **domain** and filters by **platform**, both as manifest metadata. No files
+moved and no command keys changed — the directory layout is now an
+implementation detail rather than the thing `wp-ops list` shows you.
+
+### Changed
+
+- **BREAKING** - **`wp-ops patterns` is now `wp-ops content`.** The category
+  absorbed `wp-cli/content-creation/` and the pattern validator, so
+  screenshotting a pattern, creating the page it goes on, and validating the
+  file all live in one group. This is the only removed *category* form; see
+  Deprecated for the directory categories, which survive, and Option D below
+  for the one command key that moved.
+
+- **Categories group by `@category` (domain), not by directory.**
+  `displayCategoryFor()` previously honoured the manifest tag only for
+  `scripts/**` subcategories with 4+ commands, so `Monitoring` meant
+  *`scripts/monitoring` only* and the four `trellis/monitoring` playbooks sat
+  under `Trellis`. Now every command's `@category` wins.
+
+  The concrete payoff: **`wp-ops backup` lists all ten backup commands** —
+  four shell scripts under `scripts/backup/` and six Ansible playbooks under
+  `trellis/backup/` — which the two-directory split made impossible. Same for
+  `security` (3 under `wp-cli/`, 2 under `trellis/`) and `monitoring` (13 + 4).
+  41% of the catalog previously lived in a domain no single directory
+  contained.
+
+  `wp-ops list` goes from 10 directory-ish groups to 12 domain groups:
+  Monitoring (17), Backup (10), Content (8), Images (7), SEO (7), Security (6),
+  Misc (5), Release (4), Git (3), MCP Server (3), Diagnostics (2), Sync (2).
+
+- **Singletons merged into neighbours** rather than left as one-command groups
+  or swept into a catch-all. Dropping the promotion threshold would otherwise
+  have produced `WooCommerce (1)`, `Updater (1)`, and `WP-CLI Config (1)` as
+  top-level entries. The merges: `patterns` + `content-creation` +
+  `wp-cli-config` → `content`; `age-verification` → `snippets`; `woocommerce`
+  + `updater` → `misc`. The rejected alternative — a 4+ threshold with the
+  rest in `Misc` — would have bucketed 20 commands across ten unrelated
+  domains, which is less navigable than the split it replaced. (The
+  `snippets` group that merge produced is gone again — see step 7 below.)
+
+- **13 `@category` values normalized.** The tags the analysis flagged as
+  directory echoes rather than domains (`wp-cli-config`, `age-verification`,
+  `updater`) are the same ones the merges absorbed.
+
+- **`wp-ops search` badges every result with its platform**, e.g.
+  `scripts/backup/db-backup  [trellis]  Back up a remote site's database…`.
+  Suppressed under `--platform`, where every row would carry the same value.
+
+- **The interactive picker** shows the platform tag per row, faint so it stays
+  subordinate to `(server)`. Domain grouping puts an Ansible playbook directly
+  above a plain-WP shell script under one header, which is exactly where the
+  row needs to say which stack it wants.
+
+### Added
+
+- **`@platform` manifest directive**, on every command. Three values, because
+  two aren't enough — `scripts/images/batch-resize.sh` needs no WordPress at
+  all, while `wp-cli/security/scanner-targeted.php` needs *a* WordPress but no
+  Trellis, and calling both "agnostic" answers the wrong question:
+
+  | Value | Means | Count |
+  | --- | --- | ---: |
+  | `trellis` | Needs a Trellis project, vault, `/srv/www`, or the `trellis` CLI | 27 |
+  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 17 |
+  | `any` | No WordPress involved | 30 |
+
+  Deliberately its own field rather than derived from `@requires`, which names
+  binaries and breaks in both directions: `scripts/backup/db-backup.sh`
+  declares only `@requires ssh` yet hard-codes `/srv/www` and `web@host`, while
+  `@requires wp` says nothing about whether the target must be Trellis. Also
+  distinct from `@runs local|server`, which says where a command *executes*,
+  not what stack it needs.
+
+- **`--platform` filter on `wp-ops list` and `wp-ops search`.**
+  `wp-ops list --platform wordpress` answers "what can I run against this
+  site" for a non-Trellis host. An unknown value is rejected up front rather
+  than silently filtering to nothing, which would read as "no such commands
+  exist" instead of "no such platform".
+
+  This made a real coverage hole **visible before closing it**:
+  `--platform wordpress` returned **zero backup commands**, because all nine
+  assumed Trellis. Previously `wp-ops backup` listed all nine happily and you
+  found out by running one. Step 6 below writes the command that fills it.
+
+- **`catalog.Platforms`** as the single source of truth for legal values,
+  shared by the flag usage strings and the validator so `list` and `search`
+  can't drift.
+
+- **`manifest.Lint()` validates `@platform`**, alongside its existing `@runs`
+  check, so a typo fails the build (`go generate ./...` in `go-build.yml`)
+  rather than silently dropping that command out of every `--platform` filter.
+
+### Deprecated
+
+- **Directory categories are now hidden aliases.** `wp-ops trellis
+  database-backup`, `wp-ops wp-cli scanner-wrapper`, `wp-ops scripts
+  db-backup`, `wp-ops bedrock wp-cli-pattern-validate`, and `wp-ops
+  wordpress-utilities <snippet>` all still resolve — they're registered from
+  the directory grouping rather than the display grouping, and hidden from
+  `--help` so the CLI presents one set of categories instead of two competing
+  ones. Prefer the domain form (`wp-ops backup database-backup`).
+
+### Fixed
+
+- **README** - `wp-ops nginx` was documented as listing `nginx/`'s guides. It
+  never did: categories with zero commands are skipped at registration, so the
+  command has always errored. Those guides are reachable through
+  `wp-ops docs`, and Option D below removes the dead category outright.
+
+- **`wp-ops list`'s footer** pointed at `wp-ops trellis` as the example
+  category, which the domain regrouping would have turned into a broken
+  suggestion printed by the tool itself.
+
+- **The catalog generator's `-out` flag** documented itself as "relative to
+  the catalog package directory" but resolved against the working directory.
+  Under `go generate` the two coincide, so this only bit a manual run:
+  `go run ./internal/catalog/gen` from `go/` wrote a stray, untracked
+  `go/catalog.json` and left the real embedded catalog stale — which reads as
+  the generator having done nothing. It now resolves from its own source path,
+  the same working-directory-independent trick `findRepoRoot()` already used.
+
+### Option D — doc-only trees moved under `docs/`
+
+- **BREAKING** - **`bedrock/wp-cli-config/wp-cli-pattern-validate` is now
+  `wp-cli/content-creation/wp-cli-pattern-validate`.** The basename form
+  (`wp-ops wp-cli-pattern-validate`) is unchanged, so only the full-key
+  invocation moves. Its `@category` was already `content`, which is what made
+  `wp-cli/content-creation/` the obvious home — it now sits beside
+  `page-creation` and `import-page-draft`.
+
+- **`nginx/` → `docs/nginx/`, `troubleshooting/` → `docs/troubleshooting/`,
+  `bedrock/` → `docs/bedrock/`.** All three were pure documentation sitting at
+  top level next to command directories, and all three appeared in the curated
+  `Categories` order where they were skipped on every pass for having zero
+  commands. `bedrock/` became documentation the moment its one command left.
+  `wp-ops docs` is unaffected — it walks every `.md` in the repo rather than a
+  category list — and `wp-ops nginx` / `wp-ops bedrock` were already
+  unreachable, so nothing that previously worked stops working.
+
+  Note `nginx/` was never purely `.md`: it carries four `.conf.j2` templates
+  copied into a Trellis `nginx-includes/` directory, and `bedrock/` a
+  reference `wp-cli.yml`. These moved with the guides that describe them
+  rather than being split off — `browser-caching/README.md` and
+  `assets-expiry.conf.j2` are one unit.
+
+- **`.github/workflows/go-build.yml`** - the removed directories are replaced
+  in both path-filter blocks by `docs/**`, which also closes a pre-existing
+  gap: `docs/` has always been embedded into the binary by `assets.go` but
+  never triggered a build when it changed.
+
+- **Inbound links** - 16 markdown links across `README.md`, `AGENTS.md`,
+  `scripts/README.md`, `wordpress-utilities/README.md`, `trellis/security/`,
+  `wp-cli/migration/`, `wp-cli/security/`, and the moved files' own relative
+  paths. `CLAUDE.md`'s repository structure gains a `docs/` section
+  describing the split: design docs as loose `.md` at the top level,
+  operational guides in subdirectories.
+
+### Step 6 — `wp-db-backup.sh`, the first non-Trellis backup command
+
+- **Added: `scripts/backup/wp-db-backup.sh`** (`@platform wordpress`) - backs
+  up any WordPress database to a local `.sql.gz`, closing the coverage hole
+  `@platform` exposed. All nine existing backup commands assume Trellis, so
+  `wp-ops list --platform wordpress` previously returned **zero** of them; a
+  Valet, Herd, cPanel, or plain `public_html` site had no backup path in this
+  toolkit at all.
+
+  Everything the Trellis scripts assume is discovered instead. Layout
+  detection probes for `wp-load.php` at the given path, then `web/wp`
+  (Bedrock), then `wordpress/` — `site-backup.sh` hard-codes Bedrock's
+  `web/app/` and breaks on anything else. The site URL comes from
+  `wp option get siteurl` rather than `wordpress_sites.yml`, and names the
+  backup. `--host` requires an explicit `--site-path` instead of guessing
+  `/srv/www/<site>/current`. `--wp-bin`/`--php-bin` reach shared hosts whose
+  PHP lives somewhere like `/opt/plesk/php/8.2/bin/php`, matching the
+  four-shape host model in `mcp-server/src/registry.ts` rather than inventing
+  a second convention. The dump is streamed, so nothing is written on the
+  server and no writable backup directory has to exist there.
+
+  Named `wp-db-backup` so `wp-ops db-backup` stays unambiguous — a shared
+  basename would turn the short form into a did-you-mean list.
+
+- **Added: `scripts/backup/README.md`** - documents the trellis/wordpress
+  split across the four shell scripts, the restore command, and the stdout
+  hazard below.
+
+  **Written against a real site, which is why it works.** The first version
+  produced a corrupt backup: WP-CLI on the test host printed a PHP
+  deprecation notice to **stdout**, so `wp db export - | gzip` made that
+  notice the first line of the dump. The result is a valid gzip, of the right
+  size, still ending in `Dump completed` — it passes every check the existing
+  scripts make and fails only on import. Three fixes came out of it:
+
+  - WP-CLI is invoked **from the site directory**, not merely pointed at it.
+    It finds `wp-cli.yml` by walking up from the working directory, not from
+    `--path`, so running elsewhere silently drops the site's own config — here,
+    a `require` that suppressed those very deprecations.
+  - The dump is validated at **both ends**. A trailing `Dump completed` marker
+    proves nothing, because pollution arrives at the front; a dump whose first
+    line isn't SQL is deleted rather than kept.
+  - `--php-bin` now adds `-d display_errors=stderr`. WP-CLI's shebang wrapper
+    gives no way to pass `-d`, so invoking PHP directly is the only way to get
+    diagnostics off stdout on a noisy host — and the rejection message says so.
+
+### Step 7 — `wordpress-utilities/` entries are no longer commands
+
+The last open question from `docs/category-organization.md`: whether that
+tree's five "commands" were commands at all. They weren't — one was a
+stylesheet, one an HTML template, and the CLI already routed the whole
+directory to a separate print-or-copy executor rather than running anything.
+Two of them described operations that WP-CLI can just do, so those became
+real commands and the rest became documentation.
+
+- **BREAKING** - **the five `wordpress-utilities/*` entries are gone from the
+  catalog**, along with `wp-ops wordpress-utilities <snippet>`. The files
+  themselves are unchanged at `docs/wordpress-utilities/`, reachable with
+  `wp-ops docs`. Catalog count goes 76 → 73.
+
+- **Added: `wp-cli/security/admin-user-create`** (`@platform wordpress`) -
+  replaces the `admin-user-creation.php` snippet, which asked you to paste
+  credentials into `functions.php` and remember to delete the block
+  afterwards. Nothing is written to a file now: the password is generated with
+  `openssl`, printed once, and the matching `wp user delete` line is printed
+  with it. Refuses to run if the username or email already exists. Works
+  locally or over `--host`/`--site-path`, and appends `--path` only when you
+  pass it, so a plain Valet/Herd/`public_html` install isn't forced into
+  Bedrock's `web/wp` layout.
+
+- **Added: `wp-cli/seo/noindex-expired-posts`** (`@platform wordpress`) -
+  writes Yoast's `_yoast_wpseo_meta-robots-noindex` on published posts whose
+  `_post_expiry_date` has passed, in one `wp post list` query rather than a
+  per-post read. The `post-expiry-noindex.php` snippet evaluated the same
+  condition through Yoast's `wpseo_robots` filter on every front-end request;
+  stamping the meta instead makes the result visible in wp-admin, independent
+  of the filter being installed, and runnable from cron. `--dry-run` prints
+  the affected posts as a table, `--revert` clears the flag from posts whose
+  date moved back into the future.
+
+  The snippet is **not** redundant and stays in `docs/`: it also renders the
+  "Noindex After Date" meta box that sets `_post_expiry_date` in the first
+  place. Keep it for the editor UI; use the command to apply the outcome.
+
+- **Removed: `internal/exec/snippet.go`** and its tests (~130 lines) — the
+  print/`--copy`/`--path` executor, plus the `wordpress-utilities/` prefix
+  branch in `executeEntry` that was checked ahead of the `.php` branch. It had
+  no remaining callers. This drops `--copy` (clipboard) as a feature;
+  `wp-ops <command> --where` already covered `--path`, and the clipboard case
+  is `cat "$(wp-ops docs -l <term> | head -1)" | pbcopy`.
+
+- **`wordpress-utilities` is dropped from `Categories`**, `assets.go`'s embed
+  list, and the CI path filters — the same treatment Option D gave the other
+  three, and for the same reason: with no commands left it would have been a
+  fourth entry the catalog walked past every time. The `Snippets` display
+  group disappears with it (it was exactly those five entries), and `SEO` and
+  `Security` each gain one from the new commands.
+
 ## [4.2.1] - 2026-08-04
 
 ### Fixed

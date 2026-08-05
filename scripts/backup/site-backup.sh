@@ -16,6 +16,7 @@
 #
 # @desc     Full backup of a Trellis site: database, uploads, config, and plugins/themes
 # @category backup
+# @platform trellis
 # @runs     server
 # @requires wp
 # @arg      site-name  optional  {example.com}  Site directory under /srv/www

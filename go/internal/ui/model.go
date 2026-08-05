@@ -73,6 +73,7 @@ var (
 	dimStyle            = lipgloss.NewStyle().Faint(true)
 	cursorStyle         = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
 	serverTag           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	platformTag         = lipgloss.NewStyle().Faint(true)
 	errorStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
 	noteStyle           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
 	borderedPane        = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1)
@@ -524,6 +525,14 @@ func (m Model) viewBrowse() string {
 			lastCat = e.DisplayCategory
 		}
 		line := fmt.Sprintf("%-28s", truncate(filepath.Base(e.Key), 28))
+		// Option C2 (docs/category-organization.md): the picker groups by
+		// domain, which puts a Trellis playbook next to a plain-WP script
+		// under the same header — so "will this run against my site" is
+		// precisely the question the row can't otherwise answer. Faint, so
+		// it stays subordinate to (server), which is the louder warning.
+		if e.Platform != "" {
+			line += " " + platformTag.Render("["+e.Platform+"]")
+		}
 		if e.RunsOn == "server" {
 			line += " " + serverTag.Render("(server)")
 		}

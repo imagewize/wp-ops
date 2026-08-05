@@ -95,7 +95,7 @@ Each utility is self-contained and can be integrated independently:
 
 ### Via wp-ops
 
-These files are reference snippets, not runnable scripts, so the [`wp-ops`](../README.md) CLI prints or copies them instead of executing them:
+These files are reference snippets, not runnable scripts, so the [`wp-ops`](../../README.md) CLI prints or copies them instead of executing them:
 
 ```bash
 wp-ops wordpress-utilities --help     # list all snippets
@@ -226,10 +226,10 @@ When adding new utilities:
 
 These utilities complement other tools in the wp-ops repository:
 
-- **[wp-cli/](../wp-cli/)** - WordPress command-line operations
+- **[wp-cli/](../../wp-cli/)** - WordPress command-line operations
 - **[nginx/](../nginx/)** - Web server configurations for performance
-- **[scripts/](../scripts/)** - Automation and deployment scripts
-- **[trellis/](../trellis/)** - Server provisioning and deployment
+- **[scripts/](../../scripts/)** - Automation and deployment scripts
+- **[trellis/](../../trellis/)** - Server provisioning and deployment
 
 ## License
 

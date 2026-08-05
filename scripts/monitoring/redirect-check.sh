@@ -5,6 +5,7 @@
 #
 # @desc     Mass-check a list of URLs for redirects with curl
 # @category monitoring
+# @platform any
 # @runs     local
 # @requires curl
 # @arg      urls  optional  One or more URLs to check; falls back to the hardcoded list in the script when omitted

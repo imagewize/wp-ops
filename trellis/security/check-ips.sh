@@ -12,6 +12,7 @@
 #
 # @desc     Check IP addresses against AbuseIPDB threat intelligence
 # @category security
+# @platform trellis
 # @runs     local
 # @requires curl
 # @arg      ip  required  {1.2.3.4}  IP address to check (repeatable)

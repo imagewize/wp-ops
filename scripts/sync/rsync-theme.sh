@@ -30,6 +30,7 @@
 # manifest block is placed after that range to avoid altering its output.
 # @desc     Rsync theme files from a Trellis site back to its standalone theme repository
 # @category sync
+# @platform any
 # @runs     local
 # @requires rsync
 # @flag     --dry-run  optional  {}  Preview the sync without writing anything

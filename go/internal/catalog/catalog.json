@@ -53,7 +53,8 @@
       "wp-ops db-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -117,7 +118,8 @@
       "wp-ops db-pull network.example.com production --multisite --yes"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -145,7 +147,87 @@
       "ssh web@example.com 'bash -s' \u003c site-backup.sh example.com"
     ],
     "manifest_category": "backup",
-    "display_category": "scripts",
+    "platform": "trellis",
+    "display_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/backup/wp-db-backup",
+    "description": "Back up any WordPress site's database (Valet, Herd, cPanel, Bedrock) to a local .sql.gz",
+    "script_path": "scripts/backup/wp-db-backup.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp",
+      "gzip"
+    ],
+    "doc": "scripts/backup/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code/example",
+        "description": "WordPress directory (default: current directory)",
+        "raw": "--path       optional  {~/code/example}  WordPress directory (default: current directory)"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "user@example.com",
+        "description": "SSH user@host to back up from",
+        "raw": "--host       optional  {user@example.com}  SSH user@host to back up from"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/home/user/public_html",
+        "description": "Directory on the server, required with --host",
+        "raw": "--site-path  optional  {/home/user/public_html}  Directory on the server, required with --host"
+      },
+      {
+        "name": "--dest",
+        "required_raw": "optional",
+        "required": false,
+        "default": "database_backup",
+        "description": "Local destination directory",
+        "raw": "--dest       optional  {database_backup}  Local destination directory"
+      },
+      {
+        "name": "--name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example_com",
+        "description": "Backup basename (default: derived from the site URL)",
+        "raw": "--name       optional  {example_com}  Backup basename (default: derived from the site URL)"
+      },
+      {
+        "name": "--wp-bin",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/wp-cli.phar",
+        "description": "wp binary or .phar to use",
+        "raw": "--wp-bin     optional  {~/wp-cli.phar}  wp binary or .phar to use"
+      },
+      {
+        "name": "--php-bin",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/opt/plesk/php/8.2/bin/php",
+        "description": "PHP binary to run --wp-bin with",
+        "raw": "--php-bin    optional  {/opt/plesk/php/8.2/bin/php}  PHP binary to run --wp-bin with"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-db-backup --path ~/code/example",
+      "wp-ops wp-db-backup --host user@example.com --site-path /home/user/public_html"
+    ],
+    "manifest_category": "backup",
+    "platform": "wordpress",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -223,7 +305,8 @@
       "wp-ops scripts/git/create-pr main \"Add new feature\" --no-ai"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -274,7 +357,8 @@
       "wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -301,7 +385,8 @@
       "wp-ops scripts/git/git-log-oneline 20"
     ],
     "manifest_category": "git",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "git",
     "annotated": true
   },
   {
@@ -388,6 +473,7 @@
       "wp-ops scripts/images/batch-resize -w 1200 -H 630 *.png"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -447,6 +533,7 @@
       "wp-ops scripts/images/convert-to-webp input.jpg output.webp 82 800 419"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -516,6 +603,7 @@
       "wp-ops scripts/images/make-square-webp input.webp output.webp --left-pad 200 --size 2000"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -589,6 +677,7 @@
       "wp-ops scripts/images/openverse_download --url https://example.com/img.jpg --convert-webp"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -672,6 +761,7 @@
       "wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -735,6 +825,7 @@
       "wp-ops svg-to-jpg -w 1920 -h 1080 designs/mastodon"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -790,6 +881,7 @@
       "wp-ops svg-to-png -w 1584 -h 396 designs/linkedin/banner.svg"
     ],
     "manifest_category": "images",
+    "platform": "any",
     "display_category": "images",
     "annotated": true
   },
@@ -827,7 +919,8 @@
       "wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -902,7 +995,8 @@
       "wp-ops scripts/misc/find-and-replace-files -l -s create-pr.sh"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -977,7 +1071,8 @@
       "wp-ops scripts/misc/post-count --ssh web@example.com --year 2026"
     ],
     "manifest_category": "misc",
-    "display_category": "scripts",
+    "platform": "wordpress",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -1041,6 +1136,7 @@
       "wp-ops scripts/monitoring/404-checker --mode spider https://example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1085,6 +1181,7 @@
       "ssh web@example.com 'bash -s' \u003c ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1146,6 +1243,7 @@
       "wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name \"QA Bot\""
     ],
     "manifest_category": "monitoring",
+    "platform": "wordpress",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1187,6 +1285,7 @@
       "ssh root@example.com 'bash -s' \u003c error-monitor.sh example.com 48"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1224,6 +1323,7 @@
       "ssh web@example.com 'bash -s' \u003c monitor.sh 24 othersite.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1250,6 +1350,7 @@
       "wp-ops scripts/monitoring/redirect-check https://example.com/old-page/"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1263,7 +1364,7 @@
     "requires": [
       "ssh"
     ],
-    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "ssh-host",
@@ -1286,6 +1387,7 @@
       "wp-ops scripts/monitoring/remote-ttfb-ua web@example.com https://example.com/"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1338,6 +1440,7 @@
       "ssh web@example.com 'bash -s' \u003c security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1374,6 +1477,7 @@
       "wp-ops scripts/monitoring/server-monitor web@example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1464,6 +1568,7 @@
       "wp-ops traffic-by-country -q --hours 24 --pattern \"/contact/\" US"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1508,6 +1613,7 @@
       "ssh web@example.com 'bash -s' \u003c traffic-monitor.sh /srv/www/demo.example.com/logs/access.log 6"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1522,7 +1628,7 @@
       "curl",
       "bc"
     ],
-    "doc": "wordpress-utilities/speed-optimization/README.md",
+    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "url",
@@ -1537,6 +1643,7 @@
       "wp-ops scripts/monitoring/ttfb-test https://example.com"
     ],
     "manifest_category": "monitoring",
+    "platform": "any",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1573,6 +1680,7 @@
       "ssh web@example.com 'bash -s' \u003c updown-webhook-handler.sh example.com down"
     ],
     "manifest_category": "monitoring",
+    "platform": "trellis",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1616,8 +1724,9 @@
     "examples": [
       "wp-ops scripts/patterns/center-screenshots ./screenshots 900 600"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1684,8 +1793,9 @@
     "examples": [
       "wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1712,8 +1822,9 @@
     "examples": [
       "PATTERN_NAMESPACE=mytheme SITE_URL=http://example.test wp-ops scripts/patterns/screenshot-patterns hero-dark"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "wordpress",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1789,8 +1900,9 @@
     "examples": [
       "wp-ops scripts/patterns/screenshot-url http://example.test/my-page/ --out=pattern.png"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1825,8 +1937,9 @@
     "examples": [
       "wp-ops scripts/patterns/trim-screenshots ./screenshots 900"
     ],
-    "manifest_category": "patterns",
-    "display_category": "patterns",
+    "manifest_category": "content",
+    "platform": "any",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -1925,6 +2038,7 @@
       "wp-ops scripts/release/deploy-plugin-wporg warder-cookie-consent --build \"npm ci \u0026\u0026 npx webpack\""
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -1972,6 +2086,7 @@
       "wp-ops scripts/release/release-plugin 2.5.3 --commit"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2028,6 +2143,7 @@
       "wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2071,6 +2187,7 @@
       "wp-ops scripts/release/upload-release-asset imagewize/warder-cookie-consent v1.3.1"
     ],
     "manifest_category": "release",
+    "platform": "any",
     "display_category": "release",
     "annotated": true
   },
@@ -2084,7 +2201,7 @@
     "requires": [
       "rsync"
     ],
-    "doc": "bedrock/local-package-development/README.md",
+    "doc": "docs/bedrock/local-package-development/README.md",
     "args": [
       {
         "name": "kind",
@@ -2127,7 +2244,8 @@
       "wp-ops scripts/sync/rsync-package-to-site theme my-theme"
     ],
     "manifest_category": "sync",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "sync",
     "annotated": true
   },
   {
@@ -2153,7 +2271,8 @@
       "wp-ops scripts/sync/rsync-theme --dry-run"
     ],
     "manifest_category": "sync",
-    "display_category": "scripts",
+    "platform": "any",
+    "display_category": "sync",
     "annotated": true
   },
   {
@@ -2166,7 +2285,7 @@
     "requires": [
       "trellis"
     ],
-    "doc": "wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md",
+    "doc": "docs/wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md",
     "flags": [
       {
         "name": "--dry-run",
@@ -2180,8 +2299,9 @@
       "wp-ops scripts/woocommerce/create-product-variations",
       "wp-ops scripts/woocommerce/create-product-variations --dry-run"
     ],
-    "manifest_category": "woocommerce",
-    "display_category": "scripts",
+    "manifest_category": "misc",
+    "platform": "trellis",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -2221,7 +2341,8 @@
       "wp-ops database-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2260,7 +2381,8 @@
       "wp-ops database-pull example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2299,7 +2421,8 @@
       "wp-ops database-push example.com staging"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2339,7 +2462,8 @@
       "wp-ops files-backup example.com production"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2389,7 +2513,8 @@
       "wp-ops files-pull example.com production --delete yes"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2428,7 +2553,8 @@
       "wp-ops files-push example.com staging"
     ],
     "manifest_category": "backup",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "backup",
     "annotated": true
   },
   {
@@ -2479,7 +2605,8 @@
       "wp-ops quick-status example.com production --log_path /var/log/custom.log"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2546,7 +2673,8 @@
       "wp-ops security-scan example.com production --hours 48 --threshold 50"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2605,7 +2733,8 @@
       "wp-ops setup-monitoring example.com production --email alerts@example.com"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2664,7 +2793,8 @@
       "wp-ops traffic-report example.com production --hours 48"
     ],
     "manifest_category": "monitoring",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "monitoring",
     "annotated": true
   },
   {
@@ -2694,7 +2824,8 @@
       "wp-ops trellis/security/check-deny-ips --full"
     ],
     "manifest_category": "security",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2722,7 +2853,8 @@
       "wp-ops trellis/security/check-ips 1.2.3.4 5.6.7.8"
     ],
     "manifest_category": "security",
-    "display_category": "trellis",
+    "platform": "trellis",
+    "display_category": "security",
     "annotated": true
   },
   {
@@ -2749,8 +2881,9 @@
       "TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater",
       "wp-ops trellis-updater --yes"
     ],
-    "manifest_category": "updater",
-    "display_category": "trellis",
+    "manifest_category": "misc",
+    "platform": "trellis",
+    "display_category": "misc",
     "annotated": true
   },
   {
@@ -2814,8 +2947,9 @@
       "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673",
       "wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
     ],
-    "manifest_category": "content-creation",
-    "display_category": "wp-cli",
+    "manifest_category": "content",
+    "platform": "trellis",
+    "display_category": "content",
     "annotated": true
   },
   {
@@ -2858,415 +2992,22 @@
     "examples": [
       "wp-ops wp-cli/content-creation/page-creation about-page-content.html \"About\" about"
     ],
-    "manifest_category": "content-creation",
-    "display_category": "wp-cli",
+    "manifest_category": "content",
+    "platform": "trellis",
+    "display_category": "content",
     "annotated": true
   },
   {
     "category": "wp-cli",
-    "key": "wp-cli/diagnostics/diagnostic-transients",
-    "description": "Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)",
-    "script_path": "wp-cli/diagnostics/diagnostic-transients.php",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/diagnostics/README.md",
-    "examples": [
-      "wp-ops wp-cli/diagnostics/diagnostic-transients"
-    ],
-    "manifest_category": "diagnostics",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/diagnostics/list-posts-count",
-    "description": "Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv",
-    "script_path": "wp-cli/diagnostics/list-posts-count.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "ssh"
-    ],
-    "doc": "wp-cli/diagnostics/README.md",
-    "examples": [
-      "wp-ops wp-cli/diagnostics/list-posts-count"
-    ],
-    "manifest_category": "diagnostics",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/security/scanner-general",
-    "description": "Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)",
-    "script_path": "wp-cli/security/scanner-general.php",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/security/README.md",
-    "args": [
-      {
-        "name": "path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/security/scanner-general"
-    ],
-    "manifest_category": "security",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/security/scanner-targeted",
-    "description": "Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)",
-    "script_path": "wp-cli/security/scanner-targeted.php",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/security/README.md",
-    "args": [
-      {
-        "name": "path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/security/scanner-targeted"
-    ],
-    "manifest_category": "security",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/security/scanner-wrapper",
-    "description": "Run both targeted and general malware scanners in sequence",
-    "script_path": "wp-cli/security/scanner-wrapper.php",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/security/README.md",
-    "args": [
-      {
-        "name": "path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/security/scanner-wrapper"
-    ],
-    "manifest_category": "security",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/blog-audit",
-    "description": "Analyze blog posts for content categorization and quality metrics",
-    "script_path": "wp-cli/seo/blog-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "flags": [
-      {
-        "name": "--path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "web/wp",
-        "description": "WordPress path for WP-CLI",
-        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
-      },
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "audits",
-        "description": "Output directory",
-        "raw": "--output    optional  {audits}  Output directory"
-      },
-      {
-        "name": "--site-url",
-        "required_raw": "optional",
-        "required": false,
-        "default": "https://example.com",
-        "description": "Site URL for reports",
-        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/orphan-links-audit",
-    "description": "Find published posts/pages that no other content links to internally",
-    "script_path": "wp-cli/seo/orphan-links-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "flags": [
-      {
-        "name": "--host",
-        "required_raw": "optional",
-        "required": false,
-        "default": "web@example.com",
-        "description": "SSH user@host to run WP-CLI on",
-        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
-      },
-      {
-        "name": "--site-path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "/srv/www/example.com/current",
-        "description": "Site root on the server",
-        "raw": "--site-path  optional  {/srv/www/example.com/current}  Site root on the server"
-      },
-      {
-        "name": "--path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "web/wp",
-        "description": "WordPress path for WP-CLI",
-        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
-      },
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "audits",
-        "description": "Output directory",
-        "raw": "--output     optional  {audits}  Output directory"
-      }
-    ],
-    "examples": [
-      "wp-ops orphan-links-audit --host web@example.com",
-      "wp-ops orphan-links-audit --path web/wp --output reports/seo"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/orphan-pages-audit",
-    "description": "Find WordPress pages that exist but aren't linked from navigation menus",
-    "script_path": "wp-cli/seo/orphan-pages-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "flags": [
-      {
-        "name": "--path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "web/wp",
-        "description": "WordPress path for WP-CLI",
-        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
-      },
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "audits",
-        "description": "Output directory",
-        "raw": "--output    optional  {audits}  Output directory"
-      },
-      {
-        "name": "--site-url",
-        "required_raw": "optional",
-        "required": false,
-        "default": "https://example.com",
-        "description": "Site URL for reports",
-        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/page-audit",
-    "description": "Identify orphaned pages, analyze internal linking, and export a page inventory",
-    "script_path": "wp-cli/seo/page-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "wp"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "flags": [
-      {
-        "name": "--path",
-        "required_raw": "optional",
-        "required": false,
-        "default": "web/wp",
-        "description": "WordPress path for WP-CLI",
-        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
-      },
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "audits",
-        "description": "Output directory",
-        "raw": "--output    optional  {audits}  Output directory"
-      },
-      {
-        "name": "--site-url",
-        "required_raw": "optional",
-        "required": false,
-        "default": "https://example.com",
-        "description": "Site URL for reports",
-        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/redirect-audit",
-    "description": "Audit redirect chains: HTTPS pages, HTTP-\u003eHTTPS, and www canonicalization",
-    "script_path": "wp-cli/seo/redirect-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "curl"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "flags": [
-      {
-        "name": "--url",
-        "required_raw": "required",
-        "required": true,
-        "default": "https://example.com",
-        "description": "URL to test (repeatable)",
-        "raw": "--url      required  {https://example.com}  URL to test (repeatable)"
-      },
-      {
-        "name": "--verbose",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Show detailed curl output",
-        "raw": "--verbose  optional  {}  Show detailed curl output"
-      },
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "results/audits",
-        "description": "Output directory for reports",
-        "raw": "--output   optional  {results/audits}  Output directory for reports"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "wp-cli",
-    "key": "wp-cli/seo/schema-audit",
-    "description": "Check key pages for schema markup and validate implementation",
-    "script_path": "wp-cli/seo/schema-audit.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "curl"
-    ],
-    "doc": "wp-cli/seo/README.md",
-    "args": [
-      {
-        "name": "site-url",
-        "required_raw": "required",
-        "required": true,
-        "default": "https://example.com",
-        "description": "Site URL to check",
-        "raw": "site-url  required  {https://example.com}  Site URL to check"
-      }
-    ],
-    "flags": [
-      {
-        "name": "--output",
-        "required_raw": "optional",
-        "required": false,
-        "default": "audits",
-        "description": "Output directory",
-        "raw": "--output  optional  {audits}  Output directory"
-      },
-      {
-        "name": "--pages",
-        "required_raw": "optional",
-        "required": false,
-        "default": "/,/about/,/contact/",
-        "description": "Comma-separated page paths to check",
-        "raw": "--pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check"
-      }
-    ],
-    "examples": [
-      "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
-    ],
-    "manifest_category": "seo",
-    "display_category": "wp-cli",
-    "annotated": true
-  },
-  {
-    "category": "bedrock",
-    "key": "bedrock/wp-cli-config/wp-cli-pattern-validate",
+    "key": "wp-cli/content-creation/wp-cli-pattern-validate",
     "description": "Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()",
-    "script_path": "bedrock/wp-cli-config/wp-cli-pattern-validate.php",
+    "script_path": "wp-cli/content-creation/wp-cli-pattern-validate.php",
     "runs_on": "local",
     "runs": "local",
     "requires": [
       "wp"
     ],
-    "doc": "bedrock/wp-cli-config/README.md",
+    "doc": "docs/bedrock/wp-cli-config/README.md",
     "args": [
       {
         "name": "path",
@@ -3325,90 +3066,624 @@
     "examples": [
       "wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix"
     ],
-    "manifest_category": "wp-cli-config",
-    "display_category": "bedrock",
+    "manifest_category": "content",
+    "platform": "wordpress",
+    "display_category": "content",
     "annotated": true
   },
   {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/age-verification",
-    "description": "Cookie-based age verification modal script (jQuery)",
-    "script_path": "wordpress-utilities/age-verification/age-verification.js",
+    "category": "wp-cli",
+    "key": "wp-cli/diagnostics/diagnostic-transients",
+    "description": "Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)",
+    "script_path": "wp-cli/diagnostics/diagnostic-transients.php",
     "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/diagnostics/README.md",
+    "examples": [
+      "wp-ops wp-cli/diagnostics/diagnostic-transients"
+    ],
+    "manifest_category": "diagnostics",
+    "platform": "wordpress",
+    "display_category": "diagnostics",
     "annotated": true
   },
   {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/footer",
-    "description": "Age verification modal HTML template (ACF-driven button content)",
-    "script_path": "wordpress-utilities/age-verification/footer.php",
+    "category": "wp-cli",
+    "key": "wp-cli/diagnostics/list-posts-count",
+    "description": "Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv",
+    "script_path": "wp-cli/diagnostics/list-posts-count.sh",
     "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "wp-cli/diagnostics/README.md",
+    "examples": [
+      "wp-ops wp-cli/diagnostics/list-posts-count"
+    ],
+    "manifest_category": "diagnostics",
+    "platform": "trellis",
+    "display_category": "diagnostics",
     "annotated": true
   },
   {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/age-verification/modal",
-    "description": "CSS styles for the age verification modal",
-    "script_path": "wordpress-utilities/age-verification/modal.css",
+    "category": "wp-cli",
+    "key": "wp-cli/security/admin-user-create",
+    "description": "Create a temporary WordPress administrator with a generated password",
+    "script_path": "wp-cli/security/admin-user-create.sh",
     "runs_on": "local",
-    "doc": "wordpress-utilities/age-verification/README.md",
-    "manifest_category": "age-verification",
-    "display_category": "wordpress-utilities",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "docs/wordpress-utilities/snippets/admin-user-creation-wpcli.md",
+    "args": [
+      {
+        "name": "username",
+        "required_raw": "required",
+        "required": true,
+        "default": "temp_admin",
+        "description": "Username for the new administrator",
+        "raw": "username  required  {temp_admin}  Username for the new administrator"
+      },
+      {
+        "name": "email",
+        "required_raw": "required",
+        "required": true,
+        "default": "temp@example.com",
+        "description": "Email address for the new administrator",
+        "raw": "email     required  {temp@example.com}  Email address for the new administrator"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--role",
+        "required_raw": "optional",
+        "required": false,
+        "default": "administrator",
+        "description": "Role to assign",
+        "raw": "--role       optional  {administrator}  Role to assign"
+      },
+      {
+        "name": "--password",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Password to set (default: generated)",
+        "raw": "--password   optional  Password to set (default: generated)"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/var/www/example.com",
+        "description": "Site root on the server, required with --host",
+        "raw": "--site-path  optional  {/var/www/example.com}  Site root on the server, required with --host"
+      }
+    ],
+    "examples": [
+      "wp-ops admin-user-create temp_admin temp@example.com",
+      "wp-ops admin-user-create --path web/wp recovery recovery@example.com"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "display_category": "security",
     "annotated": true
   },
   {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/snippets/admin-user-creation",
-    "description": "Temporary admin user creation snippet for functions.php (remove after use)",
-    "script_path": "wordpress-utilities/snippets/admin-user-creation.php",
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-general",
+    "description": "Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)",
+    "script_path": "wp-cli/security/scanner-general.php",
     "runs_on": "local",
-    "doc": "wordpress-utilities/snippets/admin-user-creation-wpcli.md",
-    "manifest_category": "snippets",
-    "display_category": "wordpress-utilities",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-general"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "display_category": "security",
     "annotated": true
   },
   {
-    "category": "wordpress-utilities",
-    "key": "wordpress-utilities/snippets/post-expiry-noindex",
-    "description": "Auto-noindex posts past their expiry date via Yoast's wpseo_robots filter",
-    "script_path": "wordpress-utilities/snippets/post-expiry-noindex.php",
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-targeted",
+    "description": "Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)",
+    "script_path": "wp-cli/security/scanner-targeted.php",
     "runs_on": "local",
-    "doc": "wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
-    "manifest_category": "snippets",
-    "display_category": "wordpress-utilities",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-targeted"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "display_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/security/scanner-wrapper",
+    "description": "Run both targeted and general malware scanners in sequence",
+    "script_path": "wp-cli/security/scanner-wrapper.php",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/path/to/scan",
+        "description": "Directory to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/security/scanner-wrapper"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "display_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/blog-audit",
+    "description": "Analyze blog posts for content categorization and quality metrics",
+    "script_path": "wp-cli/seo/blog-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/blog-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/noindex-expired-posts",
+    "description": "Set Yoast's noindex on published posts whose expiry date has passed",
+    "script_path": "wp-cli/seo/noindex-expired-posts.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "docs/wordpress-utilities/snippets/post-expiry-noindex-wpcli-checks.md",
+    "flags": [
+      {
+        "name": "--meta-key",
+        "required_raw": "optional",
+        "required": false,
+        "default": "_post_expiry_date",
+        "description": "Expiry date meta key",
+        "raw": "--meta-key   optional  {_post_expiry_date}  Expiry date meta key"
+      },
+      {
+        "name": "--category",
+        "required_raw": "optional",
+        "required": false,
+        "default": "12,34",
+        "description": "Comma-separated category IDs to limit to",
+        "raw": "--category   optional  {12,34}  Comma-separated category IDs to limit to"
+      },
+      {
+        "name": "--post-type",
+        "required_raw": "optional",
+        "required": false,
+        "default": "post",
+        "description": "Post type to scan",
+        "raw": "--post-type  optional  {post}  Post type to scan"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show what would change without writing",
+        "raw": "--dry-run    optional  Show what would change without writing"
+      },
+      {
+        "name": "--revert",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Clear noindex from posts no longer expired",
+        "raw": "--revert     optional  Clear noindex from posts no longer expired"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/var/www/example.com",
+        "description": "Site root on the server, required with --host",
+        "raw": "--site-path  optional  {/var/www/example.com}  Site root on the server, required with --host"
+      }
+    ],
+    "examples": [
+      "wp-ops noindex-expired-posts --dry-run",
+      "wp-ops noindex-expired-posts --category 12,34 --path web/wp"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/orphan-links-audit",
+    "description": "Find published posts/pages that no other content links to internally",
+    "script_path": "wp-cli/seo/orphan-links-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH user@host to run WP-CLI on",
+        "raw": "--host       optional  {web@example.com}  SSH user@host to run WP-CLI on"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/current",
+        "description": "Site root on the server",
+        "raw": "--site-path  optional  {/srv/www/example.com/current}  Site root on the server"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path       optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output     optional  {audits}  Output directory"
+      }
+    ],
+    "examples": [
+      "wp-ops orphan-links-audit --host web@example.com",
+      "wp-ops orphan-links-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/orphan-pages-audit",
+    "description": "Find WordPress pages that exist but aren't linked from navigation menus",
+    "script_path": "wp-cli/seo/orphan-pages-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/orphan-pages-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/page-audit",
+    "description": "Identify orphaned pages, analyze internal linking, and export a page inventory",
+    "script_path": "wp-cli/seo/page-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web/wp",
+        "description": "WordPress path for WP-CLI",
+        "raw": "--path      optional  {web/wp}  WordPress path for WP-CLI"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output    optional  {audits}  Output directory"
+      },
+      {
+        "name": "--site-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://example.com",
+        "description": "Site URL for reports",
+        "raw": "--site-url  optional  {https://example.com}  Site URL for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/page-audit --path web/wp --output reports/seo"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/redirect-audit",
+    "description": "Audit redirect chains: HTTPS pages, HTTP-\u003eHTTPS, and www canonicalization",
+    "script_path": "wp-cli/seo/redirect-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "flags": [
+      {
+        "name": "--url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "URL to test (repeatable)",
+        "raw": "--url      required  {https://example.com}  URL to test (repeatable)"
+      },
+      {
+        "name": "--verbose",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show detailed curl output",
+        "raw": "--verbose  optional  {}  Show detailed curl output"
+      },
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "results/audits",
+        "description": "Output directory for reports",
+        "raw": "--output   optional  {results/audits}  Output directory for reports"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/seo/schema-audit",
+    "description": "Check key pages for schema markup and validate implementation",
+    "script_path": "wp-cli/seo/schema-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl"
+    ],
+    "doc": "wp-cli/seo/README.md",
+    "args": [
+      {
+        "name": "site-url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://example.com",
+        "description": "Site URL to check",
+        "raw": "site-url  required  {https://example.com}  Site URL to check"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--output",
+        "required_raw": "optional",
+        "required": false,
+        "default": "audits",
+        "description": "Output directory",
+        "raw": "--output  optional  {audits}  Output directory"
+      },
+      {
+        "name": "--pages",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/,/about/,/contact/",
+        "description": "Comma-separated page paths to check",
+        "raw": "--pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/"
+    ],
+    "manifest_category": "seo",
+    "platform": "wordpress",
+    "display_category": "seo",
     "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/dev",
-    "description": "Run the wp-ops MCP server in development mode (tsx, no build step)",
+    "description": "Install dependencies and start the MCP server in development mode",
     "script_path": "mcp-server/dev.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/run",
-    "description": "Rebuild if stale, then exec the MCP server for stdio transport.",
+    "description": "Rebuild if stale and start the MCP server for stdio transport",
     "script_path": "mcp-server/run.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm",
+      "node"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   },
   {
     "category": "mcp-server",
     "key": "mcp-server/start",
-    "description": "Build and start the wp-ops MCP server",
+    "description": "Build and start the MCP server",
     "script_path": "mcp-server/start.sh",
     "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "npm",
+      "node"
+    ],
+    "manifest_category": "mcp-server",
+    "platform": "any",
     "display_category": "mcp-server",
-    "annotated": false
+    "annotated": true
   }
 ]

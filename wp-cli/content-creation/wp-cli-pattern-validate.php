@@ -36,7 +36,8 @@
  *     wp --require=wp-cli-pattern-validate.php pattern validate web/app/themes/your-theme/patterns/
  *
  * @desc     Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()
- * @category wp-cli-config
+ * @category content
+ * @platform wordpress
  * @runs     local
  * @requires wp
  * @arg      path               required  {web/app/themes/theme-name/patterns/}  Pattern file or directory (recursive)
@@ -47,7 +48,7 @@
  * @flag     --compliance       optional  {}  Also run project-specific compliance checks
  * @flag     --compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks
  * @example  wp-ops bedrock/wp-cli-config/wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix
- * @doc      bedrock/wp-cli-config/README.md
+ * @doc      docs/bedrock/wp-cli-config/README.md
  */
 
 if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {

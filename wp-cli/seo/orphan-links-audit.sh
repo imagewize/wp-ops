@@ -31,6 +31,7 @@
 #
 # @desc     Find published posts/pages that no other content links to internally
 # @category seo
+# @platform wordpress
 # @runs     local
 # @requires wp
 # @flag     --host       optional  {web@example.com}  SSH user@host to run WP-CLI on

@@ -3,6 +3,7 @@
 #
 # @desc     Push development's database to a remote environment, with URL search-replace
 # @category backup
+# @platform trellis
 # @runs     local
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml

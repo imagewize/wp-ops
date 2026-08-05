@@ -551,7 +551,7 @@ deny 62.60.130.228;
 
 ### Security Tools
 - **[wp-cli/security](../../wp-cli/security/)** - WordPress malware scanners
-- **[troubleshooting/](../../troubleshooting/)** - Server troubleshooting guides
+- **[troubleshooting/](../../docs/troubleshooting/)** - Server troubleshooting guides
 
 ### Trellis Operations
 - **[trellis/backup](../backup/)** - Database and file backups

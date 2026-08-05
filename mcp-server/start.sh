@@ -2,6 +2,12 @@
 # start.sh - Build and start the wp-ops MCP server
 #
 # Usage: ./start.sh
+#
+# @desc     Build and start the MCP server
+# @category mcp-server
+# @platform any
+# @runs     local
+# @requires npm node
 
 set -e
 

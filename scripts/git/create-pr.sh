@@ -14,6 +14,7 @@
 #
 # @desc     Create a GitHub PR with an AI-generated description
 # @category git
+# @platform any
 # @runs     local
 # @requires gh
 # @arg      base-branch  optional  {main}  Target branch for the PR

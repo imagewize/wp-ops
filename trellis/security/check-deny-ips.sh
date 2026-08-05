@@ -17,6 +17,7 @@
 #
 # @desc     Check every individual IP in a Trellis deny-ips.conf.j2 against AbuseIPDB
 # @category security
+# @platform trellis
 # @runs     local
 # @requires curl jq trellis
 # @flag     --full  optional  {}  Full JSON output per IP via check-ips.sh, instead of the compact summary

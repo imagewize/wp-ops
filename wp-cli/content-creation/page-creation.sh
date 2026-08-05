@@ -14,7 +14,8 @@
 # Example: ./page-creation.sh about-page-content.html "About" "about"
 #
 # @desc     Deploy an HTML page to production via SCP and WP-CLI over SSH
-# @category content-creation
+# @category content
+# @platform trellis
 # @runs     local
 # @requires ssh
 # @arg      content-file  required  {about-page-content.html}  Local HTML file with the page content

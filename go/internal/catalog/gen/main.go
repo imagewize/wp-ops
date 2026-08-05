@@ -53,11 +53,8 @@ func extensionsFor(category string) map[string]bool {
 		exts[".yml"] = true
 	case "scripts":
 		exts[".py"] = true
-	case "wp-cli", "bedrock":
+	case "wp-cli":
 		exts[".php"] = true
-	case "wordpress-utilities":
-		exts[".php"] = true
-		exts[".css"] = true
 	}
 	return exts
 }
@@ -66,24 +63,15 @@ func extensionsFor(category string) map[string]bool {
 // consulted for a command with no @runs at all (today, that's just
 // mcp-server/dev and mcp-server/start, neither of which is in this list, so
 // it never fires; ported for exactness, matching is_server_side_command()'s
-// own fallback order).
-// promotedScriptCategories are the @category values under scripts/** with
-// enough commands (4+) to warrant their own top-level DisplayCategory
-// (Phase F option 4, docs/cli-ux-plan.md) rather than staying folded into
-// "scripts" alongside backup/git/misc/sync/woocommerce (2-3 commands each).
-var promotedScriptCategories = map[string]bool{
-	"monitoring": true,
-	"images":     true,
-	"patterns":   true,
-	"release":    true,
-}
+// own fallback order.
 
 // displayCategoryFor computes catalog.Entry.DisplayCategory: the manifest's
-// own @category value for a promoted scripts/** subcategory, otherwise the
-// directory category unchanged. See DisplayCategory's doc comment for why
-// this is kept separate from Category.
+// own @category value when present and non-empty, otherwise the directory
+// category unchanged. See DisplayCategory's doc comment for why this is kept
+// separate from Category. This implements Option C1 from
+// docs/category-organization.md: group by domain (@category) everywhere.
 func displayCategoryFor(category, manifestCategory string) string {
-	if category == "scripts" && promotedScriptCategories[manifestCategory] {
+	if manifestCategory != "" {
 		return manifestCategory
 	}
 	return category
@@ -161,6 +149,7 @@ func main() {
 				DisplayCategory:  displayCategoryFor(category, cmd.Category),
 				Key:              key,
 				ScriptPath:       rel,
+				Platform:         cmd.Platform,
 				Runs:             cmd.Runs,
 				Requires:         cmd.Requires,
 				Doc:              cmd.Doc,
@@ -213,13 +202,17 @@ func main() {
 
 	outPath := *out
 	if !filepath.IsAbs(outPath) {
-		// go:generate runs with cwd set to the directory holding the
-		// //go:generate comment (the catalog package), not this gen/
-		// subdirectory — resolve relative to that when invoked that way,
-		// falling back to cwd otherwise.
-		if cwd, err := os.Getwd(); err == nil {
-			outPath = filepath.Join(cwd, outPath)
+		// Resolved against the catalog package directory, not the working
+		// directory. Under `go generate` the two coincide (cwd is set to the
+		// directory holding the //go:generate comment), but running this
+		// generator by hand — `go run ./internal/catalog/gen` from go/ — used
+		// to drop a stray, untracked go/catalog.json while leaving the real
+		// embedded catalog stale, which reads as "the generator did nothing".
+		pkgDir, err := findCatalogPkgDir()
+		if err != nil {
+			fatalf("%v", err)
 		}
+		outPath = filepath.Join(pkgDir, outPath)
 	}
 	if err := os.WriteFile(outPath, data, 0o644); err != nil {
 		fatalf("writing %s: %v", outPath, err)
@@ -349,6 +342,18 @@ func findRepoRoot() (string, error) {
 		return "", fmt.Errorf("resolved repo root %s doesn't look like the wp-ops module", root)
 	}
 	return root, nil
+}
+
+// findCatalogPkgDir locates the catalog package directory — the one this
+// generator writes catalog.json into — from this source file's own path,
+// the same working-directory-independent trick findRepoRoot uses (gen/ is
+// always one directory below it).
+func findCatalogPkgDir() (string, error) {
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("could not determine gen's own source path")
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..")), nil
 }
 
 // isWpOpsModule reports whether goModPath is this repo's own go.mod, i.e.

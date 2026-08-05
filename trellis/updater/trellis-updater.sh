@@ -21,7 +21,8 @@
 #   --yes, -y      Skip the confirmation prompt before overwriting trellis/
 #
 # @desc     Safely update a Trellis installation to the latest upstream while preserving vault/config customizations
-# @category updater
+# @category misc
+# @platform trellis
 # @runs     local
 # @requires git
 # @flag     --yes  optional  {}  Skip the confirmation prompt before overwriting trellis/

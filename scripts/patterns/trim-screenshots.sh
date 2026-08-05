@@ -10,7 +10,8 @@
 #   ./trim-screenshots.sh ./screenshots 900
 #
 # @desc     Trim whitespace from pattern screenshots in place, keeping aspect ratio (backs up originals first)
-# @category patterns
+# @category content
+# @platform any
 # @runs     local
 # @requires magick
 # @arg      screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots

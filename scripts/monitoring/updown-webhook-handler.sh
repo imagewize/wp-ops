@@ -18,6 +18,7 @@
 #
 # @desc     Analyze Nginx logs on the server when updown.io reports downtime via webhook
 # @category monitoring
+# @platform trellis
 # @runs     server
 # @requires grep
 # @arg      site_url    optional  {example.com}  Site domain (used to locate per-site logs)

@@ -40,7 +40,7 @@ func RegisteredWPCommand(scriptPath string) string {
 	return m[1]
 }
 
-// RunWPCLI runs a wp-cli/*.php or bedrock/*.php command against wpSiteDir,
+// RunWPCLI runs a wp-cli/*.php command against wpSiteDir,
 // with stdio inherited. When wpCommand is set (the script registers a
 // WP_CLI_Command), it runs as `wp --require=<scriptPath> <wpCommand>
 // <args...>`; otherwise as `wp eval-file <scriptPath> <args...>`. Port of
@@ -72,7 +72,7 @@ func RunWPCLI(wpSiteDir, scriptPath, wpCommand string, args []string) (exitCode 
 	return 0, nil
 }
 
-// FormatWPCLIHelp renders --help for a wp-cli/bedrock .php command from its
+// FormatWPCLIHelp renders --help for a wp-cli/ .php command from its
 // catalog entry — manifest-first by construction, same as FormatHelp
 // (ansible.go). Port of print_manifest_help plus execute_php_command()'s
 // --help branch (wp-ops:1160-1186).

@@ -7,6 +7,7 @@
  *
  * @desc     Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)
  * @category diagnostics
+ * @platform wordpress
  * @runs     local
  * @requires wp
  * @example  wp-ops wp-cli/diagnostics/diagnostic-transients
