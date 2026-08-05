@@ -187,8 +187,11 @@ func TestPrintServerSideGuidanceVariants(t *testing.T) {
 			wantContain: []string{
 				"writes the archive to /srv/backups/<site>",
 				"ssh web@example.com 'bash -s' < scripts/backup/site-backup.sh",
-				"wp-ops trellis/backup/database-pull",
-				"wp-ops trellis/backup/files-pull",
+				// Short names and positional arguments, matching what the
+				// playbooks actually accept — the old assertion pinned both
+				// the internal key and the retired `-e site=` syntax.
+				"wp-ops database-pull example.com production",
+				"wp-ops files-pull    example.com production",
 				"example.com",
 			},
 			wantAbsent: []string{"gawk"},

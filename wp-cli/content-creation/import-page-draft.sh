@@ -33,8 +33,8 @@
 # @arg      site-name    optional  {example.com}  Site name under /srv/www (default: example.com)
 # @arg      environment  optional  {local|production|both}  Where to apply the update (default: local)
 # @arg      template     optional  {template-no-header.blade.php}  Optional _wp_page_template value to set
-# @example  wp-ops wp-cli/content-creation/import-page-draft draft.html 7673
-# @example  wp-ops wp-cli/content-creation/import-page-draft draft.html 7673 example.com both template-no-header.blade.php
+# @example  wp-ops import-page-draft draft.html 7673
+# @example  wp-ops import-page-draft draft.html 7673 example.com both template-no-header.blade.php
 
 set -e
 

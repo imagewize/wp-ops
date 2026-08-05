@@ -15,7 +15,7 @@
 # @flag     --days   optional  {14}  Number of days to fetch (max: 14)
 # @flag     --json   optional  {}  Output raw JSON instead of formatted table
 # @flag     --quiet  optional  {}  Suppress header row in table output
-# @example  wp-ops scripts/git/gh-traffic imagewize/nynaeve --quiet
+# @example  wp-ops gh-traffic imagewize/nynaeve --quiet
 
 set -euo pipefail
 

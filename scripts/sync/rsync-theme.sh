@@ -34,7 +34,7 @@
 # @runs     local
 # @requires rsync
 # @flag     --dry-run  optional  {}  Preview the sync without writing anything
-# @example  wp-ops scripts/sync/rsync-theme --dry-run
+# @example  wp-ops rsync-theme --dry-run
 set -euo pipefail
 
 # Trailing slashes matter to rsync: "src/" copies the *contents* of src.

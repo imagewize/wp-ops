@@ -14,7 +14,7 @@
 # @flag     --mature         optional  {}  Include mature results
 # @flag     --provider       optional  {flickr}  Source provider filter
 # @flag     --json           optional  {}  Output raw JSON results
-# @example  wp-ops scripts/images/openverse_search sunset --license cc0 --limit 10
+# @example  wp-ops openverse_search sunset --license cc0 --limit 10
 
 import argparse
 import json

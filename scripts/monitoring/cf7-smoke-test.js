@@ -23,7 +23,7 @@
  * @flag     --email    optional  {qa@example.com}  Test submitter email
  * @flag     --subject  optional  {"Rate limit smoke test"}  Test subject
  * @flag     --message  optional  {"..."}  Test message body
- * @example  wp-ops scripts/monitoring/cf7-smoke-test https://example.com/contact/ --name "QA Bot"
+ * @example  wp-ops cf7-smoke-test https://example.com/contact/ --name "QA Bot"
  */
 
 const { chromium } = require('playwright');

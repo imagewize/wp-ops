@@ -53,7 +53,7 @@ usage() {
     echo "  wp db export --path=web/wp"
     echo ""
     echo "For automated/repeatable backups instead, use the Ansible playbook:"
-    echo "  wp-ops trellis/backup/database-backup -e site=example.com -e env=production"
+    echo "  wp-ops database-backup example.com production"
 }
 
 # Colors for output

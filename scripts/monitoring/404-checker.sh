@@ -22,8 +22,8 @@
 # @flag     --output   optional  Append broken-link results to this file
 # @flag     --timeout  optional  {10}  curl max-time per request, in seconds
 # @flag     --level    optional  {3}  Spider depth for --mode spider
-# @example  wp-ops scripts/monitoring/404-checker https://example.com
-# @example  wp-ops scripts/monitoring/404-checker --mode spider https://example.com
+# @example  wp-ops 404-checker https://example.com
+# @example  wp-ops 404-checker --mode spider https://example.com
 
 # ── Colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'

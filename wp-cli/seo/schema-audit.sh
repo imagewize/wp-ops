@@ -21,7 +21,7 @@
 # @arg      site-url  required  {https://example.com}  Site URL to check
 # @flag     --output  optional  {audits}  Output directory
 # @flag     --pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check
-# @example  wp-ops wp-cli/seo/schema-audit https://example.com --pages /,/services/,/contact/
+# @example  wp-ops schema-audit https://example.com --pages /,/services/,/contact/
 # @doc      wp-cli/seo/README.md
 
 set -euo pipefail

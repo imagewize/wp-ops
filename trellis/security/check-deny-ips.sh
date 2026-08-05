@@ -21,8 +21,8 @@
 # @runs     local
 # @requires curl jq trellis
 # @flag     --full  optional  {}  Full JSON output per IP via check-ips.sh, instead of the compact summary
-# @example  wp-ops trellis/security/check-deny-ips
-# @example  wp-ops trellis/security/check-deny-ips --full
+# @example  wp-ops check-deny-ips
+# @example  wp-ops check-deny-ips --full
 # @doc      trellis/security/README.md
 
 set -euo pipefail
@@ -64,7 +64,7 @@ if [[ "${1:-}" == "--full" ]]; then
     echo "Error: wp-ops not found on PATH." >&2
     exit 1
   fi
-  echo "$IPS" | xargs wp-ops trellis/security/check-ips
+  echo "$IPS" | xargs wp-ops check-ips
   exit 0
 fi
 

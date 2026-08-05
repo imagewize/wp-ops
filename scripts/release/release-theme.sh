@@ -30,7 +30,7 @@
 # @arg      version     required  {1.2.5}  New theme version
 # @flag     --commit    optional  {}  Auto-commit the version bump and changelog
 # @flag     --ai        optional  {claude|codex|vibe}  AI CLI to use (default: claude, or the only one installed)
-# @example  wp-ops scripts/release/release-theme nynaeve 1.0.0 --commit
+# @example  wp-ops release-theme nynaeve 1.0.0 --commit
 
 set -e  # Exit on error
 

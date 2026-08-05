@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.2] - 2026-08-05
+
+### Fixed
+
+- **Every `Examples:` block named the internal key rather than the command
+  you type.** 5.1.0 fixed the usage line for every command and every executor,
+  but it fixed it by changing the code that *generates* it. Example lines are
+  not generated — they are prose copied verbatim out of each script's
+  `@example` annotation — so they were never touched, and `--help` printed a
+  correct `Usage: wp-ops scanner-targeted` three rows above
+  `wp-ops wp-cli/security/scanner-targeted`. 42 of the 71 commands that carry
+  examples were affected, 47 lines in total; both render paths showed it, since
+  `exec.DetailBody` (the picker) and `exec.writeManifestHelpBody` (`--help`)
+  each print the string unchanged.
+
+  The path forms still resolved, so nothing was broken for anyone who pasted
+  one — they were wrong in that they taught the long form as the command's
+  name. One was genuinely broken: `wp-cli-pattern-validate`'s example still
+  named `bedrock/wp-cli-config/`, a category 5.0.0 retired, so the line it
+  told you to type answered `Unknown command or category`. That is the same
+  class of bug 5.1.1 fixed in `README.md`, missed then because nobody thought
+  to grep the *scripts* for the retired category name.
+
+- **`TestExamplesNameTheCommand` now pins this.** The catalog validated its
+  own structure but not its prose: `ShortName` is guaranteed to resolve and
+  CI already guards the generated catalog against drift, but every one of
+  those checks was about the *key*. The `Examples` field travelled from a
+  shell comment onto the user's screen without a single assertion that the
+  thing it told them to type exists. The new test extracts the token after
+  `wp-ops` — skipping `VAR=value` environment prefixes — and requires it to
+  equal the entry's `ShortName`, so a rename now fails in the same pull
+  request that makes it, which is the only moment the fix is cheap. Left
+  unenforced deliberately: that an example mentions only its own command,
+  since `check-deny-ips` legitimately pipes into `check-ips`.
+
+- **Server-side and Ansible guidance printed internal keys**, which no sweep
+  of the scripts could reach: the macOS access-log hint, the
+  missing-argument error, and the unannotated-playbook fallback all formatted
+  `e.Key` directly and now read through `CommandName()`. The ambiguity
+  message and `search` listing keep printing full keys, where the path is
+  the point.
+
+- **The backup hints were stale twice over.** `serverside.go`,
+  `scripts/backup/db-backup.sh` and `scripts/backup/site-backup.sh` all
+  suggested `wp-ops trellis/backup/database-pull -e site=… -e env=…` — the
+  path form *and* the `-e` syntax the playbooks stopped accepting when they
+  moved to positional arguments. They now print
+  `wp-ops database-pull example.com production`.
+
+- **`trellis/security/check-deny-ips.sh` invoked `check-ips` by full key.**
+  Not a hint but a real code path, and the one place a future rename would
+  have broken execution rather than a comment.
+
+- **`docs/trellis-cli-comparison.md` §5** asserted in the present tense that
+  `wp-ops db-backup --help` prints a full key, contradicting its own status
+  header four sections above; and two `trellis/security/README.md`
+  invocations used the path form. Documents that quote the path form *as the
+  problem being analysed* were left alone.
+
 ## [5.1.1] - 2026-08-05
 
 ### Changed

@@ -12,7 +12,7 @@
 # @flag     --quality       optional  {85}  WebP quality (0-100)
 # @flag     --background    optional  {white}  Background color
 # @flag     --left-pad      optional  {200}  Add left padding by right-aligning after resize
-# @example  wp-ops scripts/images/make-square-webp input.webp output.webp --left-pad 200 --size 2000
+# @example  wp-ops make-square-webp input.webp output.webp --left-pad 200 --size 2000
 set -euo pipefail
 
 usage() {

@@ -50,7 +50,7 @@
 # @flag     --path     optional  {web/wp}  WordPress path passed to WP-CLI
 # @flag     --ssh      optional  {web@example.com}  Run remotely over ssh
 # @flag     --site     optional  {/srv/www/example.com/current}  Remote site dir to cd into with --ssh
-# @example  wp-ops scripts/misc/post-count --ssh web@example.com --year 2026
+# @example  wp-ops post-count --ssh web@example.com --year 2026
 
 set -euo pipefail
 

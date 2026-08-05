@@ -24,8 +24,8 @@
 # @flag     --no-interactive  optional  {}  Skip all prompts, use defaults/arguments
 # @flag     --update          optional  {}  Update existing PR description for current branch
 # @flag     --dry-run         optional  {}  Print the generated body and exit without touching GitHub
-# @example  wp-ops scripts/git/create-pr --ai=claude
-# @example  wp-ops scripts/git/create-pr main "Add new feature" --no-ai
+# @example  wp-ops create-pr --ai=claude
+# @example  wp-ops create-pr main "Add new feature" --no-ai
 
 set -e
 

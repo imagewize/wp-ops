@@ -24,7 +24,7 @@
 # @flag     --url      required  {https://example.com}  URL to test (repeatable)
 # @flag     --verbose  optional  {}  Show detailed curl output
 # @flag     --output   optional  {results/audits}  Output directory for reports
-# @example  wp-ops wp-cli/seo/redirect-audit --url https://example.com --verbose
+# @example  wp-ops redirect-audit --url https://example.com --verbose
 # @doc      wp-cli/seo/README.md
 
 set -euo pipefail

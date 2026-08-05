@@ -25,7 +25,7 @@
 # @requires convert
 # @arg      png-file  required  {test-screenshot.png}  PNG file to convert
 # @flag     --quality optional  {90}  JPEG quality (1-100)
-# @example  wp-ops scripts/misc/convert-screenshot-for-claude .playwright/screenshots/test.png
+# @example  wp-ops convert-screenshot-for-claude .playwright/screenshots/test.png
 #
 
 set -e  # Exit on error

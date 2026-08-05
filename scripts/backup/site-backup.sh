@@ -42,8 +42,8 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo "Writes to /srv/backups/<site-name>/{database,files,config}/ on the"
     echo "server. To pull copies down to your machine instead, use the Ansible"
     echo "playbooks:"
-    echo "  wp-ops trellis/backup/database-pull -e site=example.com -e env=production"
-    echo "  wp-ops trellis/backup/files-pull    -e site=example.com -e env=production"
+    echo "  wp-ops database-pull example.com production"
+    echo "  wp-ops files-pull    example.com production"
     exit 0
 fi
 

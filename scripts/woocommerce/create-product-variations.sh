@@ -25,8 +25,8 @@
 # @runs     local
 # @requires trellis
 # @flag     --dry-run  optional  {}  Print the planned wp wc product_variation create commands without running them
-# @example  wp-ops scripts/woocommerce/create-product-variations
-# @example  wp-ops scripts/woocommerce/create-product-variations --dry-run
+# @example  wp-ops create-product-variations
+# @example  wp-ops create-product-variations --dry-run
 # @doc      docs/wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
 

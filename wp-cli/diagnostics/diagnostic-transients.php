@@ -10,7 +10,7 @@
  * @platform wordpress
  * @runs     local
  * @requires wp
- * @example  wp-ops wp-cli/diagnostics/diagnostic-transients
+ * @example  wp-ops diagnostic-transients
  * @doc      wp-cli/diagnostics/README.md
  */
 
