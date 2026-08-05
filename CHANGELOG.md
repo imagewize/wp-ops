@@ -5,6 +5,111 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0] - 2026-08-05
+
+The interactive picker stops behaving like a separate application. It renders
+inline, keeps your scrollback, and shows one thing per screen instead of three
+at once — the differences benchmarked against `trellis-cli` in the new
+`docs/trellis-cli-comparison.md`.
+
+### Changed
+
+- **The picker renders inline instead of taking over the screen.** `RunPicker`
+  no longer passes `tea.WithAltScreen()`. The alternate screen buffer keeps no
+  scrollback of its own and discards everything drawn in it on exit, which is
+  what made a bare `wp-ops` read as a separate prompt rather than as a command
+  that printed something. Output from earlier commands now stays visible above
+  the picker, and the last frame stays in the buffer after it exits.
+
+  The picker caps itself at 20 rows (`maxInlineRows`) as a consequence: sized
+  to the full window it would have shoved the scrollback off-screen on launch
+  and left a window-height frame behind on exit, reintroducing the problem from
+  the other direction. Same bargain `fzf --height 40%` makes.
+
+- **The browse list is a single full-width column.** It was a bordered list
+  pane beside a bordered live-preview pane, and that layout could not survive
+  its own width arithmetic: rows were built as a 28-column name plus
+  `[platform]` plus `(server)` — about 43 columns — and rendered into a pane of
+  `width * 2/5`, so on any terminal narrower than ~118 columns every tagged row
+  wrapped and its tags landed in the left margin of the next line. The preview
+  pane lost the same fight horizontally, clipping flag help mid-word
+  (`Append broken-link resu`). Both were the two panes competing for one
+  terminal's width, so neither pane splits it now.
+
+  `[platform]` no longer appears per row — it was the quietest signal on screen
+  and the one most responsible for the overflow. `(server)` stays, right-aligned
+  into its own column, and yields to the description rather than overflowing
+  when the terminal is too narrow for both.
+
+- **Command details moved from a live preview to a post-selection block.**
+  Choosing a command now prints its full help at full terminal width — usage,
+  description, requirements, examples, arguments, options — directly above the
+  argument prompts, which is the moment the information is actually needed.
+  Long option descriptions soft-wrap with a hanging indent instead of being
+  clipped, so nothing is lost off the right edge.
+
+- **Usage lines name the command you typed, with its real arguments.**
+  `wp-ops db-backup --help` answered `Usage: wp-ops scripts/backup/db-backup
+  [args...]` — an internal key carrying directory separators no user types, and
+  a placeholder where the manifest already knew the positional names three
+  lines further down. It now answers
+  `Usage: wp-ops db-backup [site-name] [environment] [options]`, derived from
+  the same `@arg`/`@flag` data, so it cannot drift from what the command
+  documents.
+
+  This lands on `--help` for every executor type and on the picker's detail
+  block, because it lands on the shared `writeManifestHelpBody`:
+
+  ```
+  Usage: wp-ops database-backup <site> <env>          (Ansible playbook)
+  Usage: wp-ops scanner-targeted [path]               (WP-CLI PHP)
+  Usage: wp-ops dev [args...]                         (un-annotated Node)
+  ```
+
+  The name comes from a new `Entry.ShortName`, computed once by `catalog.Load`
+  rather than stored in `catalog.json`: it is a property of the catalog as a
+  whole, not of the discovered file, so persisting it would let it go stale the
+  moment a colliding command is added. A basename shared by two commands has no
+  unambiguous short form — dispatch reports those as ambiguous rather than
+  picking one — so those keep the full key and the usage line stays something
+  that resolves if pasted back. `convert-to-webp` is currently the catalog's
+  only collision.
+
+- **Detail sections are ordered for a bounded viewport.** Requirements and
+  examples precede the parameter tables, the reverse of `--help`'s ordering and
+  the same shape `trellis alias --help` uses. The block runs past its ~14 rows
+  for a real command, so what sits above the fold matters: "needs `ssh`", "runs
+  on the server", and a worked invocation decide whether and how to run the
+  thing, while the exhaustive per-parameter tables can afford to scroll
+  (`pgup`/`pgdn`, hinted in the footer only when there is something to scroll).
+
+- **The category screen opens with a usage line**,
+  `Usage: wp-ops [--help] [--version] <command> [<args>]`, as `trellis` does
+  above its command table. Without it the screen read as though arrow keys were
+  the only interface to 74 commands, when every row is also reachable as
+  `wp-ops <command>`.
+
+- **Key hints abbreviate rather than wrap** on terminals too narrow for the
+  full footer, and the detail viewport shrinks to its content — a command
+  declaring no arguments used to push the prompt nine blank lines down.
+
+### Fixed
+
+- **`truncate` counts runes, not bytes.** Descriptions now fill the width the
+  preview pane used to occupy and so get truncated far more often than the old
+  28-column name field ever was; several contain an em dash that a byte-indexed
+  cut would have split into a partial rune.
+
+### Added
+
+- **docs/trellis-cli-comparison.md** - what `trellis-cli` does at its entry
+  point and command surface, what wp-ops does, and which differences are worth
+  closing. Verified against both codebases rather than inferred: framework,
+  command counts, help ownership, flag handling, completions, and the two
+  interactive-prompt models. Also reviews `docs/cli-comparison.md`, whose
+  central recommendation (add a `--help` that prints an inline list) describes
+  behavior `root.go` has shipped for some time.
+
 ## [5.0.0] - 2026-08-05
 
 Implements Option C of `docs/category-organization.md`: the catalog now groups

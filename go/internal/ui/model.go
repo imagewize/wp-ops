@@ -73,21 +73,35 @@ var (
 	dimStyle            = lipgloss.NewStyle().Faint(true)
 	cursorStyle         = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
 	serverTag           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-	platformTag         = lipgloss.NewStyle().Faint(true)
 	errorStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
 	noteStyle           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-	borderedPane        = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1)
 	footerStyle         = dimStyle
 	categoryHeaderStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("245"))
-	minListWidth        = 34
 	minPaneHeight       = 10
+	// Name-column bounds for the browse list. The column sizes to the longest
+	// visible basename so short categories don't get a gutter of dead space,
+	// clamped so a single 40-character outlier can't push every description
+	// off the right edge.
+	minNameWidth = 16
+	maxNameWidth = 30
+	// fallbackWidth stands in for the terminal width until the first
+	// tea.WindowSizeMsg lands, so the opening frame isn't laid out for a
+	// zero-width screen and then reflowed a moment later.
+	fallbackWidth = 100
+	// maxInlineRows caps how tall the picker draws. RunPicker renders inline
+	// (no alt screen), so a picker sized to the full window would shove the
+	// whole scrollback off-screen on launch and leave a window-height frame
+	// behind on exit — the very thing dropping the alt screen was meant to
+	// avoid. 20 rows keeps the list useful while leaving prior output
+	// visible above it, same bargain `fzf --height 40%` makes.
+	maxInlineRows = 20
 )
 
 // Model is the Bubble Tea model backing the interactive picker. It replaces
 // both fzf_menu() and interactive_command_menu() (open decision #3 in
 // docs/m4-go-cli-completion.md): a category-select stage (Phase F, option 3)
-// leading into a filterable, scrollable list with a live preview pane,
-// followed by guided per-field prompting on selection.
+// leading into a filterable list, followed by a full-width help block and
+// guided per-field prompting on selection.
 type Model struct {
 	all      []catalog.Entry
 	filtered []catalog.Entry
@@ -103,7 +117,7 @@ type Model struct {
 	// row in stageCategory.
 	browseCategory string
 
-	preview viewport.Model
+	detail viewport.Model
 
 	stage    stage
 	selected catalog.Entry
@@ -130,7 +144,7 @@ func New(c *catalog.Catalog) Model {
 		all:        c.Entries,
 		categories: buildCategoryOptions(c),
 		stage:      stageCategory,
-		preview:    viewport.New(40, minPaneHeight),
+		detail:     viewport.New(fallbackWidth, minPaneHeight),
 		input:      textinput.New(),
 	}
 	m.input.Prompt = "> "
@@ -174,7 +188,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		m.resizePreview()
+		m.resizeDetail()
 		return m, nil
 
 	case tea.KeyMsg:
@@ -190,36 +204,94 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) resizePreview() {
-	listWidth := minListWidth
-	if m.width > 0 {
-		listWidth = m.width * 2 / 5
-		if listWidth < minListWidth {
-			listWidth = minListWidth
-		}
+// viewportHeight is the number of terminal rows the picker allows itself,
+// as opposed to m.height (the rows the terminal has). The two differed not
+// at all under the alt screen, which the picker owned outright; inline it
+// gets a slice, so every height calculation reads this instead of m.height.
+// A zero m.height means no tea.WindowSizeMsg has arrived yet — fall back to
+// the cap rather than to zero, so the first frame isn't drawn at minimum
+// size and then jumped to full size a moment later.
+func (m Model) viewportHeight() int {
+	if m.height <= 0 || m.height > maxInlineRows {
+		return maxInlineRows
 	}
-	previewWidth := m.width - listWidth - 6
-	if previewWidth < 20 {
-		previewWidth = 20
-	}
-	previewHeight := m.height - 6
-	if previewHeight < minPaneHeight {
-		previewHeight = minPaneHeight
-	}
-	m.preview.Width = previewWidth
-	m.preview.Height = previewHeight
-	m.syncPreview()
+	return m.height
 }
 
-func (m *Model) syncPreview() {
-	if len(m.filtered) == 0 {
-		m.preview.SetContent("No matches.")
+// resizeDetail sizes the detail viewport shown on the prompt stages. It gets
+// the full terminal width now that nothing renders beside it — the old
+// two-pane split gave it m.width*3/5 minus borders, which is what truncated
+// flag help mid-word.
+func (m *Model) resizeDetail() {
+	width := m.width
+	if width <= 0 {
+		width = fallbackWidth
+	}
+	m.detail.Width = width
+	m.syncDetail()
+}
+
+// syncDetail loads the selected command's help block into the detail
+// viewport. Unlike the live preview it replaces, this runs once per
+// selection rather than on every cursor move: the block is only shown after
+// Enter, so re-rendering it while the user is still scrolling the list would
+// be work nobody sees.
+func (m *Model) syncDetail() {
+	if m.selected.Key == "" {
 		return
 	}
-	e := m.filtered[m.cursorEntry()]
-	m.preview.SetContent(wpexec.PreviewBody(e))
-	m.preview.YOffset = 0
+	body := wrapBlock(wpexec.DetailBody(m.selected), m.detail.Width)
+	m.detail.SetContent(body)
+	m.detail.Height = detailHeight(body, m.viewportHeight())
+	m.detail.YOffset = 0
 }
+
+// detailHeight sizes the viewport to its content, up to the rows the inline
+// picker can spend. A viewport shorter than its fixed Height still renders
+// the remaining rows as blanks, so a command declaring no arguments used to
+// push the prompt nine empty lines down the screen.
+func detailHeight(body string, budget int) int {
+	// 6 covers the blank line, prompt, and footer rendered beneath it.
+	max := budget - 6
+	if max < minPaneHeight {
+		max = minPaneHeight
+	}
+	if lines := strings.Count(body, "\n") + 1; lines < max {
+		return lines
+	}
+	return max
+}
+
+// wrapBlock soft-wraps a help block to width, hanging-indenting the
+// continuation of any line that was itself indented — so an option whose
+// description runs long stays visibly attached to its "--flag" rather than
+// resuming in column 0 where the next option's name belongs.
+//
+// Wrapping at all is the point: the viewport clips instead, and losing the
+// end of the sentence that explains what an option does is precisely the
+// failure this screen was added to fix.
+func wrapBlock(s string, width int) string {
+	if width <= 0 {
+		return s
+	}
+	var out []string
+	for _, line := range strings.Split(s, "\n") {
+		indent := ""
+		if strings.HasPrefix(line, "  ") {
+			indent = "    "
+		}
+		wrapped := lipgloss.NewStyle().Width(width - len(indent)).Render(line)
+		for i, part := range strings.Split(wrapped, "\n") {
+			part = strings.TrimRight(part, " ")
+			if i > 0 {
+				part = indent + strings.TrimLeft(part, " ")
+			}
+			out = append(out, part)
+		}
+	}
+	return strings.Join(out, "\n")
+}
+
 
 func (m *Model) cursorEntry() int {
 	if m.cursor >= len(m.filtered) {
@@ -310,22 +382,12 @@ func (m Model) updateBrowse(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.cursor > 0 {
 			m.cursor--
 		}
-		m.syncPreview()
 		return m, nil
 
 	case tea.KeyDown, tea.KeyCtrlN:
 		if m.cursor < len(m.filtered)-1 {
 			m.cursor++
 		}
-		m.syncPreview()
-		return m, nil
-
-	case tea.KeyPgUp:
-		m.preview.HalfViewUp()
-		return m, nil
-
-	case tea.KeyPgDown:
-		m.preview.HalfViewDown()
 		return m, nil
 
 	case tea.KeyBackspace:
@@ -355,7 +417,6 @@ func (m *Model) applyFilter() {
 	m.filtered = filterEntries(pool, string(m.filterQuery))
 	m.cursor = 0
 	m.listTop = 0
-	m.syncPreview()
 }
 
 func filterByCategory(all []catalog.Entry, category string) []catalog.Entry {
@@ -377,6 +438,9 @@ func (m Model) beginPrompting() Model {
 	m.collected = nil
 	m.errMsg = ""
 	m.note = ""
+	// The help block is loaded here, at the moment of selection, rather than
+	// tracked live while browsing — this is the only stage that shows it.
+	m.syncDetail()
 
 	if len(m.fields) == 0 {
 		m.stage = stageFreeText
@@ -414,6 +478,17 @@ func (m Model) updatePrompt(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyEnter:
 		return m.submitPrompt()
+
+	// The help block above the prompt can outrun its viewport for a command
+	// with many options, so keep the scroll keys the browse stage no longer
+	// needs. textinput ignores PgUp/PgDn, so nothing is taken from typing.
+	case tea.KeyPgUp:
+		m.detail.HalfPageUp()
+		return m, nil
+
+	case tea.KeyPgDown:
+		m.detail.HalfPageDown()
+		return m, nil
 	}
 
 	var cmd tea.Cmd
@@ -469,7 +544,13 @@ func (m Model) View() string {
 
 func (m Model) viewCategory() string {
 	var b strings.Builder
-	b.WriteString(headerStyle.Render("wp-ops — interactive picker"))
+	b.WriteString(headerStyle.Render("wp-ops — WordPress Operations Tools"))
+	b.WriteString("\n\n")
+	// Same opening line trellis prints above its command table. The picker
+	// is not the only way in — every row here is also reachable as
+	// `wp-ops <command>` — and without this the screen reads as if arrow
+	// keys were the only interface to 74 commands.
+	b.WriteString(dimStyle.Render("Usage: wp-ops [--help] [--version] <command> [<args>]"))
 	b.WriteString("\n\n")
 
 	for i, opt := range m.categories {
@@ -482,35 +563,53 @@ func (m Model) viewCategory() string {
 		b.WriteString("\n")
 	}
 
-	b.WriteString("\n" + footerStyle.Render("↑/↓ move · enter select · esc quit"))
+	b.WriteString("\n" + m.footer("↑/↓ move · enter select · esc quit", "↑/↓ · enter · esc"))
 	return b.String()
 }
 
+// viewBrowse renders the command list as a single full-width column — name,
+// then description, the two-column shape trellis prints for its own commands.
+//
+// It used to be a bordered list pane beside a bordered live-preview pane.
+// That layout could not survive its own width arithmetic: rows were built as
+// a 28-column name plus "[platform]" plus "(server)" (~43 columns) and
+// rendered into a pane of m.width*2/5, so on any terminal under ~118 columns
+// lipgloss wrapped every tagged row and the tags landed in the left margin of
+// the next line. The preview pane lost the same fight horizontally, clipping
+// descriptions and flag help mid-word. Both problems were the two panes
+// competing for one terminal's width, so the fix is to stop splitting it:
+// the list gets the full width here, and everything the preview used to show
+// moves to the post-selection detail block (viewPrompt), where it also gets
+// the full width. See docs/trellis-cli-comparison.md §5.
 func (m Model) viewBrowse() string {
-	var list strings.Builder
+	var b strings.Builder
+
 	crumb := "All categories"
 	if m.browseCategory != "" {
 		crumb = catalog.CategoryDisplayNames[m.browseCategory]
 	}
-	fmt.Fprintf(&list, "wp-ops > %s > %s\n\n", crumb, string(m.filterQuery))
+	fmt.Fprintf(&b, "%s > %s > %s\n\n",
+		headerStyle.Render("wp-ops"), crumb, string(m.filterQuery))
 
-	listWidth := minListWidth
-	if m.width > 0 {
-		listWidth = m.width * 2 / 5
-		if listWidth < minListWidth {
-			listWidth = minListWidth
-		}
-	}
-
-	visible := m.height - 8
+	visible := m.viewportHeight() - 6
 	if visible < 5 {
 		visible = 5
 	}
 	start, end := m.scrollWindow(visible)
 
 	if len(m.filtered) == 0 {
-		list.WriteString(dimStyle.Render("No matches."))
+		b.WriteString(dimStyle.Render("No matches."))
+		b.WriteString("\n")
 	}
+
+	nameW := m.nameColumnWidth(start, end)
+	descW := m.width
+	if descW <= 0 {
+		descW = fallbackWidth
+	}
+	// 2 for the cursor gutter, 2 for the gap after the name column.
+	descW -= nameW + 4
+
 	// lastCat starts empty so the window's first visible row always gets a
 	// header, even mid-scroll — reorients the user after paging rather than
 	// assuming they remember which category they scrolled into. Skipped
@@ -520,37 +619,86 @@ func (m Model) viewBrowse() string {
 	for i := start; i < end; i++ {
 		e := m.filtered[i]
 		if m.browseCategory == "" && e.DisplayCategory != lastCat {
-			list.WriteString(categoryHeaderStyle.Render(catalog.CategoryDisplayNames[e.DisplayCategory]))
-			list.WriteString("\n")
+			b.WriteString(categoryHeaderStyle.Render(catalog.CategoryDisplayNames[e.DisplayCategory]))
+			b.WriteString("\n")
 			lastCat = e.DisplayCategory
 		}
-		line := fmt.Sprintf("%-28s", truncate(filepath.Base(e.Key), 28))
-		// Option C2 (docs/category-organization.md): the picker groups by
-		// domain, which puts a Trellis playbook next to a plain-WP script
-		// under the same header — so "will this run against my site" is
-		// precisely the question the row can't otherwise answer. Faint, so
-		// it stays subordinate to (server), which is the louder warning.
-		if e.Platform != "" {
-			line += " " + platformTag.Render("["+e.Platform+"]")
-		}
-		if e.RunsOn == "server" {
-			line += " " + serverTag.Render("(server)")
-		}
+
+		name := truncate(filepath.Base(e.Key), nameW)
+		row := fmt.Sprintf("%-*s  %s", nameW, name, m.describeRow(e, descW))
 		if i == m.cursorEntry() {
-			list.WriteString(cursorStyle.Render("> " + line))
+			b.WriteString(cursorStyle.Render("> " + row))
 		} else {
-			list.WriteString("  " + line)
+			b.WriteString("  " + row)
 		}
-		list.WriteString("\n")
+		b.WriteString("\n")
 	}
 
-	listPane := borderedPane.Width(listWidth).Render(list.String())
-	previewPane := borderedPane.Render(m.preview.View())
+	b.WriteString("\n")
+	b.WriteString(m.footer(
+		"type to filter · ↑/↓ move · enter select · esc back · ctrl+c quit",
+		"↑/↓ · enter · esc back"))
+	return b.String()
+}
 
-	body := lipgloss.JoinHorizontal(lipgloss.Top, listPane, previewPane)
-	footer := footerStyle.Render("type to filter · ↑/↓ move · pgup/pgdn scroll preview · enter run · esc back · ctrl+c quit")
+// footer renders the key hints, falling back to an abbreviated form when the
+// full one would wrap. A wrapped footer is the same class of defect the row
+// layout was rewritten to remove — hints spilling into the next line read as
+// broken output, not as a dense terminal UI.
+func (m Model) footer(full, short string) string {
+	width := m.width
+	if width <= 0 {
+		width = fallbackWidth
+	}
+	hints := full
+	if len([]rune(hints)) > width {
+		hints = short
+	}
+	return footerStyle.Render(truncate(hints, width))
+}
 
-	return headerStyle.Render("wp-ops — interactive picker") + "\n" + body + "\n" + footer
+// describeRow renders a row's description column, right-aligning the
+// "(server)" warning within it when the width allows. Platform ("[trellis]",
+// "[wordpress]") deliberately no longer appears per row: it was the quietest
+// signal on the screen and the one most responsible for overflowing the row,
+// and DetailBody now states it in full a keystroke later, before anything
+// runs. "(server)" stays because "this will not run against your local site"
+// is worth knowing while still scanning the list.
+func (m Model) describeRow(e catalog.Entry, width int) string {
+	tag := ""
+	if e.RunsOn == "server" {
+		tag = " (server)"
+	}
+	descW := width - len(tag)
+	if descW < 12 {
+		// Too narrow to carry both; the description wins.
+		descW, tag = width, ""
+	}
+	if descW < 1 {
+		return ""
+	}
+	desc := fmt.Sprintf("%-*s", descW, truncate(e.Description, descW))
+	if tag == "" {
+		return strings.TrimRight(desc, " ")
+	}
+	return desc + serverTag.Render(tag)
+}
+
+// nameColumnWidth sizes the name column to the longest basename actually on
+// screen, within [minNameWidth, maxNameWidth]. Measuring the visible window
+// rather than the whole catalog keeps a narrow category (say Sync, whose
+// longest name is 11 characters) from inheriting Monitoring's gutter.
+func (m Model) nameColumnWidth(start, end int) int {
+	w := minNameWidth
+	for i := start; i < end && i < len(m.filtered); i++ {
+		if n := len(filepath.Base(m.filtered[i].Key)); n > w {
+			w = n
+		}
+	}
+	if w > maxNameWidth {
+		w = maxNameWidth
+	}
+	return w
 }
 
 // scrollWindow keeps the cursor within a `visible`-row window over the
@@ -572,28 +720,37 @@ func (m Model) scrollWindow(visible int) (start, end int) {
 	return start, end
 }
 
+// truncate shortens s to at most n display cells, ellipsizing when it cuts.
+// Counts runes rather than bytes: descriptions now fill the width the preview
+// pane used to occupy, so they get truncated far more often than the old
+// 28-column name field ever was, and a byte-indexed cut through the em dash
+// several of them contain would emit a partial rune.
 func truncate(s string, n int) string {
-	if len(s) <= n {
+	if n <= 0 {
+		return ""
+	}
+	r := []rune(s)
+	if len(r) <= n {
 		return s
 	}
-	return s[:n-1] + "…"
+	return string(r[:n-1]) + "…"
 }
 
+// viewPrompt renders the chosen command's full help block above the argument
+// prompt: usage line, description, arguments, options, requirements — the
+// shape `trellis <command> --help` prints, at full terminal width. Showing it
+// here rather than in a preview pane during browsing is what lets the browse
+// list be a plain list, and means the help is on screen at the moment it's
+// actually needed: while typing the values it documents.
 func (m Model) viewPrompt() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n", headerStyle.Render(m.selected.Key))
-	if m.selected.Description != "" {
-		fmt.Fprintf(&b, "%s\n", dimStyle.Render(m.selected.Description))
-	}
-	b.WriteString("\n")
 
-	if m.stage == stageFields {
-		f := m.fields[m.fieldIdx]
-		if f.param.Description != "" {
-			fmt.Fprintf(&b, "  %s\n", dimStyle.Render(f.param.Description))
-		}
-	}
+	b.WriteString(m.detail.View())
+	b.WriteString("\n\n")
 
+	// No per-field description line here any more: it repeated verbatim what
+	// the Arguments/Options block two lines above already says, which was
+	// tolerable when the prompt screen showed nothing but the command name.
 	b.WriteString(m.input.View())
 	b.WriteString("\n")
 
@@ -604,6 +761,10 @@ func (m Model) viewPrompt() string {
 		fmt.Fprintf(&b, "\n%s\n", noteStyle.Render(m.note))
 	}
 
-	b.WriteString("\n" + footerStyle.Render("enter confirm · esc back to list · ctrl+c quit"))
+	full := "enter confirm · esc back to list · ctrl+c quit"
+	if m.detail.TotalLineCount() > m.detail.Height {
+		full = "pgup/pgdn scroll help · " + full
+	}
+	b.WriteString("\n" + m.footer(full, "enter · esc back"))
 	return b.String()
 }

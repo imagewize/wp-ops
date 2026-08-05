@@ -61,7 +61,9 @@ func TestFormatWPCLIHelp_EvalFile(t *testing.T) {
 	help := FormatWPCLIHelp(e, "/srv/www/example.com/current", "")
 
 	for _, want := range []string{
-		"Usage: wp-ops wp-cli/security/scanner-targeted [args...]",
+		// Real positionals under the name a user types, not the catalog key
+		// with an "[args...]" placeholder — see UsageLine.
+		"Usage: wp-ops scanner-targeted [path]",
 		e.Description,
 		"Arguments:",
 		"Requires: wp",

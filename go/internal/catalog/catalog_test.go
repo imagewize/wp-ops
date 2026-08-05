@@ -215,3 +215,37 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 		t.Error("no @platform wordpress backup command — a non-Trellis site has no backup path")
 	}
 }
+
+// TestLoad_ShortNameUniqueBasenames pins the name every user-facing usage
+// line is built from: the basename when it resolves to exactly one command,
+// the full key when it does not. A collision has no unambiguous short form —
+// dispatch reports those as ambiguous rather than picking one — so printing
+// the basename would produce a usage line that errors if pasted back.
+func TestLoad_ShortNameUniqueBasenames(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	for _, e := range c.Entries {
+		if e.ShortName == "" {
+			t.Fatalf("%s: ShortName is empty; Load must populate it", e.Key)
+		}
+
+		matches := c.FindByBasename(e.ShortName)
+		switch {
+		case e.ShortName == e.Key:
+			// Fell back to the key, so the basename must genuinely collide.
+			base := e.Key[strings.LastIndex(e.Key, "/")+1:]
+			if n := len(c.FindByBasename(base)); n < 2 && base != e.Key {
+				t.Errorf("%s: fell back to the full key but %q resolves to %d command(s), not several",
+					e.Key, base, n)
+			}
+		case len(matches) != 1:
+			t.Errorf("%s: ShortName %q resolves to %d commands, want exactly 1",
+				e.Key, e.ShortName, len(matches))
+		case matches[0].Key != e.Key:
+			t.Errorf("%s: ShortName %q resolves to %s", e.Key, e.ShortName, matches[0].Key)
+		}
+	}
+}
