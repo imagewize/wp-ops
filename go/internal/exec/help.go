@@ -32,6 +32,102 @@ func PreviewBody(e catalog.Entry) string {
 	return b.String()
 }
 
+// UsageLine renders a real usage line — "Usage: wp-ops db-backup [site-name]
+// [environment] [options]" — from a command's declared @arg/@flag manifest,
+// under whatever name the caller wants the command to answer to. name is a
+// parameter rather than derived from e because the right answer differs by
+// caller: the picker shows the basename a user can actually type, while a
+// context that can't guarantee the basename is unambiguous must fall back to
+// the full key.
+//
+// This is the shape trellis-cli's per-command Help() hand-writes ("Usage:
+// trellis deploy [options] ENVIRONMENT [SITE]"); here it's derived, so it
+// can't drift from the arguments the command actually documents.
+func UsageLine(e catalog.Entry, name string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Usage: wp-ops %s", name)
+
+	for _, a := range e.Args {
+		if a.Required {
+			fmt.Fprintf(&b, " <%s>", a.Name)
+		} else {
+			fmt.Fprintf(&b, " [%s]", a.Name)
+		}
+	}
+	if len(e.Flags) > 0 {
+		b.WriteString(" [options]")
+	}
+	// Nothing declared (un-annotated commands, and annotated ones that take
+	// no arguments) still accepts a free-text argv — the picker's final
+	// prompt passes it straight through — so say so rather than implying the
+	// command takes nothing.
+	if len(e.Args) == 0 && len(e.Flags) == 0 {
+		b.WriteString(" [args...]")
+	}
+	return b.String()
+}
+
+// DetailBody renders the block the picker shows once a command is chosen:
+// the same manifest material as --help, but headed by UsageLine's real usage
+// rather than the "<full-key> [args...]" placeholder, and without the
+// Script: trailer (an implementation detail at the moment someone is about
+// to answer "site-url:"). Requires/platform/server-side facts collapse onto
+// one meta line — they used to be per-row tags in the browse list, where
+// they wrapped and broke the column alignment at any realistic pane width.
+func DetailBody(e catalog.Entry, name string) string {
+	var b strings.Builder
+	b.WriteString(UsageLine(e, name))
+	b.WriteString("\n\n")
+
+	if e.Description != "" {
+		fmt.Fprintf(&b, "%s\n\n", e.Description)
+	}
+
+	// Requirements come before the parameter blocks, not after them as
+	// --help orders things: the picker shows this in a viewport roughly 14
+	// rows tall, and a command with several options pushes whatever trails
+	// them below the fold. "Needs curl" and "runs on the server" are the two
+	// facts that decide whether to run the command at all, so they belong
+	// above the material you scroll through, not after it.
+	var meta []string
+	if len(e.Requires) > 0 {
+		meta = append(meta, "Requires: "+e.RequiresString())
+	}
+	if e.Platform != "" {
+		meta = append(meta, "Platform: "+e.Platform)
+	}
+	if e.RunsOn == "server" {
+		meta = append(meta, "Runs on the server")
+	}
+	if len(meta) > 0 {
+		fmt.Fprintf(&b, "%s\n\n", strings.Join(meta, " · "))
+	}
+
+	// Examples precede the parameter tables, as they do in trellis-cli's
+	// hand-written help ("$ trellis alias --skip-local" sits above Options).
+	// Same fold argument as the meta line: a worked invocation is the most
+	// actionable thing here for someone about to type an argument, and the
+	// exhaustive per-parameter tables are what can afford to scroll.
+	if len(e.Examples) > 0 {
+		fmt.Fprintln(&b, "Examples:")
+		for _, ex := range e.Examples {
+			fmt.Fprintf(&b, "  %s\n", ex)
+		}
+		fmt.Fprintln(&b)
+	}
+
+	writeParamBlock(&b, "Arguments:", e.Args)
+	// "Options:" rather than --help's "Flags:", matching the heading
+	// trellis-cli uses and the one `--help` output conventionally carries.
+	writeParamBlock(&b, "Options:", e.Flags)
+
+	if e.Doc != "" {
+		fmt.Fprintf(&b, "Docs: %s\n", e.Doc)
+	}
+
+	return strings.TrimRight(b.String(), "\n")
+}
+
 // writeManifestHelpBody renders the shared body of print_manifest_help
 // (wp-ops:352): usage line, description, arguments, flags, requires, the
 // server-side note, examples, docs, and the script path. FormatHelp

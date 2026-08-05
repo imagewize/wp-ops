@@ -26,9 +26,9 @@ func testCatalogEntries() []catalog.Entry {
 // path without the real embedded catalog.
 func newTestCategoryModel() Model {
 	return Model{
-		all:     testCatalogEntries(),
-		stage:   stageCategory,
-		preview: viewport.New(40, 10),
+		all:    testCatalogEntries(),
+		stage:  stageCategory,
+		detail: viewport.New(fallbackWidth, minPaneHeight),
 	}
 }
 
