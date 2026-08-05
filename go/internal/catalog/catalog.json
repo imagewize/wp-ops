@@ -479,9 +479,9 @@
   },
   {
     "category": "scripts",
-    "key": "scripts/images/convert-to-webp",
+    "key": "scripts/images/jpg-to-webp",
     "description": "Convert a JPG to WebP with center-crop (Facebook OG ratio by default)",
-    "script_path": "scripts/images/convert-to-webp.sh",
+    "script_path": "scripts/images/jpg-to-webp.sh",
     "runs_on": "local",
     "runs": "local",
     "requires": [
@@ -530,7 +530,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/images/convert-to-webp input.jpg output.webp 82 800 419"
+      "wp-ops jpg-to-webp input.jpg output.webp 82 800 419"
     ],
     "manifest_category": "images",
     "platform": "any",
@@ -1731,9 +1731,9 @@
   },
   {
     "category": "scripts",
-    "key": "scripts/patterns/convert-to-webp",
+    "key": "scripts/patterns/png-to-webp",
     "description": "Convert PNG pattern screenshots to WebP using sharp",
-    "script_path": "scripts/patterns/convert-to-webp.js",
+    "script_path": "scripts/patterns/png-to-webp.js",
     "runs_on": "local",
     "runs": "local",
     "requires": [
@@ -1791,7 +1791,7 @@
       }
     ],
     "examples": [
-      "wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90"
+      "wp-ops png-to-webp --all --dir=./screenshots --quality=90"
     ],
     "manifest_category": "content",
     "platform": "any",

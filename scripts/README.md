@@ -31,7 +31,7 @@ scripts/
 │   └── git-log-oneline.sh      # Show recent git commits as one-liners
 ├── images/                      # Image resizing and conversion
 │   ├── batch-resize.sh         # Batch resize and center-crop images for featured images
-│   ├── convert-to-webp.sh      # JPG to WebP conversion with center-crop (Facebook OG)
+│   ├── jpg-to-webp.sh          # JPG to WebP conversion with center-crop (Facebook OG)
 │   ├── make-square-webp.sh     # Pad an image onto a square canvas and export as WebP
 │   ├── openverse_search.py     # Search Openverse for CC-licensed images
 │   ├── openverse_download.py   # Download Openverse image URLs, optionally converting to WebP
@@ -58,7 +58,7 @@ scripts/
 ├── patterns/                    # WordPress block pattern screenshot toolkit
 │   ├── screenshot-patterns.sh  # End-to-end: create temp WP page, screenshot, delete, convert to WebP
 │   ├── screenshot-url.js       # Generic Playwright URL/element screenshot primitive
-│   ├── convert-to-webp.js      # Sharp-based PNG to WebP converter
+│   ├── png-to-webp.js          # Sharp-based PNG to WebP converter
 │   ├── trim-screenshots.sh     # Trim whitespace from a directory of pattern screenshots (ImageMagick)
 │   ├── center-screenshots.sh   # Center screenshots on a fixed canvas (ImageMagick)
 │   └── README.md               # Setup and usage docs
@@ -95,7 +95,7 @@ scripts/
 ./scripts/woocommerce/create-product-variations.sh
 
 # Convert JPG to WebP for Facebook OG / featured image (800x419, center crop)
-./scripts/images/convert-to-webp.sh image.jpg
+./scripts/images/jpg-to-webp.sh image.jpg
 
 # Pad an image onto a square canvas and export as WebP
 ./scripts/images/make-square-webp.sh logo.png logo-square.webp
@@ -296,7 +296,7 @@ Processing 3/3: screenshot3.png
 Batch resize complete. Processed 3 file(s).
 ```
 
-### convert-to-webp.sh
+### jpg-to-webp.sh
 
 Converts a JPG to WebP at 800×419 (1.91:1 Facebook Open Graph ratio) using a center crop so non-standard source images aren't distorted. Quality and dimensions are configurable.
 
@@ -311,13 +311,13 @@ sudo apt-get install imagemagick webp  # Ubuntu/Debian
 
 ```bash
 # Defaults: 800x419, quality 82
-./scripts/images/convert-to-webp.sh featured.jpg
+./scripts/images/jpg-to-webp.sh featured.jpg
 
 # Custom output filename
-./scripts/images/convert-to-webp.sh featured.jpg hero.webp
+./scripts/images/jpg-to-webp.sh featured.jpg hero.webp
 
 # Custom quality and dimensions
-./scripts/images/convert-to-webp.sh featured.jpg hero.webp 90 1200 630
+./scripts/images/jpg-to-webp.sh featured.jpg hero.webp 90 1200 630
 ```
 
 #### Output
@@ -435,7 +435,7 @@ brew install imagemagick   # only needed for trim-screenshots.sh / center-screen
   Trellis VM, or a remote server over SSH.
 - **`screenshot-url.js`** — the generic Playwright capture primitive underneath it;
   screenshots any URL (element selector or full page), independent of WordPress.
-- **`convert-to-webp.js`** — standalone sharp-based PNG → WebP converter, single file
+- **`png-to-webp.js`** — standalone sharp-based PNG → WebP converter, single file
   or `--all` batch mode.
 - **`trim-screenshots.sh`** / **`center-screenshots.sh`** — ImageMagick post-processing
   for a directory of `pattern-*.webp` files (trim whitespace, or trim + center on a

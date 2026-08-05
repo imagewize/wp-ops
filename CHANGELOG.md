@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1] - 2026-08-05
+
+### Changed
+
+- **The two `convert-to-webp` commands were renamed to `jpg-to-webp` and
+  `png-to-webp`**, in `scripts/images/` and `scripts/patterns/` respectively.
+  They were the catalog's only basename collision, which meant they were the
+  only two commands `wp-ops <name>` could not resolve and the only two whose
+  usage line still printed a full key with directory separators
+  (`Usage: wp-ops scripts/patterns/convert-to-webp [input-file] [options]`) —
+  5.1.0's short-name work correctly declines to abbreviate an ambiguous name.
+  Renaming removes the ambiguity at its source rather than teaching the CLI to
+  paper over it, and the new names say which format each one consumes, which
+  the shared name never did: one center-crops a JPG to the Facebook OG ratio
+  via `cwebp`, the other batch-converts `pattern-*.png` screenshots via
+  `sharp`. Every basename in the catalog is now unique, so every usage line
+  names a command that resolves if pasted back.
+
+  Callers and docs were updated with them (`screenshot-patterns.sh`, both
+  `README.md` files, `docs/nginx/image-optimization/RESIZE-AND-CONVERSION.md`).
+  Any script invoking the old filenames needs the same rename.
+
+### Fixed
+
+- **`README.md` documented a `bedrock` category that no longer exists.** 5.0.0
+  moved that tree under `docs/` and dropped `bedrock` from `catalog.Categories`,
+  so the documented `wp-ops bedrock wp-cli-pattern-validate …` answered
+  `Unknown command or category: bedrock`. The command itself was never removed —
+  it lives under `wp-cli/content-creation/` and resolves as
+  `wp-ops wp-cli-pattern-validate`.
+
+- **`README.md` still described the picker's live preview pane**, which 5.1.0
+  deleted. Details print as a post-selection block above the argument prompts
+  now, and the picker renders inline rather than taking over the screen.
+
+- **Three stale counts in `README.md`**: nine backup commands (ten since
+  `wp-db-backup`), 39 scripts (42), and five MCP tools (six — `url_audit` was
+  missing from the list, though `mcp-server/README.md` already documented it).
+  The intro also still said commands group "by subdirectory", which the
+  paragraph twenty-five lines below it contradicted with the domain grouping
+  5.0.0 introduced.
+
 ## [5.1.0] - 2026-08-05
 
 The interactive picker stops behaving like a separate application. It renders

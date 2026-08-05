@@ -33,7 +33,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
     - `scripts/sync/rsync-theme.sh` - Theme synchronization
   - `scripts/images/` - Image resizing and conversion
     - `scripts/images/batch-resize.sh` - Batch image resize with center-crop
-    - `scripts/images/convert-to-webp.sh` - Convert JPG images to WebP format
+    - `scripts/images/jpg-to-webp.sh` - Convert JPG images to WebP format
   - `scripts/patterns/` - WordPress block pattern screenshot toolkit (Playwright + sharp)
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities

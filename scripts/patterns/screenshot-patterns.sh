@@ -147,7 +147,7 @@ fi
 
 log_header "Converting to WebP"
 log_header "────────────────────────────────────────────────────"
-node "$SCRIPT_DIR/convert-to-webp.js" --all --dir="$OUTPUT_DIR"
+node "$SCRIPT_DIR/png-to-webp.js" --all --dir="$OUTPUT_DIR"
 
 echo ""
 log_success "Successfully processed: $SCREENSHOT_COUNT pattern(s)"

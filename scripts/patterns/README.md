@@ -67,15 +67,15 @@ node screenshot-url.js http://example.test/pattern/ --out=pattern.png \
   --selector=".my-pattern-wrapper,.entry-content > *:first-child"
 ```
 
-### convert-to-webp.js
+### png-to-webp.js
 
 Standalone PNG → WebP converter (sharp-based), used by `screenshot-patterns.sh` but
 usable on its own for any directory of screenshots.
 
 ```bash
-node convert-to-webp.js pattern-hero-dark.png
-node convert-to-webp.js --all --dir=./screenshots
-node convert-to-webp.js --all --dir=./screenshots --output-dir=./webp --quality=90
+node png-to-webp.js pattern-hero-dark.png
+node png-to-webp.js --all --dir=./screenshots
+node png-to-webp.js --all --dir=./screenshots --output-dir=./webp --quality=90
 ```
 
 ### trim-screenshots.sh / center-screenshots.sh

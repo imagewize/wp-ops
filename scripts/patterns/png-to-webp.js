@@ -7,8 +7,8 @@
  * optimized WebP using sharp.
  *
  * Usage:
- *   node convert-to-webp.js <input-file> [options]
- *   node convert-to-webp.js --all --dir=<screenshots-dir> [options]
+ *   node png-to-webp.js <input-file> [options]
+ *   node png-to-webp.js --all --dir=<screenshots-dir> [options]
  *
  * Options:
  *   --all                  Convert every pattern-*.png file in --dir
@@ -18,9 +18,9 @@
  *   --dry-run              Show what would be done without writing files
  *
  * Examples:
- *   node convert-to-webp.js pattern-hero-dark.png
- *   node convert-to-webp.js --all --dir=./screenshots --output-dir=./webp
- *   node convert-to-webp.js --all --dir=./screenshots --quality=90
+ *   node png-to-webp.js pattern-hero-dark.png
+ *   node png-to-webp.js --all --dir=./screenshots --output-dir=./webp
+ *   node png-to-webp.js --all --dir=./screenshots --quality=90
  *
  * @desc     Convert PNG pattern screenshots to WebP using sharp
  * @category content
@@ -33,7 +33,7 @@
  * @flag     --output-dir   optional  {./webp}  Output directory (default: same as source)
  * @flag     --quality      optional  {85}  WebP quality 1-100
  * @flag     --dry-run      optional  {}  Show what would be done without writing files
- * @example  wp-ops scripts/patterns/convert-to-webp --all --dir=./screenshots --quality=90
+ * @example  wp-ops png-to-webp --all --dir=./screenshots --quality=90
  * @doc      scripts/patterns/README.md
  */
 
