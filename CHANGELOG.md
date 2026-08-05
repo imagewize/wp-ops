@@ -27,15 +27,15 @@ implementation detail rather than the thing `wp-ops list` shows you.
   *`scripts/monitoring` only* and the four `trellis/monitoring` playbooks sat
   under `Trellis`. Now every command's `@category` wins.
 
-  The concrete payoff: **`wp-ops backup` lists all nine backup commands** —
-  three shell scripts under `scripts/backup/` and six Ansible playbooks under
+  The concrete payoff: **`wp-ops backup` lists all ten backup commands** —
+  four shell scripts under `scripts/backup/` and six Ansible playbooks under
   `trellis/backup/` — which the two-directory split made impossible. Same for
   `security` (3 under `wp-cli/`, 2 under `trellis/`) and `monitoring` (13 + 4).
   41% of the catalog previously lived in a domain no single directory
   contained.
 
   `wp-ops list` goes from 10 directory-ish groups to 12 domain groups:
-  Monitoring (17), Backup (9), Content (8), Images (7), SEO (7), Security (6),
+  Monitoring (17), Backup (10), Content (8), Images (7), SEO (7), Security (6),
   Misc (5), Release (4), Git (3), MCP Server (3), Diagnostics (2), Sync (2).
 
 - **Singletons merged into neighbours** rather than left as one-command groups
@@ -71,7 +71,7 @@ implementation detail rather than the thing `wp-ops list` shows you.
   | Value | Means | Count |
   | --- | --- | ---: |
   | `trellis` | Needs a Trellis project, vault, `/srv/www`, or the `trellis` CLI | 27 |
-  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 16 |
+  | `wordpress` | Any WP install — Valet, Herd, cPanel, Bedrock, Trellis | 17 |
   | `any` | No WordPress involved | 30 |
 
   Deliberately its own field rather than derived from `@requires`, which names
@@ -87,11 +87,10 @@ implementation detail rather than the thing `wp-ops list` shows you.
   than silently filtering to nothing, which would read as "no such commands
   exist" instead of "no such platform".
 
-  This makes a real coverage hole **visible rather than closing it**:
-  `--platform wordpress` returns 16 commands and **zero backup commands**, because
-  all nine assume Trellis. Previously `wp-ops backup` listed all nine happily
-  and you found out by running one. A `wp-db-backup.sh` tagged `wordpress` is
-  the tracked follow-up.
+  This made a real coverage hole **visible before closing it**:
+  `--platform wordpress` returned **zero backup commands**, because all nine
+  assumed Trellis. Previously `wp-ops backup` listed all nine happily and you
+  found out by running one. Step 6 below writes the command that fills it.
 
 - **`catalog.Platforms`** as the single source of truth for legal values,
   shared by the flag usage strings and the validator so `list` and `search`
@@ -165,6 +164,52 @@ implementation detail rather than the thing `wp-ops list` shows you.
   paths. `CLAUDE.md`'s repository structure gains a `docs/` section
   describing the split: design docs as loose `.md` at the top level,
   operational guides in subdirectories.
+
+### Step 6 — `wp-db-backup.sh`, the first non-Trellis backup command
+
+- **Added: `scripts/backup/wp-db-backup.sh`** (`@platform wordpress`) - backs
+  up any WordPress database to a local `.sql.gz`, closing the coverage hole
+  `@platform` exposed. All nine existing backup commands assume Trellis, so
+  `wp-ops list --platform wordpress` previously returned **zero** of them; a
+  Valet, Herd, cPanel, or plain `public_html` site had no backup path in this
+  toolkit at all.
+
+  Everything the Trellis scripts assume is discovered instead. Layout
+  detection probes for `wp-load.php` at the given path, then `web/wp`
+  (Bedrock), then `wordpress/` — `site-backup.sh` hard-codes Bedrock's
+  `web/app/` and breaks on anything else. The site URL comes from
+  `wp option get siteurl` rather than `wordpress_sites.yml`, and names the
+  backup. `--host` requires an explicit `--site-path` instead of guessing
+  `/srv/www/<site>/current`. `--wp-bin`/`--php-bin` reach shared hosts whose
+  PHP lives somewhere like `/opt/plesk/php/8.2/bin/php`, matching the
+  four-shape host model in `mcp-server/src/registry.ts` rather than inventing
+  a second convention. The dump is streamed, so nothing is written on the
+  server and no writable backup directory has to exist there.
+
+  Named `wp-db-backup` so `wp-ops db-backup` stays unambiguous — a shared
+  basename would turn the short form into a did-you-mean list.
+
+- **Added: `scripts/backup/README.md`** - documents the trellis/wordpress
+  split across the four shell scripts, the restore command, and the stdout
+  hazard below.
+
+  **Written against a real site, which is why it works.** The first version
+  produced a corrupt backup: WP-CLI on the test host printed a PHP
+  deprecation notice to **stdout**, so `wp db export - | gzip` made that
+  notice the first line of the dump. The result is a valid gzip, of the right
+  size, still ending in `Dump completed` — it passes every check the existing
+  scripts make and fails only on import. Three fixes came out of it:
+
+  - WP-CLI is invoked **from the site directory**, not merely pointed at it.
+    It finds `wp-cli.yml` by walking up from the working directory, not from
+    `--path`, so running elsewhere silently drops the site's own config — here,
+    a `require` that suppressed those very deprecations.
+  - The dump is validated at **both ends**. A trailing `Dump completed` marker
+    proves nothing, because pollution arrives at the front; a dump whose first
+    line isn't SQL is deleted rather than kept.
+  - `--php-bin` now adds `-d display_errors=stderr`. WP-CLI's shebang wrapper
+    gives no way to pass `-d`, so invoking PHP directly is the only way to get
+    diagnostics off stdout on a noisy host — and the rejection message says so.
 
 ### Step 7 — `wordpress-utilities/` entries are no longer commands
 

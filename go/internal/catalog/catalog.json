@@ -153,6 +153,85 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/backup/wp-db-backup",
+    "description": "Back up any WordPress site's database (Valet, Herd, cPanel, Bedrock) to a local .sql.gz",
+    "script_path": "scripts/backup/wp-db-backup.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp",
+      "gzip"
+    ],
+    "doc": "scripts/backup/README.md",
+    "flags": [
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code/example",
+        "description": "WordPress directory (default: current directory)",
+        "raw": "--path       optional  {~/code/example}  WordPress directory (default: current directory)"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "user@example.com",
+        "description": "SSH user@host to back up from",
+        "raw": "--host       optional  {user@example.com}  SSH user@host to back up from"
+      },
+      {
+        "name": "--site-path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/home/user/public_html",
+        "description": "Directory on the server, required with --host",
+        "raw": "--site-path  optional  {/home/user/public_html}  Directory on the server, required with --host"
+      },
+      {
+        "name": "--dest",
+        "required_raw": "optional",
+        "required": false,
+        "default": "database_backup",
+        "description": "Local destination directory",
+        "raw": "--dest       optional  {database_backup}  Local destination directory"
+      },
+      {
+        "name": "--name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example_com",
+        "description": "Backup basename (default: derived from the site URL)",
+        "raw": "--name       optional  {example_com}  Backup basename (default: derived from the site URL)"
+      },
+      {
+        "name": "--wp-bin",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/wp-cli.phar",
+        "description": "wp binary or .phar to use",
+        "raw": "--wp-bin     optional  {~/wp-cli.phar}  wp binary or .phar to use"
+      },
+      {
+        "name": "--php-bin",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/opt/plesk/php/8.2/bin/php",
+        "description": "PHP binary to run --wp-bin with",
+        "raw": "--php-bin    optional  {/opt/plesk/php/8.2/bin/php}  PHP binary to run --wp-bin with"
+      }
+    ],
+    "examples": [
+      "wp-ops wp-db-backup --path ~/code/example",
+      "wp-ops wp-db-backup --host user@example.com --site-path /home/user/public_html"
+    ],
+    "manifest_category": "backup",
+    "platform": "wordpress",
+    "display_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/git/create-pr",
     "description": "Create a GitHub PR with an AI-generated description",
     "script_path": "scripts/git/create-pr.sh",

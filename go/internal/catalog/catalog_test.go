@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 73 {
-		t.Errorf("len(Entries) = %d, want 73 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0, -5 for wordpress-utilities' reference files demoted to docs in 5.0.0, +2 for admin-user-create/noindex-expired-posts replacing two of them)", len(c.Entries))
+	if len(c.Entries) != 74 {
+		t.Errorf("len(Entries) = %d, want 74 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0, -5 for wordpress-utilities' reference files demoted to docs in 5.0.0, +2 for admin-user-create/noindex-expired-posts replacing two of them, +1 for wp-db-backup added in 5.0.0)", len(c.Entries))
 	}
 }
 
@@ -157,8 +157,8 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	}
 
 	scriptsRaw := c.CommandsIn("scripts")
-	if len(scriptsRaw) != 41 {
-		t.Errorf("CommandsIn(scripts) = %d entries, want 41 (directory-based grouping must be unaffected by the display split; +2 for ttfb-test/remote-ttfb-ua added in 3.27.0, +3 for svg-to-jpg/svg-to-png/traffic-by-country added in 4.1.0)", len(scriptsRaw))
+	if len(scriptsRaw) != 42 {
+		t.Errorf("CommandsIn(scripts) = %d entries, want 42 (directory-based grouping must be unaffected by the display split; +2 for ttfb-test/remote-ttfb-ua added in 3.27.0, +3 for svg-to-jpg/svg-to-png/traffic-by-country added in 4.1.0, +1 for wp-db-backup added in 5.0.0)", len(scriptsRaw))
 	}
 	for _, e := range scriptsRaw {
 		if e.Category != "scripts" {
@@ -191,14 +191,27 @@ func TestCommandsInDisplayPreservesCategoryForJSON(t *testing.T) {
 	// Option C1's headline case: "backup" draws from two directories at
 	// once, which is exactly what the old scripts-only rule prevented.
 	backup := c.CommandsInDisplay("backup")
-	if len(backup) != 9 {
-		t.Errorf("CommandsInDisplay(backup) = %d entries, want 9 (3 under scripts/, 6 under trellis/)", len(backup))
+	if len(backup) != 10 {
+		t.Errorf("CommandsInDisplay(backup) = %d entries, want 10 (4 under scripts/, 6 under trellis/)", len(backup))
 	}
 	dirs := make(map[string]int)
 	for _, e := range backup {
 		dirs[e.Category]++
 	}
-	if dirs["scripts"] != 3 || dirs["trellis"] != 6 {
-		t.Errorf("backup display group spans %v, want 3 scripts + 6 trellis", dirs)
+	if dirs["scripts"] != 4 || dirs["trellis"] != 6 {
+		t.Errorf("backup display group spans %v, want 4 scripts + 6 trellis", dirs)
+	}
+
+	// Step 6 of docs/category-organization.md: the backup group is no longer
+	// uniformly Trellis-shaped. Guards the coverage hole staying closed —
+	// before wp-db-backup, `--platform wordpress` returned zero of these.
+	wpBackups := 0
+	for _, e := range backup {
+		if e.Platform == "wordpress" {
+			wpBackups++
+		}
+	}
+	if wpBackups < 1 {
+		t.Error("no @platform wordpress backup command — a non-Trellis site has no backup path")
 	}
 }

@@ -1,10 +1,10 @@
 # Category Organization: directories, display categories, and what `wp-ops` shows
 
-> **Status:** Options C and D **shipped** 2026-08-05, along with the
-> `wordpress-utilities/` question (step 7). Only `wp-db-backup.sh` (step 6)
-> remains open — see [What shipped](#what-shipped) at the foot of this
-> document for the decisions the analysis left open and how they were
-> settled.
+> **Status:** **Fully implemented** 2026-08-05 — Options C and D, plus the
+> `wp-db-backup.sh` gap (step 6) and the `wordpress-utilities/` question
+> (step 7). See [What shipped](#what-shipped) at the foot of this document
+> for the decisions the analysis left open, how they were settled, and what
+> it got wrong.
 > **Problem:** The repo's top-level directories try to encode three different
 > axes at once — *mechanism* (bash/Ansible/PHP), *platform* (Trellis-only vs
 > host-agnostic), and *domain* (backup/monitoring/security) — and a directory
@@ -376,8 +376,7 @@ for the code that reads it, and splitting keeps each diff reviewable.
 
 ## What shipped
 
-Steps 2-5 and 7 landed on 2026-08-05. Step 6 (`wp-db-backup.sh`) remains
-open — it wants a real non-Trellis host to be written against.
+All of steps 2-7 landed on 2026-08-05.
 
 **The two open decisions, settled.**
 
@@ -404,10 +403,10 @@ than `DisplayOrder` (domain grouping), so `--help` presents one grouping while
 the old forms keep resolving. `wp-ops patterns` is the single casualty: it was
 a real display category in 4.2.1 and is now `wp-ops content`.
 
-**The Valet coverage hole is now visible, as predicted.** `wp-ops list
---platform wordpress` returns 19 commands in 7 groups and **zero backup
-commands** — §C2's worked example, holding for real rather than by accident of
-missing tags. Step 6 closes it.
+**The Valet coverage hole was visible first, then closed.** Tagging alone made
+`wp-ops list --platform wordpress` return zero backup commands — §C2's worked
+example holding for real rather than by accident of missing tags. Step 6 then
+wrote the command that fills it; see below.
 
 ### Option D
 
@@ -433,6 +432,46 @@ Two wrinkles the analysis didn't cover, both minor:
 
 `wp-ops docs` was unaffected, as predicted — it walks every `.md` in the repo
 rather than a category list.
+
+### Step 6 — `wp-db-backup.sh`
+
+Written against the Valet site this document names, per its own instruction
+not to write it speculatively. That paid for itself immediately: **the first
+working version produced a corrupt backup**, and no amount of desk-checking
+would have found it.
+
+WP-CLI on that host emits a PHP deprecation notice **on stdout**. Piped
+through `wp db export - | gzip`, the notice becomes the first line of the
+dump. The file is a valid gzip, it is the right size, and it still ends with
+`Dump completed` — every check the Trellis-shaped `db-backup.sh` would have
+applied passes, and the backup fails only when you try to import it, which is
+the worst possible moment to find out.
+
+Three things came out of that, all of which the design constraints missed:
+
+1. **WP-CLI must be run from the site directory**, not merely pointed at it
+   with `--path`. It discovers `wp-cli.yml` by walking up from the working
+   directory, so running from elsewhere silently drops the site's own config —
+   on this site, a `require` that suppresses exactly those deprecations.
+2. **A trailing `Dump completed` marker proves nothing.** The dump is checked
+   at both ends now, and the *first* line is the one that matters: anything
+   written to stdout lands ahead of the SQL. A dump that doesn't start with
+   `--` or `/*` is deleted rather than kept.
+3. **`--php-bin` is not only for cPanel.** WP-CLI's shebang wrapper offers no
+   way to pass `-d`, so invoking PHP directly is the only way to force
+   `display_errors=stderr` on a noisy host. The script adds that flag whenever
+   `--php-bin` is set, and the rejection message tells you to use it.
+
+The four design constraints held up otherwise. Layout detection probes for
+`wp-load.php` at the given path, then `web/wp`, then `wordpress/`, so Bedrock
+and classic installs both work without being told which they are; the site URL
+comes from `wp option get siteurl`; there is no `/srv/www`, `/srv/backups`, or
+`web@` anywhere, and `--host` refuses to run without an explicit
+`--site-path` rather than guessing a Trellis layout.
+
+Naming followed the caveat: `wp-db-backup` keeps `wp-ops db-backup`
+unambiguous. `wp-site-backup.sh` and `wp-db-pull.sh` remain unwritten and
+should stay on distinct basenames too.
 
 ### Step 7 — `wordpress-utilities/`
 

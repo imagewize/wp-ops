@@ -20,10 +20,11 @@ This directory contains utility scripts organized into functional areas:
 
 ```
 scripts/
-├── backup/                      # Backup automation scripts
-│   ├── db-backup.sh            # Back up a remote database over SSH straight to your machine
-│   ├── db-pull.sh              # Pull a remote database into development via SSH
-│   └── site-backup.sh          # Complete site backup (DB + files + config)
+├── backup/                      # Backup automation scripts (see backup/README.md)
+│   ├── wp-db-backup.sh         # Back up ANY WordPress site's database (Valet, Herd, cPanel, Bedrock)
+│   ├── db-backup.sh            # Trellis: back up a remote database over SSH straight to your machine
+│   ├── db-pull.sh              # Trellis: pull a remote database into development via SSH
+│   └── site-backup.sh          # Trellis: complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
 │   ├── create-pr.sh            # AI-powered GitHub PR creation
 │   ├── gh-traffic.sh           # Fetch and display GitHub repository traffic statistics
