@@ -104,6 +104,45 @@ func TestDetailBody_MetaLineCarriesRowTags(t *testing.T) {
 	}
 }
 
+// TestDetailBody_LocalSiteDependencyNote covers the gap that prompted
+// localSiteDependencyNote: a .php/.yml command is "local" (RunsOn != server)
+// but still unrunnable without $WP_SITE_DIR/$TRELLIS_DIR pointing at a real
+// project, and --help's executor-specific trailer (FormatWPCLIHelp/
+// FormatHelp) never renders here — DetailBody is the picker's only look at
+// the command before it prompts for arguments.
+func TestDetailBody_LocalSiteDependencyNote(t *testing.T) {
+	cases := []struct {
+		name       string
+		scriptPath string
+		want       string
+	}{
+		{"wp-cli script", "wp-cli/security/scanner-targeted.php", "Runs locally against $WP_SITE_DIR"},
+		{"trellis playbook", "trellis/backup/database-backup.yml", "Runs locally against $TRELLIS_DIR"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := helpTestEntry()
+			e.ScriptPath = tc.scriptPath
+			body := DetailBody(e)
+			if !strings.Contains(body, tc.want) {
+				t.Errorf("DetailBody() missing %q:\n%s", tc.want, body)
+			}
+		})
+	}
+}
+
+// TestDetailBody_PlainScriptOmitsSiteDependencyNote — most .sh/.js commands
+// (image conversion, git helpers) are genuinely self-contained; the note
+// would be noise, not a fact worth a row in a 14-line viewport.
+func TestDetailBody_PlainScriptOmitsSiteDependencyNote(t *testing.T) {
+	body := DetailBody(helpTestEntry()) // ScriptPath: scripts/monitoring/404-checker.sh
+	for _, unwanted := range []string{"WP_SITE_DIR", "TRELLIS_DIR"} {
+		if strings.Contains(body, unwanted) {
+			t.Errorf("DetailBody() unexpectedly mentions %q:\n%s", unwanted, body)
+		}
+	}
+}
+
 // TestDetailBody_OmitsScriptPath — the script's location on disk is an
 // implementation detail at the moment someone is about to type "site-url:",
 // and the block competes for a bounded number of rows.
