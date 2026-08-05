@@ -274,6 +274,10 @@ $stats = [
 
 /**
  * Output colored text for CLI
+ *
+ * @param string $text  Text to colorize.
+ * @param string $color Color key (red, green, yellow, blue, magenta, cyan, white).
+ * @return string Colorized text — ANSI escape codes on CLI, an HTML span in a browser.
  */
 function color_text($text, $color = 'white') {
     $colors = [
@@ -307,6 +311,10 @@ function color_text($text, $color = 'white') {
 
 /**
  * Output message
+ *
+ * @param string $message Message to print.
+ * @param string $color   Color key, as accepted by color_text().
+ * @return void
  */
 function output($message, $color = 'white') {
     if (php_sapi_name() === 'cli') {
@@ -318,6 +326,11 @@ function output($message, $color = 'white') {
 
 /**
  * Build list of files to scan
+ *
+ * @param string $dir    Directory to scan.
+ * @param array  $config Scan configuration (start_path, exclude_dirs, file_extensions, max_file_size, ...).
+ * @param array  $stats  Scan statistics, updated by reference (directories_scanned, skipped_files, errors).
+ * @return string[] File paths to scan.
  */
 function build_file_list($dir, $config, &$stats) {
     $files = [];
@@ -367,6 +380,11 @@ function build_file_list($dir, $config, &$stats) {
 
 /**
  * Scan a file for malicious patterns
+ *
+ * @param string $file_path Path of the file to scan.
+ * @param array  $patterns  Pattern categories to check the file against.
+ * @param array  $stats     Scan statistics, updated by reference (files_scanned, files_matched, matches, errors).
+ * @return void
  */
 function scan_file($file_path, $patterns, &$stats) {
     $stats['files_scanned']++;
@@ -416,6 +434,9 @@ function scan_file($file_path, $patterns, &$stats) {
 
 /**
  * Format bytes to human readable
+ *
+ * @param int $bytes Byte count.
+ * @return string Human-readable size, e.g. "1.5 MB".
  */
 function format_bytes($bytes) {
     $units = ['B', 'KB', 'MB', 'GB'];
@@ -428,6 +449,10 @@ function format_bytes($bytes) {
 
 /**
  * Display results
+ *
+ * @param array $stats  Scan statistics (matches, errors, skipped_files, counts).
+ * @param array $config Scan configuration, used for the recommendations footer.
+ * @return void
  */
 function display_results($stats, $config) {
     output('', 'white');
