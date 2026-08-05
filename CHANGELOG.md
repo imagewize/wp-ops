@@ -17,11 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   arguments — has no such trailer. A command annotated `@runs local`, like
   `scanner-targeted`, gave no hint it needed anything beyond what's on
   `$PATH` until you actually ran it and hit "`WP_SITE_DIR` is not set."
-  `DetailBody`'s meta line now adds `Runs locally against $WP_SITE_DIR` for
-  `.php` commands and `Runs locally against $TRELLIS_DIR` for `.yml`
-  playbooks, keyed off the same file extension `executeEntry`
-  (`cmd/dispatch.go`) already dispatches the executor on, so it can't drift.
-  Plain `.sh`/`.js` scripts, most of which are self-contained, are unaffected.
+  `DetailBody`'s meta line now adds `Runs via WP-CLI against the site at
+  $WP_SITE_DIR` for `.php` commands and `Runs via ansible-playbook against
+  the Trellis project at $TRELLIS_DIR` for `.yml` playbooks, keyed off the
+  same file extension `executeEntry` (`cmd/dispatch.go`) already dispatches
+  the executor on, so it can't drift. Deliberately not phrased as "runs
+  locally": a `.yml` playbook resolves `$TRELLIS_DIR` on this machine but
+  often SSHes out from there to do its actual work against a remote host
+  (`database-pull`, `files-backup`, ...), so that claim would be wrong for
+  exactly the playbooks this note exists to flag. Plain `.sh`/`.js` scripts,
+  most of which are self-contained, are unaffected.
 
 - **`scanner-targeted.php`'s six helper functions had undocumented parameter
   and return types** (intelephense `P1132`). Added `@param`/`@return`

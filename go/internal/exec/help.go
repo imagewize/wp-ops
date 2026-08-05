@@ -96,15 +96,23 @@ func DetailBody(e catalog.Entry) string {
 	}
 	if e.RunsOn == "server" {
 		meta = append(meta, "Runs on the server")
-	} else if note := localSiteDependencyNote(e); note != "" {
-		// Not server-side, but still tied to a project on disk: .php scripts
-		// run via `wp eval-file`/`wp --require` against $WP_SITE_DIR, .yml
-		// playbooks via ansible-playbook against $TRELLIS_DIR (see
+	} else if note := projectDependencyNote(e); note != "" {
+		// RunsOn == "local" only means the command isn't run by SSHing onto
+		// a server yourself and executing it there — it says nothing about
+		// whether the command's own work stays on this machine. .yml
+		// playbooks are the sharp case: ansible-playbook launches from
+		// $TRELLIS_DIR, but plenty of playbooks (pull, push, backup) then
+		// SSH out to the target host to do the actual work, so "runs
+		// locally" would be the wrong claim. This deliberately echoes the
+		// same "against the project at $VAR" phrasing FormatWPCLIHelp/
+		// FormatHelp already use in their --help trailer, which is accurate
+		// either way: .php scripts run via `wp eval-file`/`wp --require`
+		// right there against $WP_SITE_DIR, .yml playbooks via
+		// ansible-playbook against the Trellis project at $TRELLIS_DIR (see
 		// executeWPCLI/executeAnsible in cmd/dispatch.go, which dispatch on
-		// this same extension). --help already states this via the
-		// executor-specific trailer FormatWPCLIHelp/FormatHelp append after
-		// this body; DetailBody has no such trailer, so it has to say so
-		// here or the picker never mentions it before prompting for args.
+		// this same extension). DetailBody has no trailer of its own, so it
+		// has to say this here or the picker never mentions it before
+		// prompting for args.
 		meta = append(meta, note)
 	}
 	if len(meta) > 0 {
@@ -136,18 +144,24 @@ func DetailBody(e catalog.Entry) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// localSiteDependencyNote reports the env var a "local" command still
+// projectDependencyNote reports the env var a non-server-side command still
 // resolves a project from, if any, keyed off the same file extension
 // executeEntry (cmd/dispatch.go) dispatches on — so this can't drift from
 // which executor actually runs the command. Plain scripts (.sh/.js/...)
 // return "": most of them are self-contained (image conversion, git
 // helpers) and don't target a WP_SITE_DIR/TRELLIS_DIR project at all.
-func localSiteDependencyNote(e catalog.Entry) string {
+//
+// Deliberately says "against", never "locally": a .yml playbook resolves
+// $TRELLIS_DIR on this machine but frequently SSHes out from there to do its
+// actual work against a remote host (database-pull, files-backup, ...), so
+// claiming the command "runs locally" would be wrong for exactly the
+// playbooks this note exists to flag.
+func projectDependencyNote(e catalog.Entry) string {
 	switch filepath.Ext(e.ScriptPath) {
 	case ".php":
-		return "Runs locally against $WP_SITE_DIR"
+		return "Runs via WP-CLI against the site at $WP_SITE_DIR"
 	case ".yml":
-		return "Runs locally against $TRELLIS_DIR"
+		return "Runs via ansible-playbook against the Trellis project at $TRELLIS_DIR"
 	default:
 		return ""
 	}

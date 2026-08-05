@@ -104,20 +104,22 @@ func TestDetailBody_MetaLineCarriesRowTags(t *testing.T) {
 	}
 }
 
-// TestDetailBody_LocalSiteDependencyNote covers the gap that prompted
-// localSiteDependencyNote: a .php/.yml command is "local" (RunsOn != server)
+// TestDetailBody_ProjectDependencyNote covers the gap that prompted
+// projectDependencyNote: a .php/.yml command is "local" (RunsOn != server)
 // but still unrunnable without $WP_SITE_DIR/$TRELLIS_DIR pointing at a real
 // project, and --help's executor-specific trailer (FormatWPCLIHelp/
 // FormatHelp) never renders here — DetailBody is the picker's only look at
-// the command before it prompts for arguments.
-func TestDetailBody_LocalSiteDependencyNote(t *testing.T) {
+// the command before it prompts for arguments. Wording is "against", not
+// "locally": a .yml playbook resolves $TRELLIS_DIR here but often SSHes out
+// from there to do its actual work against a remote host.
+func TestDetailBody_ProjectDependencyNote(t *testing.T) {
 	cases := []struct {
 		name       string
 		scriptPath string
 		want       string
 	}{
-		{"wp-cli script", "wp-cli/security/scanner-targeted.php", "Runs locally against $WP_SITE_DIR"},
-		{"trellis playbook", "trellis/backup/database-backup.yml", "Runs locally against $TRELLIS_DIR"},
+		{"wp-cli script", "wp-cli/security/scanner-targeted.php", "Runs via WP-CLI against the site at $WP_SITE_DIR"},
+		{"trellis playbook", "trellis/backup/database-backup.yml", "Runs via ansible-playbook against the Trellis project at $TRELLIS_DIR"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
