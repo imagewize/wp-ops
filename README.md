@@ -21,7 +21,7 @@ wp-ops is a CLI for WordPress operations — deployments, database and files bac
 
 ## wp-ops CLI
 
-The single entry point for everything in this repo — a single binary that auto-discovers commands across every category, groups them by subdirectory, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
+The single entry point for everything in this repo — a single binary that auto-discovers commands across every category, groups them by domain, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
 
 ```bash
 # Recommended: Homebrew
@@ -46,7 +46,7 @@ wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
 
-Categories group by **domain**, not by directory: `wp-ops backup` lists all nine
+Categories group by **domain**, not by directory: `wp-ops backup` lists all ten
 backup commands whether they're Ansible playbooks under `trellis/` or shell scripts
 under `scripts/`. The directory names still work as aliases (`wp-ops trellis
 database-backup`), they're just no longer how the catalog presents itself.
@@ -59,7 +59,7 @@ in front of you.
 
 The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
 
-`wp-ops` with no arguments opens an interactive picker: categories first, then a fuzzy-filterable command list with a live preview pane (usage, args, examples) — no `fzf` dependency.
+`wp-ops` with no arguments opens an interactive picker: categories first, then a fuzzy-filterable command list, then the chosen command's full help (usage, requirements, examples, args) printed above its argument prompts — no `fzf` dependency. It renders inline rather than taking over the screen, so earlier output stays visible above it and the last frame stays in your scrollback after it exits.
 
 Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
 
@@ -77,10 +77,10 @@ no prompt to confirm a detected guess:
 export TRELLIS_DIR=/path/to/your/trellis
 wp-ops trellis database-backup -e site=example.com -e env=production
 
-# WP-CLI scripts (wp-ops wp-cli|bedrock <script>) need a real WordPress/Bedrock install
+# WP-CLI scripts (wp-ops wp-cli <script>) need a real WordPress/Bedrock install
 export WP_SITE_DIR=/path/to/your/bedrock-site
 wp-ops wp-cli scanner-wrapper
-wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
+wp-ops wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
 ```
 
 Detection deliberately only matches a project you're actually standing inside, so an
@@ -157,7 +157,7 @@ cat "$(wp-ops docs -l age-verification | head -1)"
 
 ## Scripts
 
-39 standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
+42 standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
 | Category | Includes | Docs |
 |------|-------------|------|
@@ -169,7 +169,7 @@ cat "$(wp-ops docs -l age-verification | head -1)"
 
 ## MCP Server
 
-Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — five tools so far (`security_scan`, `db_backup`, `wp_cli`, `redirect_audit`, `schema_audit`), more planned. See [mcp-server/README.md](mcp-server/README.md) for tool details, setup, transports (stdio/Streamable HTTP), and Docker usage.
+Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — six tools so far (`security_scan`, `db_backup`, `wp_cli`, `redirect_audit`, `schema_audit`, `url_audit`), more planned. See [mcp-server/README.md](mcp-server/README.md) for tool details, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 

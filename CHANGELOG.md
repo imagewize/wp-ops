@@ -27,6 +27,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `README.md` files, `docs/nginx/image-optimization/RESIZE-AND-CONVERSION.md`).
   Any script invoking the old filenames needs the same rename.
 
+### Fixed
+
+- **`README.md` documented a `bedrock` category that no longer exists.** 5.0.0
+  moved that tree under `docs/` and dropped `bedrock` from `catalog.Categories`,
+  so the documented `wp-ops bedrock wp-cli-pattern-validate …` answered
+  `Unknown command or category: bedrock`. The command itself was never removed —
+  it lives under `wp-cli/content-creation/` and resolves as
+  `wp-ops wp-cli-pattern-validate`.
+
+- **`README.md` still described the picker's live preview pane**, which 5.1.0
+  deleted. Details print as a post-selection block above the argument prompts
+  now, and the picker renders inline rather than taking over the screen.
+
+- **Three stale counts in `README.md`**: nine backup commands (ten since
+  `wp-db-backup`), 39 scripts (42), and five MCP tools (six — `url_audit` was
+  missing from the list, though `mcp-server/README.md` already documented it).
+  The intro also still said commands group "by subdirectory", which the
+  paragraph twenty-five lines below it contradicted with the domain grouping
+  5.0.0 introduced.
+
 ## [5.1.0] - 2026-08-05
 
 The interactive picker stops behaving like a separate application. It renders
