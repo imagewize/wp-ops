@@ -8,6 +8,9 @@ import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
 import { runMonitor } from "./tools/monitor.js";
+import { runServerStatus } from "./tools/serverStatus.js";
+import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
+import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -402,6 +405,103 @@ export function createServer(): McpServer {
         const registry = loadRegistry();
         const entry = resolveSiteEnv(registry, site, env);
         const output = await runMonitor(entry, domain ?? site, hours);
+        return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "server_status",
+    "Live CPU, memory, disk, top processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent OOM-killer snapshot " +
+      "of a server over SSH. Requires a site/env with an sshHost entry — this reads live process state, " +
+      "not local dev or a Trellis VM.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      phpFpmPattern: z
+        .string()
+        .optional()
+        .describe('Pattern to match PHP-FPM pool processes, e.g. "php-fpm: pool wordpress". Defaults to matching any pool.'),
+    },
+    async ({ site, env, phpFpmPattern }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const output = await runServerStatus(entry, phpFpmPattern);
+        return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "broken_link_audit",
+    "Check a site's internal links for broken (4xx/5xx) responses. `global` mode (default) checks all " +
+      "links found on the homepage (~30s); `spider` recursively crawls to a set depth (~5-10 min). Pass " +
+      "`siteUrl` or `site`+`env`.",
+    {
+      siteUrl: z.string().url().optional().describe('Site URL to check, e.g. "https://example.com"'),
+      site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.optional().describe('Environment key for that site, e.g. "staging", "production"'),
+      mode: z
+        .enum(["global", "spider"])
+        .default("global")
+        .describe("global checks homepage links only (fast); spider recursively crawls the whole site (slow)"),
+      timeoutSeconds: z.number().int().positive().optional().describe("curl max-time per request, in seconds"),
+      spiderLevel: z.number().int().positive().optional().describe("Spider crawl depth, only used in spider mode"),
+    },
+    async ({ siteUrl, site, env, mode, timeoutSeconds, spiderLevel }) => {
+      try {
+        let targetUrl = siteUrl;
+        if (site && env) {
+          const registry = loadRegistry();
+          const entry = resolveSiteEnv(registry, site, env);
+          if (entry.url) {
+            targetUrl = entry.url;
+          } else {
+            throw new Error(`Site entry for "${site}"/"${env}" has no URL field. Use the "siteUrl" parameter instead.`);
+          }
+        }
+        if (!targetUrl) {
+          throw new Error("Either provide 'siteUrl' or 'site' + 'env' parameters.");
+        }
+
+        const result = await runBrokenLinkAudit(targetUrl, mode, timeoutSeconds, spiderLevel);
+        const text = result.hasBrokenLinks
+          ? `❌ Broken link(s) found:\n\n${result.output}`
+          : `✅ No broken links found.\n\n${result.output}`;
+        return { content: [{ type: "text" as const, text }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "remote_ttfb_audit",
+    "Measure TTFB (time to first byte) from the server itself — via SSH, so DNS/network distance from " +
+      "your machine doesn't skew it — across multiple user agents (default, Googlebot, AhrefsBot, " +
+      "Screaming Frog). Useful after a WAF or caching change to check bots aren't treated differently " +
+      "from regular visitors. Requires a site/env with an sshHost entry.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      urls: z.array(z.string().url()).min(1).describe('URL(s) to test, e.g. ["https://example.com/", "https://example.com/blog/"]'),
+    },
+    async ({ site, env, urls }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        if (!entry.sshHost) {
+          throw new Error(`Site entry for "${site}"/"${env}" has no sshHost — remote_ttfb_audit runs curl on the server itself over SSH.`);
+        }
+        const output = await runRemoteTtfbAudit(entry.sshHost, urls);
         return { content: [{ type: "text" as const, text: output }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

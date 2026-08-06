@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-08-06
+
+### Added
+
+- **Three more read-only MCP tools**, following on from `monitor`:
+  `server_status` (`scripts/monitoring/server-monitor.sh` — live CPU/memory/
+  disk/PHP-FPM/MySQL/Nginx/OOM snapshot over SSH), `broken_link_audit`
+  (`scripts/monitoring/404-checker.sh` — internal-link 4xx/5xx check, global
+  or recursive-spider mode), and `remote_ttfb_audit`
+  (`scripts/monitoring/remote-ttfb-ua.sh` — TTFB measured from the server
+  itself across multiple crawler user agents). Part of a broader pass
+  (tracked across this and the next few entries) filling in MCP tool gaps
+  found by auditing `scripts/`, `trellis/`, and `wp-cli/` against the 7 tools
+  that existed going into it.
+
 ## [5.3.0] - 2026-08-06
 
 ### Added

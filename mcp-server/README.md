@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — seven tools implemented so far:
+Scaffold — ten tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -49,6 +49,14 @@ Scaffold — seven tools implemented so far:
   (base64, over the same SSH-stdin approach as `security_scan`) into a throwaway remote
   temp dir for the run, so it works even on sites `setup-monitoring.yml` hasn't
   provisioned yet.
+- **`server_status`** — runs `scripts/monitoring/server-monitor.sh` for a live CPU, memory, disk,
+  top-processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent-OOM-killer snapshot of a server over SSH.
+- **`broken_link_audit`** — runs `scripts/monitoring/404-checker.sh` to check a site's internal links for
+  broken (4xx/5xx) responses. `global` mode (default) checks homepage links (~30s); `spider` recursively
+  crawls the site (~5-10 min).
+- **`remote_ttfb_audit`** — runs `scripts/monitoring/remote-ttfb-ua.sh` to measure TTFB from the server
+  itself (over SSH, avoiding local network/DNS skew) across multiple user agents (default, Googlebot,
+  AhrefsBot, Screaming Frog).
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
@@ -216,8 +224,9 @@ connecting to this server.
 
 ## Permissions (pre-approve read-only tools)
 
-The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`,
-`monitor`, and read-only `wp_cli` commands) are safe to run without confirmation —
+The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
+`server_status`, `broken_link_audit`, `remote_ttfb_audit`, and read-only `wp_cli` commands) are safe to
+run without confirmation —
 `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace preview
 unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
 to avoid repeated permission prompts:
@@ -231,6 +240,9 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__security_scan": { "allowed": true },
       "mcp__wp-ops__url_audit": { "allowed": true },
       "mcp__wp-ops__monitor": { "allowed": true },
+      "mcp__wp-ops__server_status": { "allowed": true },
+      "mcp__wp-ops__broken_link_audit": { "allowed": true },
+      "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }
