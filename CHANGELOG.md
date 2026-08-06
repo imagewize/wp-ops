@@ -26,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   directly against the AbuseIPDB API rather than shelling out to `curl`/`jq`.
   Reads the same `trellis/security/.env` `ABUSEIPDB_KEY` the CLI scripts use,
   or `WP_OPS_ABUSEIPDB_KEY` as an override.
+- **`admin_user_create` MCP tool** — wraps `wp-cli/security/admin-user-create.sh`
+  (lockout recovery: create a temporary WordPress admin with a generated
+  password, shown once and never stored) by reusing `wp_cli`'s existing
+  `runWpCliRaw` dispatch instead of reimplementing local/SSH/VM execution —
+  the script's three steps (check username, check email, create) are just
+  three WP-CLI calls against an already-resolved site/env entry. Requires
+  `confirm: true`.
 
 ## [5.3.0] - 2026-08-06
 

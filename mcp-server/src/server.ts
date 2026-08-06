@@ -12,6 +12,7 @@ import { runServerStatus } from "./tools/serverStatus.js";
 import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
 import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
 import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
+import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -551,6 +552,55 @@ export function createServer(): McpServer {
 
         const results = await checkIpReputation(ips!);
         return { content: [{ type: "text" as const, text: results.map(formatIpResult).join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "admin_user_create",
+    "Create a temporary WordPress administrator via WP-CLI — for lockout recovery (lost admin password, " +
+      "a broken login plugin, an ownership handover with no working account). The password is generated " +
+      "and returned once, never stored. Requires confirm: true, only after explicit user approval.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      username: z.string().min(1).describe("Username for the new administrator"),
+      email: z.string().email().describe("Email address for the new administrator"),
+      role: z.string().default("administrator").describe("Role to assign"),
+      password: z
+        .string()
+        .optional()
+        .describe("Password to set. Defaults to a generated random password, returned once in the response."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) — creates a privileged account. Only set after explicit user approval."),
+    },
+    async ({ site, env, username, email, role, password, confirm }) => {
+      try {
+        if (!confirm) {
+          throw new Error(
+            "Creating a WordPress admin account needs confirm: true. Re-run with confirm: true only " +
+              "after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runAdminUserCreate(entry, username, email, role, password);
+
+        const lines = [`User created: ${result.username} <${result.email}> (role: ${result.role})`];
+        if (result.generatedPassword) {
+          lines.push("", `Password: ${result.generatedPassword}`, "", "Shown once — copy it now.");
+        }
+        lines.push(
+          "",
+          "Delete this user when no longer needed, via the wp_cli tool: " +
+            `{ site: "${site}", env: "${env}", args: ["user", "delete", "${username}", "--yes", "--reassign=1"], confirm: true }`
+        );
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };

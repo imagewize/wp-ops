@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — eleven tools implemented so far:
+Scaffold — twelve tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -60,6 +60,8 @@ Scaffold — eleven tools implemented so far:
 - **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
   ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
   `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
+- **`admin_user_create`** — creates a temporary WordPress administrator via WP-CLI (`user create`), for
+  lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
