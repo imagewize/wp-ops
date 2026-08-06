@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — thirteen tools implemented so far:
+Scaffold — fourteen tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -68,6 +68,11 @@ Scaffold — thirteen tools implemented so far:
   env to have `sshHost`+`remotePath`. Requires `confirm: true` — overwrites the local development
   database. (`db_push` is deliberately not implemented — pulling into production carries a much higher
   blast radius than overwriting a disposable local dev DB.)
+- **`files_pull`** — syncs a site's uploads directory from a remote environment into local development
+  via rsync. Additive by default (local-only files kept); `delete: true` mirrors the remote exactly and
+  needs `confirm: true`. Requires the site's `development` entry to have `localPath`, and the source env
+  to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
+  as `db_push`.)
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each

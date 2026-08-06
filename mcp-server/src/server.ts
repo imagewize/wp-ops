@@ -14,6 +14,7 @@ import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
 import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
 import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 import { runDbPull } from "./tools/dbPull.js";
+import { runFilesPull } from "./tools/filesPull.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -649,6 +650,56 @@ export function createServer(): McpServer {
         if (result.multisiteFixedUp) lines.push("  Multisite domain fixup applied.");
         lines.push("", "search-replace output:", result.searchReplaceOutput);
 
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "files_pull",
+    "Sync a site's uploads directory from a remote environment into local development via rsync. " +
+      "Additive by default (local-only files are kept); `delete: true` mirrors the remote exactly, " +
+      "deleting local uploads the remote no longer has — that needs confirm: true. Requires the site's " +
+      '"development" entry to have localPath, and the source env to have sshHost.',
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      fromEnv: envSchema.describe('Environment to pull from, e.g. "production", "staging" — not "development"'),
+      delete: z
+        .boolean()
+        .default(false)
+        .describe("Mirror the remote exactly, deleting local-only uploads. Destructive locally — needs confirm: true."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) only when delete: true. Only set after explicit user approval."),
+    },
+    async ({ site, fromEnv, delete: del, confirm }) => {
+      try {
+        if (fromEnv === "development") {
+          throw new Error('"development" is not a valid source environment — you can\'t pull development into itself.');
+        }
+        if (del && !confirm) {
+          throw new Error(
+            "delete: true removes local-only uploads and needs confirm: true. Re-run with confirm: true " +
+              "only after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const devEntry = resolveSiteEnv(registry, site, "development");
+        const fromEntry = resolveSiteEnv(registry, site, fromEnv);
+        const result = await runFilesPull(site, devEntry, fromEntry, del);
+
+        const lines = [
+          `Synced ${site}/${fromEnv} uploads into development.`,
+          `  Remote: ${result.remoteUploadsDir}`,
+          `  Local:  ${result.localUploadsDir}`,
+          `  Mode:   ${result.deleted ? "mirrored — local-only files deleted" : "additive — local-only files kept"}`,
+          "",
+          result.rsyncOutput,
+        ];
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

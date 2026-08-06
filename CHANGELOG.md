@@ -47,6 +47,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **`db_push` is deliberately not implemented** — pulling into production
   carries too much blast radius for a first pass; noted in
   `mcp-server/README.md`.
+- **`files_pull` MCP tool** — wraps `trellis/backup/files-pull.yml`'s rsync
+  of a Trellis site's `shared/uploads/` into development's Bedrock
+  `web/app/uploads/` on the host (no VM shell needed — a Trellis dev VM
+  mounts the project directory into the host filesystem). Additive by
+  default; `delete: true` mirrors the remote exactly and requires
+  `confirm: true`, mirroring the playbook's own opt-in `--delete` footgun
+  flag. **`files_push` is deliberately not implemented**, for the same
+  production-risk reason as `db_push`.
 
 ## [5.3.0] - 2026-08-06
 
