@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (tracked across this and the next few entries) filling in MCP tool gaps
   found by auditing `scripts/`, `trellis/`, and `wp-cli/` against the 7 tools
   that existed going into it.
+- **`ip_reputation_check` MCP tool** — wraps `trellis/security/check-ips.sh`
+  (arbitrary IP lookups against AbuseIPDB) and `check-deny-ips.sh` (audits
+  every individual IP in a Trellis project's `deny-ips.conf.j2` for
+  staleness, e.g. a score that's dropped to 0). Uses Node's native `fetch`
+  directly against the AbuseIPDB API rather than shelling out to `curl`/`jq`.
+  Reads the same `trellis/security/.env` `ABUSEIPDB_KEY` the CLI scripts use,
+  or `WP_OPS_ABUSEIPDB_KEY` as an override.
 
 ## [5.3.0] - 2026-08-06
 

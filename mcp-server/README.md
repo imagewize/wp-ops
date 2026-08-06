@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — ten tools implemented so far:
+Scaffold — eleven tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -57,6 +57,9 @@ Scaffold — ten tools implemented so far:
 - **`remote_ttfb_audit`** — runs `scripts/monitoring/remote-ttfb-ua.sh` to measure TTFB from the server
   itself (over SSH, avoiding local network/DNS skew) across multiple user agents (default, Googlebot,
   AhrefsBot, Screaming Frog).
+- **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
+  ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
+  `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
@@ -225,8 +228,8 @@ connecting to this server.
 ## Permissions (pre-approve read-only tools)
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
-`server_status`, `broken_link_audit`, `remote_ttfb_audit`, and read-only `wp_cli` commands) are safe to
-run without confirmation —
+`server_status`, `broken_link_audit`, `remote_ttfb_audit`, `ip_reputation_check`, and read-only `wp_cli`
+commands) are safe to run without confirmation —
 `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace preview
 unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
 to avoid repeated permission prompts:
@@ -243,6 +246,7 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__server_status": { "allowed": true },
       "mcp__wp-ops__broken_link_audit": { "allowed": true },
       "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
+      "mcp__wp-ops__ip_reputation_check": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }

@@ -11,6 +11,7 @@ import { runMonitor } from "./tools/monitor.js";
 import { runServerStatus } from "./tools/serverStatus.js";
 import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
 import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
+import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -503,6 +504,53 @@ export function createServer(): McpServer {
         }
         const output = await runRemoteTtfbAudit(entry.sshHost, urls);
         return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  function formatIpResult(r: IpCheckResult): string {
+    if (r.error) return `  ${r.ip}: ERROR — ${r.error}`;
+    const note = r.score === 0 ? " ⚠ CONSIDER REMOVING (score 0)" : r.score !== undefined && r.score <= 10 ? " ⚠ score dropped low" : "";
+    return `  ${r.ip}: score=${r.score} reports=${r.reports} lastSeen=${r.lastSeen ?? "never"} country=${r.country ?? "?"} isp=${r.isp ?? "?"}${r.tor ? " TOR" : ""}${note}`;
+  }
+
+  server.tool(
+    "ip_reputation_check",
+    "Check IP addresses against AbuseIPDB threat intelligence (score, report count, ISP, Tor). Pass " +
+      "`ips` directly, or `trellisDir` to audit every individual IP already blocked in that Trellis " +
+      "project's deny-ips.conf.j2 (useful for spotting stale blocks safe to remove). Requires an " +
+      "AbuseIPDB API key (WP_OPS_ABUSEIPDB_KEY env var, or trellis/security/.env).",
+    {
+      ips: z.array(z.string()).min(1).optional().describe('IP addresses to check, e.g. ["1.2.3.4", "5.6.7.8"]'),
+      trellisDir: z
+        .string()
+        .optional()
+        .describe("Path to a Trellis project, to audit its nginx-includes/all/deny-ips.conf.j2 instead of arbitrary IPs"),
+    },
+    async ({ ips, trellisDir }) => {
+      try {
+        if (!ips && !trellisDir) {
+          throw new Error("Provide either 'ips' or 'trellisDir'.");
+        }
+        if (ips && trellisDir) {
+          throw new Error("Provide only one of 'ips' or 'trellisDir', not both.");
+        }
+
+        if (trellisDir) {
+          const result = await checkDenyList(trellisDir);
+          const lines = [
+            `${result.ips.length} IP(s) checked, ${result.subnetsSkipped} subnet(s) skipped`,
+            "",
+            ...result.ips.map(formatIpResult),
+          ];
+          return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+        }
+
+        const results = await checkIpReputation(ips!);
+        return { content: [{ type: "text" as const, text: results.map(formatIpResult).join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
