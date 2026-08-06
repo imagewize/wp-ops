@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — six tools implemented so far:
+Scaffold — seven tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -42,6 +42,13 @@ Scaffold — six tools implemented so far:
   pattern. Pass `replace: {from, to}` to also preview a
   `wp search-replace --all-tables --precise --dry-run`; add `confirm: true` (only after
   explicit user approval) to apply it for real.
+- **`monitor`** — runs `scripts/monitoring/monitor.sh` (combined traffic, security,
+  AI-crawler, and error-log analysis) against a registered site's Nginx logs and returns
+  the generated markdown summary. Requires an `sshHost` entry — logs only exist on a
+  deployed server, not local dev or a Trellis VM. Bundles all five monitoring scripts
+  (base64, over the same SSH-stdin approach as `security_scan`) into a throwaway remote
+  temp dir for the run, so it works even on sites `setup-monitoring.yml` hasn't
+  provisioned yet.
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
@@ -209,11 +216,11 @@ connecting to this server.
 
 ## Permissions (pre-approve read-only tools)
 
-The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, and
-read-only `wp_cli` commands) are safe to run without confirmation — `url_audit` only
-ever queries counts and, at most, a `--dry-run` search-replace preview unless
-`confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json` to
-avoid repeated permission prompts:
+The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`,
+`monitor`, and read-only `wp_cli` commands) are safe to run without confirmation —
+`url_audit` only ever queries counts and, at most, a `--dry-run` search-replace preview
+unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
+to avoid repeated permission prompts:
 
 ```json
 {
@@ -223,6 +230,7 @@ avoid repeated permission prompts:
       "mcp__wp-ops__schema_audit": { "allowed": true },
       "mcp__wp-ops__security_scan": { "allowed": true },
       "mcp__wp-ops__url_audit": { "allowed": true },
+      "mcp__wp-ops__monitor": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }

@@ -7,6 +7,7 @@ import { isReadOnlyWpCommand, runWpCli, truncateWpCliOutput } from "./tools/wpCl
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
+import { runMonitor } from "./tools/monitor.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -370,6 +371,38 @@ export function createServer(): McpServer {
         }
 
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "monitor",
+    "Run combined traffic, security, AI-crawler, and error-log monitoring against a site's Nginx logs " +
+      "and return the generated markdown summary. Requires a site/env with an SSH entry — logs only " +
+      "exist on a deployed server, not local dev or a Trellis VM. Self-contained: bundles the monitoring " +
+      "scripts into a throwaway remote temp dir for this run, so it works whether or not the site has " +
+      "`setup-monitoring.yml` already provisioned.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      hours: z.number().int().positive().default(24).describe("How many hours of logs to analyze"),
+      domain: z
+        .string()
+        .optional()
+        .describe(
+          'Domain used to locate logs at /srv/www/<domain>/logs/access.log. Defaults to the "site" key, ' +
+            "which is the domain for every currently registered site."
+        ),
+    },
+    async ({ site, env, hours, domain }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const output = await runMonitor(entry, domain ?? site, hours);
+        return { content: [{ type: "text" as const, text: output }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };

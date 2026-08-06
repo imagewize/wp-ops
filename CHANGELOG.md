@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.3.0] - 2026-08-06
+
+### Added
+
+- **`monitor` MCP tool** — wraps `scripts/monitoring/monitor.sh` (combined
+  traffic, security, AI-crawler, and error-log analysis) as a 7th MCP tool.
+  Found missing after observing an agent asked to "use wp-ops mcp monitor"
+  fall back to nine ad-hoc bash/ssh steps (find the binary, read `--help`,
+  guess at the remote invocation, `Read` the 350-line script to work out its
+  argv) because no MCP tool existed for it — only a CLI-catalog script did.
+  Requires a site/env entry with `sshHost` (traffic/security logs only exist
+  on a deployed server, not local dev or a Trellis VM). Bundles all five
+  monitoring scripts (base64-encoded, same SSH-stdin approach as
+  `security_scan`) into a throwaway remote temp dir for the run, rather than
+  assuming `setup-monitoring.yml` already copied `traffic-monitor.sh` /
+  `security-monitor.sh` there — `ai-bot-monitor.sh` and `error-monitor.sh`
+  aren't provisioned by that playbook at all, so relying on pre-deployed
+  copies would have silently skipped two of the four reports on most sites.
+
 ## [5.2.0] - 2026-08-06
 
 ### Added
