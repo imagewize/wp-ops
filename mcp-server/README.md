@@ -137,17 +137,14 @@ Or add the same block under `mcpServers` in Claude Desktop's config file.
 
 ## Register with Mistral Vibe
 
-Vibe's CLI reads `[[mcp_servers]]` entries from a `config.toml`, in this order (first
-match wins):
+Vibe's CLI reads `[[mcp_servers]]` entries from a `config.toml` at two layers:
 
 - **Project-level:** `./.vibe/config.toml` in the current working directory — only
   loaded when that directory is marked trusted.
 - **User-level (global):** `~/.vibe/config.toml`.
 
-**Recommended: register user-scoped (`~/.vibe/config.toml`)**, for the same reason as
-Claude Code above — the site registry is central, so the tools should be available
-regardless of which project directory Vibe is invoked from, not just when you happen to
-be sitting in `wp-ops` itself.
+**Register user-scoped (`~/.vibe/config.toml`) only — do not also add a copy to any
+project's `.vibe/config.toml`:**
 
 ```toml
 [[mcp_servers]]
@@ -160,6 +157,21 @@ args = []
 Tools show up prefixed with the `name` you chose, e.g. `wp_ops_wp_cli`,
 `wp_ops_security_scan`, `wp_ops_schema_audit`. No `WP_OPS_MCP_TOKEN` or port needed —
 stdio mode has no network listener, so there's nothing to secure at that layer.
+
+**Requires Vibe ≥ 2.24.0.** Below that version, a trusted project-level `config.toml`
+*replaces* the global config for `mcp_servers` instead of composing with it —
+[mistralai/mistral-vibe#840](https://github.com/mistralai/mistral-vibe/issues/840) — so
+the global entry above silently disappears (shows as "0 MCP servers" in Vibe's banner)
+in any directory that has its own `.vibe/config.toml`, even if that file never mentions
+`mcp_servers` at all. Run `vibe --version`; if it's older, `vibe --check-upgrade` before
+registering anything.
+
+Don't work around this on an old version by duplicating the block into a project's
+`.vibe/config.toml` — that file is typically git-tracked, and doing so commits your
+machine's absolute path into the repo (verified against a real case: an earlier
+`imagewize.com/.vibe/config.toml` entry pointing at a since-nonexistent
+`/Users/j/...` path, dead for everyone who isn't that original machine). Upgrade Vibe
+instead; the global entry alone is then sufficient everywhere.
 
 Verified against Mistral's own docs (2026-08-06) for schema/transport-name accuracy;
 not yet verified end-to-end against a live Vibe install connecting to this server —
