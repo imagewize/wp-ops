@@ -100,6 +100,16 @@ block to paste — with the real path to `run.sh` on this machine already filled
 in, so there's no `/absolute/path/to/wp-ops/...` placeholder to get wrong.
 Read-only: it never writes to a config file itself.
 
+`mcp-register` shipped in wp-ops 5.2.0. If the command isn't found, update the
+CLI first:
+
+```bash
+brew upgrade --cask wp-ops   # Homebrew install
+wp-ops --version             # confirm 5.2.0 or later
+```
+
+(Built from source instead? `git pull && go build -o wp-ops ./go`.)
+
 ## Register with Claude Code
 
 **Recommended:** Register the server **user-scoped** in `~/.claude.json` so the tools
