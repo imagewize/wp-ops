@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — six tools implemented so far:
+Scaffold — fourteen tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -42,6 +42,37 @@ Scaffold — six tools implemented so far:
   pattern. Pass `replace: {from, to}` to also preview a
   `wp search-replace --all-tables --precise --dry-run`; add `confirm: true` (only after
   explicit user approval) to apply it for real.
+- **`monitor`** — runs `scripts/monitoring/monitor.sh` (combined traffic, security,
+  AI-crawler, and error-log analysis) against a registered site's Nginx logs and returns
+  the generated markdown summary. Requires an `sshHost` entry — logs only exist on a
+  deployed server, not local dev or a Trellis VM. Bundles all five monitoring scripts
+  (base64, over the same SSH-stdin approach as `security_scan`) into a throwaway remote
+  temp dir for the run, so it works even on sites `setup-monitoring.yml` hasn't
+  provisioned yet.
+- **`server_status`** — runs `scripts/monitoring/server-monitor.sh` for a live CPU, memory, disk,
+  top-processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent-OOM-killer snapshot of a server over SSH.
+- **`broken_link_audit`** — runs `scripts/monitoring/404-checker.sh` to check a site's internal links for
+  broken (4xx/5xx) responses. `global` mode (default) checks homepage links (~30s); `spider` recursively
+  crawls the site (~5-10 min).
+- **`remote_ttfb_audit`** — runs `scripts/monitoring/remote-ttfb-ua.sh` to measure TTFB from the server
+  itself (over SSH, avoiding local network/DNS skew) across multiple user agents (default, Googlebot,
+  AhrefsBot, Screaming Frog).
+- **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
+  ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
+  `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
+- **`admin_user_create`** — creates a temporary WordPress administrator via WP-CLI (`user create`), for
+  lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
+- **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
+  search-replace, backing up the current development database first. Requires the site's `development`
+  entry to have `trellisDir`+`vmWorkdir` (drives the dev site through `trellis vm shell`) and the source
+  env to have `sshHost`+`remotePath`. Requires `confirm: true` — overwrites the local development
+  database. (`db_push` is deliberately not implemented — pulling into production carries a much higher
+  blast radius than overwriting a disposable local dev DB.)
+- **`files_pull`** — syncs a site's uploads directory from a remote environment into local development
+  via rsync. Additive by default (local-only files kept); `delete: true` mirrors the remote exactly and
+  needs `confirm: true`. Requires the site's `development` entry to have `localPath`, and the source env
+  to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
+  as `db_push`.)
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
@@ -209,11 +240,12 @@ connecting to this server.
 
 ## Permissions (pre-approve read-only tools)
 
-The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, and
-read-only `wp_cli` commands) are safe to run without confirmation — `url_audit` only
-ever queries counts and, at most, a `--dry-run` search-replace preview unless
-`confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json` to
-avoid repeated permission prompts:
+The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
+`server_status`, `broken_link_audit`, `remote_ttfb_audit`, `ip_reputation_check`, and read-only `wp_cli`
+commands) are safe to run without confirmation —
+`url_audit` only ever queries counts and, at most, a `--dry-run` search-replace preview
+unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
+to avoid repeated permission prompts:
 
 ```json
 {
@@ -223,6 +255,11 @@ avoid repeated permission prompts:
       "mcp__wp-ops__schema_audit": { "allowed": true },
       "mcp__wp-ops__security_scan": { "allowed": true },
       "mcp__wp-ops__url_audit": { "allowed": true },
+      "mcp__wp-ops__monitor": { "allowed": true },
+      "mcp__wp-ops__server_status": { "allowed": true },
+      "mcp__wp-ops__broken_link_audit": { "allowed": true },
+      "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
+      "mcp__wp-ops__ip_reputation_check": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }

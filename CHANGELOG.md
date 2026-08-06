@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-08-06
+
+### Added
+
+- **Three more read-only MCP tools**, following on from `monitor`:
+  `server_status` (`scripts/monitoring/server-monitor.sh` — live CPU/memory/
+  disk/PHP-FPM/MySQL/Nginx/OOM snapshot over SSH), `broken_link_audit`
+  (`scripts/monitoring/404-checker.sh` — internal-link 4xx/5xx check, global
+  or recursive-spider mode), and `remote_ttfb_audit`
+  (`scripts/monitoring/remote-ttfb-ua.sh` — TTFB measured from the server
+  itself across multiple crawler user agents). Part of a broader pass
+  (tracked across this and the next few entries) filling in MCP tool gaps
+  found by auditing `scripts/`, `trellis/`, and `wp-cli/` against the 7 tools
+  that existed going into it.
+- **`ip_reputation_check` MCP tool** — wraps `trellis/security/check-ips.sh`
+  (arbitrary IP lookups against AbuseIPDB) and `check-deny-ips.sh` (audits
+  every individual IP in a Trellis project's `deny-ips.conf.j2` for
+  staleness, e.g. a score that's dropped to 0). Uses Node's native `fetch`
+  directly against the AbuseIPDB API rather than shelling out to `curl`/`jq`.
+  Reads the same `trellis/security/.env` `ABUSEIPDB_KEY` the CLI scripts use,
+  or `WP_OPS_ABUSEIPDB_KEY` as an override.
+- **`admin_user_create` MCP tool** — wraps `wp-cli/security/admin-user-create.sh`
+  (lockout recovery: create a temporary WordPress admin with a generated
+  password, shown once and never stored) by reusing `wp_cli`'s existing
+  `runWpCliRaw` dispatch instead of reimplementing local/SSH/VM execution —
+  the script's three steps (check username, check email, create) are just
+  three WP-CLI calls against an already-resolved site/env entry. Requires
+  `confirm: true`.
+- **`db_pull` MCP tool** — ports `scripts/backup/db-pull.sh`'s workflow (pull
+  a remote database into local development, with URL search-replace and a
+  pre-pull backup of the dev database) to composable calls against the
+  registry's already-resolved site/env entries, instead of assembling one
+  large remote `bash -c` string: read both URLs via `wp_cli`'s own
+  `runWpCliRaw`, back up dev via the existing `db_backup` tool's
+  implementation, stream the remote export straight into
+  `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
+  either side, same binary-safety rationale as `db_backup`'s own export),
+  search-replace, optional `--multisite` domain fixup, cache flush. Requires
+  `confirm: true` — overwrites the local development database.
+  **`db_push` is deliberately not implemented** — pulling into production
+  carries too much blast radius for a first pass; noted in
+  `mcp-server/README.md`.
+- **`files_pull` MCP tool** — wraps `trellis/backup/files-pull.yml`'s rsync
+  of a Trellis site's `shared/uploads/` into development's Bedrock
+  `web/app/uploads/` on the host (no VM shell needed — a Trellis dev VM
+  mounts the project directory into the host filesystem). Additive by
+  default; `delete: true` mirrors the remote exactly and requires
+  `confirm: true`, mirroring the playbook's own opt-in `--delete` footgun
+  flag. **`files_push` is deliberately not implemented**, for the same
+  production-risk reason as `db_push`.
+
+## [5.3.0] - 2026-08-06
+
+### Added
+
+- **`monitor` MCP tool** — wraps `scripts/monitoring/monitor.sh` (combined
+  traffic, security, AI-crawler, and error-log analysis) as a 7th MCP tool.
+  Found missing after observing an agent asked to "use wp-ops mcp monitor"
+  fall back to nine ad-hoc bash/ssh steps (find the binary, read `--help`,
+  guess at the remote invocation, `Read` the 350-line script to work out its
+  argv) because no MCP tool existed for it — only a CLI-catalog script did.
+  Requires a site/env entry with `sshHost` (traffic/security logs only exist
+  on a deployed server, not local dev or a Trellis VM). Bundles all five
+  monitoring scripts (base64-encoded, same SSH-stdin approach as
+  `security_scan`) into a throwaway remote temp dir for the run, rather than
+  assuming `setup-monitoring.yml` already copied `traffic-monitor.sh` /
+  `security-monitor.sh` there — `ai-bot-monitor.sh` and `error-monitor.sh`
+  aren't provisioned by that playbook at all, so relying on pre-deployed
+  copies would have silently skipped two of the four reports on most sites.
+
 ## [5.2.0] - 2026-08-06
 
 ### Added

@@ -7,6 +7,14 @@ import { isReadOnlyWpCommand, runWpCli, truncateWpCliOutput } from "./tools/wpCl
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
+import { runMonitor } from "./tools/monitor.js";
+import { runServerStatus } from "./tools/serverStatus.js";
+import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
+import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
+import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
+import { runAdminUserCreate } from "./tools/adminUserCreate.js";
+import { runDbPull } from "./tools/dbPull.js";
+import { runFilesPull } from "./tools/filesPull.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -369,6 +377,329 @@ export function createServer(): McpServer {
           }
         }
 
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "monitor",
+    "Run combined traffic, security, AI-crawler, and error-log monitoring against a site's Nginx logs " +
+      "and return the generated markdown summary. Requires a site/env with an SSH entry — logs only " +
+      "exist on a deployed server, not local dev or a Trellis VM. Self-contained: bundles the monitoring " +
+      "scripts into a throwaway remote temp dir for this run, so it works whether or not the site has " +
+      "`setup-monitoring.yml` already provisioned.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      hours: z.number().int().positive().default(24).describe("How many hours of logs to analyze"),
+      domain: z
+        .string()
+        .optional()
+        .describe(
+          'Domain used to locate logs at /srv/www/<domain>/logs/access.log. Defaults to the "site" key, ' +
+            "which is the domain for every currently registered site."
+        ),
+    },
+    async ({ site, env, hours, domain }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const output = await runMonitor(entry, domain ?? site, hours);
+        return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "server_status",
+    "Live CPU, memory, disk, top processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent OOM-killer snapshot " +
+      "of a server over SSH. Requires a site/env with an sshHost entry — this reads live process state, " +
+      "not local dev or a Trellis VM.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      phpFpmPattern: z
+        .string()
+        .optional()
+        .describe('Pattern to match PHP-FPM pool processes, e.g. "php-fpm: pool wordpress". Defaults to matching any pool.'),
+    },
+    async ({ site, env, phpFpmPattern }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const output = await runServerStatus(entry, phpFpmPattern);
+        return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "broken_link_audit",
+    "Check a site's internal links for broken (4xx/5xx) responses. `global` mode (default) checks all " +
+      "links found on the homepage (~30s); `spider` recursively crawls to a set depth (~5-10 min). Pass " +
+      "`siteUrl` or `site`+`env`.",
+    {
+      siteUrl: z.string().url().optional().describe('Site URL to check, e.g. "https://example.com"'),
+      site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.optional().describe('Environment key for that site, e.g. "staging", "production"'),
+      mode: z
+        .enum(["global", "spider"])
+        .default("global")
+        .describe("global checks homepage links only (fast); spider recursively crawls the whole site (slow)"),
+      timeoutSeconds: z.number().int().positive().optional().describe("curl max-time per request, in seconds"),
+      spiderLevel: z.number().int().positive().optional().describe("Spider crawl depth, only used in spider mode"),
+    },
+    async ({ siteUrl, site, env, mode, timeoutSeconds, spiderLevel }) => {
+      try {
+        let targetUrl = siteUrl;
+        if (site && env) {
+          const registry = loadRegistry();
+          const entry = resolveSiteEnv(registry, site, env);
+          if (entry.url) {
+            targetUrl = entry.url;
+          } else {
+            throw new Error(`Site entry for "${site}"/"${env}" has no URL field. Use the "siteUrl" parameter instead.`);
+          }
+        }
+        if (!targetUrl) {
+          throw new Error("Either provide 'siteUrl' or 'site' + 'env' parameters.");
+        }
+
+        const result = await runBrokenLinkAudit(targetUrl, mode, timeoutSeconds, spiderLevel);
+        const text = result.hasBrokenLinks
+          ? `❌ Broken link(s) found:\n\n${result.output}`
+          : `✅ No broken links found.\n\n${result.output}`;
+        return { content: [{ type: "text" as const, text }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "remote_ttfb_audit",
+    "Measure TTFB (time to first byte) from the server itself — via SSH, so DNS/network distance from " +
+      "your machine doesn't skew it — across multiple user agents (default, Googlebot, AhrefsBot, " +
+      "Screaming Frog). Useful after a WAF or caching change to check bots aren't treated differently " +
+      "from regular visitors. Requires a site/env with an sshHost entry.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      urls: z.array(z.string().url()).min(1).describe('URL(s) to test, e.g. ["https://example.com/", "https://example.com/blog/"]'),
+    },
+    async ({ site, env, urls }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        if (!entry.sshHost) {
+          throw new Error(`Site entry for "${site}"/"${env}" has no sshHost — remote_ttfb_audit runs curl on the server itself over SSH.`);
+        }
+        const output = await runRemoteTtfbAudit(entry.sshHost, urls);
+        return { content: [{ type: "text" as const, text: output }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  function formatIpResult(r: IpCheckResult): string {
+    if (r.error) return `  ${r.ip}: ERROR — ${r.error}`;
+    const note = r.score === 0 ? " ⚠ CONSIDER REMOVING (score 0)" : r.score !== undefined && r.score <= 10 ? " ⚠ score dropped low" : "";
+    return `  ${r.ip}: score=${r.score} reports=${r.reports} lastSeen=${r.lastSeen ?? "never"} country=${r.country ?? "?"} isp=${r.isp ?? "?"}${r.tor ? " TOR" : ""}${note}`;
+  }
+
+  server.tool(
+    "ip_reputation_check",
+    "Check IP addresses against AbuseIPDB threat intelligence (score, report count, ISP, Tor). Pass " +
+      "`ips` directly, or `trellisDir` to audit every individual IP already blocked in that Trellis " +
+      "project's deny-ips.conf.j2 (useful for spotting stale blocks safe to remove). Requires an " +
+      "AbuseIPDB API key (WP_OPS_ABUSEIPDB_KEY env var, or trellis/security/.env).",
+    {
+      ips: z.array(z.string()).min(1).optional().describe('IP addresses to check, e.g. ["1.2.3.4", "5.6.7.8"]'),
+      trellisDir: z
+        .string()
+        .optional()
+        .describe("Path to a Trellis project, to audit its nginx-includes/all/deny-ips.conf.j2 instead of arbitrary IPs"),
+    },
+    async ({ ips, trellisDir }) => {
+      try {
+        if (!ips && !trellisDir) {
+          throw new Error("Provide either 'ips' or 'trellisDir'.");
+        }
+        if (ips && trellisDir) {
+          throw new Error("Provide only one of 'ips' or 'trellisDir', not both.");
+        }
+
+        if (trellisDir) {
+          const result = await checkDenyList(trellisDir);
+          const lines = [
+            `${result.ips.length} IP(s) checked, ${result.subnetsSkipped} subnet(s) skipped`,
+            "",
+            ...result.ips.map(formatIpResult),
+          ];
+          return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+        }
+
+        const results = await checkIpReputation(ips!);
+        return { content: [{ type: "text" as const, text: results.map(formatIpResult).join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "admin_user_create",
+    "Create a temporary WordPress administrator via WP-CLI — for lockout recovery (lost admin password, " +
+      "a broken login plugin, an ownership handover with no working account). The password is generated " +
+      "and returned once, never stored. Requires confirm: true, only after explicit user approval.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      username: z.string().min(1).describe("Username for the new administrator"),
+      email: z.string().email().describe("Email address for the new administrator"),
+      role: z.string().default("administrator").describe("Role to assign"),
+      password: z
+        .string()
+        .optional()
+        .describe("Password to set. Defaults to a generated random password, returned once in the response."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) — creates a privileged account. Only set after explicit user approval."),
+    },
+    async ({ site, env, username, email, role, password, confirm }) => {
+      try {
+        if (!confirm) {
+          throw new Error(
+            "Creating a WordPress admin account needs confirm: true. Re-run with confirm: true only " +
+              "after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runAdminUserCreate(entry, username, email, role, password);
+
+        const lines = [`User created: ${result.username} <${result.email}> (role: ${result.role})`];
+        if (result.generatedPassword) {
+          lines.push("", `Password: ${result.generatedPassword}`, "", "Shown once — copy it now.");
+        }
+        lines.push(
+          "",
+          "Delete this user when no longer needed, via the wp_cli tool: " +
+            `{ site: "${site}", env: "${env}", args: ["user", "delete", "${username}", "--yes", "--reassign=1"], confirm: true }`
+        );
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "db_pull",
+    "Pull a site's database from a remote environment into local development, with URL search-replace. " +
+      "Backs up the current development database first. Requires the site's \"development\" entry to have " +
+      "trellisDir+vmWorkdir (drives the dev site through `trellis vm shell`) and the source env to have " +
+      "sshHost+remotePath. Requires confirm: true — overwrites the local development database.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      fromEnv: envSchema.describe('Environment to pull from, e.g. "production", "staging" — not "development"'),
+      multisite: z
+        .boolean()
+        .default(false)
+        .describe("Also fix wp_blogs domains and scope search-replace with --url, for multisite networks"),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) — overwrites the local development database. Only set after explicit user approval."),
+    },
+    async ({ site, fromEnv, multisite, confirm }) => {
+      try {
+        if (!confirm) {
+          throw new Error(
+            "db_pull overwrites the local development database and needs confirm: true. Re-run with " +
+              "confirm: true only after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const devEntry = resolveSiteEnv(registry, site, "development");
+        const fromEntry = resolveSiteEnv(registry, site, fromEnv);
+        const result = await runDbPull(site, devEntry, fromEntry, fromEnv, multisite);
+
+        const lines = [
+          `Pulled ${site}/${fromEnv} database into development.`,
+          `  ${fromEnv} URL: ${result.prodUrl}`,
+          `  development URL: ${result.devUrl}`,
+          `  Development backed up to: ${result.devBackupPath}`,
+        ];
+        if (result.multisiteFixedUp) lines.push("  Multisite domain fixup applied.");
+        lines.push("", "search-replace output:", result.searchReplaceOutput);
+
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "files_pull",
+    "Sync a site's uploads directory from a remote environment into local development via rsync. " +
+      "Additive by default (local-only files are kept); `delete: true` mirrors the remote exactly, " +
+      "deleting local uploads the remote no longer has — that needs confirm: true. Requires the site's " +
+      '"development" entry to have localPath, and the source env to have sshHost.',
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      fromEnv: envSchema.describe('Environment to pull from, e.g. "production", "staging" — not "development"'),
+      delete: z
+        .boolean()
+        .default(false)
+        .describe("Mirror the remote exactly, deleting local-only uploads. Destructive locally — needs confirm: true."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) only when delete: true. Only set after explicit user approval."),
+    },
+    async ({ site, fromEnv, delete: del, confirm }) => {
+      try {
+        if (fromEnv === "development") {
+          throw new Error('"development" is not a valid source environment — you can\'t pull development into itself.');
+        }
+        if (del && !confirm) {
+          throw new Error(
+            "delete: true removes local-only uploads and needs confirm: true. Re-run with confirm: true " +
+              "only after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const devEntry = resolveSiteEnv(registry, site, "development");
+        const fromEntry = resolveSiteEnv(registry, site, fromEnv);
+        const result = await runFilesPull(site, devEntry, fromEntry, del);
+
+        const lines = [
+          `Synced ${site}/${fromEnv} uploads into development.`,
+          `  Remote: ${result.remoteUploadsDir}`,
+          `  Local:  ${result.localUploadsDir}`,
+          `  Mode:   ${result.deleted ? "mirrored — local-only files deleted" : "additive — local-only files kept"}`,
+          "",
+          result.rsyncOutput,
+        ];
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
