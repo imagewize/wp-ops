@@ -5,9 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.5.0] - 2026-08-07
 
 ### Added
+
+- **`command_search` and `command_run` MCP tools — the catalog bridge.** Every
+  other MCP tool wraps one wp-ops capability by hand, which caps what a client
+  can see at whatever has been ported so far. The repo has ~74 commands, so a
+  client seeing only the 14 wrappers correctly answers "I can't do that" for the
+  rest — even when the exact script exists. (Observed in practice: a wp-ops-only
+  session asked for GitHub repo traffic gave a well-reasoned out-of-scope answer
+  while `scripts/git/gh-traffic.sh` sat two directories away.) These two tools
+  expose the whole catalog instead of growing the wrapper list one at a time.
+
+  `command_search` reads `go/internal/catalog/catalog.json` — the file the Go CLI
+  embeds — directly, so it works whether or not the binary has been built, and
+  gets the full manifest (args, flags, examples, platform) where `list --json`
+  deliberately exposes a frozen subset. Its matching mirrors `catalog.Search` so
+  `wp-ops search X` and `command_search(X)` can't disagree. A single match
+  returns full usage inline.
+
+  `command_run` dispatches through the `wp-ops` binary rather than exec'ing
+  scripts, reusing the Ansible and WP-CLI executors, the server-side guard, and
+  `--help` formatting instead of reimplementing them. Read-only commands run
+  directly; anything that writes, deploys, syncs, or deletes needs
+  `confirm: true`. `--help` and `--where` are always free, since `executeEntry`
+  handles both before any executor runs. The read-only allowlist is hardcoded in
+  `src/tools/catalog.ts` because the manifest has no `@mutates` directive yet; a
+  startup check warns on stderr if a listed key leaves the catalog.
 
 - **`gh-traffic.sh` now reports clones and referrers**, not just views. New
   `--clones`, `--referrers`, and `--all` flags; views remain the default when no

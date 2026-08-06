@@ -74,9 +74,48 @@ Scaffold — fourteen tools implemented so far:
   to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
   as `db_push`.)
 
-More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
-same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each
-directory for the operations these will eventually wrap.
+### The catalog bridge
+
+Every tool above wraps one wp-ops capability by hand, which caps what a client can
+see at whatever someone got round to porting. The repo has ~74 commands; a client
+seeing only the wrappers correctly answers "I can't do that" for the rest — even
+when the exact script exists. (This is not hypothetical: asking a wp-ops-only
+session for GitHub repo traffic got a reasoned "out of scope" while
+`scripts/git/gh-traffic.sh` sat two directories away.)
+
+These two tools expose the whole catalog instead of growing that list one wrapper
+at a time:
+
+- **`command_search`** — searches the full command catalog by name or description,
+  with optional `platform` (`trellis`/`wordpress`/`any`) and `category` filters.
+  Mirrors `catalog.Search` in `go/internal/catalog/catalog.go` exactly, so
+  `wp-ops search X` and `command_search(X)` can't disagree about what exists. A
+  single match returns full usage — arguments, flags, examples, requirements.
+  Reads `go/internal/catalog/catalog.json` (the file the Go CLI embeds) directly,
+  so it works whether or not the binary has been built.
+- **`command_run`** — runs a catalog command by key, args as separate argv tokens.
+  Dispatches through the `wp-ops` binary rather than exec'ing the script, which
+  reuses the Ansible and WP-CLI executors, the server-side guard, and `--help`
+  formatting instead of reimplementing them in TypeScript. Resolves the binary
+  from `WP_OPS_BIN`, then `go/wp-ops`, then `PATH`.
+
+`command_run` gates on writes: read-only commands (audits, scans, log analysis,
+traffic stats) run directly, and anything that writes, deploys, syncs, or deletes
+needs `confirm: true`. `--help` and `--where` are always free — `executeEntry`
+handles both before any executor runs. The allowlist lives in
+`src/tools/catalog.ts` because the manifest has no "does this mutate anything"
+directive yet; an `@mutates` field alongside `@runs` and `@platform` would replace
+it with catalog data, and until then a startup check warns on stderr when a listed
+key no longer exists.
+
+Note that the gate is a speed bump, not a security boundary — the model can set
+`confirm` itself. Its job is to make destructive commands surface to you as a
+distinct decision rather than disappearing into a chain of tool calls. Client-side
+tool-approval settings are what actually enforce anything.
+
+A command still deserves its own first-class tool when it needs typed parameters,
+site-registry integration, or output shaping that argv and raw stdout can't give
+it. The bridge is the floor, not a replacement for that.
 
 Two transports are implemented, both verified end-to-end (real MCP `initialize` +
 `tools/call` round trip against the real scanner):
