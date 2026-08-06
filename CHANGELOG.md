@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-08-07
+
+### Added
+
+- **`command_search` and `command_run` MCP tools — the catalog bridge.** Every
+  other MCP tool wraps one wp-ops capability by hand, which caps what a client
+  can see at whatever has been ported so far. The repo has ~74 commands, so a
+  client seeing only the 14 wrappers correctly answers "I can't do that" for the
+  rest — even when the exact script exists. (Observed in practice: a wp-ops-only
+  session asked for GitHub repo traffic gave a well-reasoned out-of-scope answer
+  while `scripts/git/gh-traffic.sh` sat two directories away.) These two tools
+  expose the whole catalog instead of growing the wrapper list one at a time.
+
+  `command_search` reads `go/internal/catalog/catalog.json` — the file the Go CLI
+  embeds — directly, so it works whether or not the binary has been built, and
+  gets the full manifest (args, flags, examples, platform) where `list --json`
+  deliberately exposes a frozen subset. Its matching mirrors `catalog.Search` so
+  `wp-ops search X` and `command_search(X)` can't disagree. A single match
+  returns full usage inline.
+
+  `command_run` dispatches through the `wp-ops` binary rather than exec'ing
+  scripts, reusing the Ansible and WP-CLI executors, the server-side guard, and
+  `--help` formatting instead of reimplementing them. Read-only commands run
+  directly; anything that writes, deploys, syncs, or deletes needs
+  `confirm: true`. `--help` and `--where` are always free, since `executeEntry`
+  handles both before any executor runs. The read-only allowlist is hardcoded in
+  `src/tools/catalog.ts` because the manifest has no `@mutates` directive yet; a
+  startup check warns on stderr if a listed key leaves the catalog.
+
+- **`gh-traffic.sh` now reports clones and referrers**, not just views. New
+  `--clones`, `--referrers`, and `--all` flags; views remain the default when no
+  section flag is given, so existing invocations are unchanged. The script also
+  accepts multiple `owner/repo` arguments in one pass, and each day-series
+  section prints a `Total` row alongside a separate `Unique (14d)` row — GitHub's
+  top-level `uniques` is deduplicated across the whole window, so summing the
+  daily uniques column would overcount, and folding the two into one "Total"
+  would be wrong.
+
+  Clone counts are dominated by CI runners, mirrors, and package resolvers rather
+  than people, which is worth knowing before reading them as interest; `--help`
+  now says so.
+
+### Fixed
+
+- **`gh-traffic.sh --days N` had no effect.** The flag was parsed and validated
+  (rejecting `> 14`) but never applied to the output, so every invocation showed
+  the full 14-day window. It now limits the day-series sections to the last N
+  days with activity. Referrer data has no day series and is always the full
+  window, which `--help` now states.
+- **`gh-traffic.sh` reported success when a repo could not be read.** The traffic
+  endpoints are maintainer-only, so a 403 is a routine outcome; the script now
+  explains that specifically, keeps going so one unreadable repo doesn't hide the
+  others, and exits 1 if any section failed. In `--json` mode a failed section
+  becomes an explicit `null` — `gh api` writes the API's error body to stdout on
+  a 4xx, which previously would have corrupted the document.
+
+### Changed
+
+- **`gh-traffic.sh --json` now emits a JSON array of per-repo objects**
+  (`{repo, views?, clones?, referrers?}`) rather than the raw views payload,
+  since it can now carry three sections for any number of repos. Nothing in the
+  repo consumed the old shape.
+- **`gh-traffic.sh` now requires `jq`**, previously optional and used only for
+  `--json`. Filtering the three payloads locally needs it.
+
 ## [5.4.0] - 2026-08-06
 
 ### Added

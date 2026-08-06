@@ -15,6 +15,16 @@ import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ip
 import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 import { runDbPull } from "./tools/dbPull.js";
 import { runFilesPull } from "./tools/filesPull.js";
+import {
+  formatRunResult,
+  formatSearchResults,
+  isIntrospectionOnly,
+  isReadOnlyCommand,
+  loadCatalog,
+  resolveCommand,
+  runCatalogCommand,
+  searchCatalog,
+} from "./tools/catalog.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -701,6 +711,98 @@ export function createServer(): McpServer {
           result.rsyncOutput,
         ];
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  // The catalog bridge. Every other tool above is a hand-written wrapper around
+  // one wp-ops capability, which means an MCP client sees only the handful
+  // someone got round to porting — and correctly answers "I can't do that" for
+  // the ~74 commands in the repo that have no wrapper, even when the exact
+  // script exists. These two expose the whole catalog instead of growing that
+  // list one tool at a time.
+  server.tool(
+    "command_search",
+    "Search the full wp-ops command catalog (~74 commands: backups, monitoring, SEO and security " +
+      "audits, image processing, releases, GitHub repo traffic, and more) by name or description. " +
+      "Use this BEFORE concluding that wp-ops cannot do something — most capabilities live here as " +
+      "scripts rather than as dedicated MCP tools. A single match returns full usage: arguments, " +
+      "flags, and examples. Run what you find with command_run.",
+    {
+      query: z
+        .string()
+        .describe('Term matched against command names and descriptions, e.g. "traffic", "backup", "webp". Use "" to list everything.'),
+      platform: z
+        .enum(["trellis", "wordpress", "any"])
+        .optional()
+        .describe('Only commands for this stack: "trellis" needs a Trellis project, "wordpress" any WP install, "any" needs neither.'),
+      category: z
+        .string()
+        .optional()
+        .describe('Only commands in this category, e.g. "monitoring", "backup", "seo", "security", "images", "git".'),
+    },
+    async ({ query, platform, category }) => {
+      try {
+        const entries = loadCatalog();
+        const matches = searchCatalog(entries, query, { platform, category });
+        return { content: [{ type: "text" as const, text: formatSearchResults(matches, query) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "command_run",
+    "Run a wp-ops catalog command found via command_search, passing args as separate tokens. " +
+      'Pass ["--help"] to read a command\'s full usage, or ["--where"] to get its file path — both are ' +
+      "free of side effects and never need confirmation. Read-only commands (audits, scans, log " +
+      "analysis) run directly; anything that writes, deploys, syncs, or deletes needs confirm: true, " +
+      "which you may only set after the user has explicitly approved that specific command.",
+    {
+      command: z
+        .string()
+        .describe('Command key from command_search, e.g. "scripts/git/gh-traffic". A unique basename like "gh-traffic" also resolves.'),
+      args: z
+        .array(z.string())
+        .default([])
+        .describe('Arguments as separate argv tokens, e.g. ["--all", "imagewize/nynaeve"]. Omit the "wp-ops" prefix and the command name.'),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) for any command that isn't read-only. Only set after explicit user approval of this exact command."),
+      timeoutSeconds: z
+        .number()
+        .int()
+        .positive()
+        .max(1800)
+        .default(120)
+        .describe("Kill the command after this many seconds. Raise it for scanners and full-site backups."),
+    },
+    async ({ command, args, confirm, timeoutSeconds }) => {
+      try {
+        const entries = loadCatalog();
+        const entry = resolveCommand(entries, command);
+
+        if (!isIntrospectionOnly(args) && !isReadOnlyCommand(entry.key) && !confirm) {
+          throw new Error(
+            `"${entry.key}" is not on the read-only allowlist and may change data, files, or remote state. ` +
+              `Show the user what it does (run it with ["--help"], which needs no confirmation), get their ` +
+              `explicit approval, then re-run with confirm: true.`
+          );
+        }
+
+        const timeoutMs = timeoutSeconds * 1000;
+        const result = await runCatalogCommand(entry.key, args, timeoutMs);
+        const text = formatRunResult(entry.key, result, timeoutMs);
+        // A nonzero exit is the command's own verdict (a scanner finding
+        // something, an audit failing), not an MCP-level failure — surface the
+        // output rather than flagging the call itself as broken.
+        return { content: [{ type: "text" as const, text }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
