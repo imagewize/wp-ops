@@ -51,11 +51,24 @@ Two transports are implemented, both verified end-to-end (real MCP `initialize` 
 `tools/call` round trip against the real scanner):
 
 - **stdio** (default) — the client spawns the process/container directly and talks over
-  stdin/stdout. This is what Claude Code/Desktop use.
+  stdin/stdout, killing it when it disconnects. This is a core MCP transport, not a
+  Claude-specific one, so it works with any client that can spawn a local process —
+  confirmed (2026-08-06, against each vendor's own docs) for:
+  - **Claude Code/Desktop** — via `run.sh`, see "Register with Claude Code" below.
+  - **Mistral Vibe CLI** — `config.toml`'s `[[mcp_servers]]`, `transport = "stdio"`,
+    see "Register with Mistral Vibe" below.
+  - **OpenAI Codex CLI** — `~/.codex/config.toml`'s `[mcp_servers.<name>]`, see
+    "Register with OpenAI Codex CLI" below. (Note: this is the Codex *CLI* — OpenAI's
+    server-side Responses API is remote-MCP-only and cannot spawn local processes at
+    all, so stdio doesn't apply there.)
+
+  Prefer stdio for any client running on the same machine — no token, no port, no
+  process to remember to stop.
 - **Streamable HTTP** — the server runs as a standing network service other MCP clients
-  can connect to over a URL. This is the transport remote/non-Claude clients generally
-  expect (e.g. Mistral's MCP connectors, or an agent framework fronting an Ollama-served
-  model) — set `MCP_TRANSPORT=http`.
+  can connect to over a URL. Only needed when the client genuinely can't spawn a local
+  process — a remote/cloud-hosted client, or multiple clients sharing one long-running
+  server instance — set `MCP_TRANSPORT=http`. Not needed for a local Mistral Vibe CLI on
+  the same machine; use stdio instead (see above).
 
 ## Setup
 
@@ -103,6 +116,66 @@ Or add the same block under `mcpServers` in Claude Desktop's config file.
 > user-scoped lets any session — including in the wp-ops repo itself — run audits
 > or WP-CLI against any registered site without project-specific config.
 
+## Register with Mistral Vibe
+
+Vibe's CLI reads `[[mcp_servers]]` entries from a `config.toml`, in this order (first
+match wins):
+
+- **Project-level:** `./.vibe/config.toml` in the current working directory — only
+  loaded when that directory is marked trusted.
+- **User-level (global):** `~/.vibe/config.toml`.
+
+**Recommended: register user-scoped (`~/.vibe/config.toml`)**, for the same reason as
+Claude Code above — the site registry is central, so the tools should be available
+regardless of which project directory Vibe is invoked from, not just when you happen to
+be sitting in `wp-ops` itself.
+
+```toml
+[[mcp_servers]]
+name = "wp_ops"
+transport = "stdio"
+command = "/absolute/path/to/wp-ops/mcp-server/run.sh"
+args = []
+```
+
+Tools show up prefixed with the `name` you chose, e.g. `wp_ops_wp_cli`,
+`wp_ops_security_scan`, `wp_ops_schema_audit`. No `WP_OPS_MCP_TOKEN` or port needed —
+stdio mode has no network listener, so there's nothing to secure at that layer.
+
+Verified against Mistral's own docs (2026-08-06) for schema/transport-name accuracy;
+not yet verified end-to-end against a live Vibe install connecting to this server —
+confirm the tool list appears and a read-only call (e.g. `wp option get siteurl`
+through `wp_ops_wp_cli`) succeeds before relying on it.
+
+## Register with OpenAI Codex CLI
+
+Codex reads MCP servers from a `config.toml`, in this order (first match wins):
+
+- **Project-level:** `.codex/config.toml` in the current working directory — only
+  loaded when that directory is trusted.
+- **User-level (global):** `~/.codex/config.toml`.
+
+**Recommended: register user-scoped (`~/.codex/config.toml`)**, same reasoning as
+Claude Code and Mistral Vibe above.
+
+Codex's table syntax differs slightly from Mistral's (a keyed table per server, not an
+array of tables), and it calls the environment-passthrough option `env_vars`:
+
+```toml
+[mcp_servers.wp_ops]
+command = "/absolute/path/to/wp-ops/mcp-server/run.sh"
+args = []
+```
+
+Tools show up prefixed with the server name, e.g. `wp_ops_wp_cli`. As with Mistral,
+stdio mode needs no `WP_OPS_MCP_TOKEN` or port.
+
+Verified against Codex's own docs (2026-08-06) for config schema; **this is the Codex
+CLI specifically** — OpenAI's server-side Responses API only speaks remote MCP
+(Streamable HTTP/SSE) and cannot spawn a local process at all, so none of the stdio
+guidance here applies to it. Not yet verified end-to-end against a live Codex CLI
+connecting to this server.
+
 ## Permissions (pre-approve read-only tools)
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, and
@@ -142,8 +215,12 @@ prompt for approval.
 
 ## Running as a network service (Streamable HTTP)
 
-For clients that connect over a URL instead of spawning a local process (remote MCP
-connectors, e.g. Mistral's, or an agent framework driving an Ollama model):
+Skip this unless you have a client that genuinely can't spawn a local process — a
+remote/cloud-hosted client, or multiple clients meant to share one long-running server
+instance. A local Claude Code/Desktop, Mistral Vibe CLI, or OpenAI Codex CLI should use
+stdio instead — see the "Register with ..." sections above.
+
+For clients that connect over a URL instead of spawning a local process:
 
 ```bash
 MCP_TRANSPORT=http \
@@ -163,8 +240,11 @@ token travels in cleartext otherwise.
 
 Client-side config depends on how that specific client wires up remote MCP servers —
 point it at `http://<host>:<port>/mcp` with the bearer token, but check that client's
-current docs for the exact syntax; this changes fast and I haven't verified Mistral's or
-a specific Ollama-fronting framework's config format against a live account.
+current docs for the exact syntax; this changes fast. (Mistral Vibe's schema for this
+is `transport = "http"` or `"streamable-http"`, `url`, `headers = { Authorization =
+"Bearer <token>" }` — verified against its docs 2026-08-06, but again, prefer stdio for
+a local Vibe CLI; this section is for genuinely remote setups.) Not verified against a
+specific Ollama-fronting framework's config format.
 
 ## Running in Docker
 
