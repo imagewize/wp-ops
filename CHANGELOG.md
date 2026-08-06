@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0] - 2026-08-06
+
+### Added
+
+- **`wp-ops mcp-register`** — a native Go command (not a catalog script; same
+  bucket as `doctor`/`init`, since it's meta-tooling about wp-ops's own setup
+  rather than a WordPress/Trellis operation) that checks `~/.claude.json`,
+  `~/.vibe/config.toml`, and `~/.codex/config.toml` for an existing wp-ops MCP
+  entry and prints the exact block to add for whichever ones are missing it,
+  with the real resolved path to `mcp-server/run.sh` already filled in (via
+  the same `repoRoot()` dev-checkout-or-extracted-assets resolution every
+  other command uses). Read-only — never writes to a config file it doesn't
+  own. Claude's config is parsed as real JSON (`encoding/json`); Mistral's and
+  Codex's as real TOML (new `github.com/BurntSushi/toml` dependency), so
+  "already registered" detection doesn't rely on string-matching a file it
+  didn't validate. Documented in `mcp-server/README.md`'s new "Quick check"
+  section, ahead of the three manual "Register with ..." sections.
+
 ## [5.1.4] - 2026-08-06
 
 ### Fixed

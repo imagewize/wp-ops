@@ -91,6 +91,15 @@ npm run build
 `config/sites.json` is gitignored since it encodes your local paths/hosts. Set
 `WP_OPS_SITES_CONFIG=/path/to/sites.json` to point at a different location.
 
+## Quick check: `wp-ops mcp-register`
+
+Before doing any of this by hand, run `wp-ops mcp-register`. It checks
+`~/.claude.json`, `~/.vibe/config.toml`, and `~/.codex/config.toml` for an
+existing wp-ops entry and, for whichever ones are missing it, prints the exact
+block to paste — with the real path to `run.sh` on this machine already filled
+in, so there's no `/absolute/path/to/wp-ops/...` placeholder to get wrong.
+Read-only: it never writes to a config file itself.
+
 ## Register with Claude Code
 
 **Recommended:** Register the server **user-scoped** in `~/.claude.json` so the tools
