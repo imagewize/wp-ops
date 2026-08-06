@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.4] - 2026-08-06
+
+### Fixed
+
+- **`mcp-server/README.md` overstated Streamable HTTP as the transport
+  non-Claude clients need.** stdio is a core MCP transport, not a
+  Claude-specific one — Mistral Vibe CLI and OpenAI Codex CLI both support it
+  the same way Claude Code does (spawn `run.sh` locally, no token/port
+  needed), confirmed against each vendor's own docs (2026-08-06). Added
+  "Register with Mistral Vibe" and "Register with OpenAI Codex CLI" sections
+  mirroring the existing Claude Code one, reframed the Streamable HTTP
+  section as for genuinely remote/shared-server cases only, and noted that
+  OpenAI's server-side Responses API (unlike its Codex CLI) is remote-MCP-only
+  and can't spawn a local process at all.
+
 ## [5.1.3] - 2026-08-05
 
 ### Fixed
