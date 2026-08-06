@@ -312,12 +312,13 @@
   {
     "category": "scripts",
     "key": "scripts/git/gh-traffic",
-    "description": "Fetch and display GitHub repository traffic statistics (14-day window)",
+    "description": "Fetch and display GitHub repo traffic: views, clones, and referrers (14-day window)",
     "script_path": "scripts/git/gh-traffic.sh",
     "runs_on": "local",
     "runs": "local",
     "requires": [
-      "gh"
+      "gh",
+      "jq"
     ],
     "args": [
       {
@@ -325,36 +326,58 @@
         "required_raw": "required",
         "required": true,
         "default": "imagewize/nynaeve",
-        "description": "GitHub repository",
-        "raw": "owner/repo  required  {imagewize/nynaeve}  GitHub repository"
+        "description": "GitHub repository (repeatable)",
+        "raw": "owner/repo  required  {imagewize/nynaeve}  GitHub repository (repeatable)"
       }
     ],
     "flags": [
+      {
+        "name": "--clones",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Include clone counts (machine traffic: CI, mirrors, bots)",
+        "raw": "--clones     optional  {}  Include clone counts (machine traffic: CI, mirrors, bots)"
+      },
+      {
+        "name": "--referrers",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Include top referring sites",
+        "raw": "--referrers  optional  {}  Include top referring sites"
+      },
+      {
+        "name": "--all",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Include every section (views, clones, referrers)",
+        "raw": "--all        optional  {}  Include every section (views, clones, referrers)"
+      },
       {
         "name": "--days",
         "required_raw": "optional",
         "required": false,
         "default": "14",
-        "description": "Number of days to fetch (max: 14)",
-        "raw": "--days   optional  {14}  Number of days to fetch (max: 14)"
+        "description": "Limit the day-series sections to the last N days (max: 14)",
+        "raw": "--days       optional  {14}  Limit the day-series sections to the last N days (max: 14)"
       },
       {
         "name": "--json",
         "required_raw": "optional",
         "required": false,
-        "description": "Output raw JSON instead of formatted table",
-        "raw": "--json   optional  {}  Output raw JSON instead of formatted table"
+        "description": "Output raw JSON instead of formatted tables",
+        "raw": "--json       optional  {}  Output raw JSON instead of formatted tables"
       },
       {
         "name": "--quiet",
         "required_raw": "optional",
         "required": false,
-        "description": "Suppress header row in table output",
-        "raw": "--quiet  optional  {}  Suppress header row in table output"
+        "description": "Suppress header rows in table output",
+        "raw": "--quiet      optional  {}  Suppress header rows in table output"
       }
     ],
     "examples": [
-      "wp-ops gh-traffic imagewize/nynaeve --quiet"
+      "wp-ops gh-traffic imagewize/nynaeve --quiet",
+      "wp-ops gh-traffic imagewize/nynaeve imagewize/wp-ops --all"
     ],
     "manifest_category": "git",
     "platform": "any",

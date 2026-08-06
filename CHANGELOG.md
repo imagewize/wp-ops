@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`gh-traffic.sh` now reports clones and referrers**, not just views. New
+  `--clones`, `--referrers`, and `--all` flags; views remain the default when no
+  section flag is given, so existing invocations are unchanged. The script also
+  accepts multiple `owner/repo` arguments in one pass, and each day-series
+  section prints a `Total` row alongside a separate `Unique (14d)` row — GitHub's
+  top-level `uniques` is deduplicated across the whole window, so summing the
+  daily uniques column would overcount, and folding the two into one "Total"
+  would be wrong.
+
+  Clone counts are dominated by CI runners, mirrors, and package resolvers rather
+  than people, which is worth knowing before reading them as interest; `--help`
+  now says so.
+
+### Fixed
+
+- **`gh-traffic.sh --days N` had no effect.** The flag was parsed and validated
+  (rejecting `> 14`) but never applied to the output, so every invocation showed
+  the full 14-day window. It now limits the day-series sections to the last N
+  days with activity. Referrer data has no day series and is always the full
+  window, which `--help` now states.
+- **`gh-traffic.sh` reported success when a repo could not be read.** The traffic
+  endpoints are maintainer-only, so a 403 is a routine outcome; the script now
+  explains that specifically, keeps going so one unreadable repo doesn't hide the
+  others, and exits 1 if any section failed. In `--json` mode a failed section
+  becomes an explicit `null` — `gh api` writes the API's error body to stdout on
+  a 4xx, which previously would have corrupted the document.
+
+### Changed
+
+- **`gh-traffic.sh --json` now emits a JSON array of per-repo objects**
+  (`{repo, views?, clones?, referrers?}`) rather than the raw views payload,
+  since it can now carry three sections for any number of repos. Nothing in the
+  repo consumed the old shape.
+- **`gh-traffic.sh` now requires `jq`**, previously optional and used only for
+  `--json`. Filtering the three payloads locally needs it.
+
 ## [5.4.0] - 2026-08-06
 
 ### Added

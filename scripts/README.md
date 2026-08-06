@@ -27,7 +27,7 @@ scripts/
 │   └── site-backup.sh          # Trellis: complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
 │   ├── create-pr.sh            # AI-powered GitHub PR creation
-│   ├── gh-traffic.sh           # Fetch and display GitHub repository traffic statistics
+│   ├── gh-traffic.sh           # GitHub repo traffic: views, clones, and referrers
 │   └── git-log-oneline.sh      # Show recent git commits as one-liners
 ├── images/                      # Image resizing and conversion
 │   ├── batch-resize.sh         # Batch resize and center-crop images for featured images
@@ -116,8 +116,11 @@ scripts/
 # Create GitHub PR with AI description
 ./scripts/git/create-pr.sh main "Add feature name"
 
-# Show GitHub repository traffic statistics
+# Show GitHub repository traffic statistics (views only, by default)
 ./scripts/git/gh-traffic.sh imagewize/nynaeve
+
+# Views, clones, and referrers for several repos at once
+./scripts/git/gh-traffic.sh --all imagewize/nynaeve imagewize/wp-ops
 
 # Show recent git commits as one-liners
 ./scripts/git/git-log-oneline.sh
