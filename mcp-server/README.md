@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — twelve tools implemented so far:
+Scaffold — thirteen tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -62,6 +62,12 @@ Scaffold — twelve tools implemented so far:
   `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
 - **`admin_user_create`** — creates a temporary WordPress administrator via WP-CLI (`user create`), for
   lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
+- **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
+  search-replace, backing up the current development database first. Requires the site's `development`
+  entry to have `trellisDir`+`vmWorkdir` (drives the dev site through `trellis vm shell`) and the source
+  env to have `sshHost`+`remotePath`. Requires `confirm: true` — overwrites the local development
+  database. (`db_push` is deliberately not implemented — pulling into production carries a much higher
+  blast radius than overwriting a disposable local dev DB.)
 
 More tools (PR creation, releases, image optimization, git/gh helpers) will follow the
 same pattern. See the parent repo's `CLAUDE.md` and the relevant README in each

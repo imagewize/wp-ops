@@ -33,6 +33,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the script's three steps (check username, check email, create) are just
   three WP-CLI calls against an already-resolved site/env entry. Requires
   `confirm: true`.
+- **`db_pull` MCP tool** — ports `scripts/backup/db-pull.sh`'s workflow (pull
+  a remote database into local development, with URL search-replace and a
+  pre-pull backup of the dev database) to composable calls against the
+  registry's already-resolved site/env entries, instead of assembling one
+  large remote `bash -c` string: read both URLs via `wp_cli`'s own
+  `runWpCliRaw`, back up dev via the existing `db_backup` tool's
+  implementation, stream the remote export straight into
+  `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
+  either side, same binary-safety rationale as `db_backup`'s own export),
+  search-replace, optional `--multisite` domain fixup, cache flush. Requires
+  `confirm: true` — overwrites the local development database.
+  **`db_push` is deliberately not implemented** — pulling into production
+  carries too much blast radius for a first pass; noted in
+  `mcp-server/README.md`.
 
 ## [5.3.0] - 2026-08-06
 

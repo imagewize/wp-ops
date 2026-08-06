@@ -13,6 +13,7 @@ import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
 import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
 import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
 import { runAdminUserCreate } from "./tools/adminUserCreate.js";
+import { runDbPull } from "./tools/dbPull.js";
 
 // Building z.enum(...) schemas from the registry means a wrong site/env key gets caught
 // by the client/model before the call is ever made, instead of costing a full round trip
@@ -600,6 +601,54 @@ export function createServer(): McpServer {
           "Delete this user when no longer needed, via the wp_cli tool: " +
             `{ site: "${site}", env: "${env}", args: ["user", "delete", "${username}", "--yes", "--reassign=1"], confirm: true }`
         );
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "db_pull",
+    "Pull a site's database from a remote environment into local development, with URL search-replace. " +
+      "Backs up the current development database first. Requires the site's \"development\" entry to have " +
+      "trellisDir+vmWorkdir (drives the dev site through `trellis vm shell`) and the source env to have " +
+      "sshHost+remotePath. Requires confirm: true — overwrites the local development database.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      fromEnv: envSchema.describe('Environment to pull from, e.g. "production", "staging" — not "development"'),
+      multisite: z
+        .boolean()
+        .default(false)
+        .describe("Also fix wp_blogs domains and scope search-replace with --url, for multisite networks"),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) — overwrites the local development database. Only set after explicit user approval."),
+    },
+    async ({ site, fromEnv, multisite, confirm }) => {
+      try {
+        if (!confirm) {
+          throw new Error(
+            "db_pull overwrites the local development database and needs confirm: true. Re-run with " +
+              "confirm: true only after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const devEntry = resolveSiteEnv(registry, site, "development");
+        const fromEntry = resolveSiteEnv(registry, site, fromEnv);
+        const result = await runDbPull(site, devEntry, fromEntry, fromEnv, multisite);
+
+        const lines = [
+          `Pulled ${site}/${fromEnv} database into development.`,
+          `  ${fromEnv} URL: ${result.prodUrl}`,
+          `  development URL: ${result.devUrl}`,
+          `  Development backed up to: ${result.devBackupPath}`,
+        ];
+        if (result.multisiteFixedUp) lines.push("  Multisite domain fixup applied.");
+        lines.push("", "search-replace output:", result.searchReplaceOutput);
+
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
