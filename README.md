@@ -2,6 +2,13 @@
   <img src="assets/logo.svg" alt="WordPress Operations Logo" width="128" height="128">
   <h1>WP OPS</h1>
 </div>
+<div align="center">
+
+[![Homebrew Downloads](https://img.shields.io/github/downloads/imagewize/wp-ops/total.svg?label=brew%20downloads)](https://github.com/imagewize/wp-ops/releases)
+[![Latest Release](https://img.shields.io/github/v/release/imagewize/wp-ops.svg?label=version)](https://github.com/imagewize/wp-ops/releases)
+[![License](https://img.shields.io/github/license/imagewize/wp-ops.svg)](LICENSE.md)
+
+</div>
 
 <div align="center">
 wp-ops is a CLI for WordPress operations — deployments, database and files backup, security scanning, monitoring, and content workflows — backed by manifest-driven scripts, Ansible playbooks, and guides, optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
