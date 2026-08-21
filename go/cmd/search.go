@@ -15,7 +15,7 @@ var searchCmd = &cobra.Command{
 	Args:  cobra.ArbitraryArgs,
 	RunE: func(cc *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			fmt.Fprintln(os.Stderr, "Usage: wp-ops search <term>")
+			fmt.Fprintf(os.Stderr, "Usage: %s search <term>\n", cmdName())
 			os.Exit(1)
 		}
 		runSearch(args[0])
@@ -42,9 +42,9 @@ func runSearch(term string) {
 	if len(matches) == 0 {
 		fmt.Printf("No commands match '%s'.\n\n", term)
 		if hasDocMatches(term) {
-			fmt.Printf("The documentation mentions it though — try wp-ops docs %s.\n\n", term)
+			fmt.Printf("The documentation mentions it though — try %s docs %s.\n\n", cmdName(), term)
 		}
-		fmt.Println("Run wp-ops to browse everything by category.")
+		fmt.Printf("Run %s to browse everything by category.\n", cmdName())
 		os.Exit(1)
 	}
 

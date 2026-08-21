@@ -35,7 +35,7 @@ func resolveTrellisDir() (string, bool) {
 		fmt.Fprintln(os.Stderr, "TRELLIS_DIR is not set.")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Ansible playbook commands run against a real Trellis project (they read")
-		fmt.Fprintln(os.Stderr, "its ansible.cfg, inventory, and group_vars/), so wp-ops needs to know")
+		fmt.Fprintf(os.Stderr, "its ansible.cfg, inventory, and group_vars/), so %s needs to know\n", cmdName())
 		fmt.Fprintln(os.Stderr, "where that project lives. Either run this from inside the project, or:")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "  export TRELLIS_DIR=/path/to/your/trellis")

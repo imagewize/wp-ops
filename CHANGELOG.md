@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-08-21
+
+### Added
+
+- **`trellis ops` — wp-ops as a trellis-cli plugin.** trellis-cli scans `$PATH`
+  for executables named `trellis-*`, drops the first `-`-separated segment, and
+  registers what's left as a subcommand, exec'ing the binary with the remaining
+  argv (roots/trellis-cli `plugin/finder.go`, `cmd/passthrough.go`). That's a
+  git/kubectl-style plugin model with no API to implement, so the whole
+  integration is a second symlink to the same binary: the Homebrew cask now
+  installs `trellis-ops` alongside `wp-ops`, and every wp-ops command is
+  reachable as `trellis ops <...>` from inside the tool Trellis users already
+  have open.
+
+  The name has to be exactly `trellis-ops`. The finder joins the remaining
+  segments with *spaces*, so `trellis-wp-ops` would register the three-word
+  `trellis wp ops`; and a first segment matching a core root command is
+  silently skipped with no error (`isUnderCoreRootCommands`), which rules out
+  `db`, `backup`-adjacent core names, and anything else on `trellis --help`.
+  `ops` is free.
+
+  Plugins are registered from `$PATH` before trellis-cli resolves a project, so
+  unlike core subcommands `trellis ops` runs anywhere — the playbook commands
+  locate the Trellis directory through wp-ops's own `detect.TrellisDir`, exactly
+  as they do under bare `wp-ops`.
+
+### Changed
+
+- **Help text and suggestions now name the command you actually typed.** Every
+  "Run `wp-ops ...`" line, usage string, and did-you-mean suggestion is rendered
+  against `filepath.Base(os.Args[0])`, so a `trellis ops` user is pointed at
+  `trellis ops backup` rather than a command they may not know exists. Output
+  under bare `wp-ops` is byte-for-byte unchanged.
+
+- **`trellis ops` scopes its listing to `@platform trellis`.** The bare listing,
+  `list`, and per-category views show the 27 Trellis-tagged commands across 6
+  categories instead of all 74 — someone at a `trellis` prompt isn't looking for
+  the image converters or release scripts. An explicit `--platform` overrides
+  it, a category with nothing Trellis-tagged still lists in full rather than
+  claiming to be empty, and *execution* is never scoped: any command runs if you
+  name it. `--json` stays the full catalog, since it's a contract for external
+  tooling.
+
 ## [5.5.0] - 2026-08-07
 
 ### Added

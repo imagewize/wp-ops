@@ -87,7 +87,7 @@ func runDocs(term string, pathsOnly, wholeWord bool) int {
 
 	if len(results) == 0 {
 		fmt.Printf("No documents match '%s'.\n\n", term)
-		fmt.Printf("Try wp-ops search %s to look for a command instead.\n", term)
+		fmt.Printf("Try %s search %s to look for a command instead.\n", cmdName(), term)
 		return 1
 	}
 
@@ -120,9 +120,9 @@ func runDocs(term string, pathsOnly, wholeWord bool) int {
 	}
 
 	if wholeWord {
-		fmt.Printf("Paths only (for piping to an editor): wp-ops docs %s -l\n\n", term)
+		fmt.Printf("Paths only (for piping to an editor): %s docs %s -l\n\n", cmdName(), term)
 	} else {
-		fmt.Printf("Whole words only: wp-ops docs %s -w   ·   paths only: wp-ops docs %s -l\n\n", term, term)
+		fmt.Printf("Whole words only: %s docs %s -w   ·   paths only: %s docs %s -l\n\n", cmdName(), term, cmdName(), term)
 	}
 
 	return 0
@@ -140,7 +140,7 @@ func printDocsList(root string) {
 		fmt.Printf("  %s\n", relDocPath(root, d))
 	}
 	fmt.Println()
-	fmt.Println("Search inside them with: wp-ops docs <term>")
+	fmt.Printf("Search inside them with: %s docs <term>\n", cmdName())
 	fmt.Println()
 }
 

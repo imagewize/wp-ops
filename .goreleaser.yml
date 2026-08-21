@@ -70,6 +70,20 @@ homebrew_casks:
     directory: Casks
     homepage: "https://github.com/imagewize/wp-ops"
     description: "Unified CLI for WordPress operations, Trellis, and Bedrock workflows"
+    # trellis-cli discovers plugins by scanning $PATH for executables named
+    # `trellis-*` and turns each into a subcommand, exec'ing the binary with
+    # the remaining argv (roots/trellis-cli plugin/finder.go, cmd/passthrough.go).
+    # So a second symlink to the same binary is the entire integration: no
+    # plugin API, no new code, no separate repo. The name must be
+    # `trellis-ops` — the finder splits on "-" and joins the rest with
+    # spaces, so `trellis-wp-ops` would become `trellis wp ops`.
+    #
+    # goreleaser's homebrew_casks has no field for a second `binary` stanza
+    # with a target, hence custom_block. It renders at the top of the cask
+    # body rather than beside the generated `binary "wp-ops"` — cask stanza
+    # order is cosmetic, and an unofficial tap isn't `brew audit`ed.
+    custom_block: |
+      binary "wp-ops", target: "trellis-ops"
     # The binary isn't code-signed/notarized (no Apple Developer ID), so
     # macOS quarantines it on download and Gatekeeper kills it outright on
     # first run (exit 137) rather than showing the usual "open anyway"
