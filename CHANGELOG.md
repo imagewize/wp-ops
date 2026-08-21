@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.1] - 2026-08-21
+
+### Fixed
+
+- **`create-pr.sh` could name an AI assistant in a generated PR description.**
+  The generation prompt already forbade mentioning the tooling, but that reads
+  as "do not credit yourself" rather than "do not describe a change that
+  happens to concern it". So when a diff touched the contributor guide's own
+  commit-message convention, the model described it faithfully — and named the
+  assistant in prose, in a public description. The prompt now says explicitly
+  that the rule survives such a change and that the neutral phrasing
+  ("the contributor guide", "commit-message conventions") is what belongs
+  there. Referring to a changed file by its real path stays fine.
+
+- **The PR-description convention only ruled out footers.** It said "no AI
+  attribution footers or tool references", which the prose above technically
+  slipped past. It now rules out any mention anywhere in the description,
+  matching the commit-message rule.
+
 ## [5.7.0] - 2026-08-21
 
 ### Fixed
