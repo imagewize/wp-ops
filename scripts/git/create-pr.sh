@@ -610,6 +610,11 @@ REQUIREMENTS:
 - Keep each bullet point to 1-2 sentences maximum
 - Describe the change, never the tooling: do NOT mention Claude, Codex, AI or any
   assistant, and do NOT append a generated-by / co-authored-by footer of any kind
+- This holds even when the diff itself concerns AI tooling. If a commit changes
+  CLAUDE.md, AGENTS.md, or an assistant convention, describe it in neutral terms
+  ('the contributor guide', 'commit-message conventions', 'attribution trailers')
+  rather than naming the assistant. Referring to a changed file by its real path
+  is fine; naming an assistant in prose is not
 
 CHANGED FILES (excluding lock files):
 $CHANGED_FILES_NO_LOCKS
