@@ -87,9 +87,14 @@ trellis ops search backup
 
 `trellis ops` scopes its **listing** to the commands tagged `@platform trellis`;
 run plain `wp-ops` for the full catalog. Running a command is never scoped — name
-any command and it works. Unlike core `trellis` subcommands, a plugin doesn't need
-you to be inside a Trellis project; the playbook commands find the project the same
-way `wp-ops` always has.
+any command and it works. See the [Trellis command reference](#command-reference)
+for what that surface contains.
+
+Unlike core `trellis` subcommands, a plugin doesn't need you to be inside a Trellis
+project — trellis-cli registers plugins from `$PATH` before it resolves a project at
+all, so `trellis ops doctor` runs from anywhere while `trellis info` refuses. The
+Ansible commands do still need a project, but they always did: wp-ops locates it
+itself by walking up from your current directory, exactly as under bare `wp-ops`.
 
 Requires trellis-cli new enough to have plugin support (v1.19.0 or later) and the
 default `load_plugins: true`. If you built from source instead of installing the
@@ -110,6 +115,7 @@ no prompt to confirm a detected guess:
 # Ansible playbooks (wp-ops trellis <playbook>) need a Trellis project's ansible.cfg/inventory/group_vars
 export TRELLIS_DIR=/path/to/your/trellis
 wp-ops trellis database-backup -e site=example.com -e env=production
+trellis ops trellis database-backup -e site=example.com -e env=production   # identical
 
 # WP-CLI scripts (wp-ops wp-cli <script>) need a real WordPress/Bedrock install
 export WP_SITE_DIR=/path/to/your/bedrock-site
@@ -152,6 +158,86 @@ cat "$(wp-ops docs -l age-verification | head -1)"
 ```
 
 ## Trellis
+
+If you have trellis-cli, every command below is also reachable as
+`trellis ops <...>` — same binary, same behaviour, no project required.
+See [As a trellis-cli plugin](#as-a-trellis-cli-plugin).
+
+```bash
+trellis ops                                    # the 27 Trellis-relevant commands
+trellis ops backup database-pull example.com production
+trellis ops monitoring quick-status example.com production
+```
+
+`trellis ops` scopes its *listing* to commands tagged `@platform trellis`;
+running a command is never scoped, so anything in the catalog still works if
+you name it. Plain `wp-ops` shows all 74.
+
+### Command reference
+
+Grouped as `trellis ops` presents them. `(runs on server)` marks the log
+readers that execute on the host — running one locally prints the SSH
+invocation instead of failing. This table is generated from the catalog;
+`wp-ops list --all` is the always-current version.
+
+**`trellis ops monitoring`** (11)
+
+| Command | What it does |
+|---------|--------------|
+| `ai-bot-monitor` | Analyze AI crawler traffic (GPTBot, ClaudeBot, etc.) from an Nginx access log *(runs on server)* |
+| `error-monitor` | Surface errors from Nginx, PHP-FPM, WordPress, MySQL, and systemd for a domain *(runs on server)* |
+| `monitor` | Run traffic, security, AI-bot, and error monitoring together and save timestamped reports *(runs on server)* |
+| `security-monitor` | Detect malicious activity (wp-login/xmlrpc abuse, high-volume IPs) in an Nginx access log *(runs on server)* |
+| `traffic-by-country` | Filter a server's Nginx access log by visitor country and show real page visits |
+| `traffic-monitor` | Analyze legitimate traffic from an Nginx access log *(runs on server)* |
+| `updown-webhook-handler` | Analyze Nginx logs on the server when updown.io reports downtime via webhook *(runs on server)* |
+| `quick-status` | Quick health check for a site: recent status codes, errors, and service status |
+| `security-scan` | Scan a site's Nginx logs for attack patterns and suspicious activity |
+| `setup-monitoring` | Install cron jobs for daily traffic reports and periodic security scans |
+| `traffic-report` | Generate a traffic analysis report from a site's Nginx access log |
+
+**`trellis ops backup`** (9)
+
+| Command | What it does |
+|---------|--------------|
+| `db-backup` | Back up a remote site's database over SSH straight to your machine |
+| `db-pull` | Pull a remote site's database into development via SSH, with URL search-replace |
+| `site-backup` | Full backup of a Trellis site: database, uploads, config, and plugins/themes *(runs on server)* |
+| `database-backup` | Back up a site's database from any environment (development/staging/production) |
+| `database-pull` | Pull a site's database from a remote environment into development, with URL search-replace |
+| `database-push` | Push development's database to a remote environment, with URL search-replace |
+| `files-backup` | Back up a site's uploads directory from any environment (development/staging/production) |
+| `files-pull` | Pull a site's uploads directory from a remote environment into development via rsync |
+| `files-push` | Push development's uploads directory to a remote environment via rsync |
+
+**`trellis ops content`** (2)
+
+| Command | What it does |
+|---------|--------------|
+| `import-page-draft` | Update an existing WordPress page from an HTML draft, locally and/or in production |
+| `page-creation` | Deploy an HTML page to production via SCP and WP-CLI over SSH |
+
+**`trellis ops misc`** (2)
+
+| Command | What it does |
+|---------|--------------|
+| `create-product-variations` | Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell |
+| `trellis-updater` | Safely update a Trellis installation to the latest upstream while preserving vault/config customizations |
+
+**`trellis ops security`** (2)
+
+| Command | What it does |
+|---------|--------------|
+| `check-deny-ips` | Check every individual IP in a Trellis deny-ips.conf.j2 against AbuseIPDB |
+| `check-ips` | Check IP addresses against AbuseIPDB threat intelligence |
+
+**`trellis ops diagnostics`** (1)
+
+| Command | What it does |
+|---------|--------------|
+| `list-posts-count` | Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv |
+
+### Guides
 
 | Tool | Description | Docs |
 |------|-------------|------|
