@@ -111,7 +111,10 @@
           # Send email only if alerts found
           if grep -q "\[ALERT\]" "$REPORT_FILE"; then
             if command -v mail &> /dev/null; then
-              mail -s "[SECURITY ALERT] {{ site }} - $(date +%Y-%m-%d %H:%M)" {{ alert_email }} < "$REPORT_FILE"
+              # The format string must be one quoted argument: unquoted,
+              # date takes %H:%M as a second operand, errors out, and mail
+              # gets a truncated subject plus a bogus recipient.
+              mail -s "[SECURITY ALERT] {{ site }} - $(date '+%Y-%m-%d %H:%M')" {{ alert_email }} < "$REPORT_FILE"
             fi
           fi
           {% endif %}
@@ -141,13 +144,33 @@
         user: "{{ web_user }}"
         state: present
 
+    - name: Create wrapper script for weekly traffic summary
+      copy:
+        content: |
+          #!/bin/bash
+          # Weekly traffic summary for {{ site }}
+          #
+          # A wrapper rather than an inline cron command on purpose: cron
+          # treats an unescaped `%` as end-of-command and pipes the rest to
+          # the job's stdin, so a crontab line containing $(date +%Y-%m-%d)
+          # is silently truncated mid-word and produces nothing.
+          REPORT_FILE="{{ monitoring_dir }}/logs/weekly-summary-$(date '+%Y-%m-%d').txt"
+          {{ monitoring_dir }}/traffic-monitor.sh {{ log_file }} 168 > "$REPORT_FILE" 2>&1
+
+          # Clean up old summaries (keep last 90 days)
+          find {{ monitoring_dir }}/logs -name "weekly-summary-*.txt" -mtime +90 -delete
+        dest: "{{ monitoring_dir }}/weekly-summary.sh"
+        owner: "{{ web_user }}"
+        group: "{{ web_user }}"
+        mode: '0755'
+
     - name: Setup cron job for weekly summary
       cron:
         name: "Weekly traffic summary for {{ site }}"
         minute: "0"
         hour: "9"
         weekday: "1"
-        job: "{{ monitoring_dir }}/traffic-monitor.sh {{ log_file }} 168 > {{ monitoring_dir }}/logs/weekly-summary-$(date +%Y-%m-%d).txt 2>&1"
+        job: "{{ monitoring_dir }}/weekly-summary.sh"
         user: "{{ web_user }}"
         state: present
 
