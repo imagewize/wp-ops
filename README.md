@@ -254,7 +254,7 @@ invocation instead of failing. This table is generated from the catalog;
 | Tool | Description | Docs |
 |------|-------------|------|
 | **Local Package Development** | Test an in-development plugin/theme branch in a Bedrock site via a Composer `path` repository, before tagging a release | [→](docs/bedrock/local-package-development/README.md) |
-| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp pattern validate` command for canonicalizing block pattern files | [→](docs/bedrock/wp-cli-config/README.md) |
+| **WP-CLI Config** | Standard `wp-cli.yml` for Bedrock path setup plus a `wp imagewize pattern-validate` command for canonicalizing block pattern files | [→](docs/bedrock/wp-cli-config/README.md) |
 
 ## WP-CLI
 

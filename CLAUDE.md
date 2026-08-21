@@ -15,7 +15,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `trellis/security/` - fail2ban WordPress protection and manual IP blocking guides
   - `trellis/updater/` - Safe Trellis update scripts
 - **wp-cli/** - WordPress command-line operations
-  - `wp-cli/content-creation/` - WP-CLI content creation, block patterns, and the `wp pattern validate` command
+  - `wp-cli/content-creation/` - WP-CLI content creation, block patterns, and the `wp imagewize pattern-validate` command
   - `wp-cli/diagnostics/` - WordPress diagnostic tools
   - `wp-cli/migration/` - WordPress migration documentation and URL update methods
   - `wp-cli/security/` - Malware detection and security scanning

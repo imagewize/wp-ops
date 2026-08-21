@@ -15,25 +15,25 @@
  * ## EXAMPLES
  *
  *     # Validate all patterns (dry run, shows what would change)
- *     wp pattern validate web/app/themes/your-theme/patterns/
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/
  *
  *     # Show unified diff without fixing
- *     wp pattern validate web/app/themes/your-theme/patterns/ --diff
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --diff
  *
  *     # Auto-fix all structural issues in-place
- *     wp pattern validate web/app/themes/your-theme/patterns/ --fix
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --fix
  *
  *     # Fix and write logs to docs/pattern-logs/
- *     wp pattern validate web/app/themes/your-theme/patterns/ --fix --log
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --fix --log
  *
  *     # Fix a single file
- *     wp pattern validate web/app/themes/your-theme/patterns/hero.php --fix
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/hero.php --fix
  *
  *     # Fix a subdirectory only
- *     wp pattern validate web/app/themes/your-theme/patterns/woocommerce/ --fix
+ *     wp imagewize pattern-validate web/app/themes/your-theme/patterns/woocommerce/ --fix
  *
  *     # If not auto-required via wp-cli.yml, pass --require explicitly:
- *     wp --require=wp-cli-pattern-validate.php pattern validate web/app/themes/your-theme/patterns/
+ *     wp --require=wp-cli-pattern-validate.php imagewize pattern-validate web/app/themes/your-theme/patterns/
  *
  * @desc     Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()
  * @category content
@@ -398,4 +398,4 @@ class Pattern_Validate_Command extends WP_CLI_Command {
 }
 
 $_cmd = new Pattern_Validate_Command();
-WP_CLI::add_command( 'pattern validate', array( $_cmd, 'validate' ) );
+WP_CLI::add_command( 'imagewize pattern-validate', array( $_cmd, 'validate' ) );

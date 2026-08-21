@@ -313,7 +313,7 @@ nothing there. Only inbound `.md` cross-links (23 files reference `nginx/` or
 `troubleshooting/`) and the dead `Categories` entries need touching.
 
 `bedrock/` is a genuine edge case: 1 command, 3 docs. Its one command
-(`wp pattern validate`) is arguably a `wp-cli/` command, after which the whole
+(`wp imagewize pattern-validate`) is arguably a `wp-cli/` command, after which the whole
 tree is documentation too. **Your instinct that `bedrock` belongs under docs
 is right** — it's the one directory where the reorganization is unambiguous.
 
