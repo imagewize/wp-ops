@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-08-21
+
+### Fixed
+
+- **`setup-monitoring.yml`: the security alert e-mail had a broken subject.**
+  It built the subject with an unquoted `$(date +%Y-%m-%d %H:%M)`. `date`
+  takes `%H:%M` as a second operand and errors out, so `mail` received a
+  truncated subject *and* `%H:%M` as an extra recipient. The format string is
+  now one quoted argument.
+
+- **`setup-monitoring.yml`: the weekly summary cron job never ran.** It was an
+  inline cron command containing `$(date +%Y-%m-%d)`, and cron treats an
+  unescaped `%` as end-of-command, piping the remainder to the job's stdin —
+  so the entry was truncated mid-word and wrote nothing. It now calls a
+  wrapper script, as the daily traffic and security reports already did, which
+  keeps `%` out of the crontab entirely and adds the 90-day report cleanup the
+  other two had.
+
+  Both were found while porting these playbooks into the standalone
+  [`imagewize/trellis-wp-monitoring`](https://github.com/imagewize/trellis-wp-monitoring)
+  Ansible role, and both failed silently — no error, just a missing report or
+  a mangled e-mail.
+
+### Added
+
+- **A Trellis command reference in the README.** The Trellis section listed
+  documentation links but never the commands themselves. It now opens with the
+  `trellis ops` equivalence and carries a generated table of all 27
+  `@platform trellis` commands, grouped the way `trellis ops` presents them and
+  marking the ones that execute on the server. The existing documentation table
+  moved under a "Guides" heading rather than being replaced.
+
 ## [5.6.0] - 2026-08-21
 
 ### Added
