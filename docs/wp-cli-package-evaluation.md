@@ -1,7 +1,10 @@
 # Publishing wp-ops WordPress tools as a WP-CLI package
 
-**Status:** step 1 of 3 shipped (the command is namespaced); extraction and
-publishing not started.
+**Status:** shipped, as
+[imagewize/wp-cli-pattern-validate](https://github.com/imagewize/wp-cli-pattern-validate)
+`v1.0.0`. Namespaced, extracted, tagged, and installable today via `wp
+package install`. What remains (listing on the WP-CLI package index,
+measuring installs) is optional follow-up, not a blocker.
 **Date:** 2026-08-21.
 **Supersedes:** the Mistral draft of the same filename, whose compatibility
 table was largely fabricated. [Corrections](#corrections-to-the-previous-draft)
@@ -105,7 +108,8 @@ one command as a proof of concept.
 
 `wp-cli-pattern-validate.php` is already a WP-CLI command. Publishing it needs
 a `composer.json` with `"type": "wp-cli-package"`, a repo, and a tag. That is
-the whole job.
+the whole job. **Shipped**, as
+[imagewize/wp-cli-pattern-validate](https://github.com/imagewize/wp-cli-pattern-validate).
 
 **Namespaced.** The command claimed an unprefixed global namespace —
 `WP_CLI::add_command( 'pattern validate', ... )` — and `pattern` is generic
@@ -114,6 +118,31 @@ It's now `wp imagewize pattern-validate`, updated everywhere the old name was
 documented (`README.md`, `CLAUDE.md`, `docs/bedrock/`,
 `docs/category-organization.md`). Done ahead of publishing rather than after,
 since renaming post-release is a breaking change.
+
+**Extracted and tagged.** The new repo carries `command.php` (the same file,
+minus the wp-ops-only manifest annotations in its docblock — `@desc`,
+`@category`, `@arg`, etc., which only mean something to this repo's own
+catalog parser and would be dead metadata anywhere else), a
+`wp-cli-package` `composer.json`, a README adapted for standalone
+installation, an MIT license, and a lint-only CI (`composer validate`,
+`php -l`, and a check that the registered command name hasn't drifted from
+what the README documents — a real functional test suite against a
+bootstrapped WordPress is the optional next investment, not done here).
+Tagged `v1.0.0`.
+
+wp-ops keeps its own copy as the source of truth for the `wp-ops
+wp-cli-pattern-validate` / `trellis ops wp-cli-pattern-validate` invocation
+path — the extraction is a second distribution channel, not a move. The two
+copies are independent, same as `files/security-monitor.sh` and
+`files/traffic-monitor.sh` are in `trellis-wp-monitoring`.
+
+**"Publish" needed no separate step.** WP-CLI's `wp package install` resolves
+a bare `vendor/package` argument as a GitHub shorthand — no registry
+submission required. `wp package install imagewize/wp-cli-pattern-validate`
+works today, against the tagged repo, for anyone who runs it. Listing it on
+the [WP-CLI package index](https://wp-cli.org/package-index/) is a separate,
+optional visibility step (a PR against `wp-cli/package-index`), not a
+prerequisite for installability.
 
 ---
 
@@ -147,11 +176,17 @@ standalone scripts, never as a rewrite of them.
 
 1. ~~Rename `pattern validate` to a namespaced command.~~ Done — it's now
    `wp imagewize pattern-validate`.
-2. Extract `wp-cli-pattern-validate.php` into its own small repo with a
-   `wp-cli-package` `composer.json`. It works unmodified.
-3. Publish, and see whether it gets installs. If it does, the next candidate
-   is a thin WP-CLI front-end over the scanners — *wrapping*, not replacing,
-   the standalone scripts.
+2. ~~Extract `wp-cli-pattern-validate.php` into its own small repo with a
+   `wp-cli-package` `composer.json`.~~ Done, as
+   [imagewize/wp-cli-pattern-validate](https://github.com/imagewize/wp-cli-pattern-validate),
+   tagged `v1.0.0`. It works unmodified.
+3. **Now: measure.** It's installable today via `wp package install
+   imagewize/wp-cli-pattern-validate` — no further action needed for that
+   part. What's left is optional and only worth doing once there's a signal
+   installs are happening: list it on the
+   [WP-CLI package index](https://wp-cli.org/package-index/), and if it gets
+   used, the next candidate is a thin WP-CLI front-end over the scanners —
+   *wrapping*, not replacing, the standalone scripts.
 
 Do not extract `diagnostics/`, `seo/`, or `migration/`. Two of those have no
 PHP at all, and the SEO auditors are better off as they are.
@@ -169,7 +204,7 @@ at lower cost.
 | Task | Estimate |
 | --- | --- |
 | ~~Namespace the `pattern validate` command~~ | ~~15 min~~ done |
-| New repo, `composer.json`, README, tag | 2–3 hrs |
+| ~~New repo, `composer.json`, README, tag~~ | ~~2–3 hrs~~ done |
 | Optional: Behat harness via `wp scaffold package-tests` | 4–8 hrs |
 | **Realistic total for the proof of concept** | **under a day** |
 
