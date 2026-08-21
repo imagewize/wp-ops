@@ -32,7 +32,7 @@ func validatePlatform(platform string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("wp-ops: unknown platform %q — expected one of: %s",
+	return fmt.Errorf("%s: unknown platform %q — expected one of: %s", cmdName(),
 		platform, strings.Join(catalog.Platforms, ", "))
 }
 
@@ -45,7 +45,14 @@ var listCmd = &cobra.Command{
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		filtered := c.FilterByPlatform(platformFlag)
+		platform := platformFlag
+		if platform == "" {
+			// Unset means "the default for how we were invoked": no
+			// filter under wp-ops, @platform trellis under `trellis ops`.
+			// An explicit --platform always wins over that default.
+			platform = defaultPlatform()
+		}
+		filtered := c.FilterByPlatform(platform)
 		switch {
 		case jsonFlag:
 			printJSON(filtered)
@@ -79,13 +86,21 @@ func printCategorizedList(c *catalog.Catalog) {
 		fmt.Printf("  %-22s (%2d)  %s\n", catalog.CategoryDisplayNames[category], len(entries), catalog.CategoryBlurbs[category])
 	}
 
+	n := cmdName()
 	fmt.Println()
-	fmt.Println("Run 'wp-ops <category>' to see a category's commands (e.g. 'wp-ops backup')")
-	fmt.Println("Run 'wp-ops list --all' to see every command with its description")
-	fmt.Println("Run 'wp-ops list --platform wordpress' to see only what runs on any WP site")
-	fmt.Println("Run 'wp-ops search <term>' to find a command")
-	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
-	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
+	fmt.Printf("Run '%s <category>' to see a category's commands (e.g. '%s backup')\n", n, n)
+	fmt.Printf("Run '%s list --all' to see every command with its description\n", n)
+	if asTrellisPlugin() {
+		// The scoped view hides ~two thirds of the catalog, so say where
+		// the rest is. Same binary, one word away — the cask installs
+		// both names.
+		fmt.Println("Showing @platform trellis commands only — run 'wp-ops' for the full catalog")
+	} else {
+		fmt.Printf("Run '%s list --platform wordpress' to see only what runs on any WP site\n", n)
+	}
+	fmt.Printf("Run '%s search <term>' to find a command\n", n)
+	fmt.Printf("Run '%s doctor' to check dependencies and environment\n", n)
+	fmt.Printf("Run '%s --json' for machine-readable command list\n", n)
 }
 
 // printAllCommands is the original full listing: every command in every
@@ -102,10 +117,11 @@ func printAllCommands(c *catalog.Catalog) {
 		fmt.Println()
 	}
 
-	fmt.Println("Run 'wp-ops list' for a compact category summary")
-	fmt.Println("Run 'wp-ops search <term>' to find a command")
-	fmt.Println("Run 'wp-ops doctor' to check dependencies and environment")
-	fmt.Println("Run 'wp-ops --json' for machine-readable command list")
+	n := cmdName()
+	fmt.Printf("Run '%s list' for a compact category summary\n", n)
+	fmt.Printf("Run '%s search <term>' to find a command\n", n)
+	fmt.Printf("Run '%s doctor' to check dependencies and environment\n", n)
+	fmt.Printf("Run '%s --json' for machine-readable command list\n", n)
 }
 
 func printCategoryCommands(category string, entries []catalog.Entry) {
@@ -113,9 +129,40 @@ func printCategoryCommands(category string, entries []catalog.Entry) {
 		fmt.Printf("No commands found in category: %s\n", catalog.CategoryDisplayNames[category])
 		return
 	}
+
+	// Scope the listing the same way the category summary is scoped, so
+	// the counts agree. But a category with nothing tagged @platform
+	// trellis (SEO, Images, Git...) still has commands that run fine here,
+	// so fall back to the whole category rather than claiming it's empty.
+	scoped := filterEntriesByPlatform(entries, defaultPlatform())
+	unscoped := len(scoped) == 0
+	if unscoped {
+		scoped = entries
+	}
+
 	fmt.Printf("%s Commands:\n\n", catalog.CategoryDisplayNames[category])
-	printCategoryEntries(entries)
+	printCategoryEntries(scoped)
+	if unscoped {
+		fmt.Printf("\nNothing here is Trellis-specific — these run on any WordPress site.\n")
+	}
 	fmt.Println()
+}
+
+// filterEntriesByPlatform keeps the per-category listing consistent with
+// the counts in the category summary. Execution is deliberately not
+// filtered — naming a non-trellis command under `trellis ops` still runs
+// it; only what we *advertise* is scoped.
+func filterEntriesByPlatform(entries []catalog.Entry, platform string) []catalog.Entry {
+	if platform == "" {
+		return entries
+	}
+	var kept []catalog.Entry
+	for _, e := range entries {
+		if e.Platform == platform {
+			kept = append(kept, e)
+		}
+	}
+	return kept
 }
 
 func printCategoryEntries(entries []catalog.Entry) {

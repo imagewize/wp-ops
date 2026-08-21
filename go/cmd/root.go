@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -19,24 +20,8 @@ var jsonFlag bool
 var rootCmd = &cobra.Command{
 	Use:   "wp-ops",
 	Short: "Unified CLI wrapper for wp-ops tools",
-	Long: `wp-ops is a single entry point for WordPress operations tools,
-scripts, and utilities: backups, monitoring, WP-CLI helpers, Trellis
-playbooks, and more.
-
-  wp-ops <category>/<command> [args...]   Run a command by its full key
-  wp-ops <category> <command> [args...]   Run a command by category + name
-  wp-ops <command> [args...]              Run a command by its bare name
-  wp-ops <command> --where                Print the path to a command's script
-  wp-ops <command> --help                 Show a command's own help
-
-  wp-ops list                             List every command by category
-  wp-ops search <term>                    Search commands by name or description
-  wp-ops docs [term] [-l]                 Search the guides (no term lists them)
-  wp-ops doctor                           Check dependencies and environment
-  wp-ops init                             Install shell completions
-  wp-ops mcp-register                     Show MCP registration snippets for Claude/Mistral/Codex
-  wp-ops --json                           Output the command list as JSON
-  wp-ops --version                        Show version`,
+	// Long is filled in by Execute() so every usage line spells the name
+	// the user actually typed — see rootLong and cmdName().
 	// Arbitrary args: a bare command name that isn't one of the explicitly
 	// registered children (list/search/doctor/category commands/full-key
 	// commands) falls through here and is resolved as a basename against
@@ -62,6 +47,10 @@ playbooks, and more.
 
 func rootRunE(cc *cobra.Command, args []string) error {
 	c := mustCatalog()
+	// What we *show* is scoped to how we were invoked (see
+	// defaultPlatform); what we *run*, below, never is. --json stays
+	// unscoped too — it's a stable contract for external tooling.
+	listing := c.FilterByPlatform(defaultPlatform())
 
 	if len(args) == 0 {
 		// Port of main()'s `[[ -t 0 && -t 1 ]]` branch (wp-ops:2154-2157):
@@ -69,10 +58,10 @@ func rootRunE(cc *cobra.Command, args []string) error {
 		// piped/redirected invocation keeps printing list-equivalent output
 		// so `wp-ops | less` etc. still work.
 		if detect.IsTerminal(os.Stdin) && detect.IsTerminal(os.Stdout) {
-			os.Exit(runInteractive(c))
+			os.Exit(runInteractive(listing))
 			return nil
 		}
-		printCategorizedList(c)
+		printCategorizedList(listing)
 		return nil
 	}
 
@@ -84,7 +73,7 @@ func rootRunE(cc *cobra.Command, args []string) error {
 		printVersion()
 		return nil
 	case "--help", "-h":
-		printCategorizedList(c)
+		printCategorizedList(listing)
 		return nil
 	}
 
@@ -109,8 +98,58 @@ func rootRunE(cc *cobra.Command, args []string) error {
 	return nil
 }
 
+// rootLong renders the root help against the invoked name, so a
+// `trellis ops` user is told to run `trellis ops backup`, not
+// `wp-ops backup`. Under bare wp-ops the output is byte-for-byte what it
+// was before this became a template.
+func rootLong(name string) string {
+	pad := func(usage string) string {
+		// Descriptions start at column 40, as they did when this was a
+		// literal string built around "wp-ops". The longest wp-ops row
+		// ("wp-ops <category>/<command> [args...]") is 37, so nothing
+		// overflows under the original name; "trellis ops" is 5 wider and
+		// pushes its three longest rows out, hence the guard.
+		if len(usage) >= 40 {
+			return usage + " "
+		}
+		return usage + strings.Repeat(" ", 40-len(usage))
+	}
+	rows := [][2]string{
+		{name + " <category>/<command> [args...]", "Run a command by its full key"},
+		{name + " <category> <command> [args...]", "Run a command by category + name"},
+		{name + " <command> [args...]", "Run a command by its bare name"},
+		{name + " <command> --where", "Print the path to a command's script"},
+		{name + " <command> --help", "Show a command's own help"},
+		{"", ""},
+		{name + " list", "List every command by category"},
+		{name + " search <term>", "Search commands by name or description"},
+		{name + " docs [term] [-l]", "Search the guides (no term lists them)"},
+		{name + " doctor", "Check dependencies and environment"},
+		{name + " init", "Install shell completions"},
+		{name + " mcp-register", "Show MCP registration snippets for Claude/Mistral/Codex"},
+		{name + " --json", "Output the command list as JSON"},
+		{name + " --version", "Show version"},
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, `%s is a single entry point for WordPress operations tools,
+scripts, and utilities: backups, monitoring, WP-CLI helpers, Trellis
+playbooks, and more.
+`, name)
+	for _, r := range rows {
+		if r[0] == "" {
+			b.WriteString("\n")
+			continue
+		}
+		fmt.Fprintf(&b, "  %s%s\n", pad(r[0]), r[1])
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
 // Execute runs the root command.
 func Execute() error {
+	rootCmd.Use = cmdName()
+	rootCmd.Long = rootLong(cmdName())
 	registerCatalogCommands(mustCatalog())
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -165,7 +165,7 @@ func rootBasenameCompletions(cc *cobra.Command, args []string, toComplete string
 func runCategory(c *catalog.Catalog, scope categoryScope, args []string) {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
 		printCategoryCommands(scope.name, scope.members(c))
-		fmt.Printf("Usage: wp-ops %s <command> [args...]\n", scope.name)
+		fmt.Printf("Usage: %s %s <command> [args...]\n", cmdName(), scope.name)
 		return
 	}
 
@@ -350,9 +350,9 @@ func printUnknownCommand(c *catalog.Catalog, candidate string) {
 	fmt.Fprintf(os.Stderr, "Unknown command or category: %s\n\n", candidate)
 	if best, ok := suggestSimilar(c, candidate); ok {
 		fmt.Fprintln(os.Stderr, "Did you mean:")
-		fmt.Fprintf(os.Stderr, "  wp-ops %s\n\n", best)
+		fmt.Fprintf(os.Stderr, "  %s %s\n\n", cmdName(), best)
 	}
-	fmt.Fprintf(os.Stderr, "Try wp-ops search %s, or wp-ops to browse everything.\n", candidate)
+	fmt.Fprintf(os.Stderr, "Try %s search %s, or %s to browse everything.\n", cmdName(), candidate, cmdName())
 }
 
 // printAmbiguous ports print_ambiguous (wp-ops:1517).
@@ -362,7 +362,7 @@ func printAmbiguous(name string, matches []catalog.Entry) {
 		fmt.Fprintf(os.Stderr, "  %-40s %s\n", m.Key, m.Description)
 	}
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintf(os.Stderr, "Run it by its full name, e.g. wp-ops %s\n", matches[0].Key)
+	fmt.Fprintf(os.Stderr, "Run it by its full name, e.g. %s %s\n", cmdName(), matches[0].Key)
 }
 
 // suggestSimilar ports suggest_similar (wp-ops:1533): a substring match on

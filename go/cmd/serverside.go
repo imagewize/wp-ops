@@ -146,8 +146,8 @@ func printServerSideGuidance(w io.Writer, e catalog.Entry) {
 		fmt.Fprintln(w, "That leaves the archive on the server. To back up *and* retrieve a copy")
 		fmt.Fprintln(w, "to this machine in one step, use the Ansible playbooks instead:")
 		fmt.Fprintln(w)
-		fmt.Fprintln(w, "  wp-ops database-pull example.com production")
-		fmt.Fprintln(w, "  wp-ops files-pull    example.com production")
+		fmt.Fprintf(w, "  %s database-pull example.com production\n", cmdName())
+		fmt.Fprintf(w, "  %s files-pull    example.com production\n", cmdName())
 		return
 	}
 
@@ -168,7 +168,7 @@ func printServerSideGuidance(w io.Writer, e catalog.Entry) {
 
 	if hasGNUDate() {
 		fmt.Fprintln(w, "Already have a log file on this machine? Pass its path and it runs here:")
-		fmt.Fprintf(w, "  wp-ops %s /path/to/access.log\n", e.CommandName())
+		fmt.Fprintf(w, "  %s %s /path/to/access.log\n", cmdName(), e.CommandName())
 	} else {
 		fmt.Fprintln(w, "The SSH route above is unaffected by what's installed here — date and")
 		fmt.Fprintln(w, "gawk both resolve on the server. Only running it against a log copied")
