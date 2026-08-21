@@ -361,18 +361,22 @@ better UX; Path B gets discovery.
 
 ## The trellis-sync repo
 
+**Status: issues closed, repo archived.** Packagist not yet marked abandoned.
+
 [`jasperf/trellis-sync`](https://github.com/jasperf/trellis-sync) predates all
-of this: created 2017, 28 stars, 5 watchers, 5 forks. Its README now redirects
-to wp-ops. What it is actually worth, measured rather than assumed:
+of this: created 2017, 28 stars, 5 watchers, 5 forks. Its description now
+reads "superseded by wp-ops" with the homepage pointed at
+[imagewize/wp-ops](https://github.com/imagewize/wp-ops). What it is actually
+worth, measured rather than assumed:
 
 | Asset | Value |
 | --- | --- |
 | 28 stars, 5 watchers | Real. Comparable to `hamedb89/trellis-db-push-and-pull` (31) |
 | Inbound links since 2017 | Roots Discourse and blog lineage — the scripts descend from Raquelle's and Ben Word's originals, which is why links accumulated |
 | Topics already set | `bedrock`, `database-sync`, `devops`, `roots`, `trellis`, `wordpress`, `wp-cli` |
-| Packagist `trellis-sync/trellis-sync` | **Dead.** 102 downloads lifetime, 0/month, 0/day |
+| Packagist `trellis-sync/trellis-sync` | **Dead**, and still live. 102 downloads lifetime, 0/month, 0/day. Not yet flagged abandoned — that's a Packagist maintainer-account action, still open |
 | 5 forks | All **0 commits ahead**. Nothing to salvage |
-| 7 open issues (2017–2019) | The most useful asset. See below |
+| 7 issues (2017–2019) | **Closed**, each with the specific fix/gap below. See below |
 | The scripts | Superseded |
 
 **This changes the repo plan for a backup role.** The section below originally
@@ -386,7 +390,7 @@ in [Recommendation](#recommendation) stands: monitoring is still the
 uncontested niche, and reviving trellis-sync means committing to maintain it —
 which is what killed it the first time.
 
-**So: archive it, and note it as the preferred home if the backup role ships.**
+**So: archived, and noted as the preferred home if the backup role ships.**
 Un-archiving a repo with history beats registering a new name.
 
 Do not transfer it to `imagewize` while it is a tombstone. GitHub transfers
@@ -394,28 +398,32 @@ preserve stars, forks, and issues and redirect the old URL, so the move is
 safe — it just buys nothing, and costs a Packagist homepage update and a
 redirect hop. Transfer becomes worthwhile only if the repo goes live again.
 
-### The open issues are a distribution channel
+### The open issues, closed
 
-Four of the seven are feature requests wp-ops now answers. Closing them
-notifies the authors and every watcher — including `strarsis`, a Roots
-contributor who filed three of them. Verified against the catalog, not assumed:
+All seven closed on 2026-08-21, each with wp-ops's actual equivalent command
+and an honest caveat where the gap is real — not a blanket "fixed!" on
+threads up to nine years old. Four of the seven were feature requests
+wp-ops answers; three stay honestly open gaps, now tracked in a maintained
+place instead of a dead one:
 
-| Issue | Status |
+| Issue | Resolution |
 | --- | --- |
-| #4 "Use config from wp-cli.yml" (2 👍) | **Solved.** Sites come from `wordpress_sites.yml` |
-| #13 `mysqldump: No such file` | **Solved.** `scripts/backup/db-pull.sh:268` runs `wp db export` over SSH on the remote; nothing dumps locally |
-| #9 "How do I add this to composer.json" | Obsolete, already answered in-thread |
-| #2 "Backup?" — tar/gzip, timestamped, incremental | **Two of three.** `files-backup.yml:27,57` produces timestamped `.tar.gz`. Not incremental, and no backup cron. `Xilonz/trellis-backup-role` does both via duply |
-| #6 "source and destination cannot both be remote" | **Not solved.** Every wp-ops path is remote↔development. No production→staging |
-| #12 "Add as WP CLI package" | Answered by [`wp-cli-package-evaluation.md`](wp-cli-package-evaluation.md) — mostly no, with reasons |
-| #14 SSH error + uploads not deleted | **Stale.** The delete half is unchanged: `files-push.yml:76` hardcodes `delete: no`. `files-pull` has an opt-in `--delete` flag; push is deliberately additive |
+| #4 "Use config from wp-cli.yml" (2 👍) | Closed **solved**. `wp-ops db-pull`/`files-pull` read sites from `wordpress_sites.yml` — no hardcoded `DEVDIR`/`PRODDIR`/`STAGDIR` |
+| #13 `mysqldump: No such file` | Closed **solved**. wp-ops runs `wp db export` on the remote over SSH; nothing dumps locally |
+| #9 "How do I add this to composer.json" | Closed **obsolete**. Answered in-thread at the time; noted the Packagist package is being marked abandoned in favor of `brew install imagewize/tap/wp-ops` |
+| #2 "Backup?" — tar/gzip, timestamped, incremental | Closed **partial, said so**. `wp-ops files-backup`/`database-backup` give timestamped tar/gzip; incremental and cron scheduling are still gaps — pointed to `Xilonz/trellis-backup-role` for those |
+| #6 "source and destination cannot both be remote" | Closed **not solved, said so**. Every wp-ops path is remote↔development; no production→staging. Two-hop pull-then-push documented as the workaround |
+| #12 "Add as WP CLI package" | Closed, answered by [`wp-cli-package-evaluation.md`](wp-cli-package-evaluation.md) — mostly no for the scripts, yes for one command (now shipped as [`wp imagewize pattern-validate`](wp-cli-package-evaluation.md)) |
+| #14 SSH error + uploads not deleted | Closed **half-stale, said so**. The SSH error was never reproduced; the delete behavior is now explicit and opt-in on pull (`--delete yes`), still additive-only on push |
 
-Close them with specific commands and honest caveats. A wrong "fixed!" on a
-nine-year-old thread is worse than leaving it open.
+Every close also flagged the two things still in flight: a Trellis Galaxy role
+for the sync/backup playbooks (this doc, [Path B](#path-b-an-ansible-role-on-galaxy)),
+and the `trellis ops` plugin surface ([Path A](#path-a-a-trellis-ops-plugin-shim)).
 
-Order matters: **close the issues first, then archive** — archived repos are
-read-only. Mark the Packagist package abandoned at the same time; nobody is
-using it, but it puts a warning in front of anyone arriving from a 2017 post.
+**Left to do:** mark the Packagist package abandoned. That's a Packagist
+maintainer-account action (not a repo change), still outstanding — nobody is
+using the package, but it puts a warning in front of anyone arriving from a
+2017 post.
 
 ---
 
