@@ -72,6 +72,33 @@ Run `wp-ops doctor` first — it reports which of the external tools these scrip
 
 `wp-ops init` installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after install — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
 
+### As a trellis-cli plugin
+
+The Homebrew cask installs the same binary under a second name, `trellis-ops`,
+which [trellis-cli](https://github.com/roots/trellis-cli) picks up as a plugin —
+it scans `$PATH` for `trellis-*` executables and turns each into a subcommand. So
+everything below is also reachable from inside the tool you already have open:
+
+```bash
+trellis ops                              # Trellis-relevant categories
+trellis ops backup database-pull         # same as: wp-ops backup database-pull
+trellis ops search backup
+```
+
+`trellis ops` scopes its **listing** to the commands tagged `@platform trellis`;
+run plain `wp-ops` for the full catalog. Running a command is never scoped — name
+any command and it works. Unlike core `trellis` subcommands, a plugin doesn't need
+you to be inside a Trellis project; the playbook commands find the project the same
+way `wp-ops` always has.
+
+Requires trellis-cli new enough to have plugin support (v1.19.0 or later) and the
+default `load_plugins: true`. If you built from source instead of installing the
+cask, make the alias yourself:
+
+```bash
+ln -s "$(command -v wp-ops)" /usr/local/bin/trellis-ops
+```
+
 Two categories resolve their project directory from an environment variable — but you
 don't need to export it by hand if you're standing inside the project: wp-ops detects
 it by walking up from your current directory and asks before using what it finds.
