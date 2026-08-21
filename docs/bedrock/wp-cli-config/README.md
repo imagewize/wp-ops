@@ -1,7 +1,7 @@
 # Bedrock WP-CLI Configuration
 
 Standard `wp-cli.yml` for a [Bedrock](https://roots.io/bedrock/) site plus a custom
-`wp pattern validate` command for keeping block pattern files in canonical form.
+`wp imagewize pattern-validate` command for keeping block pattern files in canonical form.
 
 Place both files in your **Bedrock site root** (the directory that contains `composer.json`).
 
@@ -21,7 +21,7 @@ require:
 |-----|---------|
 | `path` | Tells WP-CLI where WordPress core lives in a Bedrock layout — saves you `--path=web/wp` on every command |
 | `server.docroot` | Used by `wp server` (built-in dev server) to serve from Bedrock's public root |
-| `require` | Auto-loads `wp-cli-pattern-validate.php` on every `wp` call so the `pattern validate` command is always available without an explicit `--require` flag |
+| `require` | Auto-loads `wp-cli-pattern-validate.php` on every `wp` call so the `imagewize pattern-validate` command is always available without an explicit `--require` flag |
 
 ---
 
@@ -46,31 +46,31 @@ across a block theme's `patterns/` directory in CI or as a pre-commit check.
 
 ```bash
 # Validate all patterns — dry run, shows PASS/FAIL per file
-wp pattern validate web/app/themes/your-theme/patterns/
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/
 
 # Show a unified diff for each file that needs changes (no writes)
-wp pattern validate web/app/themes/your-theme/patterns/ --diff
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --diff
 
 # Auto-fix all structural issues in-place
-wp pattern validate web/app/themes/your-theme/patterns/ --fix
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --fix
 
 # Fix and save per-file diff logs + a summary to docs/pattern-logs/<date>/
-wp pattern validate web/app/themes/your-theme/patterns/ --fix --log
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --fix --log
 
 # Override the log output directory
-wp pattern validate web/app/themes/your-theme/patterns/ --fix --log --log-dir=/tmp/pattern-logs
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/ --fix --log --log-dir=/tmp/pattern-logs
 
 # Validate a single file
-wp pattern validate web/app/themes/your-theme/patterns/hero.php --fix
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/hero.php --fix
 
 # Validate a subdirectory only
-wp pattern validate web/app/themes/your-theme/patterns/woocommerce/ --fix
+wp imagewize pattern-validate web/app/themes/your-theme/patterns/woocommerce/ --fix
 ```
 
 If `wp-cli-pattern-validate.php` is **not** auto-loaded via `wp-cli.yml`, pass it explicitly:
 
 ```bash
-wp --require=wp-cli-pattern-validate.php pattern validate web/app/themes/your-theme/patterns/
+wp --require=wp-cli-pattern-validate.php imagewize pattern-validate web/app/themes/your-theme/patterns/
 ```
 
 **Via wp-ops:** runnable straight from the wp-ops checkout (no copying required) — set `WP_SITE_DIR` to your Bedrock site root: `WP_SITE_DIR=/path/to/site wp-ops bedrock wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix`. See [`wp-ops`](../../../README.md).

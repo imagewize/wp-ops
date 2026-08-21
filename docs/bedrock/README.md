@@ -10,4 +10,4 @@ Test an in-development plugin or theme inside a Bedrock site before tagging a re
 
 ### [`wp-cli-config/`](wp-cli-config/)
 
-Standard `wp-cli.yml` for Bedrock (sets `path: web/wp` so `--path` is never needed) plus a custom `wp pattern validate` command that round-trips block pattern files through WordPress's own parser to enforce canonical formatting.
+Standard `wp-cli.yml` for Bedrock (sets `path: web/wp` so `--path` is never needed) plus a custom `wp imagewize pattern-validate` command that round-trips block pattern files through WordPress's own parser to enforce canonical formatting.

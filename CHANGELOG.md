@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-08-21
+
+### Changed
+
+- **`wp pattern validate` is now `wp imagewize pattern-validate`.** The
+  command claimed an unprefixed global WP-CLI namespace (`pattern`), which is
+  generic enough that publishing it as a standalone WP-CLI package would risk
+  colliding with someone else's command. Renamed ahead of publishing rather
+  than after, since a post-release rename is a breaking change. Updated
+  everywhere the old name was documented: `README.md`, `CLAUDE.md`,
+  `docs/bedrock/README.md`, `docs/bedrock/wp-cli-config/README.md`, and
+  `docs/category-organization.md`.
+
 ## [5.7.1] - 2026-08-21
 
 ### Fixed

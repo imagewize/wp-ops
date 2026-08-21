@@ -1,6 +1,7 @@
 # Publishing wp-ops WordPress tools as a WP-CLI package
 
-**Status:** evaluation, nothing implemented.
+**Status:** step 1 of 3 shipped (the command is namespaced); extraction and
+publishing not started.
 **Date:** 2026-08-21.
 **Supersedes:** the Mistral draft of the same filename, whose compatibility
 table was largely fabricated. [Corrections](#corrections-to-the-previous-draft)
@@ -106,17 +107,13 @@ one command as a proof of concept.
 a `composer.json` with `"type": "wp-cli-package"`, a repo, and a tag. That is
 the whole job.
 
-One thing to fix first. The command currently claims an unprefixed global
-namespace:
-
-```php
-WP_CLI::add_command( 'pattern validate', ... );   // line 401
-```
-
-`pattern` is generic enough that a published package squatting it will collide
-with something. Namespace it before publishing — `wp imagewize pattern-validate`
-or similar. Renaming after release is a breaking change; renaming now costs one
-line.
+**Namespaced.** The command claimed an unprefixed global namespace —
+`WP_CLI::add_command( 'pattern validate', ... )` — and `pattern` is generic
+enough that a published package squatting it would collide with something.
+It's now `wp imagewize pattern-validate`, updated everywhere the old name was
+documented (`README.md`, `CLAUDE.md`, `docs/bedrock/`,
+`docs/category-organization.md`). Done ahead of publishing rather than after,
+since renaming post-release is a breaking change.
 
 ---
 
@@ -148,8 +145,8 @@ standalone scripts, never as a rewrite of them.
 
 **Ship one package, measure, then decide.**
 
-1. Rename `pattern validate` to a namespaced command. One line, do it
-   regardless of whether anything is published.
+1. ~~Rename `pattern validate` to a namespaced command.~~ Done — it's now
+   `wp imagewize pattern-validate`.
 2. Extract `wp-cli-pattern-validate.php` into its own small repo with a
    `wp-cli-package` `composer.json`. It works unmodified.
 3. Publish, and see whether it gets installs. If it does, the next candidate
@@ -171,7 +168,7 @@ at lower cost.
 
 | Task | Estimate |
 | --- | --- |
-| Namespace the `pattern validate` command | 15 min |
+| ~~Namespace the `pattern validate` command~~ | ~~15 min~~ done |
 | New repo, `composer.json`, README, tag | 2–3 hrs |
 | Optional: Behat harness via `wp scaffold package-tests` | 4–8 hrs |
 | **Realistic total for the proof of concept** | **under a day** |
