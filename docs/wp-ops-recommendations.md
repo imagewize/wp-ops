@@ -1,10 +1,38 @@
 # WP-Ops Recommendations: Real Gaps
 
-> **Status:** Draft — 2026-08-03
+> **Status:** Updated 2026-08-22 — most gaps below are now closed. See [What shipped since the draft](#what-shipped-since-the-draft).
 > **Scope:** What is actually missing from wp-ops, based on comparing its catalog
 > against `~/code/imagewize.com/scripts` and `~/code/seo-strategy/tools/scripts`.
 > **Related:** [mcp-server-recommendations.md](mcp-server-recommendations.md) (MCP roadmap),
-> [go-mcp-parity.md](go-mcp-parity.md) (why there are three interfaces)
+> [go-mcp-parity.md](go-mcp-parity.md) (why there are three interfaces),
+> [category-organization.md](category-organization.md) (domain grouping and @platform),
+> [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md) (Path A shipped),
+> [wp-cli-package-evaluation.md](wp-cli-package-evaluation.md) (one WP-CLI package shipped),
+> [third-party-extensions.md](third-party-extensions.md) (extension mechanism design)
+
+---
+
+## What shipped since the draft
+
+This document was written 2026-08-03. The following closed gaps between then and
+2026-08-22:
+
+| Gap | Shipped | How | Date |
+|-----|---------|-----|------|
+| Gap 2 (`db-pull` ergonomics) | ✅ | `scripts/backup/db-pull.sh` added as positional wrapper | 2026-08-03 |
+| Gap 4 (`url_audit`) | ✅ | MCP `url_audit` tool in `mcp-server/src/tools/urlAudit.ts` | 2026-08-03 |
+| Gap 5 "Take" rows | ✅ | Four scripts imported and annotated | 2026-08-03 |
+| Gap 6a (nine `-e`-style playbooks) | ✅ | Generic positional-arg translator (`BuildPlaybookArgs`) | 2026-08-03 |
+| Gap 6 (`db-backup` for non-Trellis) | ✅ | `scripts/backup/wp-db-backup.sh` — first `@platform wordpress` backup command | 2026-08-05 |
+| Gap 7 (dry-run coverage) | ✅ | `--dry-run` for variations, confirmation for trellis-updater | 2026-08-03 |
+| Option C & D from category-organization | ✅ | Domain grouping + `@platform` tag on all 75 commands | 2026-08-05 |
+| `trellis-ops` plugin (Path A) | ✅ | Homebrew symlink `trellis-ops` → `wp-ops` | 2026-08-21 |
+| WP-CLI package | ✅ | `imagewize/wp-cli-pattern-validate` v1.0.0 on GitHub | 2026-08-21 |
+
+**Result:** `wp-ops list --platform wordpress` now returns 18 commands (including
+`wp-db-backup`) that work against Valet, Herd, cPanel, or any plain WordPress install.
+The original coverage hole that prompted Step 6 of category-organization — zero backup
+commands for non-Trellis sites — is closed.
 
 ---
 
@@ -23,9 +51,11 @@ Usage: wp-ops scripts/backup/db-backup [args...]
 Back up a Trellis site database with WP-CLI, gzip it, and prune backups older than 30 days
 ```
 
-Bare-basename resolution across the whole catalog already exists in both CLIs —
-bash `wp-ops:2262-2281`, Go `go/cmd/root.go:95-104` — with ambiguity detection and
-did-you-mean suggestions. Every script the earlier draft proposed annotating
+Bare-basename resolution across the whole catalog already exists — Go
+`go/cmd/root.go:95-104` (`catalog.FindByBasename`) — with ambiguity detection and
+did-you-mean suggestions. (Verified 2026-08-03 against both CLIs; the bash CLI
+was deleted 2026-08-04, v4.0.0 — see [go-mcp-parity.md](go-mcp-parity.md).)
+Every script the earlier draft proposed annotating
 (`db-backup`, `site-backup`, `batch-resize`, `jpg-to-webp`,
 `make-square-webp`, `page-creation`) already resolves by short name.
 
@@ -247,11 +277,12 @@ working unchanged — if the first raw arg already starts with `-` (i.e. `-e
 key=value ...`), nothing is translated, so no existing invocation (docs,
 muscle memory, other tooling) breaks.
 
-Implemented once in each CLI: `build_playbook_args()` in `wp-ops` (bash),
-`BuildPlaybookArgs()` in `go/internal/exec/ansible.go` (Go), both called from
-the same place the raw args used to be passed straight to
-`ansible-playbook`/`RunPlaybook`. Covers all nine playbooks (and any future
-`.yml` command with manifest args) from one change per CLI, not nine. Note
+Implemented once in each CLI at the time: `build_playbook_args()` in `wp-ops`
+(bash — deleted 2026-08-04, v4.0.0, see [go-mcp-parity.md](go-mcp-parity.md)),
+`BuildPlaybookArgs()` in `go/internal/exec/ansible.go` (Go, still current).
+Both were called from the same place the raw args used to be passed straight
+to `ansible-playbook`/`RunPlaybook`. Covered all nine playbooks (and any
+future `.yml` command with manifest args) from one change per CLI, not nine. Note
 the short command names above (`database-backup`, `security-scan`, ...)
 already worked before this — bare-basename resolution has always resolved
 them to their full catalog key (see "The verbose-path premise is false"); a
@@ -320,14 +351,25 @@ tool (`mcp-server/src/tools/dbBackup.ts`) already used. `wp-ops` and the Go
 CLI both read `runs_on`/`requires` off the manifest already (bash's
 `is_server_side_command()` checks `@runs` before its hardcoded command
 lists), so flipping the header line was sufficient in both places once the
-now-stale command lists (`BACKUP_COMMANDS`/`SERVER_SIDE_COMMANDS` in
-`wp-ops`, `backupCommands` in `go/cmd/serverside.go`,
-`serverSideFallback` in `go/internal/catalog/gen/main.go`) were cleaned up
-and `catalog.json` regenerated. `go/scripts/parity-check.sh` passes 8/8.
+now-stale command lists were cleaned up and `catalog.json` regenerated.
+`go/scripts/parity-check.sh` passes 8/8.
+
+**Gap 6 extended: `wp-db-backup.sh` for non-Trellis sites** — the above
+fix addressed the Trellis-shaped `db-backup`, but left a coverage hole:
+no backup command worked for Valet, Herd, cPanel, or plain WordPress. Closed
+2026-08-05 by `scripts/backup/wp-db-backup.sh` (Step 6 of
+[category-organization.md](category-organization.md)):
+
+- Layout detection: probes for `wp-load.php`, then `web/wp`, then `wordpress/`
+- Site URL from `wp option get siteurl`, not `wordpress_sites.yml`
+- No `/srv/www`, `/srv/backups`, or `web@` assumptions
+- `--host` requires explicit `--site-path`; `--wp-bin`/`--php-bin` support
+- `@platform wordpress` — the first backup command available to non-Trellis sites
 
 The remaining 6a playbooks and 6b scripts are lower-value repeats of the same
-fix — worth doing, but `db-pull.sh` and (once built) `db-backup.sh` between
-them cover the two highest-frequency operations already.
+fix — worth doing, but `db-pull.sh` and `db-backup.sh` between them now cover
+the two highest-frequency operations for Trellis sites, and `wp-db-backup.sh`
+covers the same operation for non-Trellis sites.
 
 ---
 
@@ -400,26 +442,57 @@ so the new flag surfaces in `--help` and the interactive picker.
 
 ## Suggested order
 
+All eight numbered items below are now **Done** as of 2026-08-22. This section
+is kept as a historical record of the original prioritization.
+
 1. **Gap 3** — delete the stale seo-strategy monitoring fork. Costs nothing, stops
    the divergence that produced the false "missing tools" list.
-2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value. **Done.**
-3. **Gap 5 "Take" rows** — four scripts, mechanical work. **Done (2026-08-03).**
+2. **Gap 2** — `scripts/backup/db-pull.sh`. Highest daily value. **Done** (2026-08-03).
+3. **Gap 5 "Take" rows** — four scripts, mechanical work. **Done** (2026-08-03).
 4. **Gap 6, `db-backup`** — positional wrapper + fixes the `/srv/backups`
-   permission dead end. Same shape and value as Gap 2. **Done.**
-5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap. **Done.**
-6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to. **Done.**
-7. **Gap 6, remaining items** — 6a (the nine `-e`-style playbooks) **done**,
+   permission dead end. Same shape and value as Gap 2. **Done** (2026-08-03).
+5. **Gap 4** — `url_audit` MCP tool, per the MCP roadmap. **Done** (2026-08-03).
+6. **Gap 1** — rename `run-monitoring.sh`, or consciously decide not to. **Done** (2026-08-03).
+7. **Gap 6, remaining items** — 6a (the nine `-e`-style playbooks) **Done** (2026-08-03),
    via a generic positional-arg translator rather than nine bespoke scripts.
-   6b (four unwrapped server scripts) remains — different shape, since there's
-   no underlying playbook to translate against; needs either real wrapper
-   scripts or M5's `--on <env>` SSH dispatch.
+   6b (four unwrapped server scripts) **Done** (2026-08-03) — same translator
+   handles `@runs server` scripts that declare `@arg` names.
 8. **Gap 7** — `--dry-run` for `create-product-variations.sh`; a confirmation
-   prompt for `trellis-updater.sh`. Small, isolated fixes. **Done.**
+   prompt for `trellis-updater.sh`. Small, isolated fixes. **Done** (2026-08-03).
 
 Deliberately not queued: `@key` or any new manifest directive (premise false, and
 per [go-mcp-parity.md](go-mcp-parity.md) any new directive must land in both
 parsers at once); `db-replace` (a wrapper around `db-backup` + `db-pull` that is
 only worth writing once `db-pull` exists and proves it needs one).
+
+---
+
+## Current status: 2026-08-22
+
+**All gaps named in this document are now closed.** The eight-item suggested
+order above shipped between 2026-08-03 and 2026-08-05, plus two additional
+milestones landed since the original draft:
+
+- `@platform` tagging on all 75 commands (trellis: 27, wordpress: 18, any: 30)
+- `wp-db-backup.sh` — first `@platform wordpress` backup command
+- `trellis-ops` plugin shim via Homebrew
+- `imagewize/wp-cli-pattern-validate` v1.0.0 on GitHub
+
+**What remains open elsewhere:**
+
+- **Path B from [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md)**
+  — packaging the monitoring playbooks as a Galaxy role (`imagewize/trellis-wp-monitoring`)
+  remains an evaluation. The novel niche (Nginx log analysis) still has no published
+  Trellis extension.
+- **[third-party-extensions.md](third-party-extensions.md)** — the extension
+  mechanism design itself is still a proposal with no implementation.
+- **Optional follow-ups:** listing `imagewize/wp-cli-pattern-validate` on the
+  WP-CLI package index; measuring installs.
+
+This document is now primarily historical. For the current roadmap, see:
+[category-organization.md](category-organization.md),
+[trellis-extensions-evaluation.md](trellis-extensions-evaluation.md),
+[wp-cli-package-evaluation.md](wp-cli-package-evaluation.md).
 
 ---
 
