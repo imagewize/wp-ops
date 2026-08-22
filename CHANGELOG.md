@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - 2026-08-22
+
+### Added
+
+- **`scripts/local-sandbox/updraft-to-valet.sh` — bootstrap a local Valet site
+  from UpdraftPlus backup zips.** Closes #184. Covers the recurring
+  "handed a set of backup zips before you have SSH or hosting access"
+  onboarding pattern: matches the `plugins`/`themes`/`uploads[+N]`/`others`/`db`
+  files in a directory by their shared UpdraftPlus hash, extracts them into
+  `wp-content/` (detecting per-zip whether entries carry a `wp-content/`
+  prefix, since that has varied across UpdraftPlus versions), downloads a
+  matching WP core with `--skip-content`, links it with Valet, creates the
+  local database, and imports the dump. The pre-import URL is read straight
+  off the compressed dump's `siteurl` row rather than hardcoded, then
+  `search-replace`d for `https://<site-slug>.test`. New `@platform wordpress`
+  command (not Trellis- or Bedrock-specific) and new `scripts/local-sandbox/`
+  category, documented in `scripts/README.md`; `wp-ops doctor` now also checks
+  for `valet` on PATH.
+
 ## [5.8.0] - 2026-08-21
 
 ### Changed
