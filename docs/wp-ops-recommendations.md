@@ -481,9 +481,13 @@ milestones landed since the original draft:
 **What remains open elsewhere:**
 
 - **Path B from [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md)**
-  — packaging the monitoring playbooks as a Galaxy role (`imagewize/trellis-wp-monitoring`)
-  remains an evaluation. The novel niche (Nginx log analysis) still has no published
-  Trellis extension.
+  — the monitoring role is built at
+  [imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring)
+  (created 2026-08-21) but not yet publishable: Galaxy requires an approved
+  `imagewize` namespace, requested on the
+  [Ansible Forum](https://forum.ansible.com/t/namespace-imagewize/46206) 2026-08-21
+  and still pending as of 2026-08-22. The novel niche (Nginx log analysis) still
+  has no published Trellis extension — nothing to do here but wait on that thread.
 - **[third-party-extensions.md](third-party-extensions.md)** — the extension
   mechanism design itself is still a proposal with no implementation.
 - **Optional follow-ups:** listing `imagewize/wp-cli-pattern-validate` on the
