@@ -45,6 +45,7 @@ var doctorSections = []doctorSection{
 		{"ansible-playbook", "Trellis playbooks (trellis/)", false},
 		{"trellis", "Trellis CLI", false},
 		{"composer", "Bedrock dependency management", false},
+		{"valet", "Local sandboxes (scripts/local-sandbox/)", false},
 	}},
 	{"Images & patterns", []binCheck{
 		{"magick", "batch resize, trim/center screenshots", false},
