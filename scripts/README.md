@@ -9,6 +9,7 @@ This directory contains utility scripts organized into functional areas:
 - **GitHub Integration** - AI-powered pull request creation, manual GitHub release asset uploads, and repository traffic analytics
 - **WordPress Management** - Plugin and theme release automation, WordPress.org SVN deployment, file synchronization
 - **WooCommerce** - Product variation bulk creation
+- **Local Sandboxes** - Bootstrap a local Valet WordPress site from a directory of UpdraftPlus backup zips
 - **Image Utilities** - WebP conversion optimized for WordPress and Facebook OG images, square-canvas padding, and Openverse (CC-licensed) image search/download
 - **Pattern Screenshots** - Playwright/sharp toolkit for screenshotting WordPress block patterns and converting them to WebP
 - **Git Utilities** - Quick access to recent commit history
@@ -37,6 +38,8 @@ scripts/
 │   ├── openverse_download.py   # Download Openverse image URLs, optionally converting to WebP
 │   ├── svg-to-jpg.sh           # Render design SVGs to JPG via librsvg (native size or forced)
 │   └── svg-to-png.sh           # Render design SVGs to PNG via librsvg (lossless, best for text)
+├── local-sandbox/                # Bootstrap local dev sites from off-host backups
+│   └── updraft-to-valet.sh     # Extract UpdraftPlus zips into a Valet-linked WP site
 ├── misc/                        # Miscellaneous utilities
 │   ├── convert-screenshot-for-claude.sh  # Convert PNG screenshots to JPEG for Claude Code compatibility
 │   ├── find-and-replace-files.sh     # Batch find and replace files across directory trees
@@ -500,6 +503,53 @@ sudo apt-get install imagemagick  # Ubuntu/Debian
 ```
 JPEG file created: .playwright/screenshots/test-for-claude.jpg
 ```
+
+---
+
+## Local Sandboxes
+
+### updraft-to-valet.sh
+
+Bootstraps a local [Laravel Valet](https://laravel.com/docs/valet)-linked WordPress site from a directory of UpdraftPlus backup zips (`db`/`plugins`/`themes`/`uploads[+N]`) — no SSH or hosting access needed. For the recurring "handed a set of backup zips before you have server access" pattern: a client onboarding, or evaluating a prospective site.
+
+Local-only, plain WordPress (`@platform wordpress`) — not Trellis- or Bedrock-specific, and it doesn't use any of the Trellis-project helpers other backup scripts rely on.
+
+#### What it does
+
+1. Matches the UpdraftPlus files in the directory by their shared hash (`backup_<date>_<site>_<hash>-<type>.zip/gz`) so a directory holding more than one backup run isn't mixed together
+2. Extracts `plugins`/`themes`/`uploads[+N]`/`others` into `wp-content/` — detecting per-zip whether entries already carry a `wp-content/` prefix, since that has varied across UpdraftPlus versions
+3. Downloads a matching WordPress core with `--skip-content`, so it never overwrites the restored `wp-content/`
+4. `valet link` (+ optional `--secure`)
+5. Creates the local database and `wp-config.php`
+6. Auto-detects the old site URL from the dump's `siteurl` row (grepped straight off the compressed dump — never hardcoded) and imports the database
+7. `wp search-replace`s the old URL for `https://<site-slug>.test`, then flushes rewrites
+8. Optional `--reset-password <user>` for local wp-admin testing
+
+#### Requirements
+
+- WP-CLI, [Valet](https://laravel.com/docs/valet), `unzip`, `gzip`
+- The WordPress core version to install — the DB dump only tells you `siteurl`/`ABSPATH`, not the core version, so `--wp-version` is required and explicit rather than auto-detected
+
+#### Usage
+
+```bash
+# Minimal: WP version is the only required flag
+./scripts/local-sandbox/updraft-to-valet.sh ~/Downloads/client-backup client --wp-version 6.7.1
+
+# Secure the Valet link and set a known local wp-admin password
+./scripts/local-sandbox/updraft-to-valet.sh ~/Downloads/client-backup client \
+  --wp-version 6.6.2 --secure --reset-password admin
+
+# Override auto-detection or local DB credentials
+./scripts/local-sandbox/updraft-to-valet.sh ~/Downloads/client-backup client --wp-version 6.7.1 \
+  --old-url https://old-host.example.com --db-user root --db-pass secret
+```
+
+Via wp-ops: `wp-ops updraft-to-valet ~/Downloads/client-backup client --wp-version 6.7.1`.
+
+#### Not handled
+
+Any local PHP-FPM/MySQL environment repair (e.g. two Homebrew PHP versions' default pools colliding on the same port) is a one-time machine setup issue, not part of this repeatable workflow — fix that separately.
 
 ---
 
