@@ -302,5 +302,6 @@ Before running backup operations on production:
 ### Git Commit and PR Conventions
 
 - **Atomic commits**: Each commit should represent a single logical change. Do not bundle unrelated changes in one commit. This makes history easier to review and revert when needed.
+- **Direct pushes to `main`**: Docs-only changes (this file, `docs/`, READMEs) may be committed and pushed straight to `main` without a branch or PR — this repo's branch protection allows the owner to bypass the PR requirement, and that bypass is intentional for docs. Reserve branches and PRs for changes to scripts, playbooks, or the Go/MCP CLIs — anything that ships a new version or behavior worth reviewing.
 - **No AI attribution in commits**: do not add `Co-Authored-By` lines for Claude or Mistral, a `Claude-Session` trailer, or any other tool reference. Commit messages carry the change and its reasoning, nothing else. This matches the PR-description rule below.
 - **PR descriptions**: Pull request descriptions should be professional and focused on the changes. No mention of Claude, Mistral, Codex, or any AI assistant anywhere in the description — not as a footer, and not in prose. This holds even when the change itself concerns AI tooling: describe it neutrally ("the contributor guide", "commit-message conventions"). Referring to a changed file by its real path is fine.
