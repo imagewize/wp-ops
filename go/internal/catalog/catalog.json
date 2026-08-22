@@ -910,6 +910,119 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/local-sandbox/updraft-to-valet",
+    "description": "Bootstrap a local Valet WordPress site from a directory of UpdraftPlus backup zips",
+    "script_path": "scripts/local-sandbox/updraft-to-valet.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "wp",
+      "valet",
+      "unzip",
+      "gzip"
+    ],
+    "doc": "scripts/README.md",
+    "args": [
+      {
+        "name": "backup-dir",
+        "required_raw": "required",
+        "required": true,
+        "default": "~/Downloads/client-backup",
+        "description": "Directory containing the UpdraftPlus zip/gz files",
+        "raw": "backup-dir        required  {~/Downloads/client-backup}  Directory containing the UpdraftPlus zip/gz files"
+      },
+      {
+        "name": "site-slug",
+        "required_raw": "required",
+        "required": true,
+        "default": "client",
+        "description": "Site slug — used for ~/code/\u003cslug\u003e, the Valet link, and the wp_\u003cslug\u003e DB name",
+        "raw": "site-slug         required  {client}  Site slug — used for ~/code/\u003cslug\u003e, the Valet link, and the wp_\u003cslug\u003e DB name"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--wp-version",
+        "required_raw": "required",
+        "required": true,
+        "default": "6.7.1",
+        "description": "WordPress core version to install",
+        "raw": "--wp-version      required  {6.7.1}  WordPress core version to install"
+      },
+      {
+        "name": "--dest",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code/client",
+        "description": "Site directory (default: ~/code/\u003csite-slug\u003e)",
+        "raw": "--dest            optional  {~/code/client}  Site directory (default: ~/code/\u003csite-slug\u003e)"
+      },
+      {
+        "name": "--secure",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Run 'valet secure' after linking",
+        "raw": "--secure          optional  {}  Run 'valet secure' after linking"
+      },
+      {
+        "name": "--old-url",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://old-host.example.com",
+        "description": "Override the URL auto-detected from the dump's siteurl row",
+        "raw": "--old-url         optional  {https://old-host.example.com}  Override the URL auto-detected from the dump's siteurl row"
+      },
+      {
+        "name": "--db-user",
+        "required_raw": "optional",
+        "required": false,
+        "default": "root",
+        "description": "Local MySQL user (default: root)",
+        "raw": "--db-user         optional  {root}  Local MySQL user (default: root)"
+      },
+      {
+        "name": "--db-pass",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Local MySQL password (default: empty)",
+        "raw": "--db-pass         optional  {}  Local MySQL password (default: empty)"
+      },
+      {
+        "name": "--db-host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "localhost",
+        "description": "Local MySQL host (default: localhost)",
+        "raw": "--db-host         optional  {localhost}  Local MySQL host (default: localhost)"
+      },
+      {
+        "name": "--reset-password",
+        "required_raw": "optional",
+        "required": false,
+        "default": "admin",
+        "description": "wp-admin username to set a known local password for",
+        "raw": "--reset-password  optional  {admin}  wp-admin username to set a known local password for"
+      },
+      {
+        "name": "--password",
+        "required_raw": "optional",
+        "required": false,
+        "default": "password",
+        "description": "Password to use with --reset-password (default: password)",
+        "raw": "--password        optional  {password}  Password to use with --reset-password (default: password)"
+      }
+    ],
+    "examples": [
+      "wp-ops updraft-to-valet ~/Downloads/client-backup client --wp-version 6.7.1",
+      "wp-ops updraft-to-valet ~/Downloads/client-backup client --wp-version 6.6.2 --secure --reset-password admin"
+    ],
+    "manifest_category": "misc",
+    "platform": "wordpress",
+    "display_category": "misc",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/misc/convert-screenshot-for-claude",
     "description": "Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)",
     "script_path": "scripts/misc/convert-screenshot-for-claude.sh",
