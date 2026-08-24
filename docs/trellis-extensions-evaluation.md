@@ -1,13 +1,11 @@
 # Publishing wp-ops Trellis tools as Trellis extensions
 
 **Status:** Path A **shipped** (see [Path A](#path-a-a-trellis-ops-plugin-shim));
-Path B **built, blocked on Galaxy namespace approval** — the role lives at
-[imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring),
-but publishing it to Galaxy needs the `imagewize` namespace, requested on the
-[Ansible Forum](https://forum.ansible.com/t/namespace-imagewize/46206)
-2026-08-21 and still pending as of 2026-08-22. The trellis-sync issues are
-closed and the repo is archived.
-**Date:** 2026-08-21, updated 2026-08-22.
+Path B **shipped** — `imagewize.trellis_wp_monitoring` is published on
+[Ansible Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis_wp_monitoring/)
+at v1.0.0, imported 2026-08-25 once the `imagewize` namespace was approved.
+The trellis-sync issues are closed and the repo is archived.
+**Date:** 2026-08-21, updated 2026-08-25.
 
 What this repo already has that the Trellis ecosystem wants, which of the two
 extension mechanisms fits it, and what it would cost. The mechanics below were
@@ -340,20 +338,17 @@ and it fragments the entry point. One plugin, one door.
 
 For reaching Trellis users who don't want a Go binary at all.
 
-**Status: built, blocked on namespace approval, not an evaluation anymore.**
-The monitoring playbooks (`quick-status`, `traffic-report`, `security-scan`,
-`setup-monitoring`) are ported to role shape at
-[imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring)
-(created 2026-08-21) — `tasks/`, `defaults/`, `meta/`, `templates/`, `files/`
-all present, not just a scaffold. What's blocking publication isn't the port,
-it's Galaxy's namespace system: publishing a role requires an approved
-namespace matching (or mapped to) the GitHub org, and `imagewize` doesn't
-have one yet. Requested on the
-[Ansible Forum](https://forum.ansible.com/t/namespace-imagewize/46206)
-2026-08-21 — description "Ansible roles for WordPress, Trellis, and server
-management," admin `jasperf` (Ansible and GitHub) — and still pending as of
-2026-08-22. Nothing to do here but wait on that thread; re-check it before
-starting any further Galaxy work.
+**Status: shipped.** The monitoring playbooks (`quick-status`,
+`traffic-report`, `security-scan`, `setup-monitoring`) are ported to role
+shape at [imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring)
+(created 2026-08-21) and published on
+[Ansible Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis_wp_monitoring/)
+as `imagewize.trellis_wp_monitoring` v1.0.0. The `imagewize` namespace,
+requested on the [Ansible Forum](https://forum.ansible.com/t/namespace-imagewize/46206)
+2026-08-21, was approved and the role imported 2026-08-25 —
+`ansible-galaxy role import` cloned `main` at the `v1.0.0` tag, ran
+`ansible-lint`, and saved role id 43347 clean on the first attempt. Install
+with `ansible-galaxy role install imagewize.trellis_wp_monitoring`.
 
 `trellis/backup/*.yml` are standalone playbooks, not a role, so porting those
 too (if pursued per [Recommendation](#recommendation) item 3) would be a real
@@ -375,7 +370,7 @@ Two things were checked before committing:
   page has, so it's acceptable — but it's documented, not assumed.
 
 Galaxy roles are the channel that's actually indexed on roots.io. Path A gets
-better UX; Path B gets discovery — once the namespace clears.
+better UX; Path B gets discovery.
 
 ---
 
@@ -464,10 +459,9 @@ imagewize/trellis-wp-monitoring   # nginx log analysis + cron install — create
 ```
 
 The backup slot is [trellis-sync](#the-trellis-sync-repo), which already holds
-the name, the topics, and 28 stars. The monitoring repo already
-[exists](https://github.com/imagewize/trellis-wp-monitoring) and is built out;
-what's outstanding is Galaxy publication, gated on the `imagewize` namespace
-request (see [Path B](#path-b-an-ansible-role-on-galaxy)), not the repo itself.
+the name, the topics, and 28 stars. The monitoring repo
+[exists](https://github.com/imagewize/trellis-wp-monitoring), is built out,
+and is published on Galaxy (see [Path B](#path-b-an-ansible-role-on-galaxy)).
 
 Keep the playbooks in wp-ops as the source of truth and generate/sync the role
 repos, rather than moving them. The Go catalog indexes `trellis/backup/*.yml`
@@ -487,15 +481,14 @@ rather than announcing a suite.
 `custom_block` in `.goreleaser.yml`, no new repo, no maintenance surface. This
 was the highest ratio of reach to effort anywhere in either evaluation document.
 
-**2. ~~Then package the monitoring playbooks as a Galaxy role.~~ Built,
-blocked on namespace approval.** Not the backup ones. Backup is a crowded
-field where we'd be the fourth entrant offering a better version of a solved
-problem; Nginx log analysis and traffic reporting appear to have no published
-Trellis extension at all. If the goal is attention, ship the thing nobody
-else has. The role itself is done at
-[imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring);
-publishing it to Galaxy is waiting on the `imagewize` namespace request (filed
-2026-08-21, pending as of 2026-08-22) — see
+**2. ~~Then package the monitoring playbooks as a Galaxy role.~~ Done.** Not
+the backup ones. Backup is a crowded field where we'd be the fourth entrant
+offering a better version of a solved problem; Nginx log analysis and traffic
+reporting appear to have no published Trellis extension at all. If the goal
+is attention, ship the thing nobody else has. The role is published at
+[imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring)
+and on [Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis_wp_monitoring/)
+as `imagewize.trellis_wp_monitoring` v1.0.0 — see
 [Path B](#path-b-an-ansible-role-on-galaxy).
 
 **3. Backup as a Galaxy role is a maybe, later.** The quality gap over the

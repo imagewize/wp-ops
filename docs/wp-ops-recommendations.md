@@ -467,27 +467,28 @@ only worth writing once `db-pull` exists and proves it needs one).
 
 ---
 
-## Current status: 2026-08-22
+## Current status: 2026-08-25
 
 **All gaps named in this document are now closed.** The eight-item suggested
-order above shipped between 2026-08-03 and 2026-08-05, plus two additional
+order above shipped between 2026-08-03 and 2026-08-05, plus three additional
 milestones landed since the original draft:
 
 - `@platform` tagging on all 75 commands (trellis: 27, wordpress: 18, any: 30)
 - `wp-db-backup.sh` — first `@platform wordpress` backup command
 - `trellis-ops` plugin shim via Homebrew
 - `imagewize/wp-cli-pattern-validate` v1.0.0 on GitHub
+- `imagewize.trellis_wp_monitoring` v1.0.0 on Ansible Galaxy
 
 **What remains open elsewhere:**
 
 - **Path B from [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md)**
-  — the monitoring role is built at
+  — shipped. The monitoring role at
   [imagewize/trellis-wp-monitoring](https://github.com/imagewize/trellis-wp-monitoring)
-  (created 2026-08-21) but not yet publishable: Galaxy requires an approved
-  `imagewize` namespace, requested on the
-  [Ansible Forum](https://forum.ansible.com/t/namespace-imagewize/46206) 2026-08-21
-  and still pending as of 2026-08-22. The novel niche (Nginx log analysis) still
-  has no published Trellis extension — nothing to do here but wait on that thread.
+  is published on
+  [Ansible Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis_wp_monitoring/)
+  as `imagewize.trellis_wp_monitoring` v1.0.0, imported 2026-08-25 once the
+  `imagewize` namespace request cleared. The novel niche (Nginx log analysis)
+  now has a published Trellis extension where none existed before.
 - **[third-party-extensions.md](third-party-extensions.md)** — the extension
   mechanism design itself is still a proposal with no implementation.
 - **Optional follow-ups:** listing `imagewize/wp-cli-pattern-validate` on the
