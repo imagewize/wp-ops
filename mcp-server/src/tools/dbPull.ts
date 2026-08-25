@@ -47,6 +47,20 @@ export interface DbPullResult {
 // string: read both URLs, back up dev first, stream the remote export straight
 // into `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
 // either side), search-replace, optional multisite domain fixup, flush cache.
+// Both URLs are read from `wp option get siteurl` and then used as a search-replace
+// replacement and, for multisite, interpolated into an UPDATE on wp_blogs.domain. If a
+// wrapper ever prefixes that stdout again, a malformed value would be written across the
+// whole database before anyone noticed — which is exactly what happened once. Fail before
+// touching data instead.
+function assertSiteUrl(url: string, env: string): string {
+  if (!/^https?:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(url)) {
+    throw new Error(
+      `Refusing to continue: "siteurl" for "${env}" is not a bare URL. Got: ${JSON.stringify(url)}`
+    );
+  }
+  return url;
+}
+
 export async function runDbPull(
   site: string,
   devEntry: EnvEntry,
@@ -76,8 +90,8 @@ export async function runDbPull(
   const fromPhpBin = resolvePhpBin(fromEntry);
   const fromWpCommand = fromPhpBin ? [fromPhpBin, fromWpBin] : [fromWpBin];
 
-  const prodUrl = (await runWpCliRaw(fromEntry, ["option", "get", "siteurl"])).stdout.trim();
-  const devUrl = (await runWpCliRaw(devEntry, ["option", "get", "siteurl"])).stdout.trim();
+  const prodUrl = assertSiteUrl((await runWpCliRaw(fromEntry, ["option", "get", "siteurl"])).stdout.trim(), fromEnv);
+  const devUrl = assertSiteUrl((await runWpCliRaw(devEntry, ["option", "get", "siteurl"])).stdout.trim(), "development");
 
   // Back up dev's current DB before overwriting it — same safety step db-pull.sh
   // takes, reusing the db_backup tool's own implementation rather than
