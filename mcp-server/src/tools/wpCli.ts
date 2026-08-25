@@ -83,6 +83,19 @@ function runRemote(sshHost: string, args: string[], remotePath: string, wpBin: s
   });
 }
 
+// `trellis vm shell` prints a "Running command => …" banner to stdout before the wrapped
+// command's own output. Callers that parse stdout programmatically would otherwise treat
+// it as part of the value: dbPull read `option get siteurl` this way, so the banner ended
+// up in the search-replace replacement and in `hostOf(devUrl)`, which wrote it into
+// wp_blogs.domain and 61 content rows on the demo site.
+//
+// Only the first line is dropped, and only when it is the banner — WordPress content can
+// legitimately begin with "Running command =>" (post revisions on that same demo did,
+// from an earlier round of this bug).
+function stripVmBanner(stdout: string): string {
+  return stdout.replace(/^Running command => [^\n]*\n?/, "");
+}
+
 // Runs wp inside the Trellis dev VM via `trellis vm shell --workdir <dir> -- wp ...`.
 // `trellis` must run from the Trellis project dir (it locates the project from cwd), so
 // we set cwd rather than relying on the caller's working directory. Tokens are passed as
@@ -100,7 +113,7 @@ function runVm(trellisDir: string, workdir: string, wpPath: string, args: string
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr += d));
     child.on("error", reject);
-    child.on("close", (code) => resolve({ stdout, stderr, code: code ?? 1 }));
+    child.on("close", (code) => resolve({ stdout: stripVmBanner(stdout), stderr, code: code ?? 1 }));
   });
 }
 
