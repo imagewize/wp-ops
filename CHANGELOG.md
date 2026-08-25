@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.1] - 2026-08-25
+
+### Fixed
+
+- **`db_pull` wrote a command banner into the database instead of the dev URL.**
+  `trellis vm shell` prints a `Running command => …` banner to stdout ahead of
+  the wrapped command's own output, and `runVm` captured it as part of the
+  result. Human-readable callers just showed a noisy extra line, but `dbPull`
+  parses that stdout: it read `wp option get siteurl` for the development
+  environment, so `devUrl` became the banner *plus* the URL. That value was then
+  used as the `search-replace` replacement and interpolated into
+  `hostOf(devUrl)` for the multisite `UPDATE wp_blogs SET domain = …`.
+
+  On a real multisite pull this left every row of `wp_blogs.domain` set to the
+  banner text truncated at `http:`, plus 61 content cells carrying the banner as
+  a prefix — WordPress could then resolve no domain at all and the whole local
+  network 500'd. `prodUrl` was unaffected because the source environment is
+  reached over SSH, which prints no banner; only the search *replacement* was
+  corrupt, which is why the operation still reported success.
+
+  Two changes, since either alone would have prevented the damage:
+
+  - `runVm` now strips the banner from stdout. Only the first line, and only
+    when it is the banner — WordPress content can legitimately begin with
+    `Running command =>`, and on the demo site post revisions did, from an
+    earlier round of this same bug through `wp post get`.
+  - `dbPull` now validates both URLs with `assertSiteUrl()` before any write.
+    A value that is not a bare `http(s)://host[/path]` throws, so a future
+    wrapper change fails loudly rather than propagating across every table.
+
 ## [5.9.0] - 2026-08-22
 
 ### Added
