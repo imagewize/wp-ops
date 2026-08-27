@@ -7,6 +7,7 @@
 # @category monitoring
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires curl
 # @arg      urls  optional  One or more URLs to check; falls back to the hardcoded list in the script when omitted
 # @example  wp-ops redirect-check https://example.com/old-page/

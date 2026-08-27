@@ -102,11 +102,16 @@ at a time:
 `command_run` gates on writes: read-only commands (audits, scans, log analysis,
 traffic stats) run directly, and anything that writes, deploys, syncs, or deletes
 needs `confirm: true`. `--help` and `--where` are always free — `executeEntry`
-handles both before any executor runs. The allowlist lives in
-`src/tools/catalog.ts` because the manifest has no "does this mutate anything"
-directive yet; an `@mutates` field alongside `@runs` and `@platform` would replace
-it with catalog data, and until then a startup check warns on stderr when a listed
-key no longer exists.
+handles both before any executor runs. Which side a command falls on comes from
+its own `@mutates` directive, sitting alongside `@runs` and `@platform` in the
+script header and carried through `catalog.json`. Only an explicit
+`@mutates false` counts as read-only, so a script that never says either way is
+treated as if it writes.
+
+Marking a new read-only command is therefore a one-line manifest edit plus
+`go generate ./internal/catalog/` — no second list to remember. This replaced a
+hardcoded set of keys in `src/tools/catalog.ts`, where renaming a script silently
+flipped it to "needs confirm" and the only signal was a stderr warning.
 
 Note that the gate is a speed bump, not a security boundary — the model can set
 `confirm` itself. Its job is to make destructive commands surface to you as a

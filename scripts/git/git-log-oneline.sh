@@ -27,6 +27,7 @@
 # @category git
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires git
 # @arg      n  optional  {10}  Number of commits to show
 # @example  wp-ops git-log-oneline 20

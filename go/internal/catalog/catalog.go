@@ -61,6 +61,22 @@ type Entry struct {
 	// indicating what stack a command needs to run against. Used for filtering
 	// commands by platform compatibility.
 	Platform string `json:"platform,omitempty"`
+	// Mutates reports whether running this command can change something —
+	// write a file, alter a database, deploy, delete. It is the resolved form
+	// of @mutates: an absent directive means true, because a command nobody
+	// has classified yet must be treated as if it writes.
+	//
+	// Consumed by the MCP server, which runs read-only commands directly and
+	// makes everything else require an explicit confirm (see
+	// isReadOnlyCommand in mcp-server/src/tools/catalog.ts). That gate used to
+	// be a hand-maintained allowlist of keys living next to the tool code,
+	// which drifted whenever a script was renamed; keeping the answer next to
+	// the script it describes is the whole point of moving it here.
+	//
+	// Deliberately no omitempty: the false case is the interesting one, and
+	// omitting it would make "read-only" and "field missing entirely" look
+	// identical to any consumer reading the JSON.
+	Mutates bool `json:"mutates"`
 	// DisplayCategory is the grouping used by every human-facing surface —
 	// list.go's category views, the interactive picker, and the per-category
 	// Cobra commands (dispatch.go). It equals Category except for the

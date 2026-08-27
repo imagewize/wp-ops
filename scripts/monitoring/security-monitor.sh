@@ -14,6 +14,7 @@
 # @category monitoring
 # @platform trellis
 # @runs     server
+# @mutates  false
 # @requires gawk
 # @arg      log_file        optional  {/srv/www/example.com/logs/access.log}  Nginx access log path
 # @arg      hours           optional  {24}  How many hours back to analyze

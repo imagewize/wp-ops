@@ -18,6 +18,7 @@
 # @category monitoring
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires ssh
 # @arg      ssh-host  required  {web@example.com}  SSH user@host to run curl from
 # @arg      url       required  {https://example.com}  URL to test (repeatable)

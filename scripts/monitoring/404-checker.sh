@@ -16,6 +16,7 @@
 # @category monitoring
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires curl
 # @arg      site-url  required  {https://example.com}  Site to check
 # @flag     --mode     optional  {global|spider}  global checks homepage links (~30s); spider recursively crawls (~5-10 min)

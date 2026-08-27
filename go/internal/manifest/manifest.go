@@ -56,6 +56,13 @@ type Command struct {
 	Flags    []Flag
 	Examples []string
 	Doc      string
+	// Mutates is the raw @mutates value ("true", "false", or "" when unset).
+	// Kept as the raw string rather than a bool for the same reason Runs and
+	// Platform are: "" has to stay distinguishable from an explicit value so
+	// Lint can reject a typo, and so the "first directive wins" rule below
+	// works the same way for all of them. catalog.Entry resolves it to a
+	// bool — absent means mutating, the fail-safe reading.
+	Mutates string
 
 	// Annotated is true when the script had at least one recognized @
 	// directive at all — the Go equivalent of bash's has_manifest(), which
@@ -96,6 +103,7 @@ var (
 var directivesHandled = map[string]bool{
 	"@desc": true, "@category": true, "@runs": true, "@requires": true,
 	"@doc": true, "@example": true, "@arg": true, "@flag": true, "@platform": true,
+	"@mutates": true,
 }
 
 // DirectiveLines returns every recognized "@directive value" line found in
@@ -198,6 +206,10 @@ func Parse(key, scriptPath string) (*Command, error) {
 			if cmd.Runs == "" {
 				cmd.Runs = value
 			}
+		case "@mutates":
+			if cmd.Mutates == "" {
+				cmd.Mutates = value
+			}
 		case "@requires":
 			if cmd.Requires == nil && value != "" {
 				cmd.Requires = strings.Fields(value)
@@ -253,6 +265,18 @@ func Lint(cmd *Command, repoRoot string) []string {
 		case "trellis", "wordpress", "any":
 		default:
 			errs = append(errs, fmt.Sprintf("%s: @platform '%s' must be trellis, wordpress, or any", cmd.Key, cmd.Platform))
+		}
+	}
+
+	// Only "true"/"false" — not "yes", "1" or "no". @mutates decides whether
+	// the MCP server makes a command surface to the user as its own decision
+	// before it writes anything, so a value it doesn't understand must fail
+	// the build rather than fall back to a default nobody chose.
+	if cmd.Mutates != "" {
+		switch cmd.Mutates {
+		case "true", "false":
+		default:
+			errs = append(errs, fmt.Sprintf("%s: @mutates '%s' must be true or false", cmd.Key, cmd.Mutates))
 		}
 	}
 

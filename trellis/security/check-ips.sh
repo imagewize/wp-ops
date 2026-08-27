@@ -14,6 +14,7 @@
 # @category security
 # @platform trellis
 # @runs     local
+# @mutates  false
 # @requires curl
 # @arg      ip  required  {1.2.3.4}  IP address to check (repeatable)
 # @example  wp-ops check-ips 1.2.3.4 5.6.7.8

@@ -5,6 +5,7 @@
 # @category diagnostics
 # @platform trellis
 # @runs     local
+# @mutates  false
 # @requires ssh
 # @example  wp-ops list-posts-count
 # @doc      wp-cli/diagnostics/README.md

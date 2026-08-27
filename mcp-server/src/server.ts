@@ -788,9 +788,9 @@ export function createServer(): McpServer {
         const entries = loadCatalog();
         const entry = resolveCommand(entries, command);
 
-        if (!isIntrospectionOnly(args) && !isReadOnlyCommand(entry.key) && !confirm) {
+        if (!isIntrospectionOnly(args) && !isReadOnlyCommand(entry) && !confirm) {
           throw new Error(
-            `"${entry.key}" is not on the read-only allowlist and may change data, files, or remote state. ` +
+            `"${entry.key}" is not marked read-only (@mutates false) and may change data, files, or remote state. ` +
               `Show the user what it does (run it with ["--help"], which needs no confirmation), get their ` +
               `explicit approval, then re-run with confirm: true.`
           );

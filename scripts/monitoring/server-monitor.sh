@@ -14,6 +14,7 @@
 # @category monitoring
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires ssh
 # @arg      ssh-target            required  {web@example.com}  SSH target to connect to
 # @arg      php-fpm-pool-pattern  optional  {php-fpm: pool}  Pattern to match PHP-FPM pool processes

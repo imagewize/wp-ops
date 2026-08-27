@@ -9,6 +9,7 @@
  * @category diagnostics
  * @platform wordpress
  * @runs     local
+ * @mutates  false
  * @requires wp
  * @example  wp-ops diagnostic-transients
  * @doc      wp-cli/diagnostics/README.md

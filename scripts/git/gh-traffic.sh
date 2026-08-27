@@ -10,6 +10,7 @@
 # @category git
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires gh jq
 # @arg      owner/repo  required  {imagewize/nynaeve}  GitHub repository (repeatable)
 # @flag     --clones     optional  {}  Include clone counts (machine traffic: CI, mirrors, bots)

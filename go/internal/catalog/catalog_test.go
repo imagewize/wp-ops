@@ -15,6 +15,50 @@ func TestLoad(t *testing.T) {
 	}
 }
 
+// TestMutatesFailsSafe pins the direction the @mutates default leans. The MCP
+// server runs anything read-only without asking (isReadOnlyCommand in
+// mcp-server/src/tools/catalog.ts), so a command that ends up marked read-only
+// by accident is the failure that matters — a mutating one merely costs an
+// extra confirmation. Both halves are asserted against real entries so this
+// catches a generator change as well as a manifest edit.
+func TestMutatesFailsSafe(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	for _, tc := range []struct {
+		key         string
+		wantMutates bool
+	}{
+		// Declares @mutates false: an audit that only reads and writes a report.
+		{"wp-cli/seo/redirect-audit", false},
+		// Writes a dump to disk and prunes older ones.
+		{"scripts/backup/db-backup", true},
+		// Imports a database over the top of an existing one.
+		{"trellis/backup/database-push", true},
+		// Creates a WordPress user.
+		{"wp-cli/security/admin-user-create", true},
+	} {
+		e, ok := c.Lookup(tc.key)
+		if !ok {
+			t.Errorf("Lookup(%s) not found", tc.key)
+			continue
+		}
+		if e.Mutates != tc.wantMutates {
+			t.Errorf("%s Mutates = %v, want %v", tc.key, e.Mutates, tc.wantMutates)
+		}
+	}
+
+	// A command with no manifest at all has nobody's judgement behind it, so
+	// it must never come out read-only.
+	for _, e := range c.Entries {
+		if !e.Annotated && !e.Mutates {
+			t.Errorf("%s is unannotated but marked read-only", e.Key)
+		}
+	}
+}
+
 func TestLookup(t *testing.T) {
 	c, err := Load()
 	if err != nil {

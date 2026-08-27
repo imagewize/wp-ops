@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0] - 2026-08-27
+
+### Added
+
+- **`@mutates` manifest directive — the MCP write gate now reads the script's
+  own header instead of a hardcoded list.** Which commands `command_run` runs
+  directly and which need an explicit `confirm: true` was a `Set` of 31 command
+  keys in `mcp-server/src/tools/catalog.ts`, a long way from the scripts it
+  described. Renaming a script silently dropped it off that list and flipped it
+  to "needs confirm"; the only signal was a stderr warning from
+  `warnOnAllowlistDrift` that nothing surfaces to the user.
+
+  `@mutates true|false` parses alongside `@runs` and `@platform`, with `Lint`
+  rejecting any other value so a typo fails the build rather than quietly
+  picking a default nobody chose. `catalog.Entry` carries the resolved bool:
+  only an explicit `@mutates false` reads as read-only, so the unannotated
+  majority and any future script that forgets the directive both land on the
+  cautious side. It is emitted without `omitempty`, since `false` is the
+  interesting case and omitting it would make "read-only" and "field absent"
+  indistinguishable to anything reading `catalog.json`.
+
+  The gate's behavior is unchanged — the catalog resolves to exactly the same
+  31 read-only commands the allowlist held, verified key for key. What changes
+  is that marking a new read-only command is now a one-line manifest edit plus
+  `go generate ./internal/catalog/`, instead of an edit in two places that could
+  disagree. The TypeScript compares against `false` rather than truthiness, so
+  an older `catalog.json` without the field costs an extra confirmation instead
+  of skipping one.
+
+### Fixed
+
+- **The binary embedded `mcp-server/node_modules`, `dist/`, and the operator's
+  real `config/sites.json`.** `assets.go` embedded `mcp-server` as a whole
+  directory. The package comment's reasoning for choosing plain `go:embed` over
+  `all:` only covers dot- and underscore-prefixed entries, so the three paths
+  gitignored underneath it were picked up whenever they existed on disk — which
+  is always, for anyone who has run the server locally.
+
+  `node_modules/` (~61MB) dominated the result: a local build produced a 55MB
+  binary, 48MB of it embedded JavaScript, while goreleaser's clean-checkout
+  release build of the same commit produced ~8MB. The same commit built to very
+  different binaries depending on who built it. `config/sites.json` — SSH hosts,
+  remote and local paths, public URLs, no credentials — was readable straight
+  out of the embedded filesystem; low-sensitivity, but the wrong thing to ship
+  inside a binary and the file most likely to gain something sensitive later.
+
+  `.gitignore` was never the gap: all three paths are correctly ignored and none
+  has ever been committed. `go:embed` reads the working tree rather than the
+  index, so it sees straight through `.gitignore`, as any build step that walks
+  the filesystem does.
+
+  `mcp-server/` is now enumerated file by file, with `sites.example.json`
+  embedded in place of `sites.json`. Nothing is lost by dropping the two build
+  artifacts: `run.sh` already runs `npm install` when `node_modules/` is absent
+  and rebuilds when `dist/` is stale, which is exactly the state a freshly
+  extracted install starts in. Local builds now match the release build at
+  8.1MB.
+
+  `assets_test.go` guards both directions, because reverting to the one-line
+  directory form compiles and passes every other test in the repo — the
+  regression is otherwise silent. CI's root-package step gained `go test .` to
+  run it, scoped with `.` rather than `./...` since `go.mod` sits at the repo
+  root and `./...` would re-run every `go/` test the previous step just ran.
+
 ## [5.9.1] - 2026-08-25
 
 ### Fixed

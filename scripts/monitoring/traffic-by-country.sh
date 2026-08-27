@@ -38,6 +38,7 @@
 # @category monitoring
 # @platform trellis
 # @runs     local
+# @mutates  false
 # @requires ssh python3 geoip2fast
 # @arg      country-code  optional  {NL}  Two-letter ISO country code to filter for
 # @arg      date-filter   optional  {29/May/2026}  Only lines matching this date string

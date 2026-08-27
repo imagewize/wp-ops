@@ -5,6 +5,7 @@
 # @category monitoring
 # @platform trellis
 # @runs     local
+# @mutates  false
 # @requires ansible-playbook
 # @arg      site         required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env          required  {production|staging|development}  Target environment
