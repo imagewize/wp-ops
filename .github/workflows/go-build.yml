@@ -67,14 +67,21 @@ jobs:
       - name: Test
         run: go test ./...
 
-      - name: Build and vet root assets package
+      - name: Build, vet and test root assets package
         # The go/ subtree's ./... patterns above don't reach the root-level
         # `assets` package (its go:embed directives are what let the
         # binary embed scripts/, trellis/, etc. — see
         # docs/m4-go-cli-completion.md task 6). go/'s Build step above
         # already compiles it transitively as an import, but vet doesn't
         # visit dependencies, so it gets its own explicit check here.
+        #
+        # `go test .` and not `./...`: go.mod lives at the repo root, so a
+        # root-level ./... would re-run every go/ test the Test step just ran.
+        # The dot keeps this to assets_test.go, which is what guards the
+        # mcp-server/ embed list against re-acquiring node_modules/, dist/ and
+        # the operator's config/sites.json.
         working-directory: .
         run: |
           go build ./...
+          go test .
           go vet ./...
