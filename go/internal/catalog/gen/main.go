@@ -158,6 +158,12 @@ func main() {
 				Examples:         cmd.Examples,
 				ManifestCategory: cmd.Category,
 				Annotated:        cmd.Annotated,
+				// Anything but an explicit "@mutates false" counts as
+				// mutating, so the unannotated majority and any future script
+				// that forgets the directive both land on the cautious side.
+				// Lint has already rejected values other than true/false by
+				// the time this runs.
+				Mutates: cmd.Mutates != "false",
 			}
 
 			if cmd.Desc != "" {

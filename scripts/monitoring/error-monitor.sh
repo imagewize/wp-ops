@@ -26,6 +26,7 @@
 # @category monitoring
 # @platform trellis
 # @runs     server
+# @mutates  false
 # @arg      domain       optional  {example.com}  Site domain (used to find /srv/www/<domain>/logs/)
 # @arg      hours        optional  {24}  How many hours back to analyze
 # @arg      output_file  optional  Path to save the report instead of printing it

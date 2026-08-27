@@ -19,6 +19,7 @@
 # @category security
 # @platform trellis
 # @runs     local
+# @mutates  false
 # @requires curl jq trellis
 # @flag     --full  optional  {}  Full JSON output per IP via check-ips.sh, instead of the compact summary
 # @example  wp-ops check-deny-ips

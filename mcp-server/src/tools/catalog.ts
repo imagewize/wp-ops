@@ -40,6 +40,10 @@ const entrySchema = z
     examples: z.array(z.string()).optional(),
     platform: z.string().optional(),
     display_category: z.string().optional(),
+    // Optional so an older catalog.json still parses. Absence is read as
+    // "mutates" by isReadOnlyCommand below, so a stale catalog costs an extra
+    // confirmation rather than skipping one.
+    mutates: z.boolean().optional(),
   })
   .passthrough();
 
@@ -71,71 +75,7 @@ export function loadCatalog(): CatalogEntry[] {
   }
 
   cached = result.data;
-  warnOnAllowlistDrift(cached);
   return cached;
-}
-
-// Commands that only read — audits, scans, log analysis, traffic stats. These
-// run without confirm; everything else in the catalog needs an explicit
-// confirm: true.
-//
-// This gate is a speed bump, not a security boundary: the model can always set
-// confirm itself. Its real job is to make anything that writes, deploys, or
-// deletes surface to the user as a distinct decision instead of disappearing
-// into a chain of tool calls.
-//
-// Hardcoded here because the manifest has no "does this mutate anything"
-// directive yet. The data-driven version is an @mutates field alongside @runs
-// and @platform, parsed in go/internal/manifest and carried through
-// catalog.json — at which case this set goes away and the gate reads the entry.
-// Until then warnOnAllowlistDrift catches keys that get renamed out from under it.
-const READ_ONLY_COMMANDS = new Set([
-  "scripts/git/gh-traffic",
-  "scripts/git/git-log-oneline",
-  "scripts/images/openverse_search",
-  "scripts/misc/post-count",
-  "scripts/monitoring/404-checker",
-  "scripts/monitoring/ai-bot-monitor",
-  "scripts/monitoring/error-monitor",
-  "scripts/monitoring/monitor",
-  "scripts/monitoring/redirect-check",
-  "scripts/monitoring/remote-ttfb-ua",
-  "scripts/monitoring/security-monitor",
-  "scripts/monitoring/server-monitor",
-  "scripts/monitoring/traffic-by-country",
-  "scripts/monitoring/traffic-monitor",
-  "scripts/monitoring/ttfb-test",
-  "trellis/monitoring/quick-status",
-  "trellis/monitoring/security-scan",
-  "trellis/monitoring/traffic-report",
-  "trellis/security/check-deny-ips",
-  "trellis/security/check-ips",
-  "wp-cli/diagnostics/diagnostic-transients",
-  "wp-cli/diagnostics/list-posts-count",
-  "wp-cli/security/scanner-general",
-  "wp-cli/security/scanner-targeted",
-  "wp-cli/security/scanner-wrapper",
-  "wp-cli/seo/blog-audit",
-  "wp-cli/seo/orphan-links-audit",
-  "wp-cli/seo/orphan-pages-audit",
-  "wp-cli/seo/page-audit",
-  "wp-cli/seo/redirect-audit",
-  "wp-cli/seo/schema-audit",
-]);
-
-// A renamed or deleted script would silently drop off the allowlist and start
-// demanding confirmation for something read-only — annoying, and easy to
-// misread as "this command is dangerous". stderr is safe here: stdio transport
-// reserves stdout for the JSON-RPC stream, but stderr is free.
-function warnOnAllowlistDrift(entries: CatalogEntry[]): void {
-  const keys = new Set(entries.map((e) => e.key));
-  const stale = [...READ_ONLY_COMMANDS].filter((k) => !keys.has(k));
-  if (stale.length > 0) {
-    console.error(
-      `wp-ops MCP: READ_ONLY_COMMANDS lists ${stale.length} command(s) not in the catalog ` +
-        `(renamed or removed?): ${stale.join(", ")}`
-    );
-  }
 }
 
 // Introspection flags never reach the underlying script — go/cmd/dispatch.go's
@@ -147,8 +87,22 @@ export function isIntrospectionOnly(args: string[]): boolean {
   return args.length > 0 && INTROSPECTION_FLAGS.has(args[0]);
 }
 
-export function isReadOnlyCommand(key: string): boolean {
-  return READ_ONLY_COMMANDS.has(key);
+// Commands that only read — audits, scans, log analysis, traffic stats — run
+// without confirm; everything else needs an explicit confirm: true.
+//
+// This gate is a speed bump, not a security boundary: the model can always set
+// confirm itself. Its real job is to make anything that writes, deploys, or
+// deletes surface to the user as a distinct decision instead of disappearing
+// into a chain of tool calls.
+//
+// The answer comes from the script's own @mutates directive, carried through
+// catalog.json (see catalog.Entry.Mutates in go/internal/catalog/catalog.go).
+// It used to be a hardcoded allowlist of keys right here, which meant renaming
+// a script silently flipped it to "needs confirm" and the only signal was a
+// stderr warning nobody reads. Comparing against false and not truthiness is
+// deliberate: an entry with no mutates field at all is treated as mutating.
+export function isReadOnlyCommand(entry: CatalogEntry): boolean {
+  return entry.mutates === false;
 }
 
 // Mirrors catalog.Search in go/internal/catalog/catalog.go: case-insensitive
@@ -212,7 +166,7 @@ export function formatEntryDetail(e: CatalogEntry): string {
   ];
   if (e.requires && e.requires.length > 0) lines.push(`requires: ${e.requires.join(", ")}`);
   lines.push(
-    `write gate: ${isReadOnlyCommand(e.key) ? "read-only — runs without confirm" : "requires confirm: true"}`
+    `write gate: ${isReadOnlyCommand(e) ? "read-only — runs without confirm" : "requires confirm: true"}`
   );
   lines.push("");
   lines.push(...formatParams("arguments", e.args));
@@ -239,7 +193,7 @@ export function formatSearchResults(matches: CatalogEntry[], query: string): str
   const rows = matches.map((e) => {
     const tags = [e.platform ?? "any"];
     if (e.runs_on === "server") tags.push("server");
-    if (!isReadOnlyCommand(e.key)) tags.push("needs confirm");
+    if (!isReadOnlyCommand(e)) tags.push("needs confirm");
     return `  ${e.key.padEnd(48)} [${tags.join(", ")}] ${e.description}`;
   });
 

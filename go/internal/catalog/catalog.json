@@ -54,6 +54,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -119,6 +120,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -148,6 +150,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -227,6 +230,7 @@
     ],
     "manifest_category": "backup",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -306,6 +310,7 @@
     ],
     "manifest_category": "git",
     "platform": "any",
+    "mutates": true,
     "display_category": "git",
     "annotated": true
   },
@@ -381,6 +386,7 @@
     ],
     "manifest_category": "git",
     "platform": "any",
+    "mutates": false,
     "display_category": "git",
     "annotated": true
   },
@@ -409,6 +415,7 @@
     ],
     "manifest_category": "git",
     "platform": "any",
+    "mutates": false,
     "display_category": "git",
     "annotated": true
   },
@@ -497,6 +504,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -557,6 +565,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -627,6 +636,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -701,6 +711,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -785,6 +796,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": false,
     "display_category": "images",
     "annotated": true
   },
@@ -849,6 +861,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -905,6 +918,7 @@
     ],
     "manifest_category": "images",
     "platform": "any",
+    "mutates": true,
     "display_category": "images",
     "annotated": true
   },
@@ -1018,6 +1032,7 @@
     ],
     "manifest_category": "misc",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "misc",
     "annotated": true
   },
@@ -1056,6 +1071,7 @@
     ],
     "manifest_category": "misc",
     "platform": "any",
+    "mutates": true,
     "display_category": "misc",
     "annotated": true
   },
@@ -1132,6 +1148,7 @@
     ],
     "manifest_category": "misc",
     "platform": "any",
+    "mutates": true,
     "display_category": "misc",
     "annotated": true
   },
@@ -1208,6 +1225,7 @@
     ],
     "manifest_category": "misc",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "misc",
     "annotated": true
   },
@@ -1273,6 +1291,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "any",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1318,6 +1337,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1380,6 +1400,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1422,6 +1443,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1460,6 +1482,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1487,6 +1510,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "any",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1524,6 +1548,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "any",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1577,6 +1602,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1614,6 +1640,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "any",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1705,6 +1732,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1750,6 +1778,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1780,6 +1809,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "any",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1817,6 +1847,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -1862,6 +1893,7 @@
     ],
     "manifest_category": "content",
     "platform": "any",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -1931,6 +1963,7 @@
     ],
     "manifest_category": "content",
     "platform": "any",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -1960,6 +1993,7 @@
     ],
     "manifest_category": "content",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -2038,6 +2072,7 @@
     ],
     "manifest_category": "content",
     "platform": "any",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -2075,6 +2110,7 @@
     ],
     "manifest_category": "content",
     "platform": "any",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -2175,6 +2211,7 @@
     ],
     "manifest_category": "release",
     "platform": "any",
+    "mutates": true,
     "display_category": "release",
     "annotated": true
   },
@@ -2223,6 +2260,7 @@
     ],
     "manifest_category": "release",
     "platform": "any",
+    "mutates": true,
     "display_category": "release",
     "annotated": true
   },
@@ -2280,6 +2318,7 @@
     ],
     "manifest_category": "release",
     "platform": "any",
+    "mutates": true,
     "display_category": "release",
     "annotated": true
   },
@@ -2324,6 +2363,7 @@
     ],
     "manifest_category": "release",
     "platform": "any",
+    "mutates": true,
     "display_category": "release",
     "annotated": true
   },
@@ -2381,6 +2421,7 @@
     ],
     "manifest_category": "sync",
     "platform": "any",
+    "mutates": true,
     "display_category": "sync",
     "annotated": true
   },
@@ -2408,6 +2449,7 @@
     ],
     "manifest_category": "sync",
     "platform": "any",
+    "mutates": true,
     "display_category": "sync",
     "annotated": true
   },
@@ -2437,6 +2479,7 @@
     ],
     "manifest_category": "misc",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "misc",
     "annotated": true
   },
@@ -2478,6 +2521,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2518,6 +2562,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2558,6 +2603,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2599,6 +2645,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2650,6 +2697,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2690,6 +2738,7 @@
     ],
     "manifest_category": "backup",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "backup",
     "annotated": true
   },
@@ -2742,6 +2791,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2810,6 +2860,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2870,6 +2921,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2930,6 +2982,7 @@
     ],
     "manifest_category": "monitoring",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2961,6 +3014,7 @@
     ],
     "manifest_category": "security",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "security",
     "annotated": true
   },
@@ -2990,6 +3044,7 @@
     ],
     "manifest_category": "security",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "security",
     "annotated": true
   },
@@ -3019,6 +3074,7 @@
     ],
     "manifest_category": "misc",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "misc",
     "annotated": true
   },
@@ -3085,6 +3141,7 @@
     ],
     "manifest_category": "content",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -3130,6 +3187,7 @@
     ],
     "manifest_category": "content",
     "platform": "trellis",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -3204,6 +3262,7 @@
     ],
     "manifest_category": "content",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "content",
     "annotated": true
   },
@@ -3223,6 +3282,7 @@
     ],
     "manifest_category": "diagnostics",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -3242,6 +3302,7 @@
     ],
     "manifest_category": "diagnostics",
     "platform": "trellis",
+    "mutates": false,
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -3321,6 +3382,7 @@
     ],
     "manifest_category": "security",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "security",
     "annotated": true
   },
@@ -3350,6 +3412,7 @@
     ],
     "manifest_category": "security",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "security",
     "annotated": true
   },
@@ -3379,6 +3442,7 @@
     ],
     "manifest_category": "security",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "security",
     "annotated": true
   },
@@ -3408,6 +3472,7 @@
     ],
     "manifest_category": "security",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "security",
     "annotated": true
   },
@@ -3453,6 +3518,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3537,6 +3603,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": true,
     "display_category": "seo",
     "annotated": true
   },
@@ -3591,6 +3658,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3636,6 +3704,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3681,6 +3750,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3725,6 +3795,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3772,6 +3843,7 @@
     ],
     "manifest_category": "seo",
     "platform": "wordpress",
+    "mutates": false,
     "display_category": "seo",
     "annotated": true
   },
@@ -3787,6 +3859,7 @@
     ],
     "manifest_category": "mcp-server",
     "platform": "any",
+    "mutates": true,
     "display_category": "mcp-server",
     "annotated": true
   },
@@ -3803,6 +3876,7 @@
     ],
     "manifest_category": "mcp-server",
     "platform": "any",
+    "mutates": true,
     "display_category": "mcp-server",
     "annotated": true
   },
@@ -3819,6 +3893,7 @@
     ],
     "manifest_category": "mcp-server",
     "platform": "any",
+    "mutates": true,
     "display_category": "mcp-server",
     "annotated": true
   }

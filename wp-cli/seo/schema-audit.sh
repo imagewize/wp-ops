@@ -17,6 +17,7 @@
 # @category seo
 # @platform wordpress
 # @runs     local
+# @mutates  false
 # @requires curl
 # @arg      site-url  required  {https://example.com}  Site URL to check
 # @flag     --output  optional  {audits}  Output directory

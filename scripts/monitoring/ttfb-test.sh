@@ -17,6 +17,7 @@
 # @category monitoring
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires curl bc
 # @arg      url  required  {https://example.com}  URL to test
 # @example  wp-ops ttfb-test https://example.com

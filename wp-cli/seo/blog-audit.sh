@@ -18,6 +18,7 @@
 # @category seo
 # @platform wordpress
 # @runs     local
+# @mutates  false
 # @requires wp
 # @flag     --path      optional  {web/wp}  WordPress path for WP-CLI
 # @flag     --output    optional  {audits}  Output directory

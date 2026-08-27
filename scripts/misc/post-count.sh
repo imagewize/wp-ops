@@ -42,6 +42,7 @@
 # @category misc
 # @platform wordpress
 # @runs     local
+# @mutates  false
 # @requires wp
 # @flag     --year     optional  {2026}  Only this year — prints a single total
 # @flag     --months   optional  {2026}  Monthly breakdown (YYYY-MM) for the given year

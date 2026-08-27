@@ -5,6 +5,7 @@
 # @category images
 # @platform any
 # @runs     local
+# @mutates  false
 # @requires python3
 # @arg      query            required  {sunset}  Search query
 # @flag     --license        optional  {cc0}  License filter

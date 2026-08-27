@@ -20,6 +20,7 @@
 # @category seo
 # @platform wordpress
 # @runs     local
+# @mutates  false
 # @requires curl
 # @flag     --url      required  {https://example.com}  URL to test (repeatable)
 # @flag     --verbose  optional  {}  Show detailed curl output

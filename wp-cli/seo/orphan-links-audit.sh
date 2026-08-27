@@ -33,6 +33,7 @@
 # @category seo
 # @platform wordpress
 # @runs     local
+# @mutates  false
 # @requires wp
 # @flag     --host       optional  {web@example.com}  SSH user@host to run WP-CLI on
 # @flag     --site-path  optional  {/srv/www/example.com/current}  Site root on the server

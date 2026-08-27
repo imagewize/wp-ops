@@ -170,6 +170,49 @@ func TestLint_PlatformValues(t *testing.T) {
 	}
 }
 
+// The two fixtures cover both sides of the @mutates default: redirect-audit
+// is an audit that declares itself read-only, db-backup writes a dump and
+// prunes old ones but predates the directive — and must still read as
+// mutating, since "" is what every unannotated script in the repo has.
+func TestParse_Mutates(t *testing.T) {
+	readOnly, err := Parse("wp-cli/seo/redirect-audit", "testdata/redirect-audit.sh")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got, want := readOnly.Mutates, "false"; got != want {
+		t.Errorf("redirect-audit Mutates = %q, want %q", got, want)
+	}
+
+	unannotated, err := Parse("scripts/backup/db-backup", "testdata/db-backup.sh")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got := unannotated.Mutates; got != "" {
+		t.Errorf("db-backup Mutates = %q, want \"\" (directive absent)", got)
+	}
+}
+
+func TestLint_MutatesValues(t *testing.T) {
+	for _, tc := range []struct {
+		mutates string
+		wantErr bool
+	}{
+		{"true", false},
+		{"false", false},
+		{"", false}, // absent is legal; gen resolves it to mutating
+		{"yes", true},
+		{"no", true},
+		{"1", true},
+		{"False", true},
+	} {
+		cmd := &Command{Key: "test/cmd", Desc: "a description", Mutates: tc.mutates}
+		errs := Lint(cmd, "../../..")
+		if gotErr := len(errs) > 0; gotErr != tc.wantErr {
+			t.Errorf("Lint(@mutates %q) errors = %v, want error: %v", tc.mutates, errs, tc.wantErr)
+		}
+	}
+}
+
 func TestDirectiveLines_StopsAtLine80(t *testing.T) {
 	// Sanity check on the head-80 boundary using an existing fixture — all
 	// its directives are well within the first 80 lines.

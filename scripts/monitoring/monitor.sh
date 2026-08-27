@@ -24,6 +24,7 @@
 # @category monitoring
 # @platform trellis
 # @runs     server
+# @mutates  false
 # @requires gawk
 # @arg      hours   optional  {24}  How many hours back to analyze
 # @arg      domain  optional  {example.com}  Site domain

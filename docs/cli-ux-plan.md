@@ -179,6 +179,8 @@ before matching.
 | `@desc` | One-line description. Replaces the scrape at `wp-ops:288`. |
 | `@category` | Logical group. Decouples grouping from directory layout. |
 | `@runs` | `local` \| `server` \| `either`. Replaces `SERVER_SIDE_COMMANDS`. |
+| `@platform` | `trellis` \| `wordpress` \| `any`. What stack the command needs. |
+| `@mutates` | `true` \| `false`. Whether running it can change anything. Absent means `true`. Drives the MCP server's confirm gate. |
 | `@requires` | Binaries needed. Feeds `wp-ops doctor` (`wp-ops:1394`). |
 | `@arg` | `NAME  required\|optional  {choices-or-default}  Description` |
 | `@flag` | Same shape, for named flags. |

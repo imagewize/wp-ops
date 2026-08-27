@@ -19,6 +19,7 @@
 # @desc     Audit redirect chains: HTTPS pages, HTTP->HTTPS, and www canonicalization
 # @category seo
 # @runs     local
+# @mutates  false
 # @requires curl
 # @flag     --url      required  {https://example.com}  URL to test (repeatable)
 # @flag     --verbose  optional  {}  Show detailed curl output

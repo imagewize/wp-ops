@@ -16,6 +16,7 @@
  * @category security
  * @platform wordpress
  * @runs     local
+ * @mutates  false
  * @requires wp
  * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
  * @example  wp-ops scanner-wrapper
