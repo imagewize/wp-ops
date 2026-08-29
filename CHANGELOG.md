@@ -21,12 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   uses for multi-line strings. No Ansible result format carries a raw
   ANSI byte through this path intact.
 
-  Fixed at the source instead: `security-monitor.sh` now skips emitting
-  color codes when its stdout isn't a tty (the case whenever Ansible's
-  `shell` module captures it), the same pattern `grep`/`ls --color=auto`
-  use. Interactive runs (ssh'ing in and running the script directly) keep
-  their colors; the Ansible-captured report is now clean, readable text
-  with no escape-code noise. Confirmed against `imagewize.com` production.
+  Fixed at the source instead: `security-monitor.sh` and `traffic-monitor.sh`
+  (used by `traffic-report`, which has the same `debug: msg: stdout_lines`
+  setup) now skip emitting color codes when their stdout isn't a tty (the
+  case whenever Ansible's `shell` module captures it), the same pattern
+  `grep`/`ls --color=auto` use. Interactive runs (ssh'ing in and running a
+  script directly) keep their colors; Ansible-captured reports are now
+  clean, readable text with no escape-code noise. Confirmed against
+  `imagewize.com` production for both commands. The other monitoring
+  scripts with the same unconditional color codes (`404-checker.sh`,
+  `ai-bot-monitor.sh`, `error-monitor.sh`, `monitor.sh`, `server-monitor.sh`,
+  `ttfb-test.sh`) aren't invoked from any playbook, so they're unaffected.
 
 ## [5.11.3] - 2026-08-29
 
