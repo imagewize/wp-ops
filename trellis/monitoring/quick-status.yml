@@ -62,7 +62,7 @@
 
     - name: Get PHP-FPM status
       shell: |
-        systemctl status php*-fpm --no-pager | head -10
+        systemctl status 'php*-fpm.service' --no-pager | head -10
       register: php_status
 
     - name: Get recent suspicious activity
