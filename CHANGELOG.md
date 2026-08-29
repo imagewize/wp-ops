@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.0] - 2026-08-29
+
+### Added
+
+- **`wp-ops sync-extracted` — the two extracted repos are now checked against
+  their wp-ops sources instead of hoped about.** `imagewize.trellis_wp_monitoring`
+  on Ansible Galaxy and `imagewize/wp-cli-pattern-validate` on Packagist were
+  both populated by hand, and nothing has propagated an edit or verified one
+  since. `5569454` added `@mutates false` to `scripts/monitoring/security-monitor.sh`
+  and `scripts/monitoring/traffic-monitor.sh` two days ago; the published role
+  never saw it. That particular difference is correct — a wp-ops manifest
+  directive has no business in a Galaxy role — but nothing distinguished it
+  from a dropped bug fix, which is the actual hazard
+  [trellis-extensions-evaluation.md](docs/trellis-extensions-evaluation.md)
+  warned about when it chose a one-way export over moving the files out.
+
+  The split the command enforces is the one already true of all three published
+  files, verified before it was encoded: the leading comment block differs on
+  purpose (wp-ops carries `@desc`/`@category`/`@flag`, the downstreams carry
+  their own install instructions), and every line after it is byte-identical.
+  So `--write` rebuilds each downstream file as its own header plus this repo's
+  body, preserving the target's file mode; the default reports drift with a
+  diff and exits non-zero, which makes it usable as a pre-release check. It
+  stages files in the downstream working trees and stops there — a Galaxy role
+  and a WP-CLI package are versioned artifacts with their own release cadence,
+  and this command has no opinion about either.
+
+  Adding a future role or package means adding a row to `MAPPINGS`. Only
+  downstreams genuinely extracted *from* wp-ops qualify: one that owns its own
+  source, like the Playwright-based `wp-pattern-sentinel`, has no upstream here
+  to drift from and is deliberately not listed.
+
 ## [5.10.0] - 2026-08-27
 
 ### Added
