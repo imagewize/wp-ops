@@ -63,7 +63,7 @@
 
     - name: Display security report
       debug:
-        msg: "{{ security_report.stdout_lines }}"
+        msg: "{{ security_report.stdout }}"
 
     - name: Save report to local file
       delegate_to: localhost
