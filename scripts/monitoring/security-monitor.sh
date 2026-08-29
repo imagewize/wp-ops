@@ -58,14 +58,31 @@ SCAN_PATTERNS='(\.env|\.git|\.svn|wp-config\.php|phpinfo|eval\(|base64_decode|\.
 # Suspicious user agent patterns
 SUSPICIOUS_UA_PATTERN='(sqlmap|nikto|nmap|masscan|nessus|openvas|acunetix|^-$|^$)'
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Colors for output — only when stdout is a real terminal. Ansible's
+# security-scan.yml captures this script's output and re-displays it via
+# `debug: msg=...`, and neither of Ansible's result formats can carry raw
+# ANSI escape bytes through cleanly: its default JSON format escapes them
+# to literal `\u001b` text, and its YAML format silently drops them from
+# the block-literal style it uses for multi-line strings. So skip color
+# codes when not attached to a tty, rather than emit bytes nothing downstream
+# can render.
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    MAGENTA='\033[0;35m'
+    CYAN='\033[0;36m'
+    NC='\033[0m' # No Color
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    MAGENTA=''
+    CYAN=''
+    NC=''
+fi
 
 # ============================================================================
 # Functions
