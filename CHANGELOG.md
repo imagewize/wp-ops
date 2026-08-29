@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.3] - 2026-08-29
+
+### Fixed
+
+- **`security-scan`'s report showed literal `\u001b[...]` escape sequences
+  instead of colored output.** The "Display security report" task passed
+  `security_report.stdout_lines` (a list) to `debug`'s `msg`, which makes
+  Ansible's default callback serialize the result with `json.dumps` before
+  printing it. JSON escapes the ESC control byte in `security-monitor.sh`'s
+  ANSI color codes as the literal text `\u001b`, so terminals printed that
+  text instead of rendering color. Changed `msg` to `security_report.stdout`
+  (a plain string), which the callback prints directly and preserves the
+  raw escape bytes.
+
 ## [5.11.2] - 2026-08-29
 
 ### Fixed
