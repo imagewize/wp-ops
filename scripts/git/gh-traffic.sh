@@ -61,6 +61,11 @@ Sections:
   With no section flag, only views are shown — the same default this script has
   always had. --clones, --referrers, and --all opt into the rest.
 
+  When more than one repo is given, a summary table (one row per repo, 14-day
+  totals) is printed first, sorted by unique views descending — unique clones,
+  if views weren't requested. It's skipped for a single repo (redundant with
+  the detail table) and for a referrers-only run (nothing numeric to sort).
+
 Examples:
   # Views only (default)
   ./scripts/git/gh-traffic.sh imagewize/nynaeve
@@ -78,7 +83,6 @@ Requirements:
   - GitHub CLI (gh) installed and authenticated
   - jq for JSON processing
   - Push access to each repository (GitHub restricts traffic data to maintainers)
-  - column for table formatting (if not using --json)
 
 Reading the numbers:
   Views count page loads by humans; clones count `git clone`, which is dominated
@@ -185,11 +189,6 @@ if ! command -v jq &>/dev/null; then
     exit 1
 fi
 
-if [[ "$JSON_OUTPUT" = false ]] && ! command -v column &>/dev/null; then
-    echo "Error: column command is required for table output but not installed" >&2
-    exit 1
-fi
-
 # The traffic endpoints are maintainer-only, so a 403 here means "you don't have
 # push access to this repo" far more often than it means anything is broken.
 # Reporting that plainly beats letting gh's raw HTTP error surface.
@@ -221,6 +220,51 @@ fetch_traffic_json() {
     fi
 }
 
+# Bordered-table renderer shared by every table-mode section below. Reads
+# tab-separated rows on stdin; a blank input line is a section break and
+# becomes a full horizontal rule (used between the header and the data rows,
+# and again before a trailing totals row) rather than a real table row.
+# Columns are sized to their widest cell, text left-aligned, numbers (and the
+# "-" placeholder used for missing values) right-aligned.
+render_table() {
+    awk -F'\t' '
+    {
+        lines[NR] = $0
+        n = split($0, f, "\t")
+        if (n > maxcols) maxcols = n
+        for (i = 1; i <= n; i++) {
+            len = length(f[i])
+            if (len > width[i]) width[i] = len
+        }
+    }
+    function repeat(s, n,    r, i) {
+        r = ""
+        for (i = 0; i < n; i++) r = r s
+        return r
+    }
+    END {
+        border = "+"
+        for (i = 1; i <= maxcols; i++) border = border repeat("-", width[i] + 2) "+"
+        print border
+        for (r = 1; r <= NR; r++) {
+            line = lines[r]
+            if (line == "") { print border; continue }
+            n = split(line, f, "\t")
+            out = "|"
+            for (i = 1; i <= maxcols; i++) {
+                val = (i <= n) ? f[i] : ""
+                if (val == "-" || val ~ /^-?[0-9]+$/)
+                    out = out sprintf(" %" width[i] "s |", val)
+                else
+                    out = out sprintf(" %-" width[i] "s |", val)
+            }
+            print out
+        }
+        print border
+    }
+    '
+}
+
 # Renders one day-series section (views or clones). GitHub's series carries one
 # object per day with a zero-filled tail, so `tail -n` over the non-zero rows is
 # what --days actually means here.
@@ -250,13 +294,15 @@ print_series() {
     {
         if [[ "$QUIET" = false ]]; then
             printf 'Date\t%s\tUnique\n' "$label"
+            echo
         fi
         if [[ -n "$rows" ]]; then
             printf '%s\n' "$rows"
         fi
+        echo
         printf 'Total\t%s\t-\n' "$total_count"
         printf 'Unique (14d)\t-\t%s\n' "$window_uniques"
-    } | column -t -s $'\t'
+    } | render_table
     echo
 }
 
@@ -269,13 +315,75 @@ print_referrers() {
     {
         if [[ "$QUIET" = false ]]; then
             printf 'Source\tViews\tUnique\n'
+            echo
         fi
         if [[ -n "$rows" ]]; then
             printf '%s\n' "$rows"
         else
             printf '(none)\t-\t-\n'
         fi
-    } | column -t -s $'\t'
+    } | render_table
+    echo
+}
+
+# One row per repo, printed once ahead of the per-repo detail when more than
+# one repo is given — the detail tables below are each individually tidy, but
+# with several repos in one run there's no way to compare them at a glance
+# without this. Uses the API's own 14-day `count`/`uniques` totals (not a sum
+# of the --days window), same as the "Total"/"Unique (14d)" rows in
+# print_series, and sorted by unique views descending (unique clones, if
+# views weren't requested).
+print_summary() {
+    local sort_label="unique views"
+    [[ "$SHOW_VIEWS" = false ]] && sort_label="unique clones"
+
+    local header=""
+    if [[ "$SHOW_VIEWS" = true && "$SHOW_CLONES" = true ]]; then
+        header=$'Repo\tViews\tUnique\tClones\tUnique'
+    elif [[ "$SHOW_VIEWS" = true ]]; then
+        header=$'Repo\tViews\tUnique'
+    elif [[ "$SHOW_CLONES" = true ]]; then
+        header=$'Repo\tClones\tUnique'
+    fi
+
+    local rows=()
+    local i repo views_total views_uniques clones_total clones_uniques sort_key
+    for i in "${!REPOS[@]}"; do
+        repo="${REPOS[$i]}"
+        views_total="-"; views_uniques="-"; clones_total="-"; clones_uniques="-"
+        if [[ "$SHOW_VIEWS" = true && "${VIEWS_OK[$i]}" = true ]]; then
+            views_total=$(printf '%s' "${VIEWS_PAYLOAD[$i]}" | jq -r '.count')
+            views_uniques=$(printf '%s' "${VIEWS_PAYLOAD[$i]}" | jq -r '.uniques')
+        fi
+        if [[ "$SHOW_CLONES" = true && "${CLONES_OK[$i]}" = true ]]; then
+            clones_total=$(printf '%s' "${CLONES_PAYLOAD[$i]}" | jq -r '.count')
+            clones_uniques=$(printf '%s' "${CLONES_PAYLOAD[$i]}" | jq -r '.uniques')
+        fi
+
+        if [[ "$SHOW_VIEWS" = true ]]; then
+            sort_key="$views_uniques"
+        else
+            sort_key="$clones_uniques"
+        fi
+        [[ "$sort_key" = "-" ]] && sort_key=0
+
+        if [[ "$SHOW_VIEWS" = true && "$SHOW_CLONES" = true ]]; then
+            rows+=("${sort_key}"$'\t'"${repo}"$'\t'"${views_total}"$'\t'"${views_uniques}"$'\t'"${clones_total}"$'\t'"${clones_uniques}")
+        elif [[ "$SHOW_VIEWS" = true ]]; then
+            rows+=("${sort_key}"$'\t'"${repo}"$'\t'"${views_total}"$'\t'"${views_uniques}")
+        elif [[ "$SHOW_CLONES" = true ]]; then
+            rows+=("${sort_key}"$'\t'"${repo}"$'\t'"${clones_total}"$'\t'"${clones_uniques}")
+        fi
+    done
+
+    echo "Summary (14-day totals, sorted by ${sort_label})"
+    {
+        if [[ "$QUIET" = false ]]; then
+            printf '%s\n' "$header"
+            echo
+        fi
+        printf '%s\n' "${rows[@]}" | sort -t $'\t' -k1,1 -rn | cut -f2-
+    } | render_table
     echo
 }
 
@@ -309,33 +417,61 @@ if [[ "$JSON_OUTPUT" = true ]]; then
     exit 0
 fi
 
-for repo in "${REPOS[@]}"; do
-    echo "=== ${repo} ==="
-    echo
+# Fetched once per repo/section up front — the summary table and the
+# per-repo detail below both read from these rather than hitting the API
+# twice for the same data.
+#
+# The explicit else-branch on each fetch matters here for the same reason it
+# used to matter inline: command substitution runs fetch_traffic in a
+# subshell, so the FAILED it sets there never survives back to this scope.
+declare -a VIEWS_PAYLOAD CLONES_PAYLOAD REFERRERS_PAYLOAD
+declare -a VIEWS_OK CLONES_OK REFERRERS_OK
 
-    # Two things going on here:
-    #
-    #   - `if payload=$(...)` rather than `payload=$(...) && ...`, because under
-    #     `set -e` the latter aborts the whole run when one repo is unreadable,
-    #     and a 403 on one repo shouldn't stop the other five from reporting.
-    #   - the explicit `else FAILED=true`, because command substitution runs
-    #     fetch_traffic in a subshell, so the FAILED it sets there is discarded.
-    #     (The --json path calls fetch_traffic_json directly, no subshell, so
-    #     the assignment inside fetch_traffic does survive for that one.)
+for i in "${!REPOS[@]}"; do
+    repo="${REPOS[$i]}"
+    VIEWS_OK[$i]=false
+    CLONES_OK[$i]=false
+    REFERRERS_OK[$i]=false
+
     if [[ "$SHOW_VIEWS" = true ]]; then
         if payload=$(fetch_traffic "$repo" "views"); then
-            print_series "views" "Views" "$payload"
+            VIEWS_PAYLOAD[$i]="$payload"
+            VIEWS_OK[$i]=true
         else FAILED=true; fi
     fi
     if [[ "$SHOW_CLONES" = true ]]; then
         if payload=$(fetch_traffic "$repo" "clones"); then
-            print_series "clones" "Clones" "$payload"
+            CLONES_PAYLOAD[$i]="$payload"
+            CLONES_OK[$i]=true
         else FAILED=true; fi
     fi
     if [[ "$SHOW_REFERRERS" = true ]]; then
         if payload=$(fetch_traffic "$repo" "popular/referrers"); then
-            print_referrers "$payload"
+            REFERRERS_PAYLOAD[$i]="$payload"
+            REFERRERS_OK[$i]=true
         else FAILED=true; fi
+    fi
+done
+
+# The summary only means anything with more than one repo, and only when it
+# has a numeric column to sort — a referrers-only run has neither.
+if [[ ${#REPOS[@]} -gt 1 && ( "$SHOW_VIEWS" = true || "$SHOW_CLONES" = true ) ]]; then
+    print_summary
+fi
+
+for i in "${!REPOS[@]}"; do
+    repo="${REPOS[$i]}"
+    echo "=== ${repo} ==="
+    echo
+
+    if [[ "$SHOW_VIEWS" = true && "${VIEWS_OK[$i]}" = true ]]; then
+        print_series "views" "Views" "${VIEWS_PAYLOAD[$i]}"
+    fi
+    if [[ "$SHOW_CLONES" = true && "${CLONES_OK[$i]}" = true ]]; then
+        print_series "clones" "Clones" "${CLONES_PAYLOAD[$i]}"
+    fi
+    if [[ "$SHOW_REFERRERS" = true && "${REFERRERS_OK[$i]}" = true ]]; then
+        print_referrers "${REFERRERS_PAYLOAD[$i]}"
     fi
 done
 

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.12.0] - 2026-08-29
+
+### Added
+
+- **`gh-traffic.sh` prints a cross-repo summary table when more than one
+  `owner/repo` is given.** Each repo's detail already rendered as a tidy
+  table on its own, but a multi-repo `--all` run stacked up to 18 of them
+  (views, clones, referrers × N repos) with nothing tying them together, so
+  comparing repos meant scrolling through a wall of text. The new summary
+  is one row per repo — 14-day views/clones totals and uniques, from the
+  same API fields the per-repo `Total`/`Unique (14d)` rows already used —
+  sorted by unique views descending (unique clones, if only `--clones` was
+  requested). It's skipped for a single repo, where it would just repeat
+  the detail table, and for a referrers-only run, which has no numeric
+  column to sort by. Each repo's traffic is now fetched once and reused for
+  both the summary and the detail section, rather than hitting the API
+  twice.
+
+### Changed
+
+- **`gh-traffic.sh` table output now draws real borders** (`+---+---+`)
+  instead of `column -t`'s whitespace-aligned columns, with numbers and the
+  `-` placeholder right-aligned against left-aligned text. Rendered with a
+  small `awk` routine rather than `column`, which is no longer a
+  dependency of the script.
+
 ## [5.11.5] - 2026-08-29
 
 ### Fixed
