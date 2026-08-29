@@ -170,6 +170,19 @@ func RunPlaybook(trellisDir, playbookPath string, args []string) (exitCode int, 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	// Ansible's default callback dumps debug results as JSON, which escapes
+	// every embedded newline as literal `\n` text and quotes every string —
+	// so any multi-line report (quick-status, security-scan,
+	// traffic-report, ...) prints as one unreadable escaped blob. Its YAML
+	// result format instead renders multi-line strings with a block-literal
+	// scalar (real line breaks, no quoting), which is what these playbooks'
+	// `debug: msg: ...` tasks are actually written to be read as. Only set
+	// it when the caller hasn't already chosen a format themselves.
+	cmd.Env = os.Environ()
+	if os.Getenv("ANSIBLE_CALLBACK_RESULT_FORMAT") == "" {
+		cmd.Env = append(cmd.Env, "ANSIBLE_CALLBACK_RESULT_FORMAT=yaml")
+	}
+
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*osexec.ExitError); ok {
 			return exitErr.ExitCode(), nil

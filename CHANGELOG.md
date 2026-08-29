@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.5] - 2026-08-29
+
+### Fixed
+
+- **Ansible playbook reports (`quick-status`, `security-scan`,
+  `traffic-report`) printed as one unreadable escaped blob.** Ansible's
+  default JSON callback format escapes every embedded newline in a `debug`
+  `msg` as literal `\n` text and quotes every string, so a multi-line
+  report reads as a wall of backslash-n's and quote marks regardless of
+  whether the underlying script emits ANSI colors — a problem `quick-status`
+  had independently of the escape-sequence noise fixed in 5.11.3/5.11.4,
+  since it never calls a colored script.
+
+  `RunPlaybook` now sets `ANSIBLE_CALLBACK_RESULT_FORMAT=yaml` on the
+  `ansible-playbook` subprocess (unless the caller already set it), so
+  Ansible renders multi-line strings with a YAML block-literal scalar —
+  real line breaks, no escaping or quoting — instead of JSON. General fix
+  at the process level rather than another per-playbook patch. Confirmed
+  against `imagewize.com` production for all three commands.
+
 ## [5.11.4] - 2026-08-29
 
 ### Fixed
