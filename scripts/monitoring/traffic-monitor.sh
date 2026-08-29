@@ -42,6 +42,13 @@ OUTPUT_FILE="${3:-}"  # Optional: path to save report
 # Bot patterns to exclude from traffic analysis
 BOT_PATTERN='updown\.io|[Bb]ot|[Ss]pider|[Cc]rawl|Geedo|Semrush|DuckDuckBot|AhrefsBot|MJ12bot|SemrushBot|DataForSeoBot|YandexBot|facebookexternalhit|Googlebot|bingbot|PetalBot|BLEXBot'
 
+# Known non-visitor source IPs to exclude entirely from analysis (not just
+# bot-flagged) — e.g. our own dev/testing traffic through a VPN exit-node
+# range, which otherwise inflates "real user" counts. Anchored to line start
+# since the client IP is always the first field in combined log format.
+# 146.70.14.0/24 — ProtonVPN (NL) exit nodes used for site testing.
+EXCLUDE_IP_PATTERN='^146\.70\.14\.'
+
 # Static file extensions to exclude from page view analysis
 STATIC_PATTERN='\.(css|js|jpg|jpeg|png|gif|ico|woff|woff2|svg|webp|avif|ttf|eot|map|txt|xml)($|\?)'
 
@@ -390,6 +397,13 @@ main() {
     since_label=$(date -d "${HOURS} hours ago" '+%Y-%m-%d %H:%M UTC')
     print_section "Analyzing traffic since ${since_label} (last ${HOURS} hours)..."
     filter_recent_logs > "$TEMP_LOG"
+
+    # Drop excluded source IPs (e.g. our own VPN testing traffic) before any
+    # analysis runs, so every section below — totals, top pages, top IPs,
+    # SEO breakdowns — is already clean rather than needing its own filter.
+    if [[ -n "$EXCLUDE_IP_PATTERN" ]]; then
+        grep -vE "$EXCLUDE_IP_PATTERN" "$TEMP_LOG" > "${TEMP_LOG}.excl" && mv "${TEMP_LOG}.excl" "$TEMP_LOG"
+    fi
 
     local total_requests
     total_requests=$(wc -l < "$TEMP_LOG" | tr -d ' ')
