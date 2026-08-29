@@ -19,6 +19,7 @@
 # @flag     --days       optional  {14}  Limit the day-series sections to the last N days (max: 14)
 # @flag     --json       optional  {}  Output raw JSON instead of formatted tables
 # @flag     --quiet      optional  {}  Suppress header rows in table output
+# @flag     --summary    optional  {}  Show only the cross-repo summary table, skipping per-repo detail
 # @example  wp-ops gh-traffic imagewize/nynaeve --quiet
 # @example  wp-ops gh-traffic imagewize/nynaeve imagewize/wp-ops --all
 
@@ -27,6 +28,7 @@ set -euo pipefail
 # Default values
 JSON_OUTPUT=false
 QUIET=false
+SUMMARY_ONLY=false
 DAYS=14
 SHOW_VIEWS=false
 SHOW_CLONES=false
@@ -53,6 +55,7 @@ Options:
   -d, --days N          Limit day-series sections to the last N days (default: 14, max: 14)
   -j, --json            Output raw JSON instead of formatted tables
   -q, --quiet           Suppress header rows in table output
+  -s, --summary         Show only the cross-repo summary table, skipping per-repo detail
 
 Arguments:
   owner/repo            GitHub repository in format owner/repo (required, repeatable)
@@ -66,6 +69,10 @@ Sections:
   if views weren't requested. It's skipped for a single repo (redundant with
   the detail table) and for a referrers-only run (nothing numeric to sort).
 
+  --summary shows only that rollup, for any number of repos, and drops
+  --referrers if it was also given (or implied by --all) — the summary has
+  no column for it and per-repo detail isn't printed to show it elsewhere.
+
 Examples:
   # Views only (default)
   ./scripts/git/gh-traffic.sh imagewize/nynaeve
@@ -78,6 +85,9 @@ Examples:
 
   # Machine-readable output
   ./scripts/git/gh-traffic.sh --all --json imagewize/nynaeve
+
+  # Just the rollup across many repos, views and clones
+  ./scripts/git/gh-traffic.sh --all --summary imagewize/nynaeve imagewize/wp-ops imagewize/aludra
 
 Requirements:
   - GitHub CLI (gh) installed and authenticated
@@ -146,6 +156,10 @@ while [[ $# -gt 0 ]]; do
             QUIET=true
             shift
             ;;
+        -s|--summary)
+            SUMMARY_ONLY=true
+            shift
+            ;;
         -*)
             echo "Error: Unknown option $1" >&2
             echo "Use --help for usage information" >&2
@@ -162,6 +176,18 @@ done
 # `--clones` alone means clones alone, the same way `--all` means all three.
 if [[ "$SHOW_CLONES" = false && "$SHOW_REFERRERS" = false ]]; then
     SHOW_VIEWS=true
+fi
+
+# --summary prints only the rollup, so it needs at least one numeric section
+# to put in it — referrers has none. Drop referrers silently rather than
+# erroring when it came along via --all: that's asking for "totals only",
+# not specifically asking to see referrers nowhere.
+if [[ "$SUMMARY_ONLY" = true ]]; then
+    if [[ "$SHOW_VIEWS" = false && "$SHOW_CLONES" = false ]]; then
+        echo "Error: --summary needs a views or clones section to summarize (referrers has no numeric column) — drop --referrers or add --clones" >&2
+        exit 1
+    fi
+    SHOW_REFERRERS=false
 fi
 
 # Validate repository arguments
@@ -453,27 +479,31 @@ for i in "${!REPOS[@]}"; do
     fi
 done
 
-# The summary only means anything with more than one repo, and only when it
-# has a numeric column to sort — a referrers-only run has neither.
-if [[ ${#REPOS[@]} -gt 1 && ( "$SHOW_VIEWS" = true || "$SHOW_CLONES" = true ) ]]; then
+# --summary always gets the rollup, any number of repos. Otherwise it only
+# means anything with more than one repo, and only when it has a numeric
+# column to sort — a referrers-only run has neither.
+if [[ "$SUMMARY_ONLY" = true ]] || \
+   [[ ${#REPOS[@]} -gt 1 && ( "$SHOW_VIEWS" = true || "$SHOW_CLONES" = true ) ]]; then
     print_summary
 fi
 
-for i in "${!REPOS[@]}"; do
-    repo="${REPOS[$i]}"
-    echo "=== ${repo} ==="
-    echo
+if [[ "$SUMMARY_ONLY" = false ]]; then
+    for i in "${!REPOS[@]}"; do
+        repo="${REPOS[$i]}"
+        echo "=== ${repo} ==="
+        echo
 
-    if [[ "$SHOW_VIEWS" = true && "${VIEWS_OK[$i]}" = true ]]; then
-        print_series "views" "Views" "${VIEWS_PAYLOAD[$i]}"
-    fi
-    if [[ "$SHOW_CLONES" = true && "${CLONES_OK[$i]}" = true ]]; then
-        print_series "clones" "Clones" "${CLONES_PAYLOAD[$i]}"
-    fi
-    if [[ "$SHOW_REFERRERS" = true && "${REFERRERS_OK[$i]}" = true ]]; then
-        print_referrers "${REFERRERS_PAYLOAD[$i]}"
-    fi
-done
+        if [[ "$SHOW_VIEWS" = true && "${VIEWS_OK[$i]}" = true ]]; then
+            print_series "views" "Views" "${VIEWS_PAYLOAD[$i]}"
+        fi
+        if [[ "$SHOW_CLONES" = true && "${CLONES_OK[$i]}" = true ]]; then
+            print_series "clones" "Clones" "${CLONES_PAYLOAD[$i]}"
+        fi
+        if [[ "$SHOW_REFERRERS" = true && "${REFERRERS_OK[$i]}" = true ]]; then
+            print_referrers "${REFERRERS_PAYLOAD[$i]}"
+        fi
+    done
+fi
 
 [[ "$FAILED" = true ]] && exit 1
 exit 0

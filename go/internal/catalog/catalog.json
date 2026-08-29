@@ -378,6 +378,13 @@
         "required": false,
         "description": "Suppress header rows in table output",
         "raw": "--quiet      optional  {}  Suppress header rows in table output"
+      },
+      {
+        "name": "--summary",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Show only the cross-repo summary table, skipping per-repo detail",
+        "raw": "--summary    optional  {}  Show only the cross-repo summary table, skipping per-repo detail"
       }
     ],
     "examples": [

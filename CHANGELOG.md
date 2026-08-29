@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.13.0] - 2026-08-29
+
+### Added
+
+- **`gh-traffic.sh --summary`** shows only the cross-repo rollup table added
+  in 5.12.0 and skips per-repo detail entirely — for scanning traffic across
+  many repos without the daily-breakdown noise. Works with any number of
+  repos, including one. If `--referrers` came along (directly or via
+  `--all`), it's dropped rather than fetched: the summary has no column for
+  it, and `--summary` means per-repo detail — where referrers would
+  otherwise show — isn't printed at all. Passing `--referrers` with no
+  views or clones section active errors out instead, since the summary
+  would then have nothing to put in it.
+
 ## [5.12.0] - 2026-08-29
 
 ### Added
