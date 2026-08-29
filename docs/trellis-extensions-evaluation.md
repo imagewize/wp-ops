@@ -4,8 +4,10 @@
 Path B **shipped** — `imagewize.trellis_wp_monitoring` is published on
 [Ansible Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis_wp_monitoring/)
 at v1.0.0, imported 2026-08-25 once the `imagewize` namespace was approved.
-The trellis-sync issues are closed and the repo is archived.
-**Date:** 2026-08-21, updated 2026-08-25.
+The trellis-sync issues are closed and the repo is archived. A third path — a
+backup Galaxy role — was open as "maybe, later" until 2026-08-29 and is now
+**closed as no**; see [Recommendation](#recommendation) item 3.
+**Date:** 2026-08-21, updated 2026-08-25 and 2026-08-29.
 
 What this repo already has that the Trellis ecosystem wants, which of the two
 extension mechanisms fits it, and what it would cost. The mechanics below were
@@ -163,22 +165,49 @@ Anything we ship has to live elsewhere until Roots fills it in.
 
 ## What the ecosystem already has
 
-The published extensions closest to this repo's Trellis tooling:
+An earlier version of this section listed three backup-adjacent extensions and
+concluded from them. The roots.io page actually carries **five**, and the two it
+missed change the conclusion — so the full set, re-checked against GitHub on
+2026-08-29:
+
+**A — scheduled server-side backup to remote storage.** These push backups *off*
+the server. None of them bring a database down to a development machine, so
+none overlap `database-pull.yml` at all.
+
+| Extension | Stars | Last pushed | |
+| --- | ---: | --- | --- |
+| [Xilonz/trellis-backup-role](https://github.com/Xilonz/trellis-backup-role) | 65 | 2022-04-28 | duply profiles per site → S3/FTP/scp |
+| [MWDelaney/trellis-backup](https://github.com/MWDelaney/trellis-backup) | 36 | 2018-02-12 | **archived**, and still linked from the roots.io page |
+| [ItinerisLtd/trellis-backup-during-deploy](https://github.com/ItinerisLtd/trellis-backup-during-deploy) | 26 | 2022-06-07 | snapshots the database mid-deploy |
+
+**B — development ↔ remote migration.** This is the only group that overlaps
+`trellis/backup/`.
 
 | Extension | Stars | Last pushed | Overlaps our |
 | --- | ---: | --- | --- |
-| [valentinocossar/trellis-database-uploads-migration](https://github.com/valentinocossar/trellis-database-uploads-migration) | 96 | Dec 2022 | `backup/` — **near-identical** |
-| [louim/bedrock-site-protect](https://github.com/louim/bedrock-site-protect) | 80 | Apr 2020 | — |
-| [Xilonz/trellis-backup-role](https://github.com/Xilonz/trellis-backup-role) | 65 | Apr 2022 | `backup/`, partially |
-| [hamedb89/trellis-db-push-and-pull](https://github.com/hamedb89/trellis-db-push-and-pull) | 31 | **May 2017** | `backup/database-*` |
-| [ItinerisLtd/trellis-purge-wp-rocket-cache-during-deploy](https://github.com/ItinerisLtd/trellis-purge-wp-rocket-cache-during-deploy) | 10 | Jan 2020 | — |
+| [valentinocossar/trellis-database-uploads-migration](https://github.com/valentinocossar/trellis-database-uploads-migration) | 96 | 2022-12-20 | `backup/` — **near-identical** |
+| [hamedb89/trellis-db-push-and-pull](https://github.com/hamedb89/trellis-db-push-and-pull) | 31 | **2017-05-16** | `backup/database-*` |
 
-Two things follow from this table.
+Unrelated to backup, kept for context on what else the page hosts:
+[louim/bedrock-site-protect](https://github.com/louim/bedrock-site-protect)
+(80, 2020-04-19) and
+[ItinerisLtd/trellis-purge-wp-rocket-cache-during-deploy](https://github.com/ItinerisLtd/trellis-purge-wp-rocket-cache-during-deploy)
+(10, 2020-01).
 
-**There is demonstrated demand for exactly what `trellis/backup/` does.** Three
-separate projects, ~190 stars between them, all solving database and uploads
-push/pull. `trellis-db-push-and-pull` collected 31 stars and is still linked
-from the official roots.io page despite not being touched since 2017.
+Four things follow.
+
+**Group A is a real gap on our side, not competition.** wp-ops has no scheduled
+offsite backup at all — no duply, no S3 target, no cron. Xilonz's role does that
+properly and is the right thing to adopt rather than rebuild. This is the same
+gap admitted when trellis-sync issue #2 was closed.
+
+**Group B is where demand for `trellis/backup/` is demonstrated** — 127 stars
+across two projects, both solving database and uploads push/pull, the newer one
+stale since Dec 2022 and the older untouched since 2017 yet still linked from
+the official page.
+
+**The roots.io page is a list, not a curation.** It links a repo archived since
+2018. Presence there says nothing about whether something is maintained.
 
 **The bar is low and nobody is maintaining it.** The most popular one is
 four years stale, and its install procedure is:
@@ -202,7 +231,7 @@ The `trellis` catalog category holds 13 commands:
 
 | Ours | Ecosystem equivalent | Our advantage |
 | --- | --- | --- |
-| `backup/database-{backup,pull,push}.yml` | all three projects above | see below |
+| `backup/database-{backup,pull,push}.yml` | valentinocossar, hamedb89 (group B) | modest — see below |
 | `backup/files-{backup,pull,push}.yml` | `uploads.yml` in valentinocossar | separate backup/pull/push rather than one mode flag |
 | `monitoring/quick-status.yml` (10 tasks) | none found | log-driven health check |
 | `monitoring/traffic-report.yml` (7 tasks) | none found | Nginx access-log analysis |
@@ -211,8 +240,10 @@ The `trellis` catalog category holds 13 commands:
 | `security/check-{ips,deny-ips}.sh` | none found | AbuseIPDB reputation lookups |
 | `updater/trellis-updater.sh` | none found | safe Trellis update |
 
-Our backup playbooks are meaningfully better than the three existing projects,
-in ways worth stating concretely:
+Our backup playbooks are better than the group B projects, but by less than an
+earlier draft of this section claimed — and the difference matters, because a
+Galaxy role could only ever carry the playbook layer. Concretely, what the
+playbooks do add:
 
 ```yaml
 # trellis/backup/database-pull.yml
@@ -227,6 +258,30 @@ in ways worth stating concretely:
 Guards before destructive work, an automatic local backup before import, and
 `--all-tables --precise` search-replace. Plus `variable-check.yml`, which fails
 with a usage string instead of a Jinja undefined-variable trace.
+
+That is a better version of the same playbook — 112 lines against
+valentinocossar's 85, same `hosts: web:&{{ env }}` + `delegate_to: localhost`
+architecture. It is not a different thing.
+
+**The differentiation is not in the Ansible layer**, which is the finding that
+kills the backup-role idea. Grep both for the cases real sites actually hit:
+
+| | `trellis/backup/database-pull.yml` | `scripts/backup/db-pull.sh` |
+| --- | --- | --- |
+| `multisite` / `wp_blogs` / `--url` | **0 matches** | 8 |
+| `--host` override (for a host that fails key verification) | no | yes |
+| streaming dump, no intermediate file either end | no | yes |
+
+valentinocossar and hamedb89 also score **0** on all three — verified by
+cloning both and grepping. So the genuinely unserved cases (a multisite network
+whose `wp_blogs` domains need rewriting, a site whose SSH host differs from its
+site name) are handled only in the Bash script that drives `trellis vm shell`.
+
+A Galaxy role built from `trellis/backup/*.yml` would therefore ship the part
+that is merely a bit better and leave behind the part that is actually missing
+from the ecosystem. That is the fourth-entrant trap in its most expensive form:
+a maintenance obligation in exchange for a marginal improvement on a role that
+already has 96 stars.
 
 **The monitoring group is the genuinely novel part.** Four playbooks, ~430
 lines, and I found no published Trellis extension doing Nginx log analysis or
@@ -491,11 +546,30 @@ and on [Galaxy](https://galaxy.ansible.com/ui/standalone/roles/imagewize/trellis
 as `imagewize.trellis_wp_monitoring` v1.0.0 — see
 [Path B](#path-b-an-ansible-role-on-galaxy).
 
-**3. Backup as a Galaxy role is a maybe, later.** The quality gap over the
-incumbents is real and the demand is proven at ~190 stars, but it only pays off
-if it's maintained — and the graveyard above is what unmaintained looks like.
-Do it after the monitoring role establishes whether the channel produces
-anything.
+**3. ~~Backup as a Galaxy role is a maybe, later.~~ No — and neither is
+reviving trellis-sync to host it.** This was previously gated on whether the
+monitoring role proved the channel works. That gate is now moot: the
+[overlap section](#what-we-have-that-overlaps) shows the playbooks carry none
+of the differentiation. Multisite `wp_blogs` fixup, `--url`-scoped
+search-replace, the `--host` override, and the streaming dump all live in
+`scripts/backup/db-pull.sh`, which drives `trellis vm shell` and is not
+expressible as a Galaxy role without a rewrite. Publishing the playbooks alone
+means shipping a 112-line version of an 85-line role that already has 96 stars,
+and accepting a maintenance obligation for it.
+
+The [trellis-sync repo](#the-trellis-sync-repo) section still holds on the
+narrow question it answered — *if* a backup role ships, un-archiving beats
+registering a new name. It just no longer has a role to host. Leave it archived
+and pointing at wp-ops.
+
+What to do about backup instead: **adopt
+[Xilonz/trellis-backup-role](https://github.com/Xilonz/trellis-backup-role)**
+for the group A gap we genuinely have, and keep the pull/push scripts as
+project-specific tooling rather than a publication candidate. The one
+contribution with real ecosystem value would be a multisite patch to
+valentinocossar, which serves 96 stars' worth of users who silently corrupt
+`wp_blogs` on any network — cheap to open, though stale since Dec 2022, so rate
+the odds of a merge accordingly.
 
 **4. Don't chase `trellis db pull`.** It's blocked by the core-namespace guard
 today, silently. If Roots ever implements it, our playbooks are a better
