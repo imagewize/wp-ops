@@ -51,14 +51,28 @@ SEO_BOTS='Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp'
 # Admin and API paths to exclude from page view analysis
 ADMIN_PATTERN='^/wp/wp-login\.php|^/wp/wp-admin/|^/wp-json/|^/xmlrpc\.php|^/wp-cron\.php'
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Colors for output — only when stdout is a real terminal. traffic-report.yml
+# captures this script's output and re-displays it via `debug: msg=...`, and
+# no Ansible result format carries raw ANSI escape bytes through cleanly (see
+# security-monitor.sh for the full explanation), so skip color codes when not
+# attached to a tty rather than emit bytes nothing downstream can render.
+if [[ -t 1 ]]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    MAGENTA='\033[0;35m'
+    CYAN='\033[0;36m'
+    NC='\033[0m' # No Color
+else
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    MAGENTA=''
+    CYAN=''
+    NC=''
+fi
 
 # ============================================================================
 # Functions
