@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.1] - 2026-08-29
+
+### Fixed
+
+- **`quick-status` failed with `Missing sudo password` instead of reporting
+  status.** The "Get Nginx status" and "Get PHP-FPM status" tasks in
+  `trellis/monitoring/quick-status.yml` carried `become: yes`, but
+  `systemctl status` is a read-only query that doesn't need root, and the
+  command has no sudo password source when run non-interactively. Dropped
+  `become` from both tasks, matching the `become: no` already used by the
+  other read-only monitoring playbooks (`traffic-report.yml`,
+  `security-scan.yml`).
+
+- **The `5.11.0` release never reached Homebrew.** It was tagged `5.11.0`
+  instead of `v5.11.0`, and the release workflow only builds on a `v*` tag
+  push, so GoReleaser never ran and the tap was never updated. This release
+  is tagged correctly to get both it and the fix above out.
+
 ## [5.11.0] - 2026-08-29
 
 ### Added
