@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`traffic-monitor.sh` excludes known non-visitor IPs from analysis.** Our
-  own dev/testing traffic through a ProtonVPN (NL) exit-node range
+  own dev/testing traffic through a ProtonVPN (ID) exit-node range
   (`146.70.14.0/24`) was being counted as real user traffic throughout the
   report — totals, top pages, top IPs, SEO breakdowns — inflating
   human-traffic numbers by up to ~8% in some weekly windows. The new

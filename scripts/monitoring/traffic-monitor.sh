@@ -46,7 +46,7 @@ BOT_PATTERN='updown\.io|[Bb]ot|[Ss]pider|[Cc]rawl|Geedo|Semrush|DuckDuckBot|Ahre
 # bot-flagged) — e.g. our own dev/testing traffic through a VPN exit-node
 # range, which otherwise inflates "real user" counts. Anchored to line start
 # since the client IP is always the first field in combined log format.
-# 146.70.14.0/24 — ProtonVPN (NL) exit nodes used for site testing.
+# 146.70.14.0/24 — ProtonVPN (ID) exit nodes used for site testing.
 EXCLUDE_IP_PATTERN='^146\.70\.14\.'
 
 # Static file extensions to exclude from page view analysis
