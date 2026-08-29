@@ -125,6 +125,9 @@ scripts/
 # Views, clones, and referrers for several repos at once
 ./scripts/git/gh-traffic.sh --all imagewize/nynaeve imagewize/wp-ops
 
+# Just the cross-repo rollup table (views + clones), no per-repo detail
+./scripts/git/gh-traffic.sh --all --summary imagewize/nynaeve imagewize/wp-ops
+
 # Show recent git commits as one-liners
 ./scripts/git/git-log-oneline.sh
 ./scripts/git/git-log-oneline.sh 25
