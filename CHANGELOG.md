@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.0] - 2026-08-29
+
+### Added
+
+- **`traffic-monitor.sh` excludes known non-visitor IPs from analysis.** Our
+  own dev/testing traffic through a ProtonVPN (ID) exit-node range
+  (`146.70.14.0/24`) was being counted as real user traffic throughout the
+  report — totals, top pages, top IPs, SEO breakdowns — inflating
+  human-traffic numbers by up to ~8% in some weekly windows. The new
+  `EXCLUDE_IP_PATTERN` is applied once against the time-filtered log before
+  any section runs, so every downstream count is already clean.
+
 ## [5.13.0] - 2026-08-29
 
 ### Added
