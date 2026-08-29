@@ -2324,6 +2324,44 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/release/sync-extracted",
+    "description": "Check or update the extracted Galaxy role and WP-CLI package against their wp-ops sources",
+    "script_path": "scripts/release/sync-extracted.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "git"
+    ],
+    "doc": "docs/trellis-extensions-evaluation.md",
+    "flags": [
+      {
+        "name": "--write",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Rewrite downstream files instead of only reporting",
+        "raw": "--write   optional  {}  Rewrite downstream files instead of only reporting"
+      },
+      {
+        "name": "--root",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code",
+        "description": "Directory holding the downstream clones",
+        "raw": "--root    optional  {~/code}  Directory holding the downstream clones"
+      }
+    ],
+    "examples": [
+      "wp-ops sync-extracted",
+      "wp-ops sync-extracted --write"
+    ],
+    "manifest_category": "release",
+    "platform": "any",
+    "mutates": true,
+    "display_category": "release",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/release/upload-release-asset",
     "description": "Upload a zipped plugin/theme as a GitHub Release asset (for when the release workflow didn't trigger)",
     "script_path": "scripts/release/upload-release-asset.sh",

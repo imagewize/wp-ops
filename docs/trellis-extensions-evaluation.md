@@ -473,6 +473,20 @@ The same reasoning applies to the WP-CLI package in the companion doc — which
 is the third potential repo, and the argument for doing these one at a time
 rather than announcing a suite.
 
+**The one-way export now exists**, as `wp-ops sync-extracted`
+(`scripts/release/sync-extracted.sh`). It holds the line this section argues
+for: the leading comment block belongs to each downstream — wp-ops carries the
+manifest directives, the published copies carry their own install instructions
+— and everything after it is copied from here verbatim. `--write` rebuilds each
+downstream file as its own header plus this repo's body; the default reports
+drift and exits non-zero, so it works as a pre-release check.
+
+Adding a role means adding a row to its `MAPPINGS` table, not writing new
+logic. Only files genuinely extracted *from* wp-ops belong there: a downstream
+that owns its own source, like the Playwright validator
+[wp-pattern-sentinel](https://github.com/imagewize/wp-pattern-sentinel), has no
+upstream here to drift from and is deliberately absent.
+
 ---
 
 ## Recommendation
