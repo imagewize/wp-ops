@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.2] - 2026-08-29
+
+### Fixed
+
+- **`quick-status`'s "Get PHP-FPM status" task silently returned nothing.**
+  `systemctl status php*-fpm` matched no unit — systemd unit-name globbing
+  requires the full suffix, so `php*-fpm` never matches `php8.4-fpm.service`
+  even though the unit is loaded and running — and the task exited `rc=0`
+  with empty output instead of erroring, so it went unnoticed by the
+  `become` fix in 5.11.1. Changed the glob to `'php*-fpm.service'`,
+  confirmed against `imagewize.com` production, and quoted it so the
+  remote shell can't expand it against files in the deploy user's home
+  directory before systemctl sees it.
+
 ## [5.11.1] - 2026-08-29
 
 ### Fixed
