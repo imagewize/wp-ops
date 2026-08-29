@@ -58,13 +58,11 @@
     - name: Get Nginx status
       shell: |
         systemctl status nginx --no-pager | head -10
-      become: yes
       register: nginx_status
 
     - name: Get PHP-FPM status
       shell: |
         systemctl status php*-fpm --no-pager | head -10
-      become: yes
       register: php_status
 
     - name: Get recent suspicious activity
