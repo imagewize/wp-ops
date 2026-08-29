@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.4] - 2026-08-29
+
+### Fixed
+
+- **5.11.3 did not actually fix the `security-scan` escape-sequence noise.**
+  That release changed the "Display security report" task's `debug` msg
+  from `security_report.stdout_lines` to `security_report.stdout` on the
+  theory that Ansible's default callback only JSON-encodes list results.
+  Verified against the installed ansible-core (2.21.2) that this is wrong:
+  the callback always runs a debug `msg` through its result-format
+  serializer, string or list alike, and control bytes get mangled either
+  way — the JSON format escapes the ESC byte to literal `\u001b` text,
+  and the YAML format silently drops it from the block-literal style it
+  uses for multi-line strings. No Ansible result format carries a raw
+  ANSI byte through this path intact.
+
+  Fixed at the source instead: `security-monitor.sh` now skips emitting
+  color codes when its stdout isn't a tty (the case whenever Ansible's
+  `shell` module captures it), the same pattern `grep`/`ls --color=auto`
+  use. Interactive runs (ssh'ing in and running the script directly) keep
+  their colors; the Ansible-captured report is now clean, readable text
+  with no escape-code noise. Confirmed against `imagewize.com` production.
+
 ## [5.11.3] - 2026-08-29
 
 ### Fixed
