@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.1] - 2026-08-30
+
+### Fixed
+
+- **The database playbooks now run their development-side steps where the
+  development database actually lives.** `database-pull.yml`,
+  `database-push.yml` and `database-backup.yml` ran `wp db export` /
+  `wp db import` / `wp search-replace` on the host against `local_path`, which
+  only works when WordPress and MariaDB are reachable from the host. With a
+  trellis-cli VM development site (`trellis vm start`, Lima) both live inside
+  the VM, so the host's `wp` read the site's `.env` credentials, aimed them at
+  whatever MySQL the host happens to run, and failed with `Access denied for
+  user '<site>'@'localhost'` — while the *export* steps failed silently, since
+  `wp db export - | gzip > file` returns gzip's exit status, leaving a
+  ~170-byte husk where the pre-import backup of the development database should
+  have been. The playbooks now detect a VM development site from
+  `<trellis>/.trellis/lima/inventory` and run each development-side command
+  through `trellis vm shell --workdir /srv/www/<site>/current -- bash -c
+  '<command>'`. The VM mounts `local_path` at that same path, so dumps and
+  backups stay in the shared directory and the paths around the commands are
+  relative to it, identical on both sides. Host-local development is unchanged.
+  `-e dev_target=host|vm` overrides the detection; a VM site with no trellis-cli
+  on `PATH` aborts in `pre_tasks` with an explanation instead of at the first
+  command. `database-backup.yml -e env=development` additionally needs an
+  Ansible-reachable development host, which a stock `hosts/development`
+  inventory does not describe for a trellis-cli VM — `trellis/backup/README.md`
+  records that limitation.
+- **The pull/push URL search-replace rewrote a hostname to itself.**
+  `database-pull.yml` took `url_from`, and `database-push.yml` took `url_to`,
+  from `wordpress_sites[site]` — but both plays load
+  `group_vars/development/wordpress_sites.yml` through `vars_files`, which
+  outranks the remote environment's `group_vars` for the whole play. Both ends
+  therefore resolved to the *development* hostname, and the search-replace
+  became `example.test` → `example.test`: a no-op that still reports `changed`,
+  leaving every production URL in the freshly pulled development database (1527
+  posts on the run that caught it) and every `.test` URL in production on a
+  push. Each end is now read from its own environment's file by name.
+- **`ansible_date_time` replaced with `ansible_facts.date_time`** in the
+  database, files-backup and monitoring playbooks. ansible-core deprecates the
+  injected top-level fact variables — `INJECT_FACTS_AS_VARS` defaults to `True`
+  today but the injection is removed in 2.24, and the deprecation warning fired
+  on every run of these playbooks in the meantime.
+
 ## [5.15.0] - 2026-08-30
 
 ### Changed
