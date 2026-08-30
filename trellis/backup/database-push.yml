@@ -68,9 +68,9 @@
 
   - name: Create database dump on development
     delegate_to: localhost
-    shell: wp db export --allow-root - | gzip > {{ dump_file }}
+    shell: wp db export --allow-root --path=web/wp - | gzip > {{ dump_file }}
     args:
-      chdir: "{{ project_local_path }}/web/wp"
+      chdir: "{{ project_local_path }}"
     become: no
 
   - name: Push database dump from development to {{ env }}

@@ -84,16 +84,16 @@
 
   - name: Export development database before importing dump (backup)
     delegate_to: localhost
-    shell: wp db export - | gzip > database_backup/{{ backup_file }}
+    shell: wp db export --path=web/wp - | gzip > database_backup/{{ backup_file }}
     args:
-      chdir: "{{ project_local_path }}/web/wp"
+      chdir: "{{ project_local_path }}"
     become: no
 
   - name: Import database dump on development
     delegate_to: localhost
-    shell: gzip -c -d {{ dump_file }} | wp db import -
+    shell: gzip -c -d {{ dump_file }} | wp db import --path=web/wp -
     args:
-      chdir: "{{ project_local_path }}/web/wp"
+      chdir: "{{ project_local_path }}"
     become: no
 
   - name: Delete database dump from development
@@ -105,8 +105,8 @@
 
   - name: Search for {{ url_from }} and replace with {{ url_to }} on development
     delegate_to: localhost
-    command: wp search-replace '//{{ url_from }}' '//{{ url_to }}' --allow-root --all-tables --precise
+    command: wp search-replace '//{{ url_from }}' '//{{ url_to }}' --allow-root --all-tables --precise --path=web/wp
     args:
-      chdir: "{{ project_local_path }}/web/wp"
+      chdir: "{{ project_local_path }}"
     become: no
     tags: ['search-replace']

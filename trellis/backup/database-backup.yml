@@ -56,9 +56,9 @@
 
   - name: Export {{ env }} database
     delegate_to: localhost
-    shell: wp db export - | gzip > database_backup/{{ backup_file }}
+    shell: wp db export --path=web/wp - | gzip > database_backup/{{ backup_file }}
     args:
-      chdir: "{{ project_local_path }}/web/wp"
+      chdir: "{{ project_local_path }}"
     become: no
     when: env is defined and env == "development"
 
