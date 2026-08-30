@@ -29,6 +29,7 @@
     url_from: "{{ dev_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
     url_to: "{{ project.site_hosts.0.canonical }}"
     project_local_path: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}"
+    local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
     dump_file: "{{ site | regex_replace('\\.+', '_') }}_db_dump.sql.gz"
     current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_{{ env }}_{{ current_date_and_time }}.sql.gz"
@@ -48,41 +49,41 @@
     - name: Check if {{ site }} local folder exists
       delegate_to: localhost
       stat:
-        path: "{{ project_local_path }}"
+        path: "{{ local_site_dir }}"
       register: result
       become: no
 
     - name: Abort if {{ site }} local folder doesn't exist
       fail:
-        msg: "ERROR: {{ site }} is not a valid site (local folder {{ project_local_path }} does not exist)."
+        msg: "ERROR: {{ site }} is not a valid site (local folder {{ local_site_dir }} does not exist)."
       when: result.stat.exists is defined and result.stat.exists == false or result.stat.isdir is defined and result.stat.isdir == false
 
   tasks:
   - name: Create local database_backup directory if it doesn't exist
     delegate_to: localhost
     file:
-      path: "{{ project_local_path }}/database_backup"
+      path: "{{ local_site_dir }}/database_backup"
       state: directory
       mode: 0755
     become: no
 
   - name: Create database dump on development
     delegate_to: localhost
-    shell: wp db export --allow-root --path=web/wp - | gzip > {{ dump_file }}
+    shell: wp db export --allow-root --path=web/wp - | gzip > {{ local_site_dir }}/{{ dump_file }}
     args:
-      chdir: "{{ project_local_path }}"
+      chdir: "{{ local_site_dir }}"
     become: no
 
   - name: Push database dump from development to {{ env }}
     copy:
-      src: "{{ project_local_path }}/{{ dump_file }}"
+      src: "{{ local_site_dir }}/{{ dump_file }}"
       dest: "{{ project_web_dir }}/{{ dump_file }}"
 
   - name: Delete database dump from development
     delegate_to: localhost
-    shell: rm -f {{ dump_file }}
-    args:
-      chdir: "{{ project_local_path }}"
+    file:
+      path: "{{ local_site_dir }}/{{ dump_file }}"
+      state: absent
     become: no
 
   - name: Export {{ env }} database before importing dump (backup)
@@ -93,7 +94,7 @@
   - name: Pull exported database from {{ env }} to development (backup)
     fetch:
       src: "{{project_web_dir}}/{{ backup_file }}"
-      dest: "{{ project_local_path }}/database_backup/"
+      dest: "{{ local_site_dir }}/database_backup/"
       flat: yes
 
   - name: Delete exported database from {{ env }} (backup)

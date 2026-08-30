@@ -29,6 +29,7 @@
     dev_wordpress_sites: "{{ lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml }}"
     url_to: "{{ dev_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
     project_local_path: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}"
+    local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
     dump_file: "{{ site | regex_replace('\\.+', '_') }}_db_dump.sql.gz"
     current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_development_{{ current_date_and_time }}.sql.gz"
@@ -48,20 +49,20 @@
     - name: Check if {{ site }} local folder exists
       delegate_to: localhost
       stat:
-        path: "{{ project_local_path }}"
+        path: "{{ local_site_dir }}"
       register: result
       become: no
 
     - name: Abort if {{ site }} local folder doesn't exist
       fail:
-        msg: "ERROR: {{ site }} is not a valid site (local folder {{ project_local_path }} does not exist)."
+        msg: "ERROR: {{ site }} is not a valid site (local folder {{ local_site_dir }} does not exist)."
       when: result.stat.exists is defined and result.stat.exists == false or result.stat.isdir is defined and result.stat.isdir == false
 
   tasks:
   - name: Create local database_backup directory if it doesn't exist
     delegate_to: localhost
     file:
-      path: "{{ project_local_path }}/database_backup"
+      path: "{{ local_site_dir }}/database_backup"
       state: directory
       mode: 0755
     become: no
@@ -74,7 +75,7 @@
   - name: Pull database dump from {{ env }} to development
     fetch:
       src: "{{ project_web_dir }}/{{ dump_file }}"
-      dest: "{{ project_local_path }}/"
+      dest: "{{ local_site_dir }}/"
       flat: yes
 
   - name: Delete database dump from {{ env }}
@@ -84,29 +85,29 @@
 
   - name: Export development database before importing dump (backup)
     delegate_to: localhost
-    shell: wp db export --path=web/wp - | gzip > database_backup/{{ backup_file }}
+    shell: wp db export --path=web/wp - | gzip > {{ local_site_dir }}/database_backup/{{ backup_file }}
     args:
-      chdir: "{{ project_local_path }}"
+      chdir: "{{ local_site_dir }}"
     become: no
 
   - name: Import database dump on development
     delegate_to: localhost
-    shell: gzip -c -d {{ dump_file }} | wp db import --path=web/wp -
+    shell: gzip -c -d {{ local_site_dir }}/{{ dump_file }} | wp db import --path=web/wp -
     args:
-      chdir: "{{ project_local_path }}"
+      chdir: "{{ local_site_dir }}"
     become: no
 
   - name: Delete database dump from development
     delegate_to: localhost
-    shell: rm -f {{ dump_file }}
-    args:
-      chdir: "{{ project_local_path }}"
+    file:
+      path: "{{ local_site_dir }}/{{ dump_file }}"
+      state: absent
     become: no
 
   - name: Search for {{ url_from }} and replace with {{ url_to }} on development
     delegate_to: localhost
     command: wp search-replace '//{{ url_from }}' '//{{ url_to }}' --allow-root --all-tables --precise --path=web/wp
     args:
-      chdir: "{{ project_local_path }}"
+      chdir: "{{ local_site_dir }}"
     become: no
     tags: ['search-replace']

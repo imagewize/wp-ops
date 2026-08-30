@@ -19,10 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dump (backup)" with `database_backup/<site>_development_<stamp>.sql.gz: No
   such file or directory`, and would have failed again on the import
   (`gzip: <site>_db_dump.sql.gz: No such file or directory`) had it got that
-  far; `database-push` failed the same way copying its dump up. The local
-  tasks now `chdir` to `{{ project_local_path }}` — matching the paths the
-  playbooks actually write — and pass `--path=web/wp` to `wp` so WordPress is
-  still found under Bedrock's layout.
+  far; `database-push` failed the same way copying its dump up. Every local
+  path is now built from a new `local_site_dir` — the site's `local_path`
+  resolved against the playbook directory — so no local file reference depends
+  on a task's working directory or on where `ansible-playbook` was invoked
+  from, and the local `wp` calls pass `--path=web/wp` so WordPress is still
+  found under Bedrock's layout.
 
 ## [5.14.0] - 2026-08-29
 

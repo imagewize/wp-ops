@@ -23,6 +23,7 @@
     project_root: "{{ www_root }}/{{ site }}"
     project_web_dir: "{{ project_root }}/current"
     project_local_path: "{{ project.local_path }}"
+    local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
     current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_{{ env }}_{{ current_date_and_time }}.sql.gz"
 
@@ -36,29 +37,29 @@
     - name: Check if {{ site }} local folder exists
       delegate_to: localhost
       stat:
-        path: "{{ project_local_path }}"
+        path: "{{ local_site_dir }}"
       register: result
       become: no
 
     - name: Abort if {{ site }} local folder doesn't exist
       fail:
-        msg: "ERROR: {{ site }} is not a valid site (local folder {{ project_local_path }} does not exist)."
+        msg: "ERROR: {{ site }} is not a valid site (local folder {{ local_site_dir }} does not exist)."
       when: result.stat.exists is defined and result.stat.exists == false or result.stat.isdir is defined and result.stat.isdir == false
 
   tasks:
   - name: Create local database_backup directory if it doesn't exist
     delegate_to: localhost
     file:
-      path: "{{ project_local_path }}/database_backup"
+      path: "{{ local_site_dir }}/database_backup"
       state: directory
       mode: 0755
     become: no
 
   - name: Export {{ env }} database
     delegate_to: localhost
-    shell: wp db export --path=web/wp - | gzip > database_backup/{{ backup_file }}
+    shell: wp db export --path=web/wp - | gzip > {{ local_site_dir }}/database_backup/{{ backup_file }}
     args:
-      chdir: "{{ project_local_path }}"
+      chdir: "{{ local_site_dir }}"
     become: no
     when: env is defined and env == "development"
 
@@ -71,7 +72,7 @@
   - name: Pull exported database from {{ env }} to local
     fetch:
       src: "{{ project_web_dir }}/{{ backup_file }}"
-      dest: "{{ project_local_path }}/database_backup/"
+      dest: "{{ local_site_dir }}/database_backup/"
       flat: yes
     when: env is defined and env != "development"
 
