@@ -7,7 +7,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 
 	assets "github.com/imagewize/wp-ops"
 	"github.com/imagewize/wp-ops/go/internal/catalog"
@@ -107,7 +109,90 @@ func extractedAssetsRoot() (string, error) {
 		}
 		return "", fmt.Errorf("could not finalize extraction at %s: %w", dir, err)
 	}
+
+	// Only after an extraction actually happened: on the fast path above
+	// (this version is already extracted) there is nothing new to make
+	// anything stale, and a run that asks for scripts shouldn't pay for a
+	// directory scan it can't benefit from.
+	sweepOldAssetExtractions(parent, filepath.Base(dir), time.Now())
 	return dir, nil
+}
+
+// assetExtractionPrefix names the per-version extraction directories
+// sweepOldAssetExtractions is allowed to remove. Matching on it (rather
+// than on "every directory here") keeps the sweep from touching anything
+// else that shares the cache parent, now or later.
+const assetExtractionPrefix = "assets-"
+
+// keptPreviousExtractions is how many superseded extractions survive a
+// sweep, alongside the current version's. Keeping a couple is what makes
+// the sweep safe against a concurrently running older binary — a just-
+// replaced version is exactly the one a still-open shell or a
+// mid-playbook run is most likely to be reading files out of, and
+// removing it under them would fail the run with a missing script.
+const keptPreviousExtractions = 2
+
+// staleExtractionAge is how old an extraction must be before the sweep
+// will consider it at all, on the same reasoning as
+// stalePlaybookStagingAge in internal/exec: an in-flight run of an older
+// version keeps reading its own scripts (playbooks, .sh files) for as
+// long as it lasts, and a database or files pull can run for hours.
+const staleExtractionAge = 24 * time.Hour
+
+// sweepOldAssetExtractions removes superseded per-version asset
+// extractions from the cache parent, which otherwise accumulate one
+// directory per upgrade forever (29 of them, back to 3.23.2, on a machine
+// that had been upgrading since the Go CLI shipped). The current version
+// and the keptPreviousExtractions most recent others are always kept, as
+// is anything younger than staleExtractionAge.
+//
+// Leftover ".extract-*" temp directories are swept on the same age rule:
+// extractAssetsTo's own defer removes them, so any that survive are from
+// a run that was killed mid-extraction and owns nothing.
+//
+// Best-effort throughout — this is housekeeping, not the operation the
+// caller asked for, so a cache directory that can't be read or removed
+// (permissions, a concurrent sweep) is left alone rather than failing the
+// command.
+func sweepOldAssetExtractions(parent, currentName string, now time.Time) {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		return
+	}
+
+	type extraction struct {
+		path    string
+		modTime time.Time
+	}
+	var superseded []extraction
+
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		info, infoErr := e.Info()
+		if infoErr != nil || now.Sub(info.ModTime()) < staleExtractionAge {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(name, ".extract-"):
+			os.RemoveAll(filepath.Join(parent, name))
+		case strings.HasPrefix(name, assetExtractionPrefix) && name != currentName:
+			superseded = append(superseded, extraction{filepath.Join(parent, name), info.ModTime()})
+		}
+	}
+
+	// Newest first, so the tail past the keep count is the oldest.
+	sort.Slice(superseded, func(i, j int) bool {
+		return superseded[i].modTime.After(superseded[j].modTime)
+	})
+	if len(superseded) <= keptPreviousExtractions {
+		return
+	}
+	for _, e := range superseded[keptPreviousExtractions:] {
+		os.RemoveAll(e.path)
+	}
 }
 
 // extractAssetsTo writes every file in the embedded asset tree under dir,
