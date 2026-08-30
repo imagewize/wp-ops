@@ -5,7 +5,7 @@ Ansible playbooks for automated database backup, synchronization, and management
 ## Table of Contents
 
 - [Overview](#overview)
-  - [Development Site Assumption](#development-site-assumption)
+  - [Development Site: Host or Trellis VM](#development-site-host-or-trellis-vm)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -50,27 +50,38 @@ This directory contains Ansible playbooks that integrate with your existing Trel
 - **files-pull.yml** - Pull WordPress uploads from remote environment to development
 - **files-push.yml** - Push WordPress uploads from development to remote environment
 
-### Development Site Assumption
+### Development Site: Host or Trellis VM
 
-The database playbooks run their development-side steps on **your machine**
-(`delegate_to: localhost`), calling `wp` against the site at `local_path`. That
-assumes WordPress and its database are reachable from the host — the classic
-setup where development runs on a local PHP/MySQL stack.
+The database playbooks' development-side steps (`wp db export`, `wp db import`,
+`wp search-replace`) have to run where the development database actually lives,
+and the playbooks detect that themselves:
 
-**If your development site runs inside a Trellis VM** (`trellis vm start`, Lima),
-the host has no access to the VM's database, and the playbooks' development steps
-cannot work no matter how they're configured. Use the shell-script equivalents
-instead — they reach the dev site through `trellis vm shell`:
+- **Trellis VM** (`trellis vm start`, Lima) — detected by
+  `<trellis>/.trellis/lima/inventory`. WordPress and MariaDB live inside the VM,
+  so each development-side command is run through
+  `trellis vm shell --workdir /srv/www/<site>/current -- bash -c '<command>'`.
+  The VM mounts `local_path` at that same path, so dump and backup files are
+  written to the shared directory and are visible on both sides.
+- **Host-local** — no VM inventory present. Commands run on your machine against
+  the site at `local_path`, as before.
 
-| Playbook | Trellis VM equivalent |
-| --- | --- |
-| `database-pull.yml` | `wp-ops db-pull example.com production` |
-| `database-backup.yml` (remote env) | `wp-ops db-backup example.com production` |
-| `database-push.yml` | No shell equivalent yet — export from the VM with `trellis vm shell` and import manually |
+Override the detection with `-e dev_target=host` or `-e dev_target=vm`. With a VM
+development site, trellis-cli has to be on `PATH` and the VM running; the
+playbooks abort early with an explanatory message if trellis-cli is missing.
 
 The remote-only operations (`database-backup.yml` against production or staging,
 and all three `files-*.yml` playbooks) are unaffected: they run over SSH and only
 write files to the host.
+
+**Known limitation:** `database-backup.yml -e env=development` also has to *reach*
+a development host through Ansible (`hosts: web:&development`), which a stock
+`hosts/development` inventory does not describe for a trellis-cli VM. For a
+development backup, use `wp-ops db-backup` or run `wp db export` through
+`trellis vm shell` directly.
+
+> If you prefer a script to a playbook, `wp-ops db-pull example.com production`
+> and `wp-ops db-backup example.com production` cover the same ground over SSH
+> and `trellis vm shell`.
 
 ## Prerequisites
 
@@ -154,7 +165,7 @@ ansible-playbook database-pull.yml -e site=example.com -e env=staging
 
 **Note:** Cannot pull from development to development (will abort with error).
 
-**Note:** The development-side steps run on the host — see [Development Site Assumption](#development-site-assumption). For a Trellis VM dev site, use `wp-ops db-pull` below instead.
+**Note:** The development-side steps run on the host, or inside the Trellis VM when one is detected — see [Development Site: Host or Trellis VM](#development-site-host-or-trellis-vm).
 
 #### Alternative: Direct Shell Script Method
 

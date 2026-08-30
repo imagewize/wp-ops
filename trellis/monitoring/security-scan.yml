@@ -69,7 +69,7 @@
       delegate_to: localhost
       copy:
         content: "{{ security_report.stdout }}"
-        dest: "{{ playbook_dir }}/security-report-{{ site }}-{{ env }}-{{ ansible_date_time.iso8601_basic_short }}.txt"
+        dest: "{{ playbook_dir }}/security-report-{{ site }}-{{ env }}-{{ ansible_facts.date_time.iso8601_basic_short }}.txt"
       become: no
       when: save_report is defined and save_report | bool
 
@@ -81,7 +81,7 @@
       mail:
         host: localhost
         port: 25
-        subject: "[SECURITY ALERT] {{ site }} {{ env }} - {{ ansible_date_time.date }}"
+        subject: "[SECURITY ALERT] {{ site }} {{ env }} - {{ ansible_facts.date_time.date }}"
         body: "{{ security_report.stdout }}"
         to: "{{ alert_email }}"
         from: "monitoring@{{ site }}"

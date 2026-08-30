@@ -25,13 +25,31 @@
     project: "{{ wordpress_sites[site] }}"
     project_root: "{{ www_root }}/{{ site }}"
     project_web_dir: "{{ project_root }}/current"
+    # `wordpress_sites` here is development's: the play loads it through
+    # vars_files, which outranks the remote environment's group_vars for the
+    # whole play. Both ends therefore have to be read from their own file by
+    # name, or url_from and url_to come back as the same host and the
+    # search-replace silently does nothing.
     dev_wordpress_sites: "{{ lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml }}"
+    remote_wordpress_sites: "{{ lookup('file', 'group_vars/' ~ env ~ '/wordpress_sites.yml') | from_yaml }}"
     url_from: "{{ dev_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
-    url_to: "{{ project.site_hosts.0.canonical }}"
+    url_to: "{{ remote_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
     project_local_path: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}"
     local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
+    # Where the development site's WordPress and database actually live. A
+    # trellis-cli VM (`trellis vm start`, Lima) keeps both inside the VM, so the
+    # host's `wp` cannot reach that database at all — but the VM mounts
+    # local_path at /srv/www/{{ site }}/current, so a file written here is the
+    # same file the VM reads. Development-side commands therefore run through
+    # `trellis vm shell` while every path around them stays relative to that
+    # shared directory. Override the detection with -e dev_target=host|vm.
+    dev_target: auto
+    trellis_vm_inventory: "{{ (playbook_dir, '.trellis/lima/inventory') | path_join }}"
+    dev_uses_vm: "{{ dev_target == 'vm' or (dev_target == 'auto' and trellis_vm_inventory is exists) }}"
+    dev_run_dir: "{{ dev_uses_vm | bool | ternary(playbook_dir, local_site_dir) }}"
+    dev_vm_shell: "trellis vm shell --workdir /srv/www/{{ site }}/current -- bash -c "
     dump_file: "{{ site | regex_replace('\\.+', '_') }}_db_dump.sql.gz"
-    current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
+    current_date_and_time: "{{ ansible_facts.date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_facts.date_time.hour }}_{{ ansible_facts.date_time.minute }}_{{ ansible_facts.date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_{{ env }}_{{ current_date_and_time }}.sql.gz"
 
   pre_tasks:
@@ -58,6 +76,25 @@
         msg: "ERROR: {{ site }} is not a valid site (local folder {{ local_site_dir }} does not exist)."
       when: result.stat.exists is defined and result.stat.exists == false or result.stat.isdir is defined and result.stat.isdir == false
 
+    - name: Check for trellis-cli ({{ site }} development runs in a Trellis VM)
+      delegate_to: localhost
+      shell: command -v trellis
+      register: trellis_cli
+      changed_when: false
+      failed_when: false
+      become: no
+      when: dev_uses_vm | bool
+
+    - name: Abort if trellis-cli is unavailable
+      delegate_to: localhost
+      fail:
+        msg: >-
+          ERROR: {{ site }}'s development site runs in a Trellis VM
+          ({{ trellis_vm_inventory }} exists), so the development-side steps run
+          through `trellis vm shell` — but trellis-cli is not on PATH. Install it,
+          or re-run with -e dev_target=host if development runs on this machine.
+      when: dev_uses_vm | bool and trellis_cli.rc | default(1) != 0
+
   tasks:
   - name: Create local database_backup directory if it doesn't exist
     delegate_to: localhost
@@ -69,9 +106,11 @@
 
   - name: Create database dump on development
     delegate_to: localhost
-    shell: wp db export --allow-root --path=web/wp - | gzip > {{ local_site_dir }}/{{ dump_file }}
+    vars:
+      dev_cmd: "wp db export --allow-root --path=web/wp - | gzip > {{ dump_file }}"
+    shell: "{{ dev_uses_vm | bool | ternary(dev_vm_shell ~ (dev_cmd | quote), dev_cmd) }}"
     args:
-      chdir: "{{ local_site_dir }}"
+      chdir: "{{ dev_run_dir }}"
     become: no
 
   - name: Push database dump from development to {{ env }}
