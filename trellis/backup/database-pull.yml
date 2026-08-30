@@ -31,7 +31,7 @@
     project_local_path: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}"
     local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
     dump_file: "{{ site | regex_replace('\\.+', '_') }}_db_dump.sql.gz"
-    current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
+    current_date_and_time: "{{ ansible_facts.date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_facts.date_time.hour }}_{{ ansible_facts.date_time.minute }}_{{ ansible_facts.date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_development_{{ current_date_and_time }}.sql.gz"
 
   pre_tasks:

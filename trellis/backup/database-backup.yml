@@ -24,7 +24,7 @@
     project_web_dir: "{{ project_root }}/current"
     project_local_path: "{{ project.local_path }}"
     local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
-    current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
+    current_date_and_time: "{{ ansible_facts.date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_facts.date_time.hour }}_{{ ansible_facts.date_time.minute }}_{{ ansible_facts.date_time.second }}"
     backup_file: "{{ site | regex_replace('\\.+', '_') }}_{{ env }}_{{ current_date_and_time }}.sql.gz"
 
   pre_tasks:

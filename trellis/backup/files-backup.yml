@@ -23,7 +23,7 @@
     project_root: "{{ www_root }}/{{ site }}"
     shared_uploads_dir: "{{ project_root }}/shared/uploads"
     project_local_path: "{{ project.local_path }}"
-    current_date_and_time: "{{ ansible_date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_date_time.hour }}_{{ ansible_date_time.minute }}_{{ ansible_date_time.second }}"
+    current_date_and_time: "{{ ansible_facts.date_time.date | regex_replace('\\-+', '_') }}_{{ ansible_facts.date_time.hour }}_{{ ansible_facts.date_time.minute }}_{{ ansible_facts.date_time.second }}"
     backup_filename: "{{ site | regex_replace('\\.+', '_') }}_{{ env }}_uploads_{{ current_date_and_time }}.tar.gz"
     backup_dir: "{{ project_local_path }}/files_backup"
 

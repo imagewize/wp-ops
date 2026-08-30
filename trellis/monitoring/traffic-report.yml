@@ -67,6 +67,6 @@
       delegate_to: localhost
       copy:
         content: "{{ traffic_report.stdout }}"
-        dest: "{{ playbook_dir }}/traffic-report-{{ site }}-{{ env }}-{{ ansible_date_time.iso8601_basic_short }}.txt"
+        dest: "{{ playbook_dir }}/traffic-report-{{ site }}-{{ env }}-{{ ansible_facts.date_time.iso8601_basic_short }}.txt"
       become: no
       when: save_report is defined and save_report | bool
