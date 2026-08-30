@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.14.1] - 2026-08-30
+
+### Fixed
+
+- **Local `wp` tasks in the database playbooks ran from the wrong directory,
+  breaking `database-pull`, `database-push`, and a development
+  `database-backup`.** Every local task `chdir`'d into
+  `{{ project_local_path }}/web/wp` but referenced its files relative to
+  `{{ project_local_path }}` — the directory one level up, where the
+  `database_backup/` folder is created and where the dump is fetched to. So
+  `database-pull` aborted at "Export development database before importing
+  dump (backup)" with `database_backup/<site>_development_<stamp>.sql.gz: No
+  such file or directory`, and would have failed again on the import
+  (`gzip: <site>_db_dump.sql.gz: No such file or directory`) had it got that
+  far; `database-push` failed the same way copying its dump up. The local
+  tasks now `chdir` to `{{ project_local_path }}` — matching the paths the
+  playbooks actually write — and pass `--path=web/wp` to `wp` so WordPress is
+  still found under Bedrock's layout.
+
 ## [5.14.0] - 2026-08-29
 
 ### Added
