@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.15.0] - 2026-08-30
+
+### Changed
+
+- **Superseded asset-cache extractions are now pruned after an upgrade.** A
+  binary installed via Homebrew extracts its embedded scripts to a
+  version-stamped cache directory (`~/Library/Caches/wp-ops/assets-<version>`)
+  on first run, and nothing ever removed the previous one — a machine that had
+  been upgrading since the Go CLI shipped had 29 of them, back to 3.23.2.
+  Extracting a new version now sweeps the parent afterwards, keeping the
+  current extraction, the two most recent superseded ones, and anything less
+  than 24 hours old; leftover `.extract-*` temp directories from a run killed
+  mid-extraction are swept on the same age rule. The keep-recent and age rules
+  are what make this safe against an older binary that is still running: a
+  long database or files pull keeps reading its own scripts for as long as it
+  lasts. The sweep runs only when an extraction actually happened, so a run
+  that finds its version already extracted does no directory scanning at all.
+
 ## [5.14.1] - 2026-08-30
 
 ### Fixed
