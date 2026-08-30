@@ -25,9 +25,15 @@
     project: "{{ wordpress_sites[site] }}"
     project_root: "{{ www_root }}/{{ site }}"
     project_web_dir: "{{ project_root }}/current"
+    # `wordpress_sites` here is development's: the play loads it through
+    # vars_files, which outranks the remote environment's group_vars for the
+    # whole play. Both ends therefore have to be read from their own file by
+    # name, or url_from and url_to come back as the same host and the
+    # search-replace silently does nothing.
     dev_wordpress_sites: "{{ lookup('file', 'group_vars/development/wordpress_sites.yml') | from_yaml }}"
+    remote_wordpress_sites: "{{ lookup('file', 'group_vars/' ~ env ~ '/wordpress_sites.yml') | from_yaml }}"
     url_from: "{{ dev_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
-    url_to: "{{ project.site_hosts.0.canonical }}"
+    url_to: "{{ remote_wordpress_sites.wordpress_sites[site].site_hosts.0.canonical }}"
     project_local_path: "{{ dev_wordpress_sites.wordpress_sites[site].local_path }}"
     local_site_dir: "{{ (playbook_dir, project_local_path) | path_join }}"
     dump_file: "{{ site | regex_replace('\\.+', '_') }}_db_dump.sql.gz"
