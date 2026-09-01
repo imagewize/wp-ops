@@ -644,15 +644,23 @@ export function createServer(): McpServer {
         .enum(["publish", "draft", "pending", "private"])
         .default("publish")
         .describe("Post status to create with (ignored when updateId is given)"),
+      imagePath: z
+        .string()
+        .optional()
+        .describe(
+          "Absolute path to a local featured image. It is uploaded, set as _thumbnail_id with alt text, " +
+            "and its verified URL is written into the Article JSON-LD `image` field."
+        ),
+      imageAlt: z
+        .string()
+        .optional()
+        .describe("Alt text for an uploaded image. Defaults to the post title."),
       imageAttachmentId: z
         .number()
         .int()
         .positive()
         .optional()
-        .describe(
-          "Attachment ID of an already-uploaded featured image to set as _thumbnail_id. Upload it first " +
-            'via the wp_cli tool: args: ["media", "import", "<path>", "--porcelain"]'
-        ),
+        .describe("Attach an already-uploaded attachment ID instead of uploading a file. Ignored when imagePath is given."),
       dryRun: z
         .boolean()
         .default(false)
@@ -662,7 +670,7 @@ export function createServer(): McpServer {
         .default(false)
         .describe("Required (true) for a real write. Only set after explicit user approval."),
     },
-    async ({ site, env, draftPath, updateId, status, imageAttachmentId, dryRun, confirm }) => {
+    async ({ site, env, draftPath, updateId, status, imagePath, imageAlt, imageAttachmentId, dryRun, confirm }) => {
       try {
         if (!dryRun && !confirm) {
           throw new Error(
@@ -672,7 +680,14 @@ export function createServer(): McpServer {
         }
         const registry = loadRegistry();
         const entry = resolveSiteEnv(registry, site, env);
-        const result = await runPublishPost(entry, draftPath, { updateId, status, imageAttachmentId, dryRun });
+        const result = await runPublishPost(entry, draftPath, {
+          updateId,
+          status,
+          imagePath,
+          imageAlt,
+          imageAttachmentId,
+          dryRun,
+        });
         return {
           content: [{ type: "text" as const, text: formatPublishPost(result) }],
           isError: !dryRun && !result.verified,

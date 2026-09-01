@@ -21,6 +21,7 @@ export interface PublishPostResult {
   sourceLdJson: number;
   storedLdJson: number;
   thumbnailId?: number;
+  imageUrl?: string;
   warnings: string[];
   verified: boolean;
 }
@@ -73,25 +74,119 @@ function phpQuote(s: string): string {
   return Buffer.from(s, "utf8").toString("base64");
 }
 
+// Rewrite the Article JSON-LD block's `image` to a verified upload URL.
+// Parsed as real JSON rather than patched with a regex: the block is genuine
+// JSON-LD and a textual edit corrupts it silently on any nesting. Mirrors
+// publish-post.sh's prepare_body().
+export function injectArticleImage(body: string, url: string): { body: string; injected: boolean } {
+  let injected = false;
+  const out = body.replace(
+    /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g,
+    (whole, inner: string) => {
+      let parsed: Record<string, unknown>;
+      try {
+        parsed = JSON.parse(inner);
+      } catch {
+        return whole;
+      }
+      if (parsed["@type"] !== "Article") return whole;
+      parsed.image = url;
+      injected = true;
+      return `<script type="application/ld+json">\n${JSON.stringify(parsed, null, 2)}\n</script>`;
+    }
+  );
+  return { body: injected ? out : body, injected };
+}
+
+// Upload a local image and return its attachment ID and verified URL.
+// The file is shipped as base64 inside `wp eval` for the same reason the post
+// body is: it keeps one code path across SSH, a local path and a Trellis VM,
+// where an scp would only cover the first.
+export async function uploadFeaturedImage(
+  entry: EnvEntry,
+  imagePath: string,
+  title: string,
+  alt: string
+): Promise<{ attachmentId: number; url: string }> {
+  const bytes = readFileSync(imagePath);
+  const remoteName = imagePath.split("/").pop() ?? "featured.jpg";
+
+  const write = await runWpCliRaw(entry, [
+    "eval",
+    `$p = sys_get_temp_dir() . '/' . basename( base64_decode( '${phpQuote(remoteName)}' ) );` +
+      `file_put_contents( $p, base64_decode( '${bytes.toString("base64")}' ) ); echo $p;`,
+  ]);
+  if (write.code !== 0) {
+    throw new Error(`Could not stage the image on the target (exit ${write.code}): ${write.stderr || write.stdout}`);
+  }
+  const remotePath = write.stdout.trim().split("\n").pop()?.trim() ?? "";
+  if (!remotePath) throw new Error("Could not determine the staged image path on the target.");
+
+  const imported = await runWpCliRaw(entry, [
+    "media",
+    "import",
+    remotePath,
+    `--title=${title}`,
+    `--alt=${alt}`,
+    "--porcelain",
+  ]);
+  // Clean up the staged copy whether or not the import succeeded.
+  await runWpCliRaw(entry, ["eval", `@unlink( base64_decode( '${phpQuote(remotePath)}' ) );`]);
+
+  if (imported.code !== 0) {
+    throw new Error(`wp media import failed (exit ${imported.code}): ${imported.stderr || imported.stdout}`);
+  }
+  const attachmentId = Number(imported.stdout.trim().split("\n").pop()?.replace(/\D/g, ""));
+  if (!attachmentId) throw new Error(`Could not parse an attachment ID from: ${imported.stdout.trim()}`);
+
+  const guid = await runWpCliRaw(entry, ["post", "get", String(attachmentId), "--field=guid"]);
+  const url = guid.stdout.trim().split("\n").pop()?.trim() ?? "";
+  return { attachmentId, url };
+}
+
 export async function runPublishPost(
   entry: EnvEntry,
   draftPath: string,
   options: {
     updateId?: number;
     status?: string;
+    /** Local image file to upload, attach and inject into the Article schema. */
+    imagePath?: string;
+    /** Alt text for an uploaded image. Defaults to the post title. */
+    imageAlt?: string;
+    /** An already-uploaded attachment to attach instead of uploading one. */
     imageAttachmentId?: number;
     dryRun?: boolean;
   } = {}
 ): Promise<PublishPostResult> {
   const raw = readFileSync(draftPath, "utf8");
   const header = parseDraftHeader(raw);
-  const body = stripDraftHeader(raw);
+  let body = stripDraftHeader(raw);
 
   const warnings: string[] = [];
 
   if (!header.title) throw new Error(`No "<!-- SUGGESTED TITLE: ... -->" found in ${draftPath}`);
   if (!header.slug && !options.updateId) {
     throw new Error(`No "<!-- SUGGESTED POST SLUG: /slug/ -->" found and no updateId given`);
+  }
+
+  // Upload the featured image first: its URL goes into the Article schema, so
+  // it must be known before the source byte counts that the verification
+  // compares against are taken.
+  let thumbnailId = options.imageAttachmentId;
+  let imageUrl: string | undefined;
+  if (options.imagePath && !options.dryRun) {
+    const uploaded = await uploadFeaturedImage(
+      entry,
+      options.imagePath,
+      header.title,
+      options.imageAlt || header.title
+    );
+    thumbnailId = uploaded.attachmentId;
+    imageUrl = uploaded.url;
+    const { body: withImage, injected } = injectArticleImage(body, uploaded.url);
+    body = withImage;
+    if (!injected) warnings.push("No Article JSON-LD block found — image URL not injected into schema");
   }
 
   const sourceBytes = Buffer.byteLength(body, "utf8");
@@ -162,7 +257,7 @@ $mt = base64_decode( '${phpQuote(header.metaTitle)}' );
 $md = base64_decode( '${phpQuote(header.metaDescription)}' );
 if ( $mt ) { update_post_meta( $id, '_genesis_title', $mt ); }
 if ( $md ) { update_post_meta( $id, '_genesis_description', $md ); }
-${options.imageAttachmentId ? `update_post_meta( $id, '_thumbnail_id', ${options.imageAttachmentId} );` : ""}
+${thumbnailId ? `update_post_meta( $id, '_thumbnail_id', ${thumbnailId} );` : ""}
 
 $cat = base64_decode( '${phpQuote(header.category)}' );
 if ( $cat ) {
@@ -238,7 +333,8 @@ echo "stored_scripts=" . substr_count( $saved->post_content, '<script' ) . "\n";
     storedBytes,
     sourceLdJson,
     storedLdJson,
-    thumbnailId: options.imageAttachmentId,
+    thumbnailId,
+    imageUrl,
     warnings,
     verified: storedBytes === sourceBytes && storedLdJson === sourceLdJson && storedScripts === sourceScripts,
   };
@@ -254,7 +350,7 @@ export function formatPublishPost(r: PublishPostResult): string {
     lines.push(r.permalink);
     lines.push("");
     lines.push(`Stored ${r.storedBytes} bytes (source ${r.sourceBytes}), JSON-LD ${r.storedLdJson}/${r.sourceLdJson}`);
-    if (r.thumbnailId) lines.push(`Featured image: attachment ${r.thumbnailId}`);
+    if (r.thumbnailId) lines.push(`Featured image: attachment ${r.thumbnailId}${r.imageUrl ? ` — ${r.imageUrl}` : ""}`);
     lines.push("");
     lines.push(r.verified ? "VERIFIED: content stored intact." : "VERIFICATION FAILED — see warnings.");
   }

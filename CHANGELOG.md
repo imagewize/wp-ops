@@ -46,6 +46,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   It requires `confirm: true` for a real write, and `dryRun: true` preflights a
   draft (header parsing, block and length checks) without confirmation.
 
+### Changed
+
+- **`publish-post` and `publish_post` now behave identically.** They were split
+  on two points: the shell script uploaded an image file while the MCP tool only
+  accepted an already-uploaded attachment ID, and the shell script demanded
+  `TRELLIS_DIR`/`SITE_DIR` for a local run while the MCP tool resolved the VM
+  from the registry. Both now take an image *file*, upload it, set alt text, and
+  write the resulting verified URL into the Article JSON-LD `image` field;
+  `publish-post` auto-detects `TRELLIS_DIR` (with the same confirm prompt as
+  `scripts/backup/db-pull.sh`) and defaults `SITE_DIR` to the Bedrock checkout
+  beside it.
+
+  The two Article-schema injections are separate implementations — python3 in
+  the script, TypeScript in the MCP tool — so both parse the block as real JSON
+  rather than patching it textually, and their output is verified byte-identical
+  on the same input. The MCP tool ships the image as base64 through `wp eval`
+  for the same reason it ships the post body that way: one code path across SSH,
+  a local path and a Trellis VM. Confirmed lossless by SHA-256 round-trip
+  against a live upload.
+
+  Because the attachment URL differs per environment, the post body is now built
+  per target rather than once and shared — the byte counts the verification
+  compares against are taken after injection.
+
+### Fixed
+
+- **`publish-post` now actually performs the Article JSON-LD image rewrite its
+  header documented.** The behaviour was described in the command's comment
+  block but never implemented.
+
 ### Notes
 
 - Both new commands deliberately **omit `--user`** when invoking WP-CLI, and say

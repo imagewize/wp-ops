@@ -3287,6 +3287,14 @@
         "raw": "--image      optional  {featured.jpg}  Featured image to upload and attach"
       },
       {
+        "name": "--alt",
+        "required_raw": "optional",
+        "required": false,
+        "default": "Alt text",
+        "description": "Alt text for the uploaded image (default: the post title)",
+        "raw": "--alt        optional  {Alt text}  Alt text for the uploaded image (default: the post title)"
+      },
+      {
         "name": "--update",
         "required_raw": "optional",
         "required": false,
