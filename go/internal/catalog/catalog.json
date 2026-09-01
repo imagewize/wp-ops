@@ -3238,6 +3238,144 @@
   },
   {
     "category": "wp-cli",
+    "key": "wp-cli/content-creation/publish-post",
+    "description": "Publish or update a WordPress post from an HTML draft, with schema-integrity verification",
+    "script_path": "wp-cli/content-creation/publish-post.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh",
+      "trellis"
+    ],
+    "args": [
+      {
+        "name": "draft-file",
+        "required_raw": "required",
+        "required": true,
+        "default": "post.html",
+        "description": "HTML draft with block markup and a SUGGESTED header",
+        "raw": "draft-file   required  {post.html}  HTML draft with block markup and a SUGGESTED header"
+      },
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site name under /srv/www (default: example.com)",
+        "raw": "site-name    optional  {example.com}  Site name under /srv/www (default: example.com)"
+      },
+      {
+        "name": "environment",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "local",
+          "production",
+          "both"
+        ],
+        "description": "Where to publish (default: local)",
+        "raw": "environment  optional  {local|production|both}  Where to publish (default: local)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--image",
+        "required_raw": "optional",
+        "required": false,
+        "default": "featured.jpg",
+        "description": "Featured image to upload and attach",
+        "raw": "--image      optional  {featured.jpg}  Featured image to upload and attach"
+      },
+      {
+        "name": "--update",
+        "required_raw": "optional",
+        "required": false,
+        "default": "13681",
+        "description": "Update this existing post ID instead of creating a new post",
+        "raw": "--update     optional  {13681}  Update this existing post ID instead of creating a new post"
+      },
+      {
+        "name": "--status",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "publish",
+          "draft"
+        ],
+        "description": "Post status (default: publish)",
+        "raw": "--status     optional  {publish|draft}  Post status (default: publish)"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Parse and preflight only; make no changes",
+        "raw": "--dry-run    optional  Parse and preflight only; make no changes"
+      }
+    ],
+    "examples": [
+      "wp-ops publish-post post.html",
+      "wp-ops publish-post post.html example.com production --image featured.jpg",
+      "wp-ops publish-post post.html example.com production --update 13681"
+    ],
+    "manifest_category": "content",
+    "platform": "trellis",
+    "mutates": true,
+    "display_category": "content",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
+    "key": "wp-cli/content-creation/verify-post",
+    "description": "Verify a published post's JSON-LD, blocks and links survived the write and render live",
+    "script_path": "wp-cli/content-creation/verify-post.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh",
+      "trellis"
+    ],
+    "args": [
+      {
+        "name": "post",
+        "required_raw": "required",
+        "required": true,
+        "default": "13681",
+        "description": "Post ID or slug to verify",
+        "raw": "post         required  {13681}  Post ID or slug to verify"
+      },
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site name under /srv/www (default: example.com)",
+        "raw": "site-name    optional  {example.com}  Site name under /srv/www (default: example.com)"
+      },
+      {
+        "name": "environment",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "local",
+          "production"
+        ],
+        "description": "Where to check (default: production)",
+        "raw": "environment  optional  {local|production}  Where to check (default: production)"
+      }
+    ],
+    "examples": [
+      "wp-ops verify-post 13681 example.com production",
+      "wp-ops verify-post my-post-slug example.com production"
+    ],
+    "manifest_category": "content",
+    "platform": "trellis",
+    "mutates": true,
+    "display_category": "content",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
     "key": "wp-cli/content-creation/wp-cli-pattern-validate",
     "description": "Validate/fix block pattern files by round-tripping through parse_blocks()/serialize_blocks()",
     "script_path": "wp-cli/content-creation/wp-cli-pattern-validate.php",
