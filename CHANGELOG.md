@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.16.0] - 2026-09-01
+
+### Added
+
+- **`publish-post` — create or update a WordPress post from an HTML draft, and
+  verify the write actually survived.** `import-page-draft` only updates an
+  existing *page* by ID and touches no metadata, so publishing a blog post meant
+  a long manual sequence: strip the `<!-- SUGGESTED ... -->` header, scp the
+  body, `wp eval` an insert, set `_thumbnail_id`, set `_genesis_title` /
+  `_genesis_description`, assign terms, flush cache, then hand-check that
+  nothing was silently dropped. This does all of it, and refuses to proceed on a
+  duplicate slug, a body under 500 bytes, or a JSON-LD block count that changed
+  in transit.
+
+  The post-write verification is the reason the command exists. Every way
+  content silently disappears on this stack is invisible to a `post_content`
+  diff — kses stripping `<script type="application/ld+json">`, a self-closing
+  custom block one-liner saving as a genuinely empty block, a stale render off
+  cache. None of them raise an error. `publish-post` re-reads the saved post and
+  compares stored bytes and `<script>`/JSON-LD counts against the source, so a
+  loss is reported at write time rather than discovered later in a search
+  result.
+
+  It also declines to invent taxonomy: a tag or category that does not already
+  exist is reported as a warning and skipped, never created.
+
+- **`verify-post` — check a published post's stored content against what
+  actually renders.** Split out as its own command so it can run against any
+  post, not just one this toolkit wrote. Reports stored bytes, JSON-LD and
+  `<script>` counts, self-closing custom blocks, SEO meta length, and featured
+  image; then fetches the live URL and confirms the schema still renders, every
+  internal link resolves, and no CTA wrapper rendered empty.
+
+- **MCP tools `publish_post` and `verify_post`,** implemented against
+  `runWpCliRaw` rather than shelling out to the scripts, so both work across an
+  SSH host, a local path and a Trellis VM through the same site/env resolution
+  as every other tool. `publish_post` ships the body as base64 inside `wp eval`
+  instead of scp'ing it, which keeps one code path across all three transports.
+  It requires `confirm: true` for a real write, and `dryRun: true` preflights a
+  draft (header parsing, block and length checks) without confirmation.
+
+### Changed
+
+- **`publish-post` and `publish_post` now behave identically.** They were split
+  on two points: the shell script uploaded an image file while the MCP tool only
+  accepted an already-uploaded attachment ID, and the shell script demanded
+  `TRELLIS_DIR`/`SITE_DIR` for a local run while the MCP tool resolved the VM
+  from the registry. Both now take an image *file*, upload it, set alt text, and
+  write the resulting verified URL into the Article JSON-LD `image` field;
+  `publish-post` auto-detects `TRELLIS_DIR` (with the same confirm prompt as
+  `scripts/backup/db-pull.sh`) and defaults `SITE_DIR` to the Bedrock checkout
+  beside it.
+
+  The two Article-schema injections are separate implementations — python3 in
+  the script, TypeScript in the MCP tool — so both parse the block as real JSON
+  rather than patching it textually, and their output is verified byte-identical
+  on the same input. The MCP tool ships the image as base64 through `wp eval`
+  for the same reason it ships the post body that way: one code path across SSH,
+  a local path and a Trellis VM. Confirmed lossless by SHA-256 round-trip
+  against a live upload.
+
+  Because the attachment URL differs per environment, the post body is now built
+  per target rather than once and shared — the byte counts the verification
+  compares against are taken after injection.
+
+### Fixed
+
+- **`publish-post` now actually performs the Article JSON-LD image rewrite its
+  header documented.** The behaviour was described in the command's comment
+  block but never implemented.
+
+### Notes
+
+- Both new commands deliberately **omit `--user`** when invoking WP-CLI, and say
+  so in their headers. WP-CLI tears down kses filters at `init` priority 11 only
+  when `--user` is absent; passing it for any account lacking `unfiltered_html`
+  re-adds the filters and strips JSON-LD from the post. This is the opposite of
+  the intuitive reading, which is why it is commented at both call sites.
+
 ## [5.15.1] - 2026-08-30
 
 ### Fixed

@@ -15,6 +15,8 @@ import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ip
 import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 import { runDbPull } from "./tools/dbPull.js";
 import { runFilesPull } from "./tools/filesPull.js";
+import { runPublishPost, formatPublishPost } from "./tools/publishPost.js";
+import { runVerifyPost, formatVerifyPost } from "./tools/verifyPost.js";
 import {
   formatRunResult,
   formatSearchResults,
@@ -613,6 +615,111 @@ export function createServer(): McpServer {
             `{ site: "${site}", env: "${env}", args: ["user", "delete", "${username}", "--yes", "--reassign=1"], confirm: true }`
         );
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "publish_post",
+    "Publish or update a WordPress blog post from a local HTML draft carrying the `<!-- SUGGESTED ... -->` " +
+      "header (slug, title, meta title, meta description, tags, category). Parses that header, strips it from " +
+      "the body, writes the post, sets The SEO Framework meta and terms, and then VERIFIES that the stored " +
+      "bytes and <script>/JSON-LD counts match the source — the failure this guards against (kses stripping " +
+      "schema, a self-closing block saving empty) is silent and invisible in a post_content diff. " +
+      "Requires confirm: true, only after explicit user approval.",
+    {
+      site: siteSchema.describe("Site key from the wp-ops site registry (config/sites.json)"),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "production"'),
+      draftPath: z.string().min(1).describe("Absolute path to the local HTML draft file"),
+      updateId: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Update this existing post ID instead of creating a new post"),
+      status: z
+        .enum(["publish", "draft", "pending", "private"])
+        .default("publish")
+        .describe("Post status to create with (ignored when updateId is given)"),
+      imagePath: z
+        .string()
+        .optional()
+        .describe(
+          "Absolute path to a local featured image. It is uploaded, set as _thumbnail_id with alt text, " +
+            "and its verified URL is written into the Article JSON-LD `image` field."
+        ),
+      imageAlt: z
+        .string()
+        .optional()
+        .describe("Alt text for an uploaded image. Defaults to the post title."),
+      imageAttachmentId: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Attach an already-uploaded attachment ID instead of uploading a file. Ignored when imagePath is given."),
+      dryRun: z
+        .boolean()
+        .default(false)
+        .describe("Parse the header and run preflight checks only; make no changes. Does not need confirm."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) for a real write. Only set after explicit user approval."),
+    },
+    async ({ site, env, draftPath, updateId, status, imagePath, imageAlt, imageAttachmentId, dryRun, confirm }) => {
+      try {
+        if (!dryRun && !confirm) {
+          throw new Error(
+            "Writing a post needs confirm: true. Re-run with confirm: true only after the user has " +
+              "explicitly approved this, or pass dryRun: true to preflight without changes."
+          );
+        }
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runPublishPost(entry, draftPath, {
+          updateId,
+          status,
+          imagePath,
+          imageAlt,
+          imageAttachmentId,
+          dryRun,
+        });
+        return {
+          content: [{ type: "text" as const, text: formatPublishPost(result) }],
+          isError: !dryRun && !result.verified,
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "verify_post",
+    "Verify that a published WordPress post survived the write intact: compares what is STORED in " +
+      "post_content against what actually RENDERS on the live page. Catches JSON-LD stripped by kses, " +
+      "self-closing custom blocks that saved empty, broken internal links and a missing featured image — " +
+      "all failure modes that look fine in the editor and in a diff. Read-only.",
+    {
+      site: siteSchema.describe("Site key from the wp-ops site registry (config/sites.json)"),
+      env: envSchema.describe('Environment key for that site, e.g. "development", "production"'),
+      post: z.string().min(1).describe('Post ID or slug to verify, e.g. "13681" or "my-post-slug"'),
+      checkLinks: z
+        .boolean()
+        .default(true)
+        .describe("Also request every internal link in the post and report non-200 responses"),
+    },
+    async ({ site, env, post, checkLinks }) => {
+      try {
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runVerifyPost(entry, post, { checkLinks });
+        return { content: [{ type: "text" as const, text: formatVerifyPost(result) }], isError: !result.passed };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
