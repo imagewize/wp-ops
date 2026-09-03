@@ -286,6 +286,11 @@ build_php() {
 if ( \$body === false || strlen( \$body ) < 500 ) { echo "ABORT: body missing or too short\n"; return; }
 if ( strlen( \$body ) !== $bytes ) { echo "ABORT: body length changed in transit\n"; return; }
 
+// wp_update_post()/wp_insert_post() call wp_unslash() internally and expect slashed
+// input, so an unslashed body loses every literal backslash. Slash after the transit
+// check above so that check still measures the real payload.
+\$body = wp_slash( \$body );
+
 \$update_id = '$UPDATE_ID';
 \$slug      = '$SLUG';
 

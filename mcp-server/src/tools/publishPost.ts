@@ -230,6 +230,10 @@ export async function runPublishPost(
   const worker = String.raw`
 $body = base64_decode( '${phpQuote(body)}' );
 if ( strlen( $body ) !== ${sourceBytes} ) { echo "ABORT=transit-length\n"; return; }
+// wp_update_post()/wp_insert_post() call wp_unslash() internally and expect slashed
+// input, so an unslashed body loses every literal backslash. Slash after the transit
+// check above so that check still measures the real payload.
+$body = wp_slash( $body );
 $update_id = ${options.updateId ? String(options.updateId) : "0"};
 $slug = base64_decode( '${phpQuote(header.slug)}' );
 if ( $update_id ) {
