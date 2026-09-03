@@ -295,8 +295,22 @@ if ( strlen( \$body ) !== $bytes ) { echo "ABORT: body length changed in transit
 \$slug      = '$SLUG';
 
 if ( \$update_id ) {
-    if ( ! get_post( (int) \$update_id ) ) { echo "ABORT: post \$update_id not found\n"; return; }
-    \$id = wp_update_post( array( 'ID' => (int) \$update_id, 'post_content' => \$body ), true );
+    \$before = get_post( (int) \$update_id );
+    if ( ! \$before ) { echo "ABORT: post \$update_id not found\n"; return; }
+    // The draft header is the source of truth for the title and meta description:
+    // the SEO meta below is rewritten from it on every run, so leaving post_title
+    // and post_excerpt alone let a stale title outlive the SEO title it should match.
+    // post_name and post_status are deliberately NOT touched — rewriting the slug
+    // would break the live URL silently, and an update must not flip a draft live.
+    if ( \$slug && \$before->post_name !== \$slug ) {
+        echo "WARN: draft slug '\$slug' differs from post slug '{\$before->post_name}' — left unchanged\n";
+    }
+    \$id = wp_update_post( array(
+        'ID'           => (int) \$update_id,
+        'post_title'   => wp_slash( base64_decode( '$(printf '%s' "$TITLE" | base64)' ) ),
+        'post_content' => \$body,
+        'post_excerpt' => wp_slash( base64_decode( '$(printf '%s' "$META_DESC" | base64)' ) ),
+    ), true );
 } else {
     \$existing = \$slug ? get_page_by_path( \$slug, OBJECT, 'post' ) : null;
     if ( \$existing ) { echo "ABORT: slug '\$slug' already exists as post {\$existing->ID} — pass --update {\$existing->ID}\n"; return; }
