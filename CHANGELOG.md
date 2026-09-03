@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.17.0] - 2026-09-03
+
+### Changed
+
+- **`publish-post --update` now rewrites `post_title` and `post_excerpt`** from the
+  draft header, instead of writing only `post_content`. The SEO meta title and
+  description were already rewritten from that same header on every run, so a title
+  fixed in the draft stayed stale on the post while the SEO title it is supposed to
+  match was updated — on one post a "WooComerce" typo survived an update that changed
+  everything else. If you relied on the post title being preserved across an update,
+  it no longer is; the draft header is now authoritative for both fields.
+- `post_name` and `post_status` are still deliberately left alone on update: rewriting
+  a slug would silently break the live URL, and an update must not flip a draft live.
+  When the draft's slug differs from the stored one, `publish-post` now warns and
+  leaves it untouched rather than changing it.
+
 ## [5.16.1] - 2026-09-03
 
 ### Fixed

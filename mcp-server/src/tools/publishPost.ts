@@ -237,8 +237,20 @@ $body = wp_slash( $body );
 $update_id = ${options.updateId ? String(options.updateId) : "0"};
 $slug = base64_decode( '${phpQuote(header.slug)}' );
 if ( $update_id ) {
-  if ( ! get_post( $update_id ) ) { echo "ABORT=missing-post\n"; return; }
-  $id = wp_update_post( array( 'ID' => $update_id, 'post_content' => $body ), true );
+  $before = get_post( $update_id );
+  if ( ! $before ) { echo "ABORT=missing-post\n"; return; }
+  // The draft header is the source of truth for the title and meta description:
+  // the SEO meta below is rewritten from it on every run, so leaving post_title
+  // and post_excerpt alone let a stale title outlive the SEO title it should match.
+  // post_name and post_status are deliberately NOT touched — rewriting the slug
+  // would break the live URL silently, and an update must not flip a draft live.
+  if ( $slug && $before->post_name !== $slug ) { echo "warn_slug=" . $before->post_name . "\n"; }
+  $id = wp_update_post( array(
+    'ID'           => $update_id,
+    'post_title'   => wp_slash( base64_decode( '${phpQuote(header.title)}' ) ),
+    'post_content' => $body,
+    'post_excerpt' => wp_slash( base64_decode( '${phpQuote(header.metaDescription)}' ) ),
+  ), true );
   $created = 0;
 } else {
   $existing = $slug ? get_page_by_path( $slug, OBJECT, 'post' ) : null;
@@ -311,6 +323,12 @@ echo "stored_scripts=" . substr_count( $saved->post_content, '<script' ) . "\n";
     throw new Error(`Publish aborted: ${kv.ABORT}${kv.message ? ` — ${kv.message}` : ""}`);
   }
 
+  if (kv.warn_slug) {
+    warnings.push(
+      `Slug in draft ("${header.slug}") differs from the post's slug ("${kv.warn_slug}") — ` +
+        `left unchanged, since rewriting it would break the live URL. Change it in WordPress and add a redirect if intended.`
+    );
+  }
   if (kv.warn_category) warnings.push(`Category "${kv.warn_category}" does not exist — post left uncategorized`);
   if (kv.warn_tags) warnings.push(`Tag(s) not found and NOT created: ${kv.warn_tags}`);
 
