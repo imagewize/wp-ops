@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.17.1] - 2026-09-03
+
+### Fixed
+
+- **`import-page-draft` no longer strips backslashes from page content.** The same
+  defect fixed in `publish-post` in 5.16.1 was still present here: both the local
+  and the production path passed `file_get_contents()` straight to `wp_update_post()`,
+  which calls `wp_unslash()` internally and expects slashed input, so every literal
+  backslash was eaten. Prose is unaffected, which is why it goes unnoticed; a page
+  draft carrying code is silently corrupted, with `\"`, `\'`, `\\`, `\n`, `\b` and
+  backreferences like `\2` vanishing from regexes and `printf`/`sprintf` calls.
+  Fixed by wrapping the body in `wp_slash()` on both paths.
+
 ## [5.17.0] - 2026-09-03
 
 ### Changed
