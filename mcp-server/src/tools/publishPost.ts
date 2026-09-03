@@ -247,10 +247,10 @@ if ( $update_id ) {
     'post_type'    => 'post',
     'post_status'  => base64_decode( '${phpQuote(options.status ?? "publish")}' ),
     'post_author'  => 1,
-    'post_title'   => base64_decode( '${phpQuote(header.title)}' ),
+    'post_title'   => wp_slash( base64_decode( '${phpQuote(header.title)}' ) ),
     'post_name'    => $slug,
     'post_content' => $body,
-    'post_excerpt' => base64_decode( '${phpQuote(header.metaDescription)}' ),
+    'post_excerpt' => wp_slash( base64_decode( '${phpQuote(header.metaDescription)}' ) ),
   ), true );
   $created = 1;
 }

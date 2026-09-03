@@ -304,10 +304,10 @@ if ( \$update_id ) {
         'post_type'    => 'post',
         'post_status'  => '$POST_STATUS',
         'post_author'  => 1,
-        'post_title'   => base64_decode( '$(printf '%s' "$TITLE" | base64)' ),
+        'post_title'   => wp_slash( base64_decode( '$(printf '%s' "$TITLE" | base64)' ) ),
         'post_name'    => \$slug,
         'post_content' => \$body,
-        'post_excerpt' => base64_decode( '$(printf '%s' "$META_DESC" | base64)' ),
+        'post_excerpt' => wp_slash( base64_decode( '$(printf '%s' "$META_DESC" | base64)' ) ),
     ), true );
 }
 if ( is_wp_error( \$id ) ) { echo "ERROR: " . \$id->get_error_message() . "\n"; return; }

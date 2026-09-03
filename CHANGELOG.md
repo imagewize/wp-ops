@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   applying `wp_slash()` to the body immediately before the write, on both the update
   and the create path, in the MCP tool and the CLI script. The slash is applied after
   the transit-length guard so that guard still measures the real payload.
+  `post_title` and `post_excerpt` are slashed on the create path for the same reason.
   ([#210](https://github.com/imagewize/wp-ops/issues/210))
 
 ## [5.16.0] - 2026-09-01
