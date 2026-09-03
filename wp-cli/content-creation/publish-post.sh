@@ -286,6 +286,11 @@ build_php() {
 if ( \$body === false || strlen( \$body ) < 500 ) { echo "ABORT: body missing or too short\n"; return; }
 if ( strlen( \$body ) !== $bytes ) { echo "ABORT: body length changed in transit\n"; return; }
 
+// wp_update_post()/wp_insert_post() call wp_unslash() internally and expect slashed
+// input, so an unslashed body loses every literal backslash. Slash after the transit
+// check above so that check still measures the real payload.
+\$body = wp_slash( \$body );
+
 \$update_id = '$UPDATE_ID';
 \$slug      = '$SLUG';
 
@@ -299,10 +304,10 @@ if ( \$update_id ) {
         'post_type'    => 'post',
         'post_status'  => '$POST_STATUS',
         'post_author'  => 1,
-        'post_title'   => base64_decode( '$(printf '%s' "$TITLE" | base64)' ),
+        'post_title'   => wp_slash( base64_decode( '$(printf '%s' "$TITLE" | base64)' ) ),
         'post_name'    => \$slug,
         'post_content' => \$body,
-        'post_excerpt' => base64_decode( '$(printf '%s' "$META_DESC" | base64)' ),
+        'post_excerpt' => wp_slash( base64_decode( '$(printf '%s' "$META_DESC" | base64)' ) ),
     ), true );
 }
 if ( is_wp_error( \$id ) ) { echo "ERROR: " . \$id->get_error_message() . "\n"; return; }

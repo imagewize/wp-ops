@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.16.1] - 2026-09-03
+
+### Fixed
+
+- **`publish-post` / `publish_post` no longer strip backslashes from post content.**
+  The body was passed to `wp_update_post()` / `wp_insert_post()` unslashed, but both
+  call `wp_unslash()` internally and expect slashed input, so every literal backslash
+  was eaten on the way into the database. Prose was unaffected; posts containing code
+  were silently corrupted — `\"`, `\'`, `\\`, `\n`, `\b` and backreferences like `\2`
+  are load-bearing in regexes and `printf`/`sprintf` calls, and vanished. Fixed by
+  applying `wp_slash()` to the body immediately before the write, on both the update
+  and the create path, in the MCP tool and the CLI script. The slash is applied after
+  the transit-length guard so that guard still measures the real payload.
+  `post_title` and `post_excerpt` are slashed on the create path for the same reason.
+  ([#210](https://github.com/imagewize/wp-ops/issues/210))
+
 ## [5.16.0] - 2026-09-01
 
 ### Added
