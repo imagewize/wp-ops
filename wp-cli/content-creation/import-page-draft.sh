@@ -91,8 +91,11 @@ update_local() {
     print_step "Updating local page $PAGE_ID"
     cp "$STRIPPED_FILE" "$SITE_DIR/$TMP_NAME"
 
+    # wp_update_post() calls wp_unslash() internally and expects slashed input, so an
+    # unslashed body loses every literal backslash. Page drafts carrying code (regex
+    # backreferences, \n in printf, escaped quotes) are silently corrupted without this.
     (cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH" -- \
-        wp eval 'wp_update_post(array("ID" => '"$PAGE_ID"', "post_content" => file_get_contents("'"$SERVER_PATH"'/'"$TMP_NAME"'")));' \
+        wp eval 'wp_update_post(array("ID" => '"$PAGE_ID"', "post_content" => wp_slash(file_get_contents("'"$SERVER_PATH"'/'"$TMP_NAME"'"))));' \
         --path="$WP_PATH")
 
     if [ -n "$TEMPLATE" ]; then
@@ -111,7 +114,8 @@ update_production() {
     print_step "Updating production page $PAGE_ID"
     scp "$STRIPPED_FILE" "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/$TMP_NAME"
 
-    ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp eval 'wp_update_post(array(\"ID\" => $PAGE_ID, \"post_content\" => file_get_contents(\"$SERVER_PATH/$TMP_NAME\")));' --path=$WP_PATH"
+    # See the note in update_local(): wp_update_post() unslashes, so slash the body first.
+    ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp eval 'wp_update_post(array(\"ID\" => $PAGE_ID, \"post_content\" => wp_slash(file_get_contents(\"$SERVER_PATH/$TMP_NAME\"))));' --path=$WP_PATH"
 
     if [ -n "$TEMPLATE" ]; then
         ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp post meta update $PAGE_ID _wp_page_template '$TEMPLATE' --path=$WP_PATH"
