@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.19.0] - 2026-09-04
+
+### Fixed
+
+- **`publish-post` / MCP `publish_post` now refuse a draft containing a
+  self-closing custom block**, instead of warning and publishing it anyway. The
+  one-liner Gutenberg's inserter produces (`<!-- wp:imagewize/cta {...} /-->`)
+  saves an EMPTY block when written through WP-CLI — the InnerBlocks template is
+  hydrated client-side on insert, so nothing expands it server-side. Nothing
+  errors, the block is missing from the rendered post, and a `post_content` diff
+  shows nothing; two posts on imagewize.com shipped with an empty CTA block in
+  four days. `verify-post` already treated this as a hard FAIL, so the tool waved
+  the draft through and then failed it afterwards, once the mistake could no
+  longer be prevented cheaply. The refusal names the offending blocks (which
+  `verify-post` did and `publish-post` didn't) and both entry points now use
+  `verify-post`'s pattern, so the attribute-less form is caught too.
+  `--allow-self-closing-blocks` / `allowSelfClosingBlocks: true` publishes anyway,
+  for a genuinely dynamic, server-rendered block. The MCP tool also gained the
+  `wp:nynaeve/` bad-block prefix `publish-post.sh` already had — `nynaeve` is a
+  block category, not a namespace, so any `wp:nynaeve/x` is a typo.
+- **MCP `publish_post` writes the Article schema `image` when attaching by
+  `imageAttachmentId`.** `injectArticleImage()` sat inside the `imagePath` branch,
+  so an attachment ID set `_thumbnail_id` and nothing else, even though the two
+  options are documented as interchangeable. A post first published with
+  `imagePath` carries an `image` field the local draft never had — wp-ops added it
+  at publish time — so a later content-only update passing `imageAttachmentId`
+  republished it without one, and every check passed: `publish_post` compares the
+  source to the stored bytes (the source was already missing it) and `verify_post`
+  counts JSON-LD blocks (the count never changed). The URL is now resolved with
+  `wp_get_attachment_url()` and both options end at the same injection; a
+  non-existent attachment ID is an error rather than a bogus `_thumbnail_id`.
+- **An update that drops Article schema fields the live post has is refused.**
+  Both tools verify that what was sent is what landed; neither noticed that what
+  was sent was poorer than what it replaced. Since a draft is written before
+  wp-ops enriches the post, re-publishing it strips that enrichment back off —
+  `image` on post 13755, and `datePublished`, `author` and `publisher` exactly the
+  same way. `publish-post` now reads the live post first and compares its Article
+  JSON-LD keys against the draft's, listing what would be dropped.
+  `--allow-schema-regression` / `allowSchemaRegression: true` overrides. The MCP
+  tool checks in preflight, so `dryRun: true` reports it before anything is
+  written; the shell script checks inside the PHP worker, the first point at which
+  a per-target run can see the target.
+
 ## [5.18.0] - 2026-09-04
 
 ### Added
