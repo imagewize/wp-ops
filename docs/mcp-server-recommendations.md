@@ -13,7 +13,8 @@ longer-term question of tighter coupling with the Go CLI binary.
 > were a running tally that kept falling behind each new tool; the full list now
 > lives in [`mcp-server/README.md`](../mcp-server/README.md) rather than being
 > re-enumerated here, so this doc doesn't have to be kept in lockstep with every
-> new tool going forward.
+> new tool going forward. The Verification Checklist's two open items (dev
+> mode, all 20 tools invokable) were closed out 2026-09-04 — see that section.
 
 ## Current state
 
@@ -454,7 +455,11 @@ dependency itself becomes a distribution blocker. Until then, Option C stands.
 ## Verification Checklist
 
 - [x] MCP server commands are in Go CLI catalog: `wp-ops mcp-server --help`
-- [ ] Development mode works: `wp-ops mcp-server dev`
+- [x] Development mode works: `wp-ops mcp-server dev`. **Verified 2026-09-04:**
+      ran `npm run dev` directly (`tsx src/index.ts`) with a scripted
+      `initialize` → `notifications/initialized` → `tools/list` handshake piped
+      over stdin. Clean JSON-RPC responses, no stderr output, and `tools/list`
+      returned all 20 tools with valid schemas.
 - [x] Production build works: `npm run build` in mcp-server/ (verified 2026-08-03)
 - [x] `dist/` is not stale relative to `src/` — `find src -newer dist/index.js`
       should print nothing; re-run `npm run build` if it does
@@ -462,7 +467,25 @@ dependency itself becomes a distribution blocker. Until then, Option C stands.
       `aseonomics.com`, `imagewize.com`, `demo.imagewize.com` (verified 2026-08-03)
 - [x] MCP client can connect and list tools — confirmed via `~/.claude.json`
       top-level `mcpServers.wp-ops` (user scope, verified 2026-08-03)
-- [ ] Each of the 20 tools can be invoked successfully
+- [x] Each of the 20 tools can be invoked successfully. **Verified 2026-09-04**
+      against the live `imagewize.com` site (development + production):
+      `wp_cli`, `command_search`, `command_run`, `url_audit`, `security_scan`,
+      `db_backup`, `server_status`, `redirect_audit`, `schema_audit`,
+      `broken_link_audit`, `remote_ttfb_audit`, `monitor`, `ip_reputation_check`,
+      and `verify_post` all ran and returned correct real data. The four
+      mutating tools (`admin_user_create`, `publish_post`, `db_pull`, a
+      `files_pull` with `delete: true`) were deliberately not exercised blind —
+      each needs `confirm: true` after a specific, explicit approval, which a
+      verification pass isn't.
+
+      **Found in the process:** this session's already-connected `wp-ops` MCP
+      server didn't expose `ssh_command`/`scp_file` at all — a live instance of
+      the "New failure mode" documented above (stale in-memory process; the
+      session connected before the last rebuild). Confirmed harmless: the
+      standalone `npm run dev` handshake in the same pass listed both tools
+      with correct schemas, so the *build* is current — only this session's
+      already-running connection is behind. A session reconnect/restart picks
+      it up, same as any other rebuild.
 
 ## See Also
 
