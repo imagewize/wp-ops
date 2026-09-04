@@ -50,6 +50,7 @@
 # @flag     --alt        optional  {Alt text}  Alt text for the uploaded image (default: the post title)
 # @flag     --update     optional  {13681}  Update this existing post ID instead of creating a new post
 # @flag     --status     optional  {publish|draft}  Post status (default: publish)
+# @flag     --allow-self-closing-blocks  optional  Publish even though self-closing custom blocks will save empty
 # @flag     --dry-run    optional  Parse and preflight only; make no changes
 # @example  wp-ops publish-post post.html
 # @example  wp-ops publish-post post.html example.com production --image featured.jpg
@@ -133,6 +134,7 @@ IMAGE_ALT=""
 UPDATE_ID=""
 POST_STATUS="publish"
 DRY_RUN="no"
+ALLOW_SELF_CLOSING="no"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -140,13 +142,14 @@ while [ $# -gt 0 ]; do
         --alt)     IMAGE_ALT="$2";  shift 2 ;;
         --update)  UPDATE_ID="$2";  shift 2 ;;
         --status)  POST_STATUS="$2"; shift 2 ;;
+        --allow-self-closing-blocks) ALLOW_SELF_CLOSING="yes"; shift ;;
         --dry-run) DRY_RUN="yes";   shift ;;
         *) print_error "Unknown option: $1"; exit 1 ;;
     esac
 done
 
 if [ -z "$DRAFT_FILE" ]; then
-    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--dry-run]"
+    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--allow-self-closing-blocks] [--dry-run]"
     exit 1
 fi
 [ ! -f "$DRAFT_FILE" ] && { print_error "Draft file not found: $DRAFT_FILE"; exit 1; }
@@ -263,10 +266,23 @@ for bad in 'wp:columns' 'wp:callout' 'wp:acf/' 'wp:nynaeve/'; do
 done
 # A self-closing custom block never hydrates when written via WP-CLI: Gutenberg
 # builds its InnerBlocks template client-side on insert, so piping the one-liner
-# into post_content saves a genuinely empty block with no visible output.
-if grep -qE '<!-- wp:[a-z0-9-]+/[a-z0-9-]+ \{[^}]*\} /-->' "$PREFLIGHT_FILE"; then
-    print_warn "Draft contains a self-closing custom block (\`/-->\`) — it will save EMPTY via WP-CLI."
-    print_warn "Hand-build the full serialized markup instead."
+# into post_content saves a genuinely empty block with no visible output. This
+# fails rather than warns, matching verify-post: nothing errors on the write and
+# a post_content diff shows nothing, so a warning is read too late to help.
+SELF_CLOSING_RE='<!-- wp:[a-z0-9-]+/[a-z0-9-]+ (\{[^}]*\} )?/-->'
+SELF_CLOSING_NAMES=$(grep -oE "$SELF_CLOSING_RE" "$PREFLIGHT_FILE" \
+    | sed -E 's/^<!-- wp:([a-z0-9-]+\/[a-z0-9-]+).*/\1/' | sort -u | paste -sd ',' -)
+if [ -n "$SELF_CLOSING_NAMES" ]; then
+    if [ "$ALLOW_SELF_CLOSING" == "yes" ]; then
+        print_warn "Self-closing custom block(s): $SELF_CLOSING_NAMES — these save EMPTY via WP-CLI."
+        print_warn "Publishing anyway (--allow-self-closing-blocks)."
+    else
+        print_error "Draft contains self-closing custom block(s): $SELF_CLOSING_NAMES"
+        echo "        These save EMPTY when written via WP-CLI. Hand-build the full serialized" >&2
+        echo "        markup, or pass --allow-self-closing-blocks to publish anyway (only correct" >&2
+        echo "        for a genuinely dynamic, server-rendered block)." >&2
+        rm -f "$PREFLIGHT_FILE"; exit 1
+    fi
 fi
 rm -f "$PREFLIGHT_FILE"
 

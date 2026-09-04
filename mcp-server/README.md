@@ -67,9 +67,11 @@ Scaffold — twenty tools implemented so far:
   that header, strips it from the body, writes the post, sets The SEO Framework meta and terms, and then
   VERIFIES the stored bytes and `<script>`/JSON-LD counts against the source — catching the silent
   failures (kses stripping schema, a self-closing block saving empty) that don't show up in a
-  `post_content` diff. Optionally uploads a featured image (`imagePath`) or attaches an existing one
-  (`imageAttachmentId`). `dryRun: true` runs the header parse and preflight checks with no writes and
-  doesn't need `confirm`; a real write requires `confirm: true`.
+  `post_content` diff. A draft containing a self-closing custom block (`<!-- wp:ns/block {...} /-->`,
+  which saves EMPTY via WP-CLI) is refused before the write, naming the offending blocks, unless
+  `allowSelfClosingBlocks: true` is set. Optionally uploads a featured image (`imagePath`) or attaches
+  an existing one (`imageAttachmentId`). `dryRun: true` runs the header parse and preflight checks with
+  no writes and doesn't need `confirm`; a real write requires `confirm: true`.
 - **`verify_post`** — read-only companion to `publish_post`: compares what's STORED in `post_content`
   against what actually RENDERS on the live page for an already-published post. Catches JSON-LD stripped
   by kses, self-closing custom blocks that saved empty, broken internal links, and a missing featured

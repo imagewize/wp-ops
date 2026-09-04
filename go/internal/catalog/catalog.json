@@ -3314,6 +3314,13 @@
         "raw": "--status     optional  {publish|draft}  Post status (default: publish)"
       },
       {
+        "name": "--allow-self-closing-blocks",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Publish even though self-closing custom blocks will save empty",
+        "raw": "--allow-self-closing-blocks  optional  Publish even though self-closing custom blocks will save empty"
+      },
+      {
         "name": "--dry-run",
         "required_raw": "optional",
         "required": false,

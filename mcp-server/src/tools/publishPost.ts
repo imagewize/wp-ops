@@ -74,6 +74,17 @@ function phpQuote(s: string): string {
   return Buffer.from(s, "utf8").toString("base64");
 }
 
+// A self-closing custom block never hydrates when written via WP-CLI: Gutenberg
+// builds its InnerBlocks template client-side on insert, so piping the one-liner
+// the inserter produces into post_content saves a genuinely empty block with no
+// visible output. The pattern is verify-post's, so the two tools agree on what
+// counts — including the attribute-less form verify-post already matched.
+const SELF_CLOSING_BLOCK = /<!-- wp:([a-z0-9-]+\/[a-z0-9-]+) (?:\{[^}]*\} )?\/-->/g;
+
+export function selfClosingBlockNames(body: string): string[] {
+  return [...new Set(Array.from(body.matchAll(SELF_CLOSING_BLOCK), (m) => m[1]))];
+}
+
 // Rewrite the Article JSON-LD block's `image` to a verified upload URL.
 // Parsed as real JSON rather than patched with a regex: the block is genuine
 // JSON-LD and a textual edit corrupts it silently on any nesting. Mirrors
@@ -156,6 +167,8 @@ export async function runPublishPost(
     imageAlt?: string;
     /** An already-uploaded attachment to attach instead of uploading one. */
     imageAttachmentId?: number;
+    /** Publish even though the draft has self-closing custom blocks that will save empty. */
+    allowSelfClosingBlocks?: boolean;
     dryRun?: boolean;
   } = {}
 ): Promise<PublishPostResult> {
@@ -205,11 +218,21 @@ export async function runPublishPost(
   for (const bad of ["wp:columns", "wp:callout", "wp:acf/"]) {
     if (body.includes(bad)) warnings.push(`Draft contains "${bad}" — renders as a broken block in posts`);
   }
-  if (/<!-- wp:[a-z0-9-]+\/[a-z0-9-]+ \{[^}]*\} \/-->/.test(body)) {
-    warnings.push(
-      "Draft contains a self-closing custom block (`/-->`) — it will save EMPTY via WP-CLI. " +
-        "Hand-build the full serialized markup instead."
-    );
+  // Fails rather than warns, matching verify-post and the near-empty-body check
+  // above: the block saves empty, nothing errors, and a post_content diff shows
+  // nothing — so a warning printed next to a successful publish is read too late.
+  const selfClosing = selfClosingBlockNames(body);
+  if (selfClosing.length) {
+    const detail =
+      `Draft contains ${selfClosing.length} self-closing custom block(s) (${selfClosing.join(", ")}) — ` +
+      "they will save EMPTY via WP-CLI.";
+    if (!options.allowSelfClosingBlocks) {
+      throw new Error(
+        `${detail} Hand-build the full serialized markup, or pass allowSelfClosingBlocks: true ` +
+          "to publish anyway (only correct for a genuinely dynamic, server-rendered block)."
+      );
+    }
+    warnings.push(`${detail} Published anyway — allowSelfClosingBlocks was set.`);
   }
 
   if (options.dryRun) {
