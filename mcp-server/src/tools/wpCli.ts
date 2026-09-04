@@ -65,7 +65,7 @@ function runLocal(args: string[], localPath: string, wpBin: string, phpBin?: str
 // shell, so a caller-supplied token containing shell metacharacters would otherwise
 // execute on the remote host. Shell-quote each token ourselves and pass ssh a single
 // pre-quoted command string instead of separate argv entries.
-function shellQuote(arg: string): string {
+export function shellQuote(arg: string): string {
   return `'${arg.replace(/'/g, `'\\''`)}'`;
 }
 
