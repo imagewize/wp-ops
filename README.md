@@ -289,7 +289,7 @@ invocation instead of failing. This table is generated from the catalog;
 
 ## MCP Server
 
-Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — six tools so far (`security_scan`, `db_backup`, `wp_cli`, `redirect_audit`, `schema_audit`, `url_audit`), more planned. See [mcp-server/README.md](mcp-server/README.md) for tool details, setup, transports (stdio/Streamable HTTP), and Docker usage.
+Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full 74-command CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 

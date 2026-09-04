@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — sixteen tools implemented so far:
+Scaffold — twenty tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -62,6 +62,19 @@ Scaffold — sixteen tools implemented so far:
   `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
 - **`admin_user_create`** — creates a temporary WordPress administrator via WP-CLI (`user create`), for
   lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
+- **`publish_post`** — publishes or updates a WordPress blog post from a local HTML draft carrying the
+  `<!-- SUGGESTED ... -->` header (slug, title, meta title, meta description, tags, category). Parses
+  that header, strips it from the body, writes the post, sets The SEO Framework meta and terms, and then
+  VERIFIES the stored bytes and `<script>`/JSON-LD counts against the source — catching the silent
+  failures (kses stripping schema, a self-closing block saving empty) that don't show up in a
+  `post_content` diff. Optionally uploads a featured image (`imagePath`) or attaches an existing one
+  (`imageAttachmentId`). `dryRun: true` runs the header parse and preflight checks with no writes and
+  doesn't need `confirm`; a real write requires `confirm: true`.
+- **`verify_post`** — read-only companion to `publish_post`: compares what's STORED in `post_content`
+  against what actually RENDERS on the live page for an already-published post. Catches JSON-LD stripped
+  by kses, self-closing custom blocks that saved empty, broken internal links, and a missing featured
+  image. `checkLinks: true` (default) also requests every internal link in the post and reports non-200
+  responses.
 - **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
   search-replace, backing up the current development database first. Requires the site's `development`
   entry to have `trellisDir`+`vmWorkdir` (drives the dev site through `trellis vm shell`) and the source
