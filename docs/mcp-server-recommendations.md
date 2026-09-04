@@ -7,21 +7,24 @@ longer-term question of tighter coupling with the Go CLI binary.
 
 > **Status:** Up to date as of v5.18.0 (2026-09-04) — items 1-13 done. Verified
 > 2026-08-03: item 1's "not registered user-scoped" observation was stale — it
-> already was, see below. Items 12-13 were added 2026-09-04 and are now done. Note
-> also: the tool count in "Current state" below (five tools) is itself stale —
-> `mcp-server/src/tools/` now has sixteen (`db_pull`, `files_pull`, `monitor`,
-> `publish_post`, `verify_post`, `broken_link_audit`, `ip_reputation`,
-> `remote_ttfb_audit`, `url_audit`, `admin_user_create`, `ssh_command`, and
-> `scp_file` have shipped since); not re-audited here, flagged for a future pass.
+> already was, see below. Items 12-13 were added 2026-09-04 and are now done.
+> "Current state" below now reflects the real tool count (twenty as of
+> `ssh_command`/`scp_file` in v5.18.0) — the earlier five/sixteen-tool notes here
+> were a running tally that kept falling behind each new tool; the full list now
+> lives in [`mcp-server/README.md`](../mcp-server/README.md) rather than being
+> re-enumerated here, so this doc doesn't have to be kept in lockstep with every
+> new tool going forward.
 
 ## Current state
 
-The server exposes five tools — `security_scan`, `db_backup`, `wp_cli`,
-`redirect_audit`, `schema_audit` — backed by a Zod-validated site registry
-(`config/sites.json`).
+The server exposes twenty tools — security/SEO audits, backups, dev-site sync,
+content publishing/verification, SSH/SCP passthrough, and a catalog bridge — backed
+by a Zod-validated site registry (`config/sites.json`). See
+[`mcp-server/README.md`](../mcp-server/README.md) for the full, current list; it's
+not re-enumerated here to avoid this doc drifting out of sync again.
 
 It's launched via the Go CLI (`wp-ops mcp-server dev` / `wp-ops mcp-server start` /
-`wp-ops mcp-server run`, all discoverable in the Go binary's 67-command catalog),
+`wp-ops mcp-server run`, all discoverable in the Go binary's 78-command catalog),
 but the Go CLI's role
 stops at **launching the process** — the MCP server itself **bypasses the Go CLI**
 and invokes scripts directly via Node.js `child_process.spawn`. This gives it
@@ -459,7 +462,7 @@ dependency itself becomes a distribution blocker. Until then, Option C stands.
       `aseonomics.com`, `imagewize.com`, `demo.imagewize.com` (verified 2026-08-03)
 - [x] MCP client can connect and list tools — confirmed via `~/.claude.json`
       top-level `mcpServers.wp-ops` (user scope, verified 2026-08-03)
-- [ ] Each of the 5 tools can be invoked successfully
+- [ ] Each of the 20 tools can be invoked successfully
 
 ## See Also
 
