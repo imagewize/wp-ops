@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.17.2] - 2026-09-04
+
+### Fixed
+
+- **MCP `db_backup` and `security_scan` no longer risk a stray VM banner line
+  in their output.** `trellis vm shell` prints a `Running command => …` banner
+  onto stdout before the wrapped command's own output — the same defect
+  `stripVmBanner()` in `wpCli.ts` already fixed once for `db_pull`/`url_audit`
+  (it had written a banner line into `wp_blogs.domain` and 61 content rows on
+  the demo site). `dbBackup.ts` and `securityScan.ts` spawn `trellis vm shell`
+  directly rather than going through that shared path, so they kept the gap:
+  for `dbBackup.ts` this meant a banner line could land inside the actual
+  `.sql` dump before gzip, not just a parsed value. `stripVmBanner()` is now
+  exported and reused in `securityScan.ts`; `dbBackup.ts` gets a new
+  Buffer-safe `stripVmBannerFromBuffer()`, since its export is binary and
+  isn't guaranteed valid UTF-8.
+
 ## [5.17.1] - 2026-09-03
 
 ### Fixed

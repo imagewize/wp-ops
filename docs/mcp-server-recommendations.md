@@ -225,6 +225,13 @@ Observed setup gaps:
     and apply it in `dbBackup.ts` and `securityScan.ts` wherever they parse
     stdout from a `trellis vm shell` spawn.
 
+    **Done, 2026-09-04.** `stripVmBanner()` is now exported from `wpCli.ts`
+    and reused as-is in `securityScan.ts`'s `runVm()`. `dbBackup.ts`'s export
+    is a `Buffer`, not a string (a SQL dump isn't guaranteed valid UTF-8), so
+    it gets a separate exported `stripVmBannerFromBuffer()` that only decodes
+    the fixed ASCII prefix rather than the whole buffer, keeping binary
+    content after the banner intact.
+
 13. **No generic SSH/SCP passthrough tool.** `ssh` is currently only ever
     invoked internally by specific tools (`dbBackup.ts`, `dbPull.ts`,
     `monitor.ts`, `securityScan.ts`) — there's no `ssh_command` or
@@ -246,7 +253,7 @@ Observed setup gaps:
 3. ✅ Items 7–8: biggest recurring token savers.
 4. ✅ Item 11: `url_audit` tool — done.
 5. ✅ Items 9–10: output compaction and tight descriptions — done.
-6. **Item 12** — fix the `stripVmBanner` gap in `dbBackup.ts`/`securityScan.ts`.
+6. ✅ **Item 12** — fix the `stripVmBanner` gap in `dbBackup.ts`/`securityScan.ts`.
    Small, isolated, and the highest-severity of the two open items (can
    corrupt a database backup, not just a report). Do this first.
 7. **Item 13** — `ssh_command`/`scp_file` tools, for classic/shared-hosting

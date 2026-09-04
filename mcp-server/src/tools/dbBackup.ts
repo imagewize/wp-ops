@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { gzip as gzipCallback } from "node:zlib";
 import type { EnvEntry } from "../registry.js";
 import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
+import { stripVmBannerFromBuffer } from "./wpCli.js";
 
 function shellQuote(arg: string): string {
   return `'${arg.replace(/'/g, `'\\''`)}'`;
@@ -61,10 +62,15 @@ export async function runDbBackup(entry: EnvEntry, site: string, env: string): P
   if (hasTrellisVm(entry)) {
     const wpPath = entry.vmPath ?? "web/wp";
     // Export streams over the VM shell's stdout; nothing is written to disk in the VM.
-    sql = await exportSql(
-      "trellis",
-      ["vm", "shell", "--workdir", entry.vmWorkdir, "--", ...wpCommand, "db", "export", "-", `--path=${wpPath}`],
-      entry.trellisDir
+    // `trellis vm shell` prints a "Running command => …" banner ahead of the real
+    // output — strip it here too, or it lands inside the .sql dump before gzip (see
+    // the comment on stripVmBanner in wpCli.ts for the bug this already caused once).
+    sql = stripVmBannerFromBuffer(
+      await exportSql(
+        "trellis",
+        ["vm", "shell", "--workdir", entry.vmWorkdir, "--", ...wpCommand, "db", "export", "-", `--path=${wpPath}`],
+        entry.trellisDir
+      )
     );
   } else if (entry.sshHost && entry.remotePath) {
     // Streams the export over SSH stdout so nothing is ever written to disk on the

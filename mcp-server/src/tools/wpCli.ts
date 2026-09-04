@@ -92,8 +92,24 @@ function runRemote(sshHost: string, args: string[], remotePath: string, wpBin: s
 // Only the first line is dropped, and only when it is the banner — WordPress content can
 // legitimately begin with "Running command =>" (post revisions on that same demo did,
 // from an earlier round of this bug).
-function stripVmBanner(stdout: string): string {
+// Exported so other tools that spawn `trellis vm shell` directly (rather than going
+// through runWpCli/runWpCliRaw) can strip the same banner — dbBackup.ts and
+// securityScan.ts both do.
+export function stripVmBanner(stdout: string): string {
   return stdout.replace(/^Running command => [^\n]*\n?/, "");
+}
+
+const VM_BANNER_PREFIX = "Running command => ";
+
+// Buffer-safe counterpart of stripVmBanner, for callers streaming binary output (e.g.
+// dbBackup.ts's `wp db export -`, which isn't guaranteed valid UTF-8 and can't be routed
+// through the string version without risking corruption of the SQL dump itself). Only
+// the leading bytes are ever decoded, and only to check for the fixed ASCII prefix.
+export function stripVmBannerFromBuffer(buf: Buffer): Buffer {
+  if (buf.toString("latin1", 0, VM_BANNER_PREFIX.length) !== VM_BANNER_PREFIX) return buf;
+  const newlineIndex = buf.indexOf(0x0a);
+  if (newlineIndex === -1) return buf;
+  return buf.subarray(newlineIndex + 1);
 }
 
 // Runs wp inside the Trellis dev VM via `trellis vm shell --workdir <dir> -- wp ...`.

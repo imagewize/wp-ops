@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { EnvEntry } from "../registry.js";
 import { hasTrellisVm, resolvePhpBin } from "../registry.js";
+import { stripVmBanner } from "./wpCli.js";
 
 function shellQuote(arg: string): string {
   return `'${arg.replace(/'/g, `'\\''`)}'`;
@@ -71,7 +72,7 @@ function runVm(
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr += d));
     child.on("error", reject);
-    child.on("close", (code) => resolve({ stdout, stderr, code: code ?? 1 }));
+    child.on("close", (code) => resolve({ stdout: stripVmBanner(stdout), stderr, code: code ?? 1 }));
     child.stdin.write(scannerSource);
     child.stdin.end();
   });
