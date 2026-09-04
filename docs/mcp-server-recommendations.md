@@ -5,7 +5,7 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v5.18.0 (2026-09-04) — items 1-13 done. Verified
+> **Status:** Up to date as of v5.19.0 (2026-09-04) — items 1-13 done. Verified
 > 2026-08-03: item 1's "not registered user-scoped" observation was stale — it
 > already was, see below. Items 12-13 were added 2026-09-04 and are now done.
 > "Current state" below now reflects the real tool count (twenty as of
@@ -15,6 +15,10 @@ longer-term question of tighter coupling with the Go CLI binary.
 > re-enumerated here, so this doc doesn't have to be kept in lockstep with every
 > new tool going forward. The Verification Checklist's two open items (dev
 > mode, all 20 tools invokable) were closed out 2026-09-04 — see that section.
+> v5.19.0 changed no tool count: it added the `allowSelfClosingBlocks` and
+> `allowSchemaRegression` parameters to `publish_post`, which now refuses a draft
+> with self-closing custom blocks and an update that drops live Article schema
+> fields (issues #216, #217).
 
 ## Current state
 
