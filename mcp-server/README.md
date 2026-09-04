@@ -71,7 +71,11 @@ Scaffold — twenty tools implemented so far:
   which saves EMPTY via WP-CLI) is refused before the write, naming the offending blocks, unless
   `allowSelfClosingBlocks: true` is set. Optionally uploads a featured image (`imagePath`) or attaches
   an existing one (`imageAttachmentId`) — either way the image URL is written into the Article JSON-LD
-  `image` field. `dryRun: true` runs the header parse and preflight checks with
+  `image` field. With `updateId`, an update whose Article
+  JSON-LD drops a field the live post already has is refused too, unless `allowSchemaRegression: true` —
+  a draft written before wp-ops enriched the post will otherwise strip `image` (or `author`, `publisher`)
+  back off it, and every other check passes because the source and the stored bytes still agree.
+  `dryRun: true` runs the header parse and preflight checks with
   no writes and doesn't need `confirm`; a real write requires `confirm: true`.
 - **`verify_post`** — read-only companion to `publish_post`: compares what's STORED in `post_content`
   against what actually RENDERS on the live page for an already-published post. Catches JSON-LD stripped

@@ -51,6 +51,7 @@
 # @flag     --update     optional  {13681}  Update this existing post ID instead of creating a new post
 # @flag     --status     optional  {publish|draft}  Post status (default: publish)
 # @flag     --allow-self-closing-blocks  optional  Publish even though self-closing custom blocks will save empty
+# @flag     --allow-schema-regression    optional  With --update, publish even though it drops live Article schema fields
 # @flag     --dry-run    optional  Parse and preflight only; make no changes
 # @example  wp-ops publish-post post.html
 # @example  wp-ops publish-post post.html example.com production --image featured.jpg
@@ -135,6 +136,7 @@ UPDATE_ID=""
 POST_STATUS="publish"
 DRY_RUN="no"
 ALLOW_SELF_CLOSING="no"
+ALLOW_SCHEMA_REGRESSION="no"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -143,13 +145,14 @@ while [ $# -gt 0 ]; do
         --update)  UPDATE_ID="$2";  shift 2 ;;
         --status)  POST_STATUS="$2"; shift 2 ;;
         --allow-self-closing-blocks) ALLOW_SELF_CLOSING="yes"; shift ;;
+        --allow-schema-regression)   ALLOW_SCHEMA_REGRESSION="yes"; shift ;;
         --dry-run) DRY_RUN="yes";   shift ;;
         *) print_error "Unknown option: $1"; exit 1 ;;
     esac
 done
 
 if [ -z "$DRAFT_FILE" ]; then
-    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--allow-self-closing-blocks] [--dry-run]"
+    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--allow-self-closing-blocks] [--allow-schema-regression] [--dry-run]"
     exit 1
 fi
 [ ! -f "$DRAFT_FILE" ] && { print_error "Draft file not found: $DRAFT_FILE"; exit 1; }
@@ -298,6 +301,22 @@ build_php() {
     local remote_body="$1" thumb_id="$2" bytes="$3" ldjson="$4" scripts="$5"
     cat <<PHP
 <?php
+// The Article JSON-LD keys of a post body, so an update can be compared against
+// what is already live. Only the Article block is looked at — that is the one
+// wp-ops enriches at publish time.
+function wpops_article_keys( \$content ) {
+    if ( ! preg_match_all( '/<script type="application\/ld\+json">(.*?)<\/script>/s', \$content, \$m ) ) {
+        return array();
+    }
+    foreach ( \$m[1] as \$json ) {
+        \$d = json_decode( \$json, true );
+        if ( is_array( \$d ) && isset( \$d['@type'] ) && 'Article' === \$d['@type'] ) {
+            return array_keys( \$d );
+        }
+    }
+    return array();
+}
+
 \$body = file_get_contents( '$remote_body' );
 if ( \$body === false || strlen( \$body ) < 500 ) { echo "ABORT: body missing or too short\n"; return; }
 if ( strlen( \$body ) !== $bytes ) { echo "ABORT: body length changed in transit\n"; return; }
@@ -305,6 +324,9 @@ if ( strlen( \$body ) !== $bytes ) { echo "ABORT: body length changed in transit
 // wp_update_post()/wp_insert_post() call wp_unslash() internally and expect slashed
 // input, so an unslashed body loses every literal backslash. Slash after the transit
 // check above so that check still measures the real payload.
+// Keep the unslashed copy: wp_slash() escapes every quote in the JSON-LD, so
+// the schema comparison below has to run against the real body.
+\$body_unslashed = \$body;
 \$body = wp_slash( \$body );
 
 \$update_id = '$UPDATE_ID';
@@ -320,6 +342,22 @@ if ( \$update_id ) {
     // would break the live URL silently, and an update must not flip a draft live.
     if ( \$slug && \$before->post_name !== \$slug ) {
         echo "WARN: draft slug '\$slug' differs from post slug '{\$before->post_name}' — left unchanged\n";
+    }
+    // The live post is the state worth diffing an update against, and the only
+    // state nothing else here looks at: the post-write verification compares the
+    // source to what got stored, so a draft that is poorer than the live post
+    // passes every check while stripping fields off it.
+    \$dropped = array_values( array_diff(
+        wpops_article_keys( \$before->post_content ),
+        wpops_article_keys( \$body_unslashed )
+    ) );
+    if ( \$dropped ) {
+        if ( '$ALLOW_SCHEMA_REGRESSION' === 'yes' ) {
+            echo "WARN: update removes Article schema field(s) present on the live post: " . implode( ', ', \$dropped ) . " — publishing anyway\n";
+        } else {
+            echo "ABORT: update removes Article schema field(s) present on the live post: " . implode( ', ', \$dropped ) . " — add them to the draft, or pass --allow-schema-regression\n";
+            return;
+        }
     }
     \$id = wp_update_post( array(
         'ID'           => (int) \$update_id,

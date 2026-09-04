@@ -3321,6 +3321,13 @@
         "raw": "--allow-self-closing-blocks  optional  Publish even though self-closing custom blocks will save empty"
       },
       {
+        "name": "--allow-schema-regression",
+        "required_raw": "optional",
+        "required": false,
+        "description": "With --update, publish even though it drops live Article schema fields",
+        "raw": "--allow-schema-regression    optional  With --update, publish even though it drops live Article schema fields"
+      },
+      {
         "name": "--dry-run",
         "required_raw": "optional",
         "required": false,

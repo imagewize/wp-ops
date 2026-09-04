@@ -675,6 +675,13 @@ export function createServer(): McpServer {
             "Those save EMPTY via WP-CLI, so this is refused by default; only correct for a genuinely " +
             "dynamic, server-rendered block."
         ),
+      allowSchemaRegression: z
+        .boolean()
+        .default(false)
+        .describe(
+          "With updateId, publish even though the draft's Article JSON-LD drops field(s) the live post " +
+            "already has (typically `image`, which wp-ops itself added at first publish). Refused by default."
+        ),
       dryRun: z
         .boolean()
         .default(false)
@@ -694,6 +701,7 @@ export function createServer(): McpServer {
       imageAlt,
       imageAttachmentId,
       allowSelfClosingBlocks,
+      allowSchemaRegression,
       dryRun,
       confirm,
     }) => {
@@ -713,6 +721,7 @@ export function createServer(): McpServer {
           imageAlt,
           imageAttachmentId,
           allowSelfClosingBlocks,
+          allowSchemaRegression,
           dryRun,
         });
         return {

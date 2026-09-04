@@ -114,6 +114,41 @@ export function injectArticleImage(body: string, url: string): { body: string; i
   return { body: injected ? out : body, injected };
 }
 
+// Keys of the Article JSON-LD block, in document order. An update writes the
+// draft over whatever is live, and a draft is usually written before wp-ops
+// enriches the post — so the fields the tool added at publish time (`image`
+// above, but `datePublished`, `author` and `publisher` just as easily) are the
+// ones a re-publish quietly drops.
+export function articleSchemaKeys(body: string): string[] {
+  for (const m of body.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(m[1]);
+    } catch {
+      continue;
+    }
+    if (parsed["@type"] === "Article") return Object.keys(parsed);
+  }
+  return [];
+}
+
+// Read a post's stored content. base64 so the round trip can't be mangled by a
+// stray banner line or a locale-mangled newline.
+export async function fetchPostContent(entry: EnvEntry, postId: number): Promise<string> {
+  const res = await runWpCliRaw(entry, [
+    "eval",
+    `$p = get_post( ${postId} );` +
+      `if ( ! $p ) { echo "MISSING"; return; }` +
+      `echo base64_encode( $p->post_content );`,
+  ]);
+  if (res.code !== 0) {
+    throw new Error(`Could not read post ${postId} (exit ${res.code}): ${res.stderr || res.stdout}`);
+  }
+  const out = res.stdout.trim().split("\n").pop()?.trim() ?? "";
+  if (out === "MISSING") throw new Error(`Post ${postId} does not exist on the target.`);
+  return Buffer.from(out, "base64").toString("utf8");
+}
+
 // Upload a local image and return its attachment ID and verified URL.
 // The file is shipped as base64 inside `wp eval` for the same reason the post
 // body is: it keeps one code path across SSH, a local path and a Trellis VM,
@@ -195,6 +230,8 @@ export async function runPublishPost(
     imageAttachmentId?: number;
     /** Publish even though the draft has self-closing custom blocks that will save empty. */
     allowSelfClosingBlocks?: boolean;
+    /** Update even though it drops Article schema fields the live post has. */
+    allowSchemaRegression?: boolean;
     dryRun?: boolean;
   } = {}
 ): Promise<PublishPostResult> {
@@ -267,6 +304,29 @@ export async function runPublishPost(
       );
     }
     warnings.push(`${detail} Published anyway — allowSelfClosingBlocks was set.`);
+  }
+
+  // On an update, the state worth diffing against is the live post — the one
+  // state nothing else in the toolchain looks at. publish_post compares the
+  // source to what got stored and verify_post counts JSON-LD blocks; neither
+  // notices that what was sent is poorer than what it replaced.
+  if (options.updateId) {
+    const liveKeys = articleSchemaKeys(await fetchPostContent(entry, options.updateId));
+    const draftKeys = new Set(articleSchemaKeys(body));
+    let dropped = liveKeys.filter((k) => !draftKeys.has(k));
+    // A dry run never uploads, so `image` isn't injected yet — don't report a
+    // field the real run would put back.
+    if (options.dryRun && options.imagePath) dropped = dropped.filter((k) => k !== "image");
+    if (dropped.length) {
+      const detail = `Update removes Article schema field(s) present on the live post: ${dropped.join(", ")}.`;
+      if (!options.allowSchemaRegression) {
+        throw new Error(
+          `${detail} Add them to the draft so it is self-contained, or pass allowSchemaRegression: true ` +
+            "to publish the poorer version anyway."
+        );
+      }
+      warnings.push(`${detail} Published anyway — allowSchemaRegression was set.`);
+    }
   }
 
   if (options.dryRun) {
