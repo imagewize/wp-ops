@@ -164,78 +164,23 @@ If you have trellis-cli, every command below is also reachable as
 See [As a trellis-cli plugin](#as-a-trellis-cli-plugin).
 
 ```bash
-trellis ops                                    # the 27 Trellis-relevant commands
+trellis ops                                    # Trellis-relevant categories only
 trellis ops backup database-pull example.com production
 trellis ops monitoring quick-status example.com production
 ```
 
 `trellis ops` scopes its *listing* to commands tagged `@platform trellis`;
 running a command is never scoped, so anything in the catalog still works if
-you name it. Plain `wp-ops` shows all 74.
+you name it. Plain `wp-ops` shows the full catalog.
 
 ### Command reference
 
-Grouped as `trellis ops` presents them. `(runs on server)` marks the log
-readers that execute on the host — running one locally prints the SSH
-invocation instead of failing. This table is generated from the catalog;
-`wp-ops list --all` is the always-current version.
-
-**`trellis ops monitoring`** (11)
-
-| Command | What it does |
-|---------|--------------|
-| `ai-bot-monitor` | Analyze AI crawler traffic (GPTBot, ClaudeBot, etc.) from an Nginx access log *(runs on server)* |
-| `error-monitor` | Surface errors from Nginx, PHP-FPM, WordPress, MySQL, and systemd for a domain *(runs on server)* |
-| `monitor` | Run traffic, security, AI-bot, and error monitoring together and save timestamped reports *(runs on server)* |
-| `security-monitor` | Detect malicious activity (wp-login/xmlrpc abuse, high-volume IPs) in an Nginx access log *(runs on server)* |
-| `traffic-by-country` | Filter a server's Nginx access log by visitor country and show real page visits |
-| `traffic-monitor` | Analyze legitimate traffic from an Nginx access log *(runs on server)* |
-| `updown-webhook-handler` | Analyze Nginx logs on the server when updown.io reports downtime via webhook *(runs on server)* |
-| `quick-status` | Quick health check for a site: recent status codes, errors, and service status |
-| `security-scan` | Scan a site's Nginx logs for attack patterns and suspicious activity |
-| `setup-monitoring` | Install cron jobs for daily traffic reports and periodic security scans |
-| `traffic-report` | Generate a traffic analysis report from a site's Nginx access log |
-
-**`trellis ops backup`** (9)
-
-| Command | What it does |
-|---------|--------------|
-| `db-backup` | Back up a remote site's database over SSH straight to your machine |
-| `db-pull` | Pull a remote site's database into development via SSH, with URL search-replace |
-| `site-backup` | Full backup of a Trellis site: database, uploads, config, and plugins/themes *(runs on server)* |
-| `database-backup` | Back up a site's database from any environment (development/staging/production) |
-| `database-pull` | Pull a site's database from a remote environment into development, with URL search-replace |
-| `database-push` | Push development's database to a remote environment, with URL search-replace |
-| `files-backup` | Back up a site's uploads directory from any environment (development/staging/production) |
-| `files-pull` | Pull a site's uploads directory from a remote environment into development via rsync |
-| `files-push` | Push development's uploads directory to a remote environment via rsync |
-
-**`trellis ops content`** (2)
-
-| Command | What it does |
-|---------|--------------|
-| `import-page-draft` | Update an existing WordPress page from an HTML draft, locally and/or in production |
-| `page-creation` | Deploy an HTML page to production via SCP and WP-CLI over SSH |
-
-**`trellis ops misc`** (2)
-
-| Command | What it does |
-|---------|--------------|
-| `create-product-variations` | Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell |
-| `trellis-updater` | Safely update a Trellis installation to the latest upstream while preserving vault/config customizations |
-
-**`trellis ops security`** (2)
-
-| Command | What it does |
-|---------|--------------|
-| `check-deny-ips` | Check every individual IP in a Trellis deny-ips.conf.j2 against AbuseIPDB |
-| `check-ips` | Check IP addresses against AbuseIPDB threat intelligence |
-
-**`trellis ops diagnostics`** (1)
-
-| Command | What it does |
-|---------|--------------|
-| `list-posts-count` | Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv |
+`wp-ops list --platform trellis` (equivalently, `trellis ops`) is the always-current,
+grouped-and-counted listing — a hand-copied table here would just be one more place
+for that catalog to drift out of sync, the way this section previously did. Run it
+directly, or `wp-ops search <term>` / `trellis ops search <term>` to find one command.
+`(runs on server)` in that output marks the log readers that execute on the host —
+running one locally prints the SSH invocation instead of failing.
 
 ### Guides
 
@@ -277,7 +222,7 @@ invocation instead of failing. This table is generated from the catalog;
 
 ## Scripts
 
-42 standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
+Standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in [scripts/README.md](scripts/README.md).
 
 | Category | Includes | Docs |
 |------|-------------|------|
@@ -289,7 +234,7 @@ invocation instead of failing. This table is generated from the catalog;
 
 ## MCP Server
 
-Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full 74-command CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
+Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 
