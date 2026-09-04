@@ -7,7 +7,12 @@ longer-term question of tighter coupling with the Go CLI binary.
 
 > **Status:** Up to date as of v3.35.0 (2026-08-03) — items 1-11 done (all items
 > in this document). Verified 2026-08-03: item 1's "not registered user-scoped"
-> observation was stale — it already was, see below.
+> observation was stale — it already was, see below. Two new open items (12-13)
+> added 2026-09-04. Note also: the tool count in "Current state" below (five
+> tools) is itself stale — `mcp-server/src/tools/` now has thirteen (`db_pull`,
+> `files_pull`, `monitor`, `publish_post`, `verify_post`, `broken_link_audit`,
+> `ip_reputation`, `remote_ttfb_audit`, `url_audit`, and `admin_user_create` have
+> shipped since); not re-audited here, flagged for a future pass.
 
 ## Current state
 
@@ -192,6 +197,48 @@ Observed setup gaps:
     {from, to}` always previews `wp search-replace --dry-run` and only applies
     for real with `confirm: true`, matching `wp_cli`'s existing confirm gating.
 
+## Open items (found 2026-09-04)
+
+12. **`stripVmBanner` isn't applied everywhere it needs to be.** `trellis vm
+    shell` prints a `Running command => …` banner onto stdout before the
+    wrapped command's own output — the exact bug that once wrote a stray
+    banner line into `wp_blogs.domain` and 61 content rows on the demo site
+    (see the comment above `stripVmBanner()` in `tools/wpCli.ts`). The fix
+    that bug got was `stripVmBanner()`, called once inside `runVm()` in
+    `wpCli.ts` — so anything going through `runWpCli`/`runWpCliRaw`
+    (`dbPull.ts`, `urlAudit.ts`) is covered. But three tools spawn
+    `trellis vm shell` directly instead of going through that path, and
+    don't strip the banner:
+
+    - `dbBackup.ts:66` — streams `wp db export -` straight through the VM
+      shell's stdout into the `.sql` file before gzip. This is the sharpest
+      case: a banner line isn't just cosmetic here, it can land inside the
+      actual database backup content.
+    - `securityScan.ts:66` — same shape for the PHP scanner's stdout; a
+      banner line would land at the top of the scan report.
+    - `filesPull.ts` doesn't have this problem — it rsyncs over `ssh`
+      directly, never through `trellis vm shell`, so no banner is ever
+      printed onto its stdout.
+
+    **Recommendation:** factor `stripVmBanner()` out of `wpCli.ts` into a
+    shared helper (or a small `execVm()` wrapper the way `runVm` already is)
+    and apply it in `dbBackup.ts` and `securityScan.ts` wherever they parse
+    stdout from a `trellis vm shell` spawn.
+
+13. **No generic SSH/SCP passthrough tool.** `ssh` is currently only ever
+    invoked internally by specific tools (`dbBackup.ts`, `dbPull.ts`,
+    `monitor.ts`, `securityScan.ts`) — there's no `ssh_command` or
+    `scp_file` tool for the "run one ad-hoc command on a registered host" or
+    "copy one file up/down" cases that come up on classic (non-Bedrock)
+    WordPress installs where no purpose-built tool exists yet.
+
+    **Recommendation:** add `ssh_command: { site, env, command, confirm? }`
+    and `scp_file: { site, env, direction: "up" | "down", localPath,
+    remotePath, confirm? }`, both requiring `confirm: true` outside a
+    read-only allowlist the way `wp_cli` already does. Reuse the registry's
+    `sshHost`/`remotePath` resolution and `shellQuote()` from `wpCli.ts`
+    rather than re-implementing quoting.
+
 ## Suggested order of work
 
 1. ✅ Items 1–4: config-only, doable immediately.
@@ -199,6 +246,11 @@ Observed setup gaps:
 3. ✅ Items 7–8: biggest recurring token savers.
 4. ✅ Item 11: `url_audit` tool — done.
 5. ✅ Items 9–10: output compaction and tight descriptions — done.
+6. **Item 12** — fix the `stripVmBanner` gap in `dbBackup.ts`/`securityScan.ts`.
+   Small, isolated, and the highest-severity of the two open items (can
+   corrupt a database backup, not just a report). Do this first.
+7. **Item 13** — `ssh_command`/`scp_file` tools, for classic/shared-hosting
+   ad-hoc work. Lower urgency than item 12; do when that workflow next comes up.
 
 ---
 
