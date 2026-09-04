@@ -160,6 +160,27 @@ export async function uploadFeaturedImage(
   return { attachmentId, url };
 }
 
+// Resolve an already-uploaded attachment's public URL. imageAttachmentId has to
+// reach the same injectArticleImage() call imagePath does: without a URL it can
+// only set _thumbnail_id, and an update that took this path silently republished
+// the post with no `image` in its Article schema.
+export async function attachmentUrl(entry: EnvEntry, attachmentId: number): Promise<string> {
+  const res = await runWpCliRaw(entry, [
+    "eval",
+    `$p = get_post( ${attachmentId} );` +
+      `if ( ! $p || $p->post_type !== 'attachment' ) { echo "MISSING"; return; }` +
+      `echo wp_get_attachment_url( ${attachmentId} );`,
+  ]);
+  if (res.code !== 0) {
+    throw new Error(`Could not resolve attachment ${attachmentId} (exit ${res.code}): ${res.stderr || res.stdout}`);
+  }
+  const out = res.stdout.trim().split("\n").pop()?.trim() ?? "";
+  if (out === "MISSING") {
+    throw new Error(`Attachment ${attachmentId} does not exist on the target — refusing to set a featured image that isn't there.`);
+  }
+  return out;
+}
+
 export async function runPublishPost(
   entry: EnvEntry,
   draftPath: string,
@@ -188,9 +209,10 @@ export async function runPublishPost(
     throw new Error(`No "<!-- SUGGESTED POST SLUG: /slug/ -->" found and no updateId given`);
   }
 
-  // Upload the featured image first: its URL goes into the Article schema, so
-  // it must be known before the source byte counts that the verification
-  // compares against are taken.
+  // Settle the featured image first: its URL goes into the Article schema, so it
+  // must be known before the source byte counts that the verification compares
+  // against are taken. Both ways of naming an image end at the same injection —
+  // an attachment ID is only a different way to point at the same URL.
   let thumbnailId = options.imageAttachmentId;
   let imageUrl: string | undefined;
   if (options.imagePath && !options.dryRun) {
@@ -202,7 +224,14 @@ export async function runPublishPost(
     );
     thumbnailId = uploaded.attachmentId;
     imageUrl = uploaded.url;
-    const { body: withImage, injected } = injectArticleImage(body, uploaded.url);
+  } else if (options.imageAttachmentId && !options.imagePath) {
+    imageUrl = await attachmentUrl(entry, options.imageAttachmentId);
+    if (!imageUrl) {
+      warnings.push(`Attachment ${options.imageAttachmentId} has no URL — schema image left as the draft has it`);
+    }
+  }
+  if (imageUrl) {
+    const { body: withImage, injected } = injectArticleImage(body, imageUrl);
     body = withImage;
     if (!injected) warnings.push("No Article JSON-LD block found — image URL not injected into schema");
   }

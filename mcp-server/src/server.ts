@@ -662,7 +662,11 @@ export function createServer(): McpServer {
         .int()
         .positive()
         .optional()
-        .describe("Attach an already-uploaded attachment ID instead of uploading a file. Ignored when imagePath is given."),
+        .describe(
+          "Attach an already-uploaded attachment ID instead of uploading a file. Its URL is resolved and " +
+            "written into the Article JSON-LD `image` field, exactly as imagePath does. Ignored when " +
+            "imagePath is given."
+        ),
       allowSelfClosingBlocks: z
         .boolean()
         .default(false)
