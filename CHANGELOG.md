@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [5.18.0] - 2026-09-04
+
+### Added
+
+- **MCP `ssh_command` and `scp_file` tools** — generic SSH/SCP passthroughs for
+  ad-hoc work on registered remote hosts. `ssh_command` runs a single shell
+  command over SSH, tokenizing and shell-quoting it before sending so shell
+  metacharacters become literal arguments; commands outside a conservative
+  read-only allowlist require `confirm: true`. `scp_file` copies a single file
+  up to or down from the remote host via SCP, resolving relative remote paths
+  against the registry entry's `remotePath`; uploads (`direction: "up"`) require
+  `confirm: true`. Both reuse the existing `shellQuote()` helper from
+  `tools/wpCli.ts` and the registry's `sshHost`/`remotePath` resolution. Closes
+  the last open item in `docs/mcp-server-recommendations.md`.
+
 ## [5.17.2] - 2026-09-04
 
 ### Fixed
