@@ -85,6 +85,11 @@ export function selfClosingBlockNames(body: string): string[] {
   return [...new Set(Array.from(body.matchAll(SELF_CLOSING_BLOCK), (m) => m[1]))];
 }
 
+// Block markup that never renders in a post. `wp:nynaeve/` is on the list
+// because `nynaeve` is a block *category* prefix, not a namespace — every block
+// in that theme is `imagewize/*`, so any `wp:nynaeve/x` in a draft is a typo.
+const BAD_BLOCK_PREFIXES = ["wp:columns", "wp:callout", "wp:acf/", "wp:nynaeve/"];
+
 // Rewrite the Article JSON-LD block's `image` to a verified upload URL.
 // Parsed as real JSON rather than patched with a regex: the block is genuine
 // JSON-LD and a textual edit corrupts it silently on any nesting. Mirrors
@@ -215,7 +220,7 @@ export async function runPublishPost(
   if (header.metaDescription.length > 155) {
     warnings.push(`Meta description is ${header.metaDescription.length} chars (>155) — will truncate in SERPs`);
   }
-  for (const bad of ["wp:columns", "wp:callout", "wp:acf/"]) {
+  for (const bad of BAD_BLOCK_PREFIXES) {
     if (body.includes(bad)) warnings.push(`Draft contains "${bad}" — renders as a broken block in posts`);
   }
   // Fails rather than warns, matching verify-post and the near-empty-body check
