@@ -15,6 +15,7 @@ import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ip
 import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 import { runDbPull } from "./tools/dbPull.js";
 import { runFilesPull } from "./tools/filesPull.js";
+import { isReadOnlySshCommand, runScpFile, runSshCommand } from "./tools/sshPassthrough.js";
 import { runPublishPost, formatPublishPost } from "./tools/publishPost.js";
 import { runVerifyPost, formatVerifyPost } from "./tools/verifyPost.js";
 import {
@@ -818,6 +819,89 @@ export function createServer(): McpServer {
           result.rsyncOutput,
         ];
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "ssh_command",
+    "Run one ad-hoc shell command on the registered remote host over SSH. Commands are split into " +
+      "tokens and shell-quoted before being sent, so shell metacharacters are treated as literal " +
+      "arguments. Commands outside the read-only allowlist need confirm: true.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      command: z
+        .string()
+        .min(1)
+        .describe('Command to run on the remote host, e.g. "ls -la web/app/uploads"'),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) for commands outside the read-only allowlist. Only set after explicit user approval."),
+    },
+    async ({ site, env, command, confirm }) => {
+      try {
+        if (!isReadOnlySshCommand(command) && !confirm) {
+          throw new Error(
+            `"${command}" is not on the ssh_command read-only allowlist and may change remote state. ` +
+              "Re-run with confirm: true after the user has explicitly approved this command."
+          );
+        }
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runSshCommand(entry, command);
+        const parts = [`(exit ${result.code})`, result.stdout.trim()];
+        if (result.stderr.trim()) {
+          parts.push(`STDERR:\n${result.stderr.trim()}`);
+        }
+        return { content: [{ type: "text" as const, text: truncateWpCliOutput(parts.filter(Boolean).join("\n")) }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "scp_file",
+    "Copy a single file to (direction 'up') or from (direction 'down') the registered remote host " +
+      "via SCP. The remotePath is resolved relative to the registry entry's remotePath unless it is " +
+      "absolute. Uploading ('up') needs confirm: true.",
+    {
+      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
+      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
+      direction: z
+        .enum(["up", "down"])
+        .describe("'up' copies localPath to remotePath; 'down' copies remotePath to localPath."),
+      localPath: z.string().min(1).describe("Absolute local file path"),
+      remotePath: z.string().min(1).describe("Remote file path. Relative paths are resolved against the registry entry's remotePath."),
+      confirm: z
+        .boolean()
+        .default(false)
+        .describe("Required (true) when direction is 'up'. Only set after explicit user approval."),
+    },
+    async ({ site, env, direction, localPath, remotePath, confirm }) => {
+      try {
+        if (direction === "up" && !confirm) {
+          throw new Error(
+            "scp_file direction 'up' writes to the remote host and needs confirm: true. Re-run with " +
+              "confirm: true only after the user has explicitly approved this."
+          );
+        }
+        const registry = loadRegistry();
+        const entry = resolveSiteEnv(registry, site, env);
+        const result = await runScpFile(entry, direction, localPath, remotePath);
+        const remoteSpec = `${entry.sshHost}:${result.remoteFullPath}`;
+        const summary = direction === "up" ? `${localPath} -> ${remoteSpec}` : `${remoteSpec} -> ${localPath}`;
+        const parts = [`SCP ${direction}: ${summary}`, `(exit ${result.code})`, result.stdout.trim()];
+        if (result.stderr.trim()) {
+          parts.push(`STDERR:\n${result.stderr.trim()}`);
+        }
+        return { content: [{ type: "text" as const, text: parts.filter(Boolean).join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };

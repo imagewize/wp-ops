@@ -5,14 +5,14 @@ all sites — example.com, other WordPress installs (Bedrock/Trellis or plain), 
 non-WordPress sites — with a focus on saving time and tokens. Also covers the
 longer-term question of tighter coupling with the Go CLI binary.
 
-> **Status:** Up to date as of v3.35.0 (2026-08-03) — items 1-11 done (all items
-> in this document). Verified 2026-08-03: item 1's "not registered user-scoped"
-> observation was stale — it already was, see below. Two new open items (12-13)
-> added 2026-09-04. Note also: the tool count in "Current state" below (five
-> tools) is itself stale — `mcp-server/src/tools/` now has thirteen (`db_pull`,
-> `files_pull`, `monitor`, `publish_post`, `verify_post`, `broken_link_audit`,
-> `ip_reputation`, `remote_ttfb_audit`, `url_audit`, and `admin_user_create` have
-> shipped since); not re-audited here, flagged for a future pass.
+> **Status:** Up to date as of v5.18.0 (2026-09-04) — items 1-13 done. Verified
+> 2026-08-03: item 1's "not registered user-scoped" observation was stale — it
+> already was, see below. Items 12-13 were added 2026-09-04 and are now done. Note
+> also: the tool count in "Current state" below (five tools) is itself stale —
+> `mcp-server/src/tools/` now has sixteen (`db_pull`, `files_pull`, `monitor`,
+> `publish_post`, `verify_post`, `broken_link_audit`, `ip_reputation`,
+> `remote_ttfb_audit`, `url_audit`, `admin_user_create`, `ssh_command`, and
+> `scp_file` have shipped since); not re-audited here, flagged for a future pass.
 
 ## Current state
 
@@ -232,19 +232,21 @@ Observed setup gaps:
     the fixed ASCII prefix rather than the whole buffer, keeping binary
     content after the banner intact.
 
-13. **No generic SSH/SCP passthrough tool.** `ssh` is currently only ever
+13. ✅ **Generic SSH/SCP passthrough tools.** `ssh` was previously only ever
     invoked internally by specific tools (`dbBackup.ts`, `dbPull.ts`,
-    `monitor.ts`, `securityScan.ts`) — there's no `ssh_command` or
+    `monitor.ts`, `securityScan.ts`) — there was no `ssh_command` or
     `scp_file` tool for the "run one ad-hoc command on a registered host" or
     "copy one file up/down" cases that come up on classic (non-Bedrock)
     WordPress installs where no purpose-built tool exists yet.
 
-    **Recommendation:** add `ssh_command: { site, env, command, confirm? }`
-    and `scp_file: { site, env, direction: "up" | "down", localPath,
-    remotePath, confirm? }`, both requiring `confirm: true` outside a
-    read-only allowlist the way `wp_cli` already does. Reuse the registry's
-    `sshHost`/`remotePath` resolution and `shellQuote()` from `wpCli.ts`
-    rather than re-implementing quoting.
+    **Done, 2026-09-04.** Added `ssh_command` and `scp_file` to `server.ts`
+    with a small `sshPassthrough.ts` implementation. `ssh_command` tokenizes
+    and shell-quotes the command string (reusing the existing `shellQuote()`
+    from `wpCli.ts`) and gates mutating commands with `confirm: true` behind
+    a conservative read-only allowlist. `scp_file` resolves relative remote
+    paths against the registry entry's `remotePath` and requires `confirm:
+    true` for uploads (`direction: "up"`); downloads (`direction: "down"`)
+    are read-only from the remote host's perspective.
 
 ## Suggested order of work
 
@@ -256,8 +258,8 @@ Observed setup gaps:
 6. ✅ **Item 12** — fix the `stripVmBanner` gap in `dbBackup.ts`/`securityScan.ts`.
    Small, isolated, and the highest-severity of the two open items (can
    corrupt a database backup, not just a report). Do this first.
-7. **Item 13** — `ssh_command`/`scp_file` tools, for classic/shared-hosting
-   ad-hoc work. Lower urgency than item 12; do when that workflow next comes up.
+7. ✅ **Item 13** — `ssh_command`/`scp_file` tools, for classic/shared-hosting
+   ad-hoc work. Done, 2026-09-04.
 
 ---
 
