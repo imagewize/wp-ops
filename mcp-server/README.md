@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — fourteen tools implemented so far:
+Scaffold — sixteen tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -73,6 +73,12 @@ Scaffold — fourteen tools implemented so far:
   needs `confirm: true`. Requires the site's `development` entry to have `localPath`, and the source env
   to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
   as `db_push`.)
+- **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
+  tokenized and shell-quoted, so shell metacharacters become literal arguments; commands outside the
+  read-only allowlist require `confirm: true`.
+- **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
+  remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
+  it is absolute. Uploads require `confirm: true`.
 
 ### The catalog bridge
 
@@ -285,10 +291,10 @@ connecting to this server.
 ## Permissions (pre-approve read-only tools)
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
-`server_status`, `broken_link_audit`, `remote_ttfb_audit`, `ip_reputation_check`, and read-only `wp_cli`
-commands) are safe to run without confirmation —
-`url_audit` only ever queries counts and, at most, a `--dry-run` search-replace preview
-unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
+`server_status`, `broken_link_audit`, `remote_ttfb_audit`, `ip_reputation_check`, read-only
+`ssh_command`, `scp_file` downloads, and read-only `wp_cli` commands) are safe to run without
+confirmation — `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace
+preview unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
 to avoid repeated permission prompts:
 
 ```json
@@ -304,6 +310,8 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__broken_link_audit": { "allowed": true },
       "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
       "mcp__wp-ops__ip_reputation_check": { "allowed": true },
+      "mcp__wp-ops__ssh_command": { "allowed": true },
+      "mcp__wp-ops__scp_file": { "allowed": true },
       "mcp__wp-ops__wp_cli": { "allowed": true }
     }
   }
@@ -433,7 +441,7 @@ npm run dev   # runs src/index.ts directly via tsx, no build step needed
 ## Adding a new tool
 
 1. Add a function under `src/tools/`.
-2. Register it with `server.tool(...)` in `src/index.ts`.
+2. Register it with `server.tool(...)` in `src/server.ts`.
 3. If it's a write/destructive operation (push, deploy, release), require a
    `confirm: true` argument and document that clients should only set it after
    explicit user approval in conversation.
