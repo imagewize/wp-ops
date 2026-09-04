@@ -74,6 +74,22 @@ function phpQuote(s: string): string {
   return Buffer.from(s, "utf8").toString("base64");
 }
 
+// A self-closing custom block never hydrates when written via WP-CLI: Gutenberg
+// builds its InnerBlocks template client-side on insert, so piping the one-liner
+// the inserter produces into post_content saves a genuinely empty block with no
+// visible output. The pattern is verify-post's, so the two tools agree on what
+// counts — including the attribute-less form verify-post already matched.
+const SELF_CLOSING_BLOCK = /<!-- wp:([a-z0-9-]+\/[a-z0-9-]+) (?:\{[^}]*\} )?\/-->/g;
+
+export function selfClosingBlockNames(body: string): string[] {
+  return [...new Set(Array.from(body.matchAll(SELF_CLOSING_BLOCK), (m) => m[1]))];
+}
+
+// Block markup that never renders in a post. `wp:nynaeve/` is on the list
+// because `nynaeve` is a block *category* prefix, not a namespace — every block
+// in that theme is `imagewize/*`, so any `wp:nynaeve/x` in a draft is a typo.
+const BAD_BLOCK_PREFIXES = ["wp:columns", "wp:callout", "wp:acf/", "wp:nynaeve/"];
+
 // Rewrite the Article JSON-LD block's `image` to a verified upload URL.
 // Parsed as real JSON rather than patched with a regex: the block is genuine
 // JSON-LD and a textual edit corrupts it silently on any nesting. Mirrors
@@ -96,6 +112,41 @@ export function injectArticleImage(body: string, url: string): { body: string; i
     }
   );
   return { body: injected ? out : body, injected };
+}
+
+// Keys of the Article JSON-LD block, in document order. An update writes the
+// draft over whatever is live, and a draft is usually written before wp-ops
+// enriches the post — so the fields the tool added at publish time (`image`
+// above, but `datePublished`, `author` and `publisher` just as easily) are the
+// ones a re-publish quietly drops.
+export function articleSchemaKeys(body: string): string[] {
+  for (const m of body.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(m[1]);
+    } catch {
+      continue;
+    }
+    if (parsed["@type"] === "Article") return Object.keys(parsed);
+  }
+  return [];
+}
+
+// Read a post's stored content. base64 so the round trip can't be mangled by a
+// stray banner line or a locale-mangled newline.
+export async function fetchPostContent(entry: EnvEntry, postId: number): Promise<string> {
+  const res = await runWpCliRaw(entry, [
+    "eval",
+    `$p = get_post( ${postId} );` +
+      `if ( ! $p ) { echo "MISSING"; return; }` +
+      `echo base64_encode( $p->post_content );`,
+  ]);
+  if (res.code !== 0) {
+    throw new Error(`Could not read post ${postId} (exit ${res.code}): ${res.stderr || res.stdout}`);
+  }
+  const out = res.stdout.trim().split("\n").pop()?.trim() ?? "";
+  if (out === "MISSING") throw new Error(`Post ${postId} does not exist on the target.`);
+  return Buffer.from(out, "base64").toString("utf8");
 }
 
 // Upload a local image and return its attachment ID and verified URL.
@@ -144,6 +195,27 @@ export async function uploadFeaturedImage(
   return { attachmentId, url };
 }
 
+// Resolve an already-uploaded attachment's public URL. imageAttachmentId has to
+// reach the same injectArticleImage() call imagePath does: without a URL it can
+// only set _thumbnail_id, and an update that took this path silently republished
+// the post with no `image` in its Article schema.
+export async function attachmentUrl(entry: EnvEntry, attachmentId: number): Promise<string> {
+  const res = await runWpCliRaw(entry, [
+    "eval",
+    `$p = get_post( ${attachmentId} );` +
+      `if ( ! $p || $p->post_type !== 'attachment' ) { echo "MISSING"; return; }` +
+      `echo wp_get_attachment_url( ${attachmentId} );`,
+  ]);
+  if (res.code !== 0) {
+    throw new Error(`Could not resolve attachment ${attachmentId} (exit ${res.code}): ${res.stderr || res.stdout}`);
+  }
+  const out = res.stdout.trim().split("\n").pop()?.trim() ?? "";
+  if (out === "MISSING") {
+    throw new Error(`Attachment ${attachmentId} does not exist on the target — refusing to set a featured image that isn't there.`);
+  }
+  return out;
+}
+
 export async function runPublishPost(
   entry: EnvEntry,
   draftPath: string,
@@ -156,6 +228,10 @@ export async function runPublishPost(
     imageAlt?: string;
     /** An already-uploaded attachment to attach instead of uploading one. */
     imageAttachmentId?: number;
+    /** Publish even though the draft has self-closing custom blocks that will save empty. */
+    allowSelfClosingBlocks?: boolean;
+    /** Update even though it drops Article schema fields the live post has. */
+    allowSchemaRegression?: boolean;
     dryRun?: boolean;
   } = {}
 ): Promise<PublishPostResult> {
@@ -170,9 +246,10 @@ export async function runPublishPost(
     throw new Error(`No "<!-- SUGGESTED POST SLUG: /slug/ -->" found and no updateId given`);
   }
 
-  // Upload the featured image first: its URL goes into the Article schema, so
-  // it must be known before the source byte counts that the verification
-  // compares against are taken.
+  // Settle the featured image first: its URL goes into the Article schema, so it
+  // must be known before the source byte counts that the verification compares
+  // against are taken. Both ways of naming an image end at the same injection —
+  // an attachment ID is only a different way to point at the same URL.
   let thumbnailId = options.imageAttachmentId;
   let imageUrl: string | undefined;
   if (options.imagePath && !options.dryRun) {
@@ -184,7 +261,14 @@ export async function runPublishPost(
     );
     thumbnailId = uploaded.attachmentId;
     imageUrl = uploaded.url;
-    const { body: withImage, injected } = injectArticleImage(body, uploaded.url);
+  } else if (options.imageAttachmentId && !options.imagePath) {
+    imageUrl = await attachmentUrl(entry, options.imageAttachmentId);
+    if (!imageUrl) {
+      warnings.push(`Attachment ${options.imageAttachmentId} has no URL — schema image left as the draft has it`);
+    }
+  }
+  if (imageUrl) {
+    const { body: withImage, injected } = injectArticleImage(body, imageUrl);
     body = withImage;
     if (!injected) warnings.push("No Article JSON-LD block found — image URL not injected into schema");
   }
@@ -202,14 +286,47 @@ export async function runPublishPost(
   if (header.metaDescription.length > 155) {
     warnings.push(`Meta description is ${header.metaDescription.length} chars (>155) — will truncate in SERPs`);
   }
-  for (const bad of ["wp:columns", "wp:callout", "wp:acf/"]) {
+  for (const bad of BAD_BLOCK_PREFIXES) {
     if (body.includes(bad)) warnings.push(`Draft contains "${bad}" — renders as a broken block in posts`);
   }
-  if (/<!-- wp:[a-z0-9-]+\/[a-z0-9-]+ \{[^}]*\} \/-->/.test(body)) {
-    warnings.push(
-      "Draft contains a self-closing custom block (`/-->`) — it will save EMPTY via WP-CLI. " +
-        "Hand-build the full serialized markup instead."
-    );
+  // Fails rather than warns, matching verify-post and the near-empty-body check
+  // above: the block saves empty, nothing errors, and a post_content diff shows
+  // nothing — so a warning printed next to a successful publish is read too late.
+  const selfClosing = selfClosingBlockNames(body);
+  if (selfClosing.length) {
+    const detail =
+      `Draft contains ${selfClosing.length} self-closing custom block(s) (${selfClosing.join(", ")}) — ` +
+      "they will save EMPTY via WP-CLI.";
+    if (!options.allowSelfClosingBlocks) {
+      throw new Error(
+        `${detail} Hand-build the full serialized markup, or pass allowSelfClosingBlocks: true ` +
+          "to publish anyway (only correct for a genuinely dynamic, server-rendered block)."
+      );
+    }
+    warnings.push(`${detail} Published anyway — allowSelfClosingBlocks was set.`);
+  }
+
+  // On an update, the state worth diffing against is the live post — the one
+  // state nothing else in the toolchain looks at. publish_post compares the
+  // source to what got stored and verify_post counts JSON-LD blocks; neither
+  // notices that what was sent is poorer than what it replaced.
+  if (options.updateId) {
+    const liveKeys = articleSchemaKeys(await fetchPostContent(entry, options.updateId));
+    const draftKeys = new Set(articleSchemaKeys(body));
+    let dropped = liveKeys.filter((k) => !draftKeys.has(k));
+    // A dry run never uploads, so `image` isn't injected yet — don't report a
+    // field the real run would put back.
+    if (options.dryRun && options.imagePath) dropped = dropped.filter((k) => k !== "image");
+    if (dropped.length) {
+      const detail = `Update removes Article schema field(s) present on the live post: ${dropped.join(", ")}.`;
+      if (!options.allowSchemaRegression) {
+        throw new Error(
+          `${detail} Add them to the draft so it is self-contained, or pass allowSchemaRegression: true ` +
+            "to publish the poorer version anyway."
+        );
+      }
+      warnings.push(`${detail} Published anyway — allowSchemaRegression was set.`);
+    }
   }
 
   if (options.dryRun) {

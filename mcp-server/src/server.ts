@@ -629,7 +629,8 @@ export function createServer(): McpServer {
       "header (slug, title, meta title, meta description, tags, category). Parses that header, strips it from " +
       "the body, writes the post, sets The SEO Framework meta and terms, and then VERIFIES that the stored " +
       "bytes and <script>/JSON-LD counts match the source — the failure this guards against (kses stripping " +
-      "schema, a self-closing block saving empty) is silent and invisible in a post_content diff. " +
+      "schema, a self-closing block saving empty) is silent and invisible in a post_content diff. A draft " +
+      "containing a self-closing custom block is REFUSED before the write unless allowSelfClosingBlocks is set. " +
       "Requires confirm: true, only after explicit user approval.",
     {
       site: siteSchema.describe("Site key from the wp-ops site registry (config/sites.json)"),
@@ -661,7 +662,26 @@ export function createServer(): McpServer {
         .int()
         .positive()
         .optional()
-        .describe("Attach an already-uploaded attachment ID instead of uploading a file. Ignored when imagePath is given."),
+        .describe(
+          "Attach an already-uploaded attachment ID instead of uploading a file. Its URL is resolved and " +
+            "written into the Article JSON-LD `image` field, exactly as imagePath does. Ignored when " +
+            "imagePath is given."
+        ),
+      allowSelfClosingBlocks: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Publish even though the draft contains self-closing custom blocks (`<!-- wp:ns/block {...} /-->`). " +
+            "Those save EMPTY via WP-CLI, so this is refused by default; only correct for a genuinely " +
+            "dynamic, server-rendered block."
+        ),
+      allowSchemaRegression: z
+        .boolean()
+        .default(false)
+        .describe(
+          "With updateId, publish even though the draft's Article JSON-LD drops field(s) the live post " +
+            "already has (typically `image`, which wp-ops itself added at first publish). Refused by default."
+        ),
       dryRun: z
         .boolean()
         .default(false)
@@ -671,7 +691,20 @@ export function createServer(): McpServer {
         .default(false)
         .describe("Required (true) for a real write. Only set after explicit user approval."),
     },
-    async ({ site, env, draftPath, updateId, status, imagePath, imageAlt, imageAttachmentId, dryRun, confirm }) => {
+    async ({
+      site,
+      env,
+      draftPath,
+      updateId,
+      status,
+      imagePath,
+      imageAlt,
+      imageAttachmentId,
+      allowSelfClosingBlocks,
+      allowSchemaRegression,
+      dryRun,
+      confirm,
+    }) => {
       try {
         if (!dryRun && !confirm) {
           throw new Error(
@@ -687,6 +720,8 @@ export function createServer(): McpServer {
           imagePath,
           imageAlt,
           imageAttachmentId,
+          allowSelfClosingBlocks,
+          allowSchemaRegression,
           dryRun,
         });
         return {
