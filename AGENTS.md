@@ -43,6 +43,7 @@
   - Passing positional args without `--no-interactive` still triggers prompts
   - Script auto-generates AI-powered description and creates PR via GitHub CLI
 - PRs: include a short description of scope, commands run/outputs (or screenshots for doc-only visual changes), and linked issues if applicable. Note any risk areas (data migration, remote writes).
+- After modifying scripts in the catalog (e.g., `scripts/git/*.sh`), regenerate `go/internal/catalog/catalog.json` by running `go generate ./...` from the repo root, then commit the updated file before pushing.
 
 ### Important Rules
 - **AI co-authorship in commits is allowed** — `Co-Authored-By` lines for Claude or Mistral Vibe are permitted

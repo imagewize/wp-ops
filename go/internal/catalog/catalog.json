@@ -385,6 +385,14 @@
         "required": false,
         "description": "Show only the cross-repo summary table, skipping per-repo detail",
         "raw": "--summary    optional  {}  Show only the cross-repo summary table, skipping per-repo detail"
+      },
+      {
+        "name": "--sort-by",
+        "required_raw": "optional",
+        "required": false,
+        "default": "unique-views",
+        "description": "Sort summary by 'unique-views' or 'unique-clones' (default: unique-views when views shown, unique-clones when only clones shown)",
+        "raw": "--sort-by    optional  {unique-views}  Sort summary by 'unique-views' or 'unique-clones' (default: unique-views when views shown, unique-clones when only clones shown)"
       }
     ],
     "examples": [

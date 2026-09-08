@@ -20,6 +20,7 @@
 # @flag     --json       optional  {}  Output raw JSON instead of formatted tables
 # @flag     --quiet      optional  {}  Suppress header rows in table output
 # @flag     --summary    optional  {}  Show only the cross-repo summary table, skipping per-repo detail
+# @flag     --sort-by    optional  {unique-views}  Sort summary by 'unique-views' or 'unique-clones' (default: unique-views when views shown, unique-clones when only clones shown)
 # @example  wp-ops gh-traffic imagewize/nynaeve --quiet
 # @example  wp-ops gh-traffic imagewize/nynaeve imagewize/wp-ops --all
 
@@ -33,6 +34,7 @@ DAYS=14
 SHOW_VIEWS=false
 SHOW_CLONES=false
 SHOW_REFERRERS=false
+SORT_BY=""  # Will default to unique-views or unique-clones based on visible sections
 REPOS=()
 
 # Help function
@@ -56,6 +58,8 @@ Options:
   -j, --json            Output raw JSON instead of formatted tables
   -q, --quiet           Suppress header rows in table output
   -s, --summary         Show only the cross-repo summary table, skipping per-repo detail
+  --sort-by COL        Sort summary by COL: 'unique-views' or 'unique-clones'
+                         (default: unique-views when views shown, unique-clones when only clones shown)
 
 Arguments:
   owner/repo            GitHub repository in format owner/repo (required, repeatable)
@@ -65,9 +69,10 @@ Sections:
   always had. --clones, --referrers, and --all opt into the rest.
 
   When more than one repo is given, a summary table (one row per repo, 14-day
-  totals) is printed first, sorted by unique views descending — unique clones,
-  if views weren't requested. It's skipped for a single repo (redundant with
-  the detail table) and for a referrers-only run (nothing numeric to sort).
+  totals) is printed first, sorted by unique views descending by default (unique
+  clones if views weren't requested, or as specified with --sort-by). It's skipped
+  for a single repo (redundant with the detail table) and for a referrers-only
+  run (nothing numeric to sort).
 
   --summary shows only that rollup, for any number of repos, and drops
   --referrers if it was also given (or implied by --all) — the summary has
@@ -88,6 +93,9 @@ Examples:
 
   # Just the rollup across many repos, views and clones
   ./scripts/git/gh-traffic.sh --all --summary imagewize/nynaeve imagewize/wp-ops imagewize/aludra
+
+  # Sort summary by unique clones instead of unique views
+  ./scripts/git/gh-traffic.sh --all --summary --sort-by unique-clones imagewize/nynaeve imagewize/wp-ops
 
 Requirements:
   - GitHub CLI (gh) installed and authenticated
@@ -159,6 +167,20 @@ while [[ $# -gt 0 ]]; do
         -s|--summary)
             SUMMARY_ONLY=true
             shift
+            ;;
+        --sort-by)
+            if [[ -n "${2:-}" ]]; then
+                if [[ "${2:-}" =~ ^(unique-views|unique-clones)$ ]]; then
+                    SORT_BY="$2"
+                    shift 2
+                else
+                    echo "Error: --sort-by must be 'unique-views' or 'unique-clones'" >&2
+                    exit 1
+                fi
+            else
+                echo "Error: --sort-by requires a value" >&2
+                exit 1
+            fi
             ;;
         -*)
             echo "Error: Unknown option $1" >&2
@@ -361,7 +383,13 @@ print_referrers() {
 # views weren't requested).
 print_summary() {
     local sort_label="unique views"
-    [[ "$SHOW_VIEWS" = false ]] && sort_label="unique clones"
+    if [[ -n "$SORT_BY" ]]; then
+        if [[ "$SORT_BY" = "unique-clones" ]]; then
+            sort_label="unique clones"
+        fi
+    elif [[ "$SHOW_VIEWS" = false ]]; then
+        sort_label="unique clones"
+    fi
 
     local header=""
     if [[ "$SHOW_VIEWS" = true && "$SHOW_CLONES" = true ]]; then
@@ -386,7 +414,13 @@ print_summary() {
             clones_uniques=$(printf '%s' "${CLONES_PAYLOAD[$i]}" | jq -r '.uniques')
         fi
 
-        if [[ "$SHOW_VIEWS" = true ]]; then
+        if [[ -n "$SORT_BY" ]]; then
+            if [[ "$SORT_BY" = "unique-clones" ]]; then
+                sort_key="$clones_uniques"
+            else
+                sort_key="$views_uniques"
+            fi
+        elif [[ "$SHOW_VIEWS" = true ]]; then
             sort_key="$views_uniques"
         else
             sort_key="$clones_uniques"

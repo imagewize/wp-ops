@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.20.0] - 2026-09-09
+
+### Added
+
+- **`gh-traffic.sh` gains `--sort-by`** to sort the summary table by `unique-clones` or
+  `unique-views`. Previously the summary sorted by unique views when views were shown
+  and by unique clones when only clones were requested; the new flag lets you force
+  either order regardless of which sections are enabled.
+
 ## [5.19.0] - 2026-09-04
 
 ### Fixed
