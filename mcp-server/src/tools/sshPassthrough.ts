@@ -97,12 +97,39 @@ function tokenizeCommand(command: string): string[] {
   return tokens;
 }
 
+// Path fragments that indicate a credential-bearing file. Even a command in
+// READ_ONLY_COMMANDS (cat, grep, head, tail, ...) needs confirm: true when any
+// argument targets one of these — "cat" being harmless in general doesn't mean
+// "cat wp-config.php" or "cat ~/.ssh/id_rsa" should be auto-approved, since that
+// prints database credentials or an SSH private key straight into the response.
+const CREDENTIAL_PATH_PATTERNS: RegExp[] = [
+  /wp-config\.php$/i,
+  /(^|\/)\.env(\.|$)/,
+  /(^|\/)\.ssh(\/|$)/,
+  /(^|\/)id_rsa/,
+  /(^|\/)id_ed25519/,
+  /(^|\/)id_ecdsa/,
+  /\.pem$/i,
+  /(^|\/)authorized_keys$/,
+  /(^|\/)\.netrc$/,
+  /(^|\/)\.pgpass$/,
+  /(^|\/)\.git-credentials$/,
+];
+
+function touchesCredentialPath(tokens: string[]): boolean {
+  return tokens
+    .slice(1)
+    .some((token) => CREDENTIAL_PATH_PATTERNS.some((pattern) => pattern.test(token)));
+}
+
 export function isReadOnlySshCommand(command: string): boolean {
   const tokens = tokenizeCommand(command);
   const first = tokens[0];
   if (!first) return false;
   const base = path.basename(first);
-  return READ_ONLY_COMMANDS.has(base);
+  if (!READ_ONLY_COMMANDS.has(base)) return false;
+  if (touchesCredentialPath(tokens)) return false;
+  return true;
 }
 
 export function runSshCommand(entry: EnvEntry, command: string): Promise<SshCommandResult> {

@@ -36,8 +36,18 @@ const NESTED_RESOURCE_VERBS: Record<string, Set<string>> = {
   cron: new Set(["event", "schedule"]),
 };
 
+// "wp config" is WP-CLI's dedicated interface onto wp-config.php constants —
+// DB_PASSWORD, DB_USER, AUTH_KEY salts, and whatever else a site defines there.
+// "get"/"list"/"export" all being in SAFE_READ_VERBS would otherwise let
+// "wp config get DB_PASSWORD" through with no confirmation, which is a plainer
+// path to the same credentials `cat wp-config.php` would print. Always confirm.
+const ALWAYS_CONFIRM_COMMANDS = new Set(["config"]);
+
 export function isReadOnlyWpCommand(args: string[]): boolean {
   const [command, verbOrResource, thirdToken] = args;
+  if (command !== undefined && ALWAYS_CONFIRM_COMMANDS.has(command)) {
+    return false;
+  }
   if (verbOrResource !== undefined && SAFE_READ_VERBS.has(verbOrResource)) {
     return true;
   }

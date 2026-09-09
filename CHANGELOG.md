@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.20.1] - 2026-09-09
+
+### Security
+
+- **MCP `ssh_command` and `wp_cli` no longer auto-approve reads of credential-bearing
+  files.** `ssh_command`'s read-only allowlist (`cat`, `grep`, `head`, `tail`, ...) let
+  `cat web/wp-config.php` or `cat ~/.ssh/id_rsa` through with no `confirm: true` step,
+  because the *command* was harmless in general even though this particular argument
+  wasn't — same failure mode as [a WordPress consultant's LinkedIn post this fix was
+  prompted by](https://www.linkedin.com/posts/remkusdevries_connecting-ai-to-a-wordpress-site-now-takes-share-7503145873036685313-vCPk/)
+  describes: "once it has local file access, it can find your ssh credential... the
+  database credentials in your wp-config.php." `isReadOnlySshCommand()` now also
+  refuses when any argument matches a credential-shaped path (`wp-config.php`, `.env`,
+  `.ssh/`, `id_rsa`/`id_ed25519`/`id_ecdsa`, `*.pem`, `authorized_keys`, `.netrc`,
+  `.pgpass`, `.git-credentials`), forcing the normal confirm-after-explicit-approval
+  flow. Separately, `wp_cli`'s `isReadOnlyWpCommand()` treated `wp config get
+  DB_PASSWORD` as read-only too — `get` is a safe verb in general, but `wp config` is
+  WP-CLI's direct interface onto wp-config.php's constants, an even more direct route
+  to the same credentials. `wp config *` (any verb) now always needs `confirm: true`.
+  Neither change blocks legitimate reads or edits — it only removes the no-confirmation
+  fast path, matching how every other sensitive MCP operation already works.
+
 ## [5.20.0] - 2026-09-09
 
 ### Added
