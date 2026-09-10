@@ -12,9 +12,10 @@
  * - Suspicious file patterns
  * - SEO spam injections
  *
- * @version 1.0.0
- * @date November 5, 2025
+ * @version 2.0.0
+ * @date September 10, 2026
  * @see docs/SECURITY-SCANNER-GUIDE.md
+ * @see https://github.com/imagewize/wp-ops/issues/224 for checksum verification
  *
  * SECURITY NOTES:
  * - This script should be deleted after use or secured with authentication
@@ -24,15 +25,15 @@
  * USAGE:
  *
  * Via WP-CLI (recommended):
- *   wp eval-file wp-content/themes/client/security-scanner-general.php
+ *   wp eval-file wp-cli/security/scanner-general.php
  *
  * Via Browser (secure with IP check first):
- *   https://yoursite.com/wp-content/themes/client/security-scanner-general.php
+ *   https://yoursite.com/wp-cli/security/scanner-general.php
  *
  * Via Command Line:
- *   php wp-content/themes/client/security-scanner-general.php [/path/to/scan]
+ *   php wp-cli/security/scanner-general.php [/path/to/scan]
  *
- * @desc     Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)
+ * @desc     Broad-spectrum malware scanner with checksum verification (webshells, pharma hacks, backdoors, SEO spam)
  * @category security
  * @platform wordpress
  * @runs     local
@@ -42,6 +43,12 @@
  * @example  wp-ops scanner-general
  * @doc      wp-cli/security/README.md
  */
+
+// ============================================================================
+// CHECKSUM VERIFICATION MODULE
+// ============================================================================
+
+require_once dirname(__FILE__) . '/checksum-verify.php';
 
 // ============================================================================
 // CONFIGURATION
@@ -399,6 +406,8 @@ $stats = [
     'errors' => [],
     'skipped_files' => [],
     'suspicious_filenames' => [],
+    'checksum_verified_skipped' => 0, // Files skipped due to checksum verification
+    'checksum_failed' => [], // Files that failed checksum verification
     'start_time' => microtime(true),
 ];
 
@@ -600,6 +609,8 @@ function format_bytes($bytes) {
  * Display results
  */
 function display_results($stats, $config) {
+    global $checksum_cache;
+
     output('', 'white');
     output('============================================', 'cyan');
     output('  GENERAL MALWARE SCAN COMPLETE', 'cyan');
@@ -615,12 +626,36 @@ function display_results($stats, $config) {
     output('  Total matches: ' . number_format(count($stats['matches'])), 'yellow');
     output('  Errors: ' . number_format(count($stats['errors'])), count($stats['errors']) > 0 ? 'red' : 'green');
     output('  Skipped files: ' . number_format(count($stats['skipped_files'])), 'white');
+    output('  Checksum-verified files skipped: ' . number_format($stats['checksum_verified_skipped']), 'green');
+    output('  Checksum-failed files: ' . number_format(count($stats['checksum_failed'])), count($stats['checksum_failed']) > 0 ? 'red' : 'green');
 
     $elapsed = microtime(true) - $stats['start_time'];
     output('  Scan time: ' . round($elapsed, 2) . ' seconds', 'white');
     output('', 'white');
 
-    // Display suspicious filenames FIRST (highest priority)
+    // Display checksum failures FIRST (highest priority)
+    if (count($stats['checksum_failed']) > 0) {
+        output('============================================', 'red');
+        output('  CHECKSUM FAILURES - HIGHEST PRIORITY (' . count($stats['checksum_failed']) . ')', 'red');
+        output('============================================', 'red');
+        output('', 'white');
+        output('These files have been MODIFIED from official WordPress releases!', 'red');
+        output('This is a STRONG indicator of compromise - investigate immediately!', 'red');
+        output('', 'white');
+
+        foreach ($stats['checksum_failed'] as $filepath) {
+            if (isset($checksum_cache['failed_files'][$filepath])) {
+                $info = $checksum_cache['failed_files'][$filepath];
+                output('FILE: ' . $filepath, 'red');
+                output('  Type: ' . $info['type'], 'white');
+                output('  Reason: ' . $info['reason'], 'yellow');
+                output('  ⚠️  ACTION: Compare with official release, restore from backup', 'red');
+                output('', 'white');
+            }
+        }
+    }
+
+    // Display suspicious filenames (second highest priority)
     if (count($stats['suspicious_filenames']) > 0) {
         output('============================================', 'red');
         output('  ⚠️  SUSPICIOUS FILENAMES DETECTED (' . count($stats['suspicious_filenames']) . ')', 'red');
@@ -673,10 +708,11 @@ function display_results($stats, $config) {
             }
         }
     } else {
-        if (count($stats['suspicious_filenames']) === 0) {
-            output('✓ No suspicious patterns or filenames detected!', 'green');
-            output('', 'white');
+        output('✓ No threats detected!', 'green');
+        if ($stats['checksum_verified_skipped'] > 0) {
+            output('  (Note: ' . number_format($stats['checksum_verified_skipped']) . ' verified core/plugin files were skipped)', 'green');
         }
+        output('', 'white');
     }
 
     // Display errors
@@ -712,29 +748,40 @@ function display_results($stats, $config) {
     output('============================================', 'cyan');
     output('', 'white');
 
-    $total_threats = count($stats['suspicious_filenames']) + count($stats['matches']);
+    $total_threats = count($stats['checksum_failed']) + count($stats['suspicious_filenames']) + count($stats['matches']);
 
     if ($total_threats > 0) {
         output('⚠️  THREATS DETECTED!', 'red');
         output('', 'white');
-        output('IMMEDIATE ACTIONS:', 'yellow');
+        output('IMMEDIATE ACTIONS (in priority order):', 'yellow');
+
+        if (count($stats['checksum_failed']) > 0) {
+            output('  1. HIGHEST PRIORITY: Review checksum failures FIRST', 'red');
+            output('     - These files have been MODIFIED from official releases', 'red');
+            output('     - STRONG compromise indicator - investigate immediately', 'red');
+            output('     - Compare with official WordPress/plugin releases', 'white');
+            output('     - Restore from clean backup if confirmed malicious', 'white');
+            output('', 'white');
+        }
 
         if (count($stats['suspicious_filenames']) > 0) {
-            output('  1. PRIORITY: Review suspicious filenames FIRST', 'red');
+            output('  2. PRIORITY: Review suspicious filenames', 'red');
             output('     - These files match known malware naming patterns', 'white');
             output('     - Check when they were created/modified', 'white');
             output('     - Review their content', 'white');
             output('     - Delete if malicious', 'white');
+            output('', 'white');
         }
 
-        output('  2. Review pattern matches by severity (CRITICAL first)', 'white');
-        output('  3. Check file modification dates: stat filename', 'white');
-        output('  4. Review Git history for unexpected changes', 'white');
-        output('  5. Compare with backup versions', 'white');
-        output('  6. Isolate infected files before deletion', 'white');
-        output('  7. Change all passwords if compromise confirmed', 'white');
+        output('  3. Review pattern matches by severity (CRITICAL first)', 'white');
+        output('  4. Check file modification dates: stat filename', 'white');
+        output('  5. Review Git history for unexpected changes', 'white');
+        output('  6. Compare with backup versions', 'white');
+        output('  7. Isolate infected files before deletion', 'white');
+        output('  8. Change all passwords if compromise confirmed', 'white');
         output('', 'white');
         output('FALSE POSITIVES:', 'yellow');
+        output('  - Verified core/plugin files are now automatically skipped via checksum', 'green');
         output('  - Pharma keywords may appear in legitimate medical sites', 'white');
         output('  - Long base64 strings may be legitimate data', 'white');
         output('  - Always verify context before removing code', 'white');
@@ -777,7 +824,7 @@ if (php_sapi_name() !== 'cli') {
 
 output('============================================', 'cyan');
 output('  WordPress General Malware Scanner', 'cyan');
-output('  Version 1.0.0 - November 5, 2025', 'cyan');
+output('  Version 2.0.0 - September 10, 2026', 'cyan');
 output('  Broad-spectrum malware detection', 'cyan');
 output('============================================', 'cyan');
 output('', 'white');
@@ -789,6 +836,11 @@ output('  Excluded Directories: ' . implode(', ', $config['exclude_dirs']), 'whi
 output('  Max File Size: ' . format_bytes($config['max_file_size']), 'white');
 output('', 'white');
 
+// Initialize checksum verification
+output('Initializing checksum verification...', 'yellow');
+init_checksum_verification($config['start_path']);
+output_checksum_results();
+
 output('Building file list and checking filenames...', 'yellow');
 $files = build_file_list($config['start_path'], $config, $malware_filenames, $stats);
 output('Found ' . number_format(count($files)) . ' files to scan', 'green');
@@ -796,18 +848,32 @@ output('Found ' . number_format(count($files)) . ' files to scan', 'green');
 if (count($stats['suspicious_filenames']) > 0) {
     output('⚠️  Found ' . count($stats['suspicious_filenames']) . ' suspicious filenames!', 'red');
 }
+
+// Filter files based on checksum verification
+output('Filtering files based on checksum verification...', 'yellow');
+$files_to_scan = filter_files_by_checksum($files, $config['start_path']);
+
+// Track how many were skipped
+$stats['checksum_verified_skipped'] = count($files) - count($files_to_scan);
+
+// Track checksum failures as high-priority matches
+$checksum_summary = get_checksum_summary();
+$stats['checksum_failed'] = $checksum_summary['failed_count'] > 0 ? 
+    array_keys($checksum_cache['failed_files']) : [];
+
+output('After checksum filtering: ' . number_format(count($files_to_scan)) . ' files to pattern-scan', 'green');
 output('', 'white');
 
 output('Scanning files for malware patterns...', 'yellow');
-$progress_interval = max(1, floor(count($files) / 20)); // Show progress every 5%
+$progress_interval = max(1, floor(count($files_to_scan) / 20)); // Show progress every 5%
 
-foreach ($files as $i => $file) {
+foreach ($files_to_scan as $i => $file) {
     scan_file($file, $patterns, $stats);
 
     // Show progress
     if ($i % $progress_interval === 0) {
-        $percent = round(($i / count($files)) * 100);
-        output("Progress: {$percent}% ({$i}/" . count($files) . " files)", 'cyan');
+        $percent = round(($i / count($files_to_scan)) * 100);
+        output("Progress: {$percent}% ({$i}/" . count($files_to_scan) . " files)", 'cyan');
     }
 }
 
