@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.21.0] - 2026-09-10
+
+### Added
+
+- **`ssl-check.sh`** — check a domain's TLS certificate expiry, issuer and subject
+  (`wp-ops ssl-check <domain>`). Wraps the `openssl s_client | openssl x509 -noout
+  -dates -issuer -subject` one-liner used ad hoc for diagnosing dead sites, and adds
+  a plain "Expires in N day(s)" / "EXPIRED N day(s) ago" line computed from
+  `notAfter` so an expired cert doesn't need to be spotted by eye against today's date.
+
 ## [5.20.1] - 2026-09-09
 
 ### Security
