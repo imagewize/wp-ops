@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [5.21.0] - 2026-09-10
+## [5.21.1] - 2026-09-10
+
+### Fixed
+
+- **`security_scan` MCP tool works on Ubuntu/Debian remote/VM sites.** Replaced `-` with `/dev/stdin` in both `runRemote()` and `runVm()` so PHP CLI reads the scanner source from stdin correctly — Ubuntu/Debian's packaged PHP CLI treats `-` as a literal filename rather than the conventional "read from stdin" token, causing `Could not open input file: -` on every remote scan.
 
 ### Added
 

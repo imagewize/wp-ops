@@ -42,7 +42,7 @@ function runLocal(scannerFile: string, scanPath: string, phpBin: string): Promis
 // on the remote host (avoids the scp-to-/tmp-then-remember-to-delete step).
 function runRemote(sshHost: string, scannerSource: string, remotePath: string, phpBin: string): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("ssh", [sshHost, `${shellQuote(phpBin)} - ${shellQuote(remotePath)}`]);
+    const child = spawn("ssh", [sshHost, `${shellQuote(phpBin)} /dev/stdin ${shellQuote(remotePath)}`]);
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
@@ -54,7 +54,7 @@ function runRemote(sshHost: string, scannerSource: string, remotePath: string, p
   });
 }
 
-// Streams the scanner source over the Trellis dev VM's stdin to `php -`, same
+// Streams the scanner source over the Trellis dev VM's stdin to `php /dev/stdin`, same
 // no-disk-write rationale as the SSH path. Runs `trellis` from the project dir.
 function runVm(
   trellisDir: string,
@@ -64,7 +64,7 @@ function runVm(
   phpBin: string
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn("trellis", ["vm", "shell", "--workdir", workdir, "--", phpBin, "-", scanPath], {
+    const child = spawn("trellis", ["vm", "shell", "--workdir", workdir, "--", phpBin, "/dev/stdin", scanPath], {
       cwd: trellisDir,
     });
     let stdout = "";
