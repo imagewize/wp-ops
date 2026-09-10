@@ -343,12 +343,12 @@ func TestFindRepoRoot(t *testing.T) {
 // TestExcludedFilenames pins the exclusion set — each of these is a real
 // file that would otherwise be discovered as a bogus command.
 func TestExcludedFilenames(t *testing.T) {
-	for _, name := range []string{"variable-check.yml", "transient-debug-browser.php"} {
+	for _, name := range []string{"variable-check.yml", "transient-debug-browser.php", "checksum-verify.php"} {
 		if !excludedFilenames[name] {
 			t.Errorf("%s should be excluded from discovery", name)
 		}
 	}
-	if len(excludedFilenames) != 2 {
-		t.Errorf("got %d exclusions, want 2 — the filter list has not changed", len(excludedFilenames))
+	if len(excludedFilenames) != 3 {
+		t.Errorf("got %d exclusions, want 3 — the filter list has not changed", len(excludedFilenames))
 	}
 }
