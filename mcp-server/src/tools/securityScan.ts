@@ -18,6 +18,26 @@ const SCANNERS = {
   general: "scanner-general.php",
 } as const;
 
+// Both scanners `require_once dirname(__FILE__) . '/checksum-verify.php'` to
+// pull in the checksum-verification module. That resolves fine when php runs
+// the file directly off disk (runLocal), but runRemote/runVm stream the
+// scanner source over `php /dev/stdin`, where __FILE__ resolves to a
+// /proc/<pid>/fd/<pipe> path with no real sibling directory - the require
+// fails with "Failed opening required '.../checksum-verify.php'" on every
+// remote/VM scan. Inline the module's body in place of that require_once
+// line so the streamed script is fully self-contained.
+const CHECKSUM_REQUIRE_RE = /^\s*require_once\s+dirname\(__FILE__\)\s*\.\s*'\/checksum-verify\.php';\s*$/m;
+
+function readStandaloneScannerSource(scannerFile: string): string {
+  const source = readFileSync(scannerFile, "utf-8");
+  if (!CHECKSUM_REQUIRE_RE.test(source)) {
+    return source;
+  }
+  const modulePath = path.join(SCANNER_DIR, "checksum-verify.php");
+  const moduleBody = readFileSync(modulePath, "utf-8").replace(/^<\?php\s*/, "");
+  return source.replace(CHECKSUM_REQUIRE_RE, moduleBody);
+}
+
 export type ScanMode = "targeted" | "general" | "both";
 
 interface ExecResult {
@@ -92,10 +112,10 @@ export async function runSecurityScan(entry: EnvEntry, mode: ScanMode): Promise<
     if (entry.localPath) {
       result = await runLocal(scannerFile, entry.localPath, phpBin);
     } else if (entry.sshHost && entry.remotePath) {
-      const scannerSource = readFileSync(scannerFile, "utf-8");
+      const scannerSource = readStandaloneScannerSource(scannerFile);
       result = await runRemote(entry.sshHost, scannerSource, entry.remotePath, phpBin);
     } else if (hasTrellisVm(entry)) {
-      const scannerSource = readFileSync(scannerFile, "utf-8");
+      const scannerSource = readStandaloneScannerSource(scannerFile);
       result = await runVm(entry.trellisDir, scannerSource, entry.vmWorkdir, entry.vmPath ?? "web/wp", phpBin);
     } else {
       throw new Error("Site/env entry has none of: localPath, sshHost+remotePath, trellisDir+vmWorkdir, or url.");

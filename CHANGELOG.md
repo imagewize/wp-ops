@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.22.1] - 2026-09-10
+
+### Fixed
+
+- **`security_scan` MCP tool works again against remote/VM sites after 5.22.0.** The checksum-verification module added in 5.22.0 is pulled in via `require_once dirname(__FILE__) . '/checksum-verify.php'`, which only resolves when PHP runs the scanner directly off disk. `security_scan`'s remote/VM paths stream the scanner source over `php /dev/stdin` instead, where `__FILE__` resolves to a pipe/fd path with no real sibling directory, so every remote or Trellis-VM scan failed with `Fatal error: Uncaught Error: Failed opening required '.../checksum-verify.php'`. The MCP tool now inlines the module's source in place of that `require_once` line before streaming, so the piped script is self-contained. Local scans (`localPath`, or running the scanner file directly) were unaffected.
+
 ## [5.22.0] - 2026-09-10
 
 ### Added
