@@ -24,7 +24,10 @@ Scaffold — twenty tools implemented so far:
   (`list`/`get`/`exists`/`status`/`info`/`version`/`search`/`check-update`/`doctor`/
   `export`) run immediately; anything else — updates, deletes, `search-replace`,
   `eval`, installs, etc. — requires `confirm: true`, meant to be set only after the
-  user has explicitly approved that specific command in conversation. For remote sites,
+  user has explicitly approved that specific command in conversation. `wp config`
+  always requires `confirm: true` regardless of verb — `get`/`list`/`export` being
+  otherwise-safe read verbs would let `wp config get DB_PASSWORD` through unconfirmed,
+  a plainer path to the same credentials `wp-config.php` holds. For remote sites,
   each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
   joins trailing args into one string for the remote shell to (re-)interpret.
 - **`redirect_audit`** — runs a comprehensive redirect chain audit for one or more URLs. Tests
@@ -95,7 +98,10 @@ Scaffold — twenty tools implemented so far:
   as `db_push`.)
 - **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
   tokenized and shell-quoted, so shell metacharacters become literal arguments; commands outside the
-  read-only allowlist require `confirm: true`.
+  read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
+  still requires `confirm: true` if any argument targets a credential-bearing path — `wp-config.php`,
+  `.env`, `.ssh/`, private key files, `.netrc`, `.pgpass`, `.git-credentials` — since "cat is read-only"
+  doesn't make `cat wp-config.php` safe to run unconfirmed.
 - **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
   remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
   it is absolute. Uploads require `confirm: true`.
