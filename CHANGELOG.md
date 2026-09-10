@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.22.2] - 2026-09-10
+
+### Fixed
+
+- **`scanner-general.php`'s suspicious-filename check now respects checksum verification.** Checksum verification (5.22.0) only ever skipped the content pattern-match scan; the separate filename check that runs during file discovery still flagged unmodified core files whose names happen to match a known-malware substring — e.g. `wp-includes/SimplePie/src/Cache/MySQL.php` and `wp-includes/Text/Diff/Engine/shell.php` matching `mysql.php`/`shell.php` — even after they passed checksum verification. A file already confirmed checksum-clean is now skipped by the filename check too, the same reasoning as the pattern-match skip: an unmodified core/plugin file can't be the payload regardless of what its filename looks like. `scanner-targeted.php` has no filename check and is unaffected.
+
 ## [5.22.1] - 2026-09-10
 
 ### Fixed
