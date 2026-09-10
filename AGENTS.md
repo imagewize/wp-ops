@@ -46,7 +46,9 @@
 - After modifying scripts in the catalog (e.g., `scripts/git/*.sh`), regenerate `go/internal/catalog/catalog.json` by running `go generate ./...` from the repo root, then commit the updated file before pushing.
 
 ### Important Rules
-- **AI co-authorship in commits is allowed** — `Co-Authored-By` lines for Claude or Mistral Vibe are permitted
+- **No AI attribution in commits or PR descriptions — no exceptions.** No `Co-Authored-By` lines for Claude or Mistral Vibe, no `Claude-Session` trailer, no other tool reference. A commit message carries the change and its reasoning, nothing else, and a PR description stays on the changes — no mention of Claude, Mistral, or Codex as a footer or in prose, even when the change itself concerns AI tooling. Generating a description with `create-pr.sh --ai=claude` is fine; naming the generator in it is not.
+- **Never start a word with `@` in a commit message.** GitHub autolinks `@word` in commit subjects and bodies to whoever owns that account name, in the commits list where backticks do not suppress it. Write "a mutates directive", not the sigil form; keep `` `@mutates` `` for Markdown.
+- `CLAUDE.md` is the authority on both rules above — check there first if this file and it ever disagree.
 - Always update CHANGELOG.md alongside code changes
 - Validate scripts with `bash -n script.sh` before committing
 
