@@ -3630,6 +3630,104 @@
   },
   {
     "category": "wp-cli",
+    "key": "wp-cli/security/malware-scan",
+    "description": "Run the malware scanners against a remote site over SSH, with checksum verification",
+    "script_path": "wp-cli/security/malware-scan.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "ssh"
+    ],
+    "doc": "wp-cli/security/README.md",
+    "args": [
+      {
+        "name": "site-name",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "Site name under /srv/www, as in wordpress_sites.yml",
+        "raw": "site-name    optional  {example.com}  Site name under /srv/www, as in wordpress_sites.yml"
+      },
+      {
+        "name": "environment",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "production",
+          "staging",
+          "development"
+        ],
+        "description": "Environment to scan",
+        "raw": "environment  optional  {production|staging|development}  Environment to scan"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--mode",
+        "required_raw": "optional",
+        "required": false,
+        "choices": [
+          "targeted",
+          "general",
+          "both"
+        ],
+        "description": "Which scanner(s) to run",
+        "raw": "--mode         optional  {targeted|general|both}  Which scanner(s) to run"
+      },
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "web@example.com",
+        "description": "SSH host to scan",
+        "raw": "--host         optional  {web@example.com}  SSH host to scan"
+      },
+      {
+        "name": "--path",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/current/web/wp",
+        "description": "WordPress core dir on the target",
+        "raw": "--path         optional  {/srv/www/example.com/current/web/wp}  WordPress core dir on the target"
+      },
+      {
+        "name": "--trellis-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code/example.com/trellis",
+        "description": "Trellis project dir (development only)",
+        "raw": "--trellis-dir  optional  {~/code/example.com/trellis}  Trellis project dir (development only)"
+      },
+      {
+        "name": "--workdir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/srv/www/example.com/current",
+        "description": "VM working dir (development only)",
+        "raw": "--workdir      optional  {/srv/www/example.com/current}  VM working dir (development only)"
+      },
+      {
+        "name": "--php",
+        "required_raw": "optional",
+        "required": false,
+        "default": "php",
+        "description": "PHP binary on the target",
+        "raw": "--php          optional  {php}  PHP binary on the target"
+      }
+    ],
+    "examples": [
+      "wp-ops malware-scan example.com production",
+      "wp-ops malware-scan example.com production --mode both",
+      "wp-ops malware-scan example.com production --host deploy@example.com --path /home/deploy/public_html"
+    ],
+    "manifest_category": "security",
+    "platform": "wordpress",
+    "mutates": false,
+    "display_category": "security",
+    "annotated": true
+  },
+  {
+    "category": "wp-cli",
     "key": "wp-cli/security/scanner-general",
     "description": "Broad-spectrum malware scanner with checksum verification (webshells, pharma hacks, backdoors, SEO spam)",
     "script_path": "wp-cli/security/scanner-general.php",
