@@ -53,6 +53,7 @@ scripts/
 │   ├── redirect-check.sh       # Mass URL redirect checker using curl
 │   ├── security-monitor.sh     # Nginx security threat detection
 │   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
+│   ├── ssl-check.sh            # TLS certificate expiry/issuer/subject check via openssl
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── traffic-by-country.sh   # Filter Nginx logs by visitor country (geoip2fast) and show real visits
 │   ├── cf7-smoke-test.js             # Playwright CF7 form submission smoke test

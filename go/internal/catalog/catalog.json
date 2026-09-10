@@ -1661,6 +1661,35 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/monitoring/ssl-check",
+    "description": "Check a domain's TLS certificate expiry, issuer and subject via openssl",
+    "script_path": "scripts/monitoring/ssl-check.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "openssl"
+    ],
+    "args": [
+      {
+        "name": "domain",
+        "required_raw": "required",
+        "required": true,
+        "default": "www.example.com",
+        "description": "Domain to check (no scheme, no port)",
+        "raw": "domain  required  {www.example.com}  Domain to check (no scheme, no port)"
+      }
+    ],
+    "examples": [
+      "wp-ops ssl-check www.example.com"
+    ],
+    "manifest_category": "monitoring",
+    "platform": "any",
+    "mutates": false,
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/monitoring/traffic-by-country",
     "description": "Filter a server's Nginx access log by visitor country and show real page visits",
     "script_path": "scripts/monitoring/traffic-by-country.sh",
