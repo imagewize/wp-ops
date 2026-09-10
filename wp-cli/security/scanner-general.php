@@ -407,6 +407,7 @@ $stats = [
     'skipped_files' => [],
     'suspicious_filenames' => [],
     'checksum_verified_skipped' => 0, // Files skipped due to checksum verification
+    'checksum_verified_filename_skips' => 0, // Suspicious-filename hits suppressed by checksum verification
     'checksum_failed' => [], // Files that failed checksum verification
     'start_time' => microtime(true),
 ];
@@ -515,12 +516,22 @@ function build_file_list($dir, $config, $malware_filenames, &$stats) {
                 // Check filename for malware patterns
                 $malware_match = check_malware_filename($file->getPathname(), $malware_filenames);
                 if ($malware_match) {
-                    $stats['suspicious_filenames'][] = [
-                        'file' => $file->getPathname(),
-                        'pattern' => $malware_match,
-                        'size' => $file->getSize(),
-                        'modified' => date('Y-m-d H:i:s', $file->getMTime()),
-                    ];
+                    // An unmodified, checksum-verified core/plugin file can't
+                    // be the malware regardless of what its filename looks
+                    // like - e.g. wp-includes/SimplePie/src/Cache/MySQL.php
+                    // and wp-includes/Text/Diff/Engine/shell.php are stock
+                    // WordPress files that happen to match "mysql.php" and
+                    // "shell.php".
+                    if (is_file_verified($file->getPathname())) {
+                        $stats['checksum_verified_filename_skips']++;
+                    } else {
+                        $stats['suspicious_filenames'][] = [
+                            'file' => $file->getPathname(),
+                            'pattern' => $malware_match,
+                            'size' => $file->getSize(),
+                            'modified' => date('Y-m-d H:i:s', $file->getMTime()),
+                        ];
+                    }
                 }
 
                 if (in_array($extension, $config['file_extensions']) || $extension === '') {
@@ -627,6 +638,7 @@ function display_results($stats, $config) {
     output('  Errors: ' . number_format(count($stats['errors'])), count($stats['errors']) > 0 ? 'red' : 'green');
     output('  Skipped files: ' . number_format(count($stats['skipped_files'])), 'white');
     output('  Checksum-verified files skipped: ' . number_format($stats['checksum_verified_skipped']), 'green');
+    output('  Checksum-verified filename hits suppressed: ' . number_format($stats['checksum_verified_filename_skips']), 'green');
     output('  Checksum-failed files: ' . number_format(count($stats['checksum_failed'])), count($stats['checksum_failed']) > 0 ? 'red' : 'green');
 
     $elapsed = microtime(true) - $stats['start_time'];
