@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.23.0] - 2026-09-10
+
+### Added
+
+- **`wp-ops malware-scan` — run the malware scanners against a remote site from your own machine.** Until now the scanners were reachable by hand only for a site whose files are already local; scanning a remote one meant `scp`-ing the scanner to `/tmp`, running it over SSH, and remembering to delete it. Since 5.22.0 that no longer worked at all — both scanners `require_once` the sibling `checksum-verify.php`, so a lone copied file fatals on the missing module. The remote-with-checksums capability existed only inside the `security_scan` MCP tool. `wp-cli/security/malware-scan.sh` ports it to the CLI: it inlines the checksum module in place of that `require_once` and streams the assembled, self-contained source to `php /dev/stdin` on the target, so nothing is written to the server and nothing needs cleaning up.
+  - `wp-ops malware-scan example.com production`, plus `--mode targeted|general|both` (default `targeted`).
+  - SSH host and WordPress path default from the MCP server's site registry (`mcp-server/config/sites.json`, or `$WP_OPS_SITES_CONFIG`) when one exists — so a site whose SSH host is not its own domain needs no flags — and fall back to the stock Trellis layout (`web@<site-name>`, `/srv/www/<site>/current/web/wp`) when it does not.
+  - Only those defaults assume Trellis. `--host` and `--path` point it at any SSH-reachable WordPress; `environment` = `development` is the one Trellis-only path, running inside the project's Trellis VM via `trellis vm shell`.
+
+### Changed
+
+- **`wp-cli/security/README.md`'s remote-scan instructions replaced.** They still described the pre-5.22.0 `scp scanner-targeted.php` workflow, which now fails on the missing `checksum-verify.php` sibling. The remote sections point at `wp-ops malware-scan` instead, and the copy-by-hand route is kept only as a note that both files must be copied.
+
 ## [5.22.2] - 2026-09-10
 
 ### Fixed
