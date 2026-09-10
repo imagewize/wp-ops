@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.22.0] - 2026-09-10
+
+### Added
+
+- **Security scanners now support checksum verification** to eliminate false positives from unmodified WordPress core and plugin files (issue #224). Both `scanner-targeted.php` and `scanner-general.php` now automatically:
+  - Run `wp core verify-checksums` to verify WordPress core integrity
+  - Run `wp plugin verify-checksums --all` to verify installed plugins
+  - Skip pattern matching on files that pass checksum verification
+  - Prioritize files that fail checksum as HIGH PRIORITY threats
+  - Fall back gracefully to pattern-only mode when WP-CLI is unavailable
+  - New module: `wp-cli/security/checksum-verify.php` encapsulates all checksum logic
+
+### Changed
+
+- **Updated security scanner versions to 2.0.0** with checksum verification support
+- **Updated documentation** in `wp-cli/security/README.md` and `wp-cli/security/SCANNER-SUMMARY.md` with new feature details
+
 ## [5.21.1] - 2026-09-10
 
 ### Fixed

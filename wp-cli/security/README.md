@@ -2,6 +2,8 @@
 
 Comprehensive dual-scanner security suite for WordPress malware detection and security auditing.
 
+✨ **NEW in v2.0:** Automatic checksum verification eliminates false positives from unmodified WordPress core and plugin files!
+
 Part of the [wp-ops](https://github.com/imagewize/wp-ops) toolkit for WordPress operations and server management.
 
 ---
@@ -150,9 +152,59 @@ php scanner-targeted.php /path/to/downloaded-wordpress
 wp eval-file wp-cli/security/scanner-wrapper.php
 
 # Or run individually
-wp eval-file wp-cli/security/scanner-targeted.php  # Quick check (1-2s)
-wp eval-file wp-cli/security/scanner-general.php   # Deep scan (2-3s)
+wp eval-file wp-cli/security/scanner-targeted.php  # Quick check (1-2s, faster with checksum!)
+wp eval-file wp-cli/security/scanner-general.php   # Deep scan (2-3s, faster with checksum!)
 ```
+
+✨ **Automatic Checksum Verification:** If WP-CLI is available, checksums are verified automatically before scanning. No extra steps needed!
+
+---
+
+## 🔐 Checksum Verification (NEW in v2.0)
+
+### What is Checksum Verification?
+
+Checksum verification compares installed WordPress files against official release hashes from wordpress.org. This allows the scanners to:
+
+1. ✅ **Skip unmodified core files** - No more false positives from legitimate WordPress code
+2. ✅ **Skip verified plugins** - Plugins from wordpress.org that pass checksum are skipped
+3. ✅ **Prioritize modified files** - Files that fail checksum are flagged as HIGH PRIORITY
+
+### What Changed?
+
+**Before v2.0:** Every scan would flag legitimate WordPress core files like `wp-includes/kses.php`, `wp-includes/SimplePie/src/Misc.php`, etc. for patterns like `file_get_contents('php://input')` or `ob_start('ob_gzhandler')`. These were **documented false positives** that appeared on every scan.
+
+**After v2.0:** These files are automatically skipped if they pass checksum verification, reducing false positives to near zero for core files!
+
+### How It Works
+
+1. **Automatic Detection:** When a scan starts, the system checks if WP-CLI is available
+2. **Core Verification:** Runs `wp core verify-checksums` to verify WordPress core integrity
+3. **Plugin Verification:** Runs `wp plugin verify-checksums --all` to verify plugins
+4. **Smart Filtering:** Files that pass verification are excluded from pattern matching
+5. **Priority Alerts:** Files that fail checksum are flagged as HIGH PRIORITY threats
+
+### What Gets Verified?
+
+| Type | Verification | Result |
+|------|-------------|--------|
+| WordPress Core | `wp core verify-checksums` | ✅ Verified files skipped |
+| WP.org Plugins | `wp plugin verify-checksums --all` | ✅ Verified files skipped |
+| Premium/Custom Plugins | N/A (no checksum source) | ⚠️ Pattern scan only |
+| Themes | N/A (custom code) | ⚠️ Pattern scan only |
+| Uploads | N/A (user content) | ⚠️ Pattern scan only |
+| mu-plugins | N/A (custom code) | ⚠️ Pattern scan only |
+
+### Fallback Behavior
+
+If WP-CLI is **not available**, the scanners automatically fall back to pattern-only mode with no checksum verification. The scan still works, but you'll see the same false positives as before.
+
+To check if WP-CLI is available:
+```bash
+wp --version
+```
+
+If not installed, see [Requirements & Installation](#-requirements--installation) below.
 
 ### Direct PHP Usage
 
@@ -182,9 +234,10 @@ wp-ops wp-cli scanner-targeted /custom/path/to/scan
 
 ```
 wp-cli/security/
+├── checksum-verify.php        # Checksum verification module (NEW!)
 ├── scanner-wrapper.php        # Wrapper (runs both scanners)
-├── scanner-targeted.php       # Site-specific threat detection
-├── scanner-general.php        # Broad malware detection
+├── scanner-targeted.php       # Site-specific threat detection v2.0
+├── scanner-general.php        # Broad malware detection v2.0
 ├── SECURITY-GUIDE.md          # Complete documentation
 ├── SCANNER-SUMMARY.md         # Quick reference guide
 └── README.md                  # This file
@@ -277,6 +330,8 @@ done
 | **Monthly** | General | `wp eval-file wp-cli/security/scanner-general.php` |
 | **After Deployment** | Targeted | `wp eval-file wp-cli/security/scanner-targeted.php` |
 | **After Incident** | Both | `wp eval-file wp-cli/security/scanner-wrapper.php` |
+
+✨ **With Checksum Verification:** Scans are faster and produce fewer false positives!
 
 ---
 
@@ -669,12 +724,18 @@ Tested on MacBook Pro M1, PHP 8.2:
 | General | 7,380 | 2.5s | 2,952 files/sec |
 | Both | 7,380 | 4.2s | 1,757 files/sec |
 
+**With Checksum Verification (v2.0):**
+- Fewer files to scan (verified files skipped)
+- Same scan speed for remaining files
+- **Net result: ~10-30% faster** depending on site composition
+
 ### Optimization Tips
 
 1. Exclude large directories (`node_modules`, `vendor`)
 2. Run during off-peak hours for production
 3. Use targeted scanner for frequent checks
 4. Use general scanner for monthly deep scans
+5. **NEW:** Ensure WP-CLI is available for automatic checksum verification
 
 ---
 

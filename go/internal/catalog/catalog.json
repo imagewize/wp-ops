@@ -3631,7 +3631,7 @@
   {
     "category": "wp-cli",
     "key": "wp-cli/security/scanner-general",
-    "description": "Broad-spectrum malware scanner (webshells, pharma hacks, backdoors, SEO spam)",
+    "description": "Broad-spectrum malware scanner with checksum verification (webshells, pharma hacks, backdoors, SEO spam)",
     "script_path": "wp-cli/security/scanner-general.php",
     "runs_on": "local",
     "runs": "local",
@@ -3661,7 +3661,7 @@
   {
     "category": "wp-cli",
     "key": "wp-cli/security/scanner-targeted",
-    "description": "Site-specific malware scanner (redirect hijacks, PHP backdoors, SQLi patterns)",
+    "description": "Site-specific malware scanner with checksum verification (redirect hijacks, PHP backdoors, SQLi patterns)",
     "script_path": "wp-cli/security/scanner-targeted.php",
     "runs_on": "local",
     "runs": "local",

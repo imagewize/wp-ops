@@ -26,12 +26,14 @@ import (
 )
 
 // excludedFilenames skips files that would otherwise be discovered as
-// bogus commands: an imported (not standalone) Ansible playbook, and a
+// bogus commands: an imported (not standalone) Ansible playbook, a
 // diagnostic script meant to be pasted into a browser console rather than
-// run as a command.
+// run as a command, and a PHP module meant to be require_once'd by the
+// scanners rather than run on its own.
 var excludedFilenames = map[string]bool{
 	"variable-check.yml":          true,
 	"transient-debug-browser.php": true,
+	"checksum-verify.php":         true,
 }
 
 // excludedDirs are directories the walk never descends into: build
