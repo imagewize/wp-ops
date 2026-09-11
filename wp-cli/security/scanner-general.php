@@ -461,6 +461,25 @@ function output($message, $color = 'white') {
 }
 
 /**
+ * Whether this scan is running from a file that actually sits on disk.
+ *
+ * `php /dev/stdin` (how wp-ops malware-scan streams the scanner to a remote
+ * host) never writes the source anywhere, so __FILE__ resolves to a pipe —
+ * `/dev/fd/0` on macOS, `/proc/<pid>/fd/pipe:[...]` on Linux, depending on
+ * how the platform's stdin device node maps to the running process. Rather
+ * than match those paths, ask the filesystem directly: is_file() is false
+ * for a pipe/fifo on every platform tested and true for a real file. The
+ * "delete this file" warning only makes sense when there is a file to delete
+ * — e.g. uploaded via FTP, run from a cPanel/Plesk terminal, or scp'd onto
+ * the server for `wp eval-file`.
+ *
+ * @return bool
+ */
+function scanner_file_is_on_disk() {
+    return is_file(__FILE__);
+}
+
+/**
  * Check if filename matches known malware patterns
  */
 function check_malware_filename($filename, $malware_filenames) {
@@ -900,10 +919,12 @@ if (php_sapi_name() !== 'cli') {
 // ============================================================================
 // SECURITY WARNING
 // ============================================================================
-output('============================================', 'red');
-output('  SECURITY WARNING', 'red');
-output('============================================', 'red');
-output('', 'white');
-output('⚠️  DELETE THIS FILE after use or move it outside the web root!', 'red');
-output('  This scanner should not remain accessible on a production server.', 'yellow');
-output('', 'white');
+if (scanner_file_is_on_disk()) {
+    output('============================================', 'red');
+    output('  SECURITY WARNING', 'red');
+    output('============================================', 'red');
+    output('', 'white');
+    output('⚠️  DELETE THIS FILE after use or move it outside the web root!', 'red');
+    output('  This scanner should not remain accessible on a production server.', 'yellow');
+    output('', 'white');
+}
