@@ -1,0 +1,66 @@
+name: SSL Certificate Check
+
+# Let's Encrypt stopped sending expiry reminder emails in June 2025, so a
+# certificate whose auto-renewal fails on a host we don't manage — a client's
+# shared hosting — now stays silent until visitors hit a browser warning.
+# This runs scripts/monitoring/ssl-check.sh daily against a list of domains
+# and fails when any certificate is expiring, expired, doesn't match its
+# hostname, or can't be retrieved at all.
+#
+# The alert is the failed run itself: GitHub emails the user who last changed
+# the cron schedule below when a scheduled run fails (with the default
+# Actions notification settings). Nothing else to configure.
+#
+# The domain list lives in the SSL_CHECK_DOMAINS repository secret, never in
+# this file. This repository is public and so are its workflow logs, so client
+# domains must not be committed or printed. Every domain — and every parent
+# domain of it, since a wildcard certificate's subject names the parent — is
+# masked before the check runs, so logs show *** in their place.
+#
+# Setup — Settings → Secrets and variables → Actions:
+#   Secret    SSL_CHECK_DOMAINS    domains separated by spaces, commas or newlines
+#   Variable  SSL_CHECK_WARN_DAYS  optional, defaults to 21
+#
+# Caveat: GitHub disables scheduled workflows in a public repository after 60
+# days without repository activity, and emails a warning first. Re-enable it
+# from the Actions tab if that happens.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check certificates
+        env:
+          DOMAINS: ${{ secrets.SSL_CHECK_DOMAINS }}
+          WARN_DAYS: ${{ vars.SSL_CHECK_WARN_DAYS || '21' }}
+        run: |
+          if [ -z "$DOMAINS" ]; then
+            echo "::error::The SSL_CHECK_DOMAINS secret is not set — nothing to check."
+            exit 1
+          fi
+
+          read -r -a domains <<< "$(printf '%s' "$DOMAINS" | tr ',\n' '  ')"
+
+          # Mask each domain and every parent domain down to (not including)
+          # the bare TLD: www.example.com → www.example.com, example.com.
+          for domain in "${domains[@]}"; do
+            name="$domain"
+            while :; do
+              echo "::add-mask::$name"
+              rest="${name#*.}"
+              [[ "$rest" == *.* ]] || break
+              name="$rest"
+            done
+          done
+
+          bash scripts/monitoring/ssl-check.sh --warn-days "$WARN_DAYS" "${domains[@]}"

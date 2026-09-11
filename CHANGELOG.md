@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.0] - 2026-09-11
+
+### Added
+
+- **`wp-ops ssl-check --warn-days N` — a certificate check that alerts instead of only reporting.** Let's Encrypt stopped sending expiry reminder emails in June 2025, so a failed auto-renewal on a host you don't manage now goes unnoticed until visitors hit a browser warning. With `--warn-days`, `ssl-check` exits `2` when any certificate expires within N days, has already expired, or doesn't match the hostname it was served for. The hostname check is there because an expiry check alone misses a common failure: a shared host that loses a site's certificate can fall back to serving its own, valid for months. Found on a client site on Sep 11, 2026, serving the host's own wildcard certificate in place of its Let's Encrypt one.
+  - Takes several domains in one run: `wp-ops ssl-check --warn-days 21 www.example.com shop.example.com`. Exit `1` still means a certificate couldn't be retrieved, and takes precedence over `2`.
+  - Expiry uses `openssl x509 -checkend`, not the parsed `notAfter` date, so the alert doesn't depend on `date` flags that differ between macOS and GNU.
+  - Without `--warn-days`, exit codes are unchanged. The one output change: a hostname mismatch is now printed.
+- **`.github/workflows/ssl-expiry.yml` — the check on a daily schedule.** Runs `ssl-check --warn-days` against the domains in the `SSL_CHECK_DOMAINS` repository secret (threshold from the `SSL_CHECK_WARN_DAYS` variable, default 21). A failed scheduled run is the alert — GitHub emails it. The list is a secret rather than a committed file because this repository and its workflow logs are public; every domain and each of its parent domains is masked before the check prints anything, since a wildcard certificate's subject names the parent.
+
 ## [5.23.1] - 2026-09-11
 
 ### Fixed
