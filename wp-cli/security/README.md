@@ -235,6 +235,7 @@ wp-ops wp-cli scanner-targeted /custom/path/to/scan
 ```
 wp-cli/security/
 ├── checksum-verify.php        # Checksum verification module (NEW!)
+├── malware-scan.sh            # Scan a remote site over SSH (NEW!)
 ├── scanner-wrapper.php        # Wrapper (runs both scanners)
 ├── scanner-targeted.php       # Site-specific threat detection v2.0
 ├── scanner-general.php        # Broad malware detection v2.0
@@ -287,22 +288,43 @@ wp-cli/security/
 wp eval-file wp-ops/wp-cli/security/scanner-targeted.php
 ```
 
-### Remote via Trellis
+### Remote sites
 
 ```bash
-# SSH into remote server
-trellis ssh production
+# One command, from your own machine — no copying, no cleanup
+wp-ops malware-scan example.com production
 
-# Navigate to WordPress root
-cd /srv/www/example.com/current
-
-# Run scanner (if wp-ops is deployed to server)
-wp eval-file /path/to/wp-ops/wp-cli/security/scanner-targeted.php
-
-# Or copy scanner to server temporarily
-scp wp-cli/security/scanner-targeted.php web@example.com:/tmp/
-trellis ssh production -- "cd /srv/www/example.com/current && wp eval-file /tmp/scanner-targeted.php"
+# Both scanners
+wp-ops malware-scan example.com production --mode both
 ```
+
+`malware-scan` streams the scanner source to the target's PHP over stdin, so
+nothing is ever written to the server. It resolves the SSH host and WordPress
+path from the MCP server's site registry (`mcp-server/config/sites.json`, or
+`$WP_OPS_SITES_CONFIG`) when one exists, and otherwise defaults to the stock
+Trellis layout — `web@<site-name>` and `/srv/www/<site>/current/web/wp`.
+
+Only those defaults assume Trellis. The scan itself is plain SSH plus a PHP
+CLI, so any WordPress you can SSH into works once you say where it is:
+
+```bash
+wp-ops malware-scan example.com production \
+  --host deploy@example.com --path /home/deploy/public_html
+```
+
+Point `--path` at the **WordPress core directory** (`web/wp` on Bedrock, the
+docroot on a classic install). Checksum verification `chdir`s into that path to
+run `wp core verify-checksums`, so aiming at a Bedrock site root silently loses
+core verification. Checksum verification also needs WP-CLI *on the target*; the
+scan still runs without it, in pattern-only mode.
+
+Ignore the scanner's closing "DELETE THIS FILE after use" warning here — it is
+written for the copy-to-the-server workflow below. Nothing was copied.
+
+> **Copying the scanner to the server by hand is no longer enough.** Since
+> v2.0 both scanners `require_once` the sibling `checksum-verify.php`, so a
+> lone `scp` of `scanner-targeted.php` fatals on the missing file. Copy both
+> files, or use `wp-ops malware-scan`.
 
 ### Scan Multiple Sites
 
@@ -371,9 +393,8 @@ ansible-playbook trellis/backup/database-push.yml -e site=example.com -e env=sta
 # After production deployment
 ansible-playbook deploy.yml -e env=production
 
-# SSH in and scan
-trellis ssh production -- "cd /srv/www/example.com/current && \
-  wp eval-file /path/to/scanner-targeted.php"
+# Scan production from your own machine
+wp-ops malware-scan example.com production
 ```
 
 ### Incident Response Workflow

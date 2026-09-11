@@ -10,8 +10,8 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Entries) != 79 {
-		t.Errorf("len(Entries) = %d, want 79 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0, -5 for wordpress-utilities' reference files demoted to docs in 5.0.0, +2 for admin-user-create/noindex-expired-posts replacing two of them, +1 for wp-db-backup added in 5.0.0, +1 for updraft-to-valet added in 5.9.0, +1 for scripts/release/sync-extracted added in 5.11.0, +2 for publish-post/verify-post added in 5.16.0, +1 for ssl-check added in 5.21.0)", len(c.Entries))
+	if len(c.Entries) != 80 {
+		t.Errorf("len(Entries) = %d, want 80 (66 per docs/m3-go-skeleton.md acceptance criteria, +1 for mcp-server/run added in 3.25.0, +1 for scripts/backup/db-pull added in 3.26.0, +4 for ttfb-test/remote-ttfb-ua/import-page-draft/check-deny-ips added in 3.27.0, +4 for svg-to-jpg/svg-to-png/traffic-by-country/orphan-links-audit added in 4.1.0, -5 for wordpress-utilities' reference files demoted to docs in 5.0.0, +2 for admin-user-create/noindex-expired-posts replacing two of them, +1 for wp-db-backup added in 5.0.0, +1 for updraft-to-valet added in 5.9.0, +1 for scripts/release/sync-extracted added in 5.11.0, +2 for publish-post/verify-post added in 5.16.0, +1 for ssl-check added in 5.21.0, +1 for malware-scan added in 5.23.0)", len(c.Entries))
 	}
 }
 
