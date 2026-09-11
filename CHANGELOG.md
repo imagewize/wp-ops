@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.23.1] - 2026-09-11
+
+### Fixed
+
+- **`scanner-targeted.php` and `scanner-general.php` no longer print "DELETE THIS FILE" when nothing was written to disk.** The closing SECURITY WARNING block is meant for the FTP-upload, cPanel/Plesk-terminal, and scp'd-`wp eval-file` workflows, where the scanner really does end up sitting in or near a web root. `wp-ops malware-scan` (5.23.0) streams the same scanner source to `php /dev/stdin` on the target instead, so there's nothing there to delete — but the warning printed anyway. Both scanners now check `is_file(__FILE__)` and skip the block when the running script isn't a real file on disk; `is_file()` is `false` for a piped/fd script on every platform tested (`/dev/fd/0` on macOS, `/proc/<pid>/fd/pipe:[...]` on Linux) and `true` for one run normally, so the warning still shows for every other invocation method.
+
 ## [5.23.0] - 2026-09-10
 
 ### Added
