@@ -7,7 +7,7 @@
 # the hostname it was served for. Let's Encrypt stopped sending expiry reminder
 # emails in June 2025, so a failed auto-renewal on a host we don't manage now
 # goes unnoticed until visitors hit a browser warning —
-# .github/workflows/ssl-expiry.yml runs this daily for exactly that.
+# .github/workflows/ssl-expiry.yml runs this for exactly that.
 #
 # The hostname check matters as much as the expiry one: a shared host that
 # loses a site's certificate can fall back to serving its own, which is valid
