@@ -1662,7 +1662,7 @@
   {
     "category": "scripts",
     "key": "scripts/monitoring/ssl-check",
-    "description": "Check a domain's TLS certificate expiry, issuer and subject via openssl",
+    "description": "Check TLS certificate expiry, issuer, subject and hostname match for one or more domains via openssl",
     "script_path": "scripts/monitoring/ssl-check.sh",
     "runs_on": "local",
     "runs": "local",
@@ -1675,12 +1675,23 @@
         "required_raw": "required",
         "required": true,
         "default": "www.example.com",
-        "description": "Domain to check (no scheme, no port)",
-        "raw": "domain  required  {www.example.com}  Domain to check (no scheme, no port)"
+        "description": "Domain to check (no scheme, no port); pass several to check them in one run",
+        "raw": "domain  required  {www.example.com}  Domain to check (no scheme, no port); pass several to check them in one run"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--warn-days",
+        "required_raw": "optional",
+        "required": false,
+        "default": "21",
+        "description": "Exit 2 if a certificate expires within this many days, has expired, or doesn't match its hostname",
+        "raw": "--warn-days  optional  {21}  Exit 2 if a certificate expires within this many days, has expired, or doesn't match its hostname"
       }
     ],
     "examples": [
-      "wp-ops ssl-check www.example.com"
+      "wp-ops ssl-check www.example.com",
+      "wp-ops ssl-check --warn-days 21 www.example.com shop.example.com"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
