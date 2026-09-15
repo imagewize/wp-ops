@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`.github/workflows/ssl-expiry.yml` no longer runs on a daily cron schedule.** It's manual-dispatch only now — trigger it from the Actions tab when you want a check. The `SSL_CHECK_DOMAINS` secret still has to be set up first.
+
 ## [5.24.0] - 2026-09-11
 
 ### Added
