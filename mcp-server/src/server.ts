@@ -775,7 +775,7 @@ export function createServer(): McpServer {
       multisite: z
         .boolean()
         .default(false)
-        .describe("Also fix wp_blogs domains and scope search-replace with --url, for multisite networks"),
+        .describe("Also fix wp_blogs/wp_site domains and scope search-replace with --url, for multisite networks"),
       confirm: z
         .boolean()
         .default(false)

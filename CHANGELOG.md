@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`.github/workflows/ssl-expiry.yml` no longer runs on a daily cron schedule.** It's manual-dispatch only now — trigger it from the Actions tab when you want a check. The `SSL_CHECK_DOMAINS` secret still has to be set up first.
 
+## [5.24.1] - 2026-09-16
+
+### Fixed
+
+- **`wp-ops db-pull --multisite` and the `db_pull` MCP tool now rewrite `wp_site.domain`, not just `wp_blogs.domain`.** Both columns store a bare hostname, so the scheme-prefixed `search-replace` (`https://example.com` → `http://example.test`) never matched either one — which is why the multisite fixup exists at all. It covered the subsites in `wp_blogs` but left the network row in `wp_site` pointing at production, so a pulled network came back half-rewritten: every subsite on the development host, the network itself still claiming the production domain and disagreeing with `DOMAIN_CURRENT_SITE` in the local config. Found on `demo.imagewize.com` (9 subsites), where `wp_blogs` read `demo.imagewize.test` while `wp_site` still read `demo.imagewize.com` after a `--multisite` pull. The mismatch does not stop the front end rendering, which is what makes it easy to miss — it surfaces as wrong network-admin URLs and redirects built from the wrong host.
+  - Both `UPDATE`s run in the same fixup step, against the `wp_`-prefixed table names the existing code already assumed. Single-site pulls are unaffected; without `--multisite` neither statement runs.
+  - `wp_sitemeta.siteurl` was already correct — it holds a full scheme-prefixed URL, so the ordinary `search-replace` reaches it.
+
 ## [5.24.0] - 2026-09-11
 
 ### Added

@@ -15,7 +15,7 @@
 #
 # Options:
 #   --host HOST    SSH host to pull from (default: site-name)
-#   --multisite    Also fix wp_blogs domains and scope search-replace with --url
+#   --multisite    Also fix wp_blogs/wp_site domains and scope search-replace with --url
 #   --yes, -y      Skip the confirmation prompt
 #
 # For a from-scratch look at each underlying step, or the Ansible-playbook
@@ -29,7 +29,7 @@
 # @arg      site-name    optional  {example.com}  Site name as in wordpress_sites.yml
 # @arg      environment  optional  {production|staging}  Remote environment to pull from
 # @flag     --host       optional  {example.com}  SSH host to pull from (default: site-name)
-# @flag     --multisite  optional  {}  Also fix wp_blogs domains and scope search-replace with --url
+# @flag     --multisite  optional  {}  Also fix wp_blogs/wp_site domains and scope search-replace with --url
 # @flag     --yes        optional  {}  Skip the confirmation prompt
 # @example  wp-ops db-pull example.com production
 # @example  wp-ops db-pull network.example.com production --multisite --yes
@@ -54,7 +54,7 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --host HOST  SSH host to pull from (default: site-name)"
-    echo "  --multisite  Also fix wp_blogs domains and scope search-replace with --url"
+    echo "  --multisite  Also fix wp_blogs/wp_site domains and scope search-replace with --url"
     echo "  --yes, -y    Skip the confirmation prompt"
     echo ""
     echo "Runs 'trellis vm shell' against your Trellis project. If TRELLIS_DIR"
@@ -242,10 +242,11 @@ if [[ "$MULTISITE" == true ]]; then
     FLUSH_STEP_NUM=7
     MULTISITE_STEPS="
 echo ''
-echo '=== Step 6: Fixing multisite blog domains ==='
+echo '=== Step 6: Fixing multisite network and blog domains ==='
 PROD_HOST=\$(echo \"\$PROD_URL\" | sed -E 's#^https?://##; s#/.*##')
 DEV_HOST=\$(echo \"\$DEV_URL\" | sed -E 's#^https?://##; s#/.*##')
 wp db query \"UPDATE wp_blogs SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
+wp db query \"UPDATE wp_site SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
 "
 fi
 

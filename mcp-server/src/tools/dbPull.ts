@@ -48,10 +48,10 @@ export interface DbPullResult {
 // into `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
 // either side), search-replace, optional multisite domain fixup, flush cache.
 // Both URLs are read from `wp option get siteurl` and then used as a search-replace
-// replacement and, for multisite, interpolated into an UPDATE on wp_blogs.domain. If a
-// wrapper ever prefixes that stdout again, a malformed value would be written across the
-// whole database before anyone noticed — which is exactly what happened once. Fail before
-// touching data instead.
+// replacement and, for multisite, interpolated into UPDATEs on wp_blogs.domain and
+// wp_site.domain. If a wrapper ever prefixes that stdout again, a malformed value would
+// be written across the whole database before anyone noticed — which is exactly what
+// happened once. Fail before touching data instead.
 function assertSiteUrl(url: string, env: string): string {
   if (!/^https?:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(url)) {
     throw new Error(
@@ -123,7 +123,13 @@ export async function runDbPull(
 
   let multisiteFixedUp = false;
   if (multisite) {
-    const query = `UPDATE wp_blogs SET domain = REPLACE(domain, '${hostOf(prodUrl)}', '${hostOf(devUrl)}');`;
+    // wp_blogs.domain and wp_site.domain hold a bare hostname, so the scheme-prefixed
+    // search-replace above never touches them. Both need fixing: wp_blogs for the
+    // subsites, wp_site for the network itself — a wp_site.domain left pointing at
+    // production disagrees with DOMAIN_CURRENT_SITE and breaks network-admin URLs.
+    const query =
+      `UPDATE wp_blogs SET domain = REPLACE(domain, '${hostOf(prodUrl)}', '${hostOf(devUrl)}');` +
+      `UPDATE wp_site SET domain = REPLACE(domain, '${hostOf(prodUrl)}', '${hostOf(devUrl)}');`;
     const fixup = await runWpCliRaw(devEntry, ["db", "query", query]);
     if (fixup.code !== 0) {
       throw new Error(`Multisite domain fixup failed (exit ${fixup.code}): ${fixup.stderr}`);
