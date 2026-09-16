@@ -103,8 +103,8 @@
         "name": "--multisite",
         "required_raw": "optional",
         "required": false,
-        "description": "Also fix wp_blogs domains and scope search-replace with --url",
-        "raw": "--multisite  optional  {}  Also fix wp_blogs domains and scope search-replace with --url"
+        "description": "Also fix wp_blogs/wp_site domains and scope search-replace with --url",
+        "raw": "--multisite  optional  {}  Also fix wp_blogs/wp_site domains and scope search-replace with --url"
       },
       {
         "name": "--yes",
