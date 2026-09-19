@@ -235,14 +235,18 @@ else
 fi
 
 SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_URL\" \"\$DEV_URL\" --all-tables --precise --path=${WP_PATH}"
+HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME\" \"\$DEV_HOME\" --all-tables --precise --path=${WP_PATH}"
+HTTP_HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME_HTTP\" \"\$DEV_HOME\" --all-tables --precise --path=${WP_PATH}"
 MULTISITE_STEPS=""
-FLUSH_STEP_NUM=6
+FLUSH_STEP_NUM=7
 if [[ "$MULTISITE" == true ]]; then
     SEARCH_REPLACE_CMD="${SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
-    FLUSH_STEP_NUM=7
+    HOME_SEARCH_REPLACE_CMD="${HOME_SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
+    HTTP_HOME_SEARCH_REPLACE_CMD="${HTTP_HOME_SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
+    FLUSH_STEP_NUM=8
     MULTISITE_STEPS="
 echo ''
-echo '=== Step 6: Fixing multisite network and blog domains ==='
+echo '=== Step 7: Fixing multisite network and blog domains ==='
 PROD_HOST=\$(echo \"\$PROD_URL\" | sed -E 's#^https?://##; s#/.*##')
 DEV_HOST=\$(echo \"\$DEV_URL\" | sed -E 's#^https?://##; s#/.*##')
 wp db query \"UPDATE wp_blogs SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
@@ -256,7 +260,9 @@ mkdir -p database_backup
 
 echo '=== Step 1: Reading current development URL ==='
 DEV_URL=\$(wp option get siteurl --path=${WP_PATH})
+DEV_HOME=\$(wp option get home --path=${WP_PATH})
 echo \"  Development: \$DEV_URL\"
+echo \"  Development home: \$DEV_HOME\"
 
 echo ''
 echo '=== Step 2: Backing up current development database ==='
@@ -265,7 +271,9 @@ wp db export database_backup/dev_backup_\$(date +%Y%m%d_%H%M%S).sql.gz --path=${
 echo ''
 echo '=== Step 3: Pulling ${ENVIRONMENT} database from ${REMOTE_HOST} ==='
 PROD_URL=\$(ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${WP_PATH}')
+PROD_HOME=\$(ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp option get home --path=${WP_PATH}')
 echo \"  ${ENVIRONMENT}: \$PROD_URL\"
+echo \"  ${ENVIRONMENT} home: \$PROD_HOME\"
 ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp db export - --path=${WP_PATH}' | gzip > /tmp/${SITE_NAME//./_}_import.sql.gz && echo '✓ Downloaded'
 
 echo ''
@@ -276,6 +284,19 @@ rm -f /tmp/${SITE_NAME//./_}_import.sql.gz
 echo ''
 echo '=== Step 5: Running search-replace for URLs ==='
 ${SEARCH_REPLACE_CMD}
+
+echo ''
+echo '=== Step 6: Running search-replace for home URL (front-end links) ==='
+if [ \"\$PROD_HOME\" != \"\$PROD_URL\" ] || [ \"\$DEV_HOME\" != \"\$DEV_URL\" ]; then
+  ${HOME_SEARCH_REPLACE_CMD}
+else
+  echo '  home matches siteurl, already covered by Step 5'
+fi
+PROD_HOME_HTTP=\$(echo \"\$PROD_HOME\" | sed -E 's#^https://#http://#')
+if [ \"\$PROD_HOME_HTTP\" != \"\$PROD_HOME\" ]; then
+  echo \"  Also replacing pre-HTTPS links: \$PROD_HOME_HTTP\"
+  ${HTTP_HOME_SEARCH_REPLACE_CMD}
+fi
 ${MULTISITE_STEPS}
 echo ''
 echo '=== Step ${FLUSH_STEP_NUM}: Flushing cache ==='
