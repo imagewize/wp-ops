@@ -165,29 +165,32 @@ REPORT_DIR="reports" ./wp-cli/seo/redirect-audit.sh --url https://example.com
 
 **Script:** `schema-audit.sh`
 
-Validates JSON-LD schema markup presence and types across key WordPress pages.
+Validates JSON-LD schema markup presence and types across a site's pages.
 
 ### Features
 
-- Detect JSON-LD schema blocks in page HTML
-- Identify specific schema types:
-  - Organization
-  - LocalBusiness
-  - Service
-  - Product
-  - WebSite
-  - BreadcrumbList
-- Check key pages (homepage, services, contact, portfolio, about, shop)
-- Generate summary report with recommendations
+- Takes the page list from the site's sitemap: `wp-sitemap.xml` (WordPress core), `sitemap_index.xml` (Yoast, Rank Math, The SEO Framework), then `sitemap.xml`. From a sitemap index it reads only the page sitemaps, when there are any. The homepage always comes first.
+- Caps the list at `--max-pages` (default 25) and says when the cap cut it short
+- Falls back to common paths (`/about/`, `/contact/`, `/shop/`, ...) only when the site has no sitemap
+- Detects JSON-LD blocks in page HTML, including ones spanning several lines or with extra attributes
+- Identifies schema types anywhere in the JSON-LD, including inside `@graph`: Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article, FAQPage, HowTo, Person
+- Lists URLs that don't return 200 in their own section, with status code and redirect target. They never count as missing schema.
+- Generates a summary report with the pages that need schema, plus recommendations
 
 ### Usage
 
 ```bash
-# Audit schema on a site
+# Audit the pages in the site's sitemap (first 25)
 ./wp-cli/seo/schema-audit.sh https://example.com
 
+# Check more sitemap pages
+./wp-cli/seo/schema-audit.sh https://example.com --max-pages 60
+
+# Specific pages: paths or full URLs
+./wp-cli/seo/schema-audit.sh https://example.com --pages /,/services/,/contact/
+
 # With custom output directory
-OUTPUT_DIR="reports/seo" ./wp-cli/seo/schema-audit.sh https://example.com
+./wp-cli/seo/schema-audit.sh https://example.com --output reports/seo
 ```
 
 ### Output Files
