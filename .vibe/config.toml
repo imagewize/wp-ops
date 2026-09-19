@@ -15,16 +15,7 @@ enable_update_checks = true
 api_timeout = 720.0
 tool_paths = []
 enabled_tools = []
-disabled_tools = [
-    "wp_ops_admin_user_create",
-    "wp_ops_command_run",
-    "wp_ops_db_pull",
-    "wp_ops_files_pull",
-    "wp_ops_publish_post",
-    "wp_ops_scp_file",
-    "wp_ops_ssh_command",
-    "wp_ops_url_audit",
-]
+disabled_tools = []
 installed_agents = [
     "lean",
 ]
@@ -221,33 +212,3 @@ allowlist = []
 denylist = []
 max_read_bytes = 64000
 max_state_history = 10
-
-[tools.wp_ops_broken_link_audit]
-permission = "always"
-
-[tools.wp_ops_command_search]
-permission = "always"
-
-[tools.wp_ops_ip_reputation_check]
-permission = "always"
-
-[tools.wp_ops_monitor]
-permission = "always"
-
-[tools.wp_ops_redirect_audit]
-permission = "always"
-
-[tools.wp_ops_remote_ttfb_audit]
-permission = "always"
-
-[tools.wp_ops_schema_audit]
-permission = "always"
-
-[tools.wp_ops_security_scan]
-permission = "always"
-
-[tools.wp_ops_server_status]
-permission = "always"
-
-[tools.wp_ops_verify_post]
-permission = "always"
