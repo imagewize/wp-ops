@@ -66,19 +66,36 @@ function extractSchema(html: string): string[] {
  * Check which schema types are present in JSON-LD content
  */
 function checkSchemaTypes(rawSchema: string[]): SchemaTypeCheck[] {
-  return SCHEMA_TYPES.map((type) => ({
-    type,
-    found: rawSchema.some((schema) => {
-      // Check for @type field with the type value
-      try {
-        const parsed = JSON.parse(schema);
-        return parsed["@type"] === type || (Array.isArray(parsed["@type"]) && parsed["@type"].includes(type));
-      } catch {
-        // Fallback to string search if JSON parsing fails
-        return schema.toLowerCase().includes(`"@type":"${type}"`);
+  const found = new Set<string>();
+
+  // Every @type anywhere in the tree: SEO plugins nest their nodes in an
+  // "@graph" array rather than putting one @type at the top level
+  const collect = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      node.forEach(collect);
+    } else if (node && typeof node === "object") {
+      for (const [key, value] of Object.entries(node)) {
+        if (key === "@type") {
+          (Array.isArray(value) ? value : [value]).forEach((t) => typeof t === "string" && found.add(t));
+        } else {
+          collect(value);
+        }
       }
-    }),
-  }));
+    }
+  };
+
+  for (const schema of rawSchema) {
+    try {
+      collect(JSON.parse(schema));
+    } catch {
+      // Unparseable JSON-LD: fall back to matching "@type": "X" in the text
+      for (const type of SCHEMA_TYPES) {
+        if (new RegExp(`"@type"\\s*:\\s*(\\[[^\\]]*)?"${type}"`).test(schema)) found.add(type);
+      }
+    }
+  }
+
+  return SCHEMA_TYPES.map((type) => ({ type, found: found.has(type) }));
 }
 
 /**
