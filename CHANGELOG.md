@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.2] - 2026-09-19
+
+### Fixed
+
+- **The `schema_audit` MCP tool now audits the pages in the site's sitemap instead of a fixed list of guessed paths.** It used to check 11 common paths (`/about-us/`, `/contact-us/`, `/shop/`, `/insights/`, `/news/`, ...), whichever of them the site actually had. On imagewize.com six of those redirect or return 404. The output listed them as "⚠️ Not Found" in the page details and still ended with "✅ All pages have schema markup!", which reads as six pages missing schema. The audit also never reached the site's real service and landing pages.
+  - Without `pages`, the list now comes from the sitemap: `wp-sitemap.xml` (WordPress core), `sitemap_index.xml` (Yoast, Rank Math, The SEO Framework), then `sitemap.xml`. From a sitemap index only the page sitemaps are read, when there are any. A flat sitemap is taken as-is. The homepage always comes first. Only a site with no sitemap falls back to the common paths, and the output says so.
+  - New `maxPages` parameter (default 25) caps how many sitemap URLs are checked. The output says when the cap cut the list, e.g. "first 25 of 177 URLs".
+  - URLs that don't return 200 are listed in their own "Not checked" section with the status code and the redirect target, and never count toward the schema totals. From a sitemap they point to a real problem (the sitemap lists a redirect or a missing page). From the common-path fallback they're labelled as expected.
+  - Each page is fetched in one request instead of two (a status check, then the body). A 25-page audit of imagewize.com dropped from about 90 to about 58 seconds.
+  - The `wp-ops schema-audit` CLI command (`wp-cli/seo/schema-audit.sh`) still uses the fixed list.
+
 ### Changed
 
 - **`.github/workflows/ssl-expiry.yml` no longer runs on a daily cron schedule.** It's manual-dispatch only now — trigger it from the Actions tab when you want a check. The `SSL_CHECK_DOMAINS` secret still has to be set up first.

@@ -10,15 +10,26 @@ interface PageSchemaResult {
   pageName: string;
   exists: boolean;
   httpStatus: number;
+  redirectUrl?: string;
   hasSchema: boolean;
   schemaTypes: SchemaTypeCheck[];
   rawSchema?: string;
+}
+
+interface PageSource {
+  kind: "custom" | "sitemap" | "default";
+  // sitemap: the sitemap URL the pages came from
+  sitemapUrl?: string;
+  // sitemap: how many same-site URLs the sitemap listed before maxPages applied
+  totalFound?: number;
 }
 
 interface SchemaAuditSummary {
   totalPages: number;
   pagesWithSchema: number;
   pagesWithoutSchema: number;
+  pagesNotFound: number;
+  pageSource: PageSource;
   schemaTypesFound: Record<string, number>;
   pages: PageSchemaResult[];
 }
@@ -71,52 +82,122 @@ function checkSchemaTypes(rawSchema: string[]): SchemaTypeCheck[] {
 }
 
 /**
- * Fetch a URL and extract schema
+ * Fetch a page in one request: body, HTTP status, and the Location target when
+ * it redirects. Redirects are not followed — a URL that redirects is reported,
+ * not audited under its old address.
  */
-async function fetchPage(url: string): Promise<{
-  html: string;
-  status: number;
-}> {
+async function fetchPage(url: string): Promise<{ html: string; status: number; redirectUrl?: string }> {
+  const marker = "\n__WP_OPS_STATUS__ ";
   return new Promise((resolve, reject) => {
-    const child = spawn("curl", ["-s", "-f", "--max-time", "30", url]);
+    const child = spawn("curl", ["-s", "--max-time", "30", "-w", `${marker}%{http_code} %{redirect_url}`, url]);
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr += d));
     child.on("error", reject);
     child.on("close", (code) => {
-      // curl returns 22 for HTTP 4xx errors when using -f flag
-      if (code !== 0 && code !== 22) {
-        reject(new Error(`curl failed with code ${code}: ${stderr}`));
+      const at = stdout.lastIndexOf(marker);
+      if (code !== 0 || at === -1) {
+        // Network-level failure (DNS, timeout, TLS) — no HTTP status to report
+        resolve({ html: "", status: 0 });
         return;
       }
-
-      // Try to get status from output (curl -w could be used but we're using -s -f)
-      // For now, assume 200 if we got output, 404 if -f flag caused failure
-      const status = code === 22 ? 404 : 200;
-      resolve({ html: stdout, status });
+      const [statusText, redirectUrl] = stdout.slice(at + marker.length).trim().split(" ");
+      const status = parseInt(statusText, 10);
+      resolve({
+        html: stdout.slice(0, at),
+        status: isNaN(status) ? 0 : status,
+        redirectUrl: redirectUrl || undefined,
+      });
     });
   });
 }
 
 /**
- * Get HTTP status code for a URL
+ * Fetch a URL's body, following redirects. Returns null on any HTTP or network error.
  */
-async function getHttpStatus(url: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const child = spawn("curl", ["-s", "-o", "/dev/null", "-w", "%{http_code}", url]);
+async function fetchText(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const child = spawn("curl", ["-s", "-f", "-L", "--max-time", "30", url]);
     let stdout = "";
     child.stdout.on("data", (d) => (stdout += d));
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code !== 0) {
-        resolve(0);
-        return;
-      }
-      const status = parseInt(stdout.trim(), 10);
-      resolve(isNaN(status) ? 0 : status);
-    });
+    child.on("error", () => resolve(null));
+    child.on("close", (code) => resolve(code === 0 ? stdout : null));
   });
+}
+
+/**
+ * Pull the <loc> values out of a sitemap or sitemap index
+ */
+function parseLocs(xml: string): string[] {
+  const locs: string[] = [];
+  const locRegex = /<loc>\s*(?:<!\[CDATA\[)?\s*(.*?)\s*(?:\]\]>)?\s*<\/loc>/gis;
+  let match;
+  while ((match = locRegex.exec(xml)) !== null) {
+    locs.push(match[1].replace(/&amp;/g, "&"));
+  }
+  return locs;
+}
+
+// Checked in order: WordPress core, then the index Yoast / Rank Math / The SEO
+// Framework serve, then the plain path most other generators use.
+const SITEMAP_PATHS = ["wp-sitemap.xml", "sitemap_index.xml", "sitemap.xml"];
+
+/**
+ * Build the page list from the site's own sitemap, so the audit checks pages
+ * that exist rather than guessed paths. From a sitemap index, only the page
+ * sitemaps are read when there are any (wp-sitemap-posts-page-1.xml,
+ * page-sitemap.xml); a flat sitemap is taken as-is. Returns null when no
+ * sitemap lists any URL on this site.
+ */
+async function discoverSitemapPages(
+  siteUrl: string,
+  maxPages: number
+): Promise<{ pages: string[]; sitemapUrl: string; totalFound: number } | null> {
+  const siteHost = new URL(siteUrl).hostname;
+
+  for (const sitemapPath of SITEMAP_PATHS) {
+    const sitemapUrl = new URL(sitemapPath, siteUrl).toString();
+    const xml = await fetchText(sitemapUrl);
+    if (!xml) continue;
+
+    let urls: string[] = [];
+    if (/<sitemapindex/i.test(xml)) {
+      const children = parseLocs(xml);
+      const pageChildren = children.filter((u) => /page/i.test(u.split("/").pop() || ""));
+      for (const child of pageChildren.length > 0 ? pageChildren : children) {
+        const childXml = await fetchText(child);
+        if (childXml) urls.push(...parseLocs(childXml));
+      }
+    } else if (/<urlset/i.test(xml)) {
+      urls = parseLocs(xml);
+    }
+
+    const seen = new Set<string>();
+    const sameSite = urls.filter((u) => {
+      let host: string;
+      try {
+        host = new URL(u).hostname;
+      } catch {
+        return false;
+      }
+      if (host !== siteHost || seen.has(u)) return false;
+      seen.add(u);
+      return true;
+    });
+    if (sameSite.length === 0) continue;
+
+    // Always lead with the homepage, whether or not the sitemap lists it
+    const homepage = new URL("/", siteUrl).toString();
+    const ordered = [homepage, ...sameSite.filter((u) => u !== homepage)];
+    const pages = ordered.slice(0, maxPages).map((u) => {
+      const path = new URL(u).pathname;
+      return `${path === "/" ? "Homepage" : path}|${u}`;
+    });
+    return { pages, sitemapUrl, totalFound: ordered.length };
+  }
+
+  return null;
 }
 
 /**
@@ -129,8 +210,7 @@ async function auditPage(
 ): Promise<PageSchemaResult> {
   const fullUrl = new URL(pageUrl, baseUrl).toString();
 
-  // Check if page exists
-  const status = await getHttpStatus(fullUrl);
+  const { html, status, redirectUrl } = await fetchPage(fullUrl);
   const exists = status === 200;
 
   if (!exists) {
@@ -139,13 +219,11 @@ async function auditPage(
       pageName,
       exists,
       httpStatus: status,
+      redirectUrl,
       hasSchema: false,
       schemaTypes: SCHEMA_TYPES.map((type) => ({ type, found: false })),
     };
   }
-
-  // Fetch page content
-  const { html } = await fetchPage(fullUrl);
 
   // Extract schema
   const rawSchemas = extractSchema(html);
@@ -170,7 +248,8 @@ async function auditPage(
  */
 export async function runSchemaAudit(
   siteUrl: string,
-  pages?: string[]
+  pages?: string[],
+  maxPages = 25
 ): Promise<SchemaAuditSummary> {
   // Normalize site URL
   if (!siteUrl.startsWith("http://") && !siteUrl.startsWith("https://")) {
@@ -180,7 +259,8 @@ export async function runSchemaAudit(
     siteUrl = `${siteUrl}/`;
   }
 
-  // Default pages to check
+  // Fallback when the site has no usable sitemap: common paths, several of
+  // which won't exist on any given site
   const defaultPages = [
     "Homepage|/",
     "Services|/services/",
@@ -195,8 +275,22 @@ export async function runSchemaAudit(
     "News|/news/",
   ];
 
-  // Use custom pages if provided, otherwise use defaults
-  const pagesToCheck = pages || defaultPages;
+  // Custom pages if provided, else the site's sitemap, else the common paths
+  let pagesToCheck: string[];
+  let pageSource: PageSource;
+  if (pages && pages.length > 0) {
+    pagesToCheck = pages;
+    pageSource = { kind: "custom" };
+  } else {
+    const discovered = await discoverSitemapPages(siteUrl, maxPages);
+    if (discovered) {
+      pagesToCheck = discovered.pages;
+      pageSource = { kind: "sitemap", sitemapUrl: discovered.sitemapUrl, totalFound: discovered.totalFound };
+    } else {
+      pagesToCheck = defaultPages;
+      pageSource = { kind: "default" };
+    }
+  }
 
   const results: PageSchemaResult[] = [];
   const schemaTypesFound: Record<string, number> = {};
@@ -204,6 +298,7 @@ export async function runSchemaAudit(
 
   let pagesWithSchema = 0;
   let pagesWithoutSchema = 0;
+  let pagesNotFound = 0;
 
   // Audit each page
   for (const pageEntry of pagesToCheck) {
@@ -224,6 +319,8 @@ export async function runSchemaAudit(
         } else {
           pagesWithoutSchema++;
         }
+      } else {
+        pagesNotFound++;
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -236,6 +333,7 @@ export async function runSchemaAudit(
         schemaTypes: SCHEMA_TYPES.map((type) => ({ type, found: false })),
       });
       // Don't count as without schema since page doesn't exist
+      pagesNotFound++;
     }
 
     // Be nice to the server
@@ -248,6 +346,8 @@ export async function runSchemaAudit(
     totalPages,
     pagesWithSchema,
     pagesWithoutSchema,
+    pagesNotFound,
+    pageSource,
     schemaTypesFound,
     pages: results,
   };
