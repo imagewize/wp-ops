@@ -84,19 +84,29 @@ homebrew_casks:
     # order is cosmetic, and an unofficial tap isn't `brew audit`ed.
     custom_block: |
       binary "wp-ops", target: "trellis-ops"
+
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{" }}staged_path}}/wp-ops"]
+        end
+      end
+    #
     # The binary isn't code-signed/notarized (no Apple Developer ID), so
     # macOS quarantines it on download and Gatekeeper kills it outright on
     # first run (exit 137) rather than showing the usual "open anyway"
-    # prompt a signed-but-unnotarized app would get. Stripping the
-    # quarantine bit post-install is the standard goreleaser fix for
-    # distributing an unsigned CLI binary via a cask — found by an actual
-    # `brew install imagewize/tap/wp-ops` failing this way.
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/wp-ops"]
-          end
+    # prompt a signed-but-unnotarized app would get. The postflight_steps
+    # block above strips the quarantine bit post-install — found by an
+    # actual `brew install imagewize/tap/wp-ops` failing this way.
+    #
+    # It lives in custom_block, not goreleaser's `hooks.post.install`, because
+    # that hook renders a Ruby `postflight do` block, which Homebrew 7
+    # deprecates in favor of the declarative `postflight_steps` DSL — every
+    # install and upgrade printed a deprecation warning. Steps blocks allow
+    # only step calls (`run`, `on_macos`, …), no Ruby, so the staged path is
+    # the `{{staged_path}}` placeholder rather than `#{staged_path}`. The
+    # custom_block is itself a Go template, so the opening braces are
+    # escaped as `{{ "{{" }}` — a bare `{{staged_path}}` fails the release
+    # with "function staged_path not defined".
 
 release:
   github:
