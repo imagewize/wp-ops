@@ -4153,12 +4153,13 @@
   {
     "category": "wp-cli",
     "key": "wp-cli/seo/schema-audit",
-    "description": "Check key pages for schema markup and validate implementation",
+    "description": "Check a site's pages (from its sitemap) for JSON-LD schema markup",
     "script_path": "wp-cli/seo/schema-audit.sh",
     "runs_on": "local",
     "runs": "local",
     "requires": [
-      "curl"
+      "curl",
+      "perl"
     ],
     "doc": "wp-cli/seo/README.md",
     "args": [
@@ -4178,15 +4179,23 @@
         "required": false,
         "default": "audits",
         "description": "Output directory",
-        "raw": "--output  optional  {audits}  Output directory"
+        "raw": "--output     optional  {audits}  Output directory"
       },
       {
         "name": "--pages",
         "required_raw": "optional",
         "required": false,
         "default": "/,/about/,/contact/",
-        "description": "Comma-separated page paths to check",
-        "raw": "--pages   optional  {/,/about/,/contact/}  Comma-separated page paths to check"
+        "description": "Comma-separated page paths or URLs (default: sitemap pages)",
+        "raw": "--pages      optional  {/,/about/,/contact/}  Comma-separated page paths or URLs (default: sitemap pages)"
+      },
+      {
+        "name": "--max-pages",
+        "required_raw": "optional",
+        "required": false,
+        "default": "25",
+        "description": "Maximum number of sitemap pages to check",
+        "raw": "--max-pages  optional  {25}  Maximum number of sitemap pages to check"
       }
     ],
     "examples": [
