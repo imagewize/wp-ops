@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.5] - 2026-09-19
+
 ### Fixed
 
-- **`brew install`/`brew upgrade` of `wp-ops` printed "Calling `postflight` is deprecated! Use `postflight_steps` instead."** The cask's quarantine-strip step came from goreleaser's `hooks.post.install`, which renders a Ruby `postflight do` block that Homebrew 7 deprecates. `.goreleaser.yml` now emits a declarative `postflight_steps` block through `custom_block` instead, running the same `xattr -dr com.apple.quarantine` on the installed binary. Takes effect in the tap from the next release.
+- **`brew install`/`brew upgrade` of `wp-ops` printed "Calling `postflight` is deprecated! Use `postflight_steps` instead."** The cask's quarantine-strip step came from goreleaser's `hooks.post.install`, which renders a Ruby `postflight do` block that Homebrew 7 deprecates. `.goreleaser.yml` now emits a declarative `postflight_steps` block through `custom_block` instead, running the same `xattr -dr com.apple.quarantine` on the installed binary.
 
 ## [5.24.4] - 2026-09-19
 
