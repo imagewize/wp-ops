@@ -38,6 +38,11 @@ Scaffold — twenty tools implemented so far:
   Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article,
   FAQPage, HowTo, and Person schema types. Returns count of pages with/without schema
   and which schema types are present. Uses `curl` to fetch pages and extract schema.
+  Pages come from `pages` if passed. Otherwise they come from the site's sitemap
+  (`wp-sitemap.xml`, `sitemap_index.xml`, then `sitemap.xml`), using only the page sitemaps
+  when there's an index, capped at `maxPages` (default 25). Only a site with no sitemap
+  falls back to a list of common paths. URLs that don't return 200 are listed separately,
+  with their status code and redirect target, and never counted as missing schema.
 - **`url_audit`** — audits `wp_posts.post_content` for hardcoded dev URLs (default
   patterns `.test`/`.localhost`) that `get_template_directory_uri()` bakes in during local
   content creation and that survive a database migration unless search-replaced — the

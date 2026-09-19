@@ -259,14 +259,24 @@ export function createServer(): McpServer {
         .optional()
         .describe(
           'Specific pages to check as "name|url" pairs, e.g. ["Homepage|/", "Contact|/contact/"]. ' +
-            'Defaults to common pages (homepage, services, about, contact, portfolio, shop, blog, etc.)'
+            "Defaults to the homepage plus the pages in the site's sitemap (wp-sitemap.xml, sitemap_index.xml " +
+            "or sitemap.xml; page sitemaps only when there is an index), capped at maxPages. Without a sitemap, " +
+            "falls back to common paths (/about/, /contact/, /shop/, ...)."
         ),
+      maxPages: z
+        .number()
+        .int()
+        .positive()
+        .default(25)
+        .describe("Maximum number of sitemap pages to check. Ignored when `pages` is passed."),
       summary: z
         .boolean()
         .default(false)
-        .describe("If true, only list pages missing schema or not found — pages that already have schema are omitted."),
+        .describe(
+          "If true, pages that already have schema are omitted. Pages without schema, and URLs that did not return 200, are still listed."
+        ),
     },
-    async ({ siteUrl, site, env, pages, summary }) => {
+    async ({ siteUrl, site, env, pages, maxPages, summary }) => {
       try {
         // Resolve siteUrl from site/env if provided
         let targetUrl = siteUrl;
@@ -284,27 +294,45 @@ export function createServer(): McpServer {
           throw new Error("Either provide 'siteUrl' or 'site' + 'env' parameters.");
         }
         
-        const result = await runSchemaAudit(targetUrl, pages);
+        const result = await runSchemaAudit(targetUrl, pages, maxPages);
+        const source = result.pageSource;
+        let sourceLine: string;
+        if (source.kind === "sitemap") {
+          const checked = result.pages.length;
+          sourceLine =
+            checked < (source.totalFound ?? checked)
+              ? `Pages: first ${checked} of ${source.totalFound} URLs from ${source.sitemapUrl} (raise maxPages or pass pages to check others)`
+              : `Pages: ${checked} URLs from ${source.sitemapUrl}`;
+        } else if (source.kind === "default") {
+          sourceLine = `Pages: ${result.pages.length} common paths (no sitemap found), so some are expected not to exist`;
+        } else {
+          sourceLine = `Pages: ${result.pages.length} passed in pages`;
+        }
         const lines: string[] = [
-          `Schema Audit: ${result.pagesWithSchema}/${result.totalPages} pages have schema markup`,
+          `Schema Audit: ${result.pagesWithSchema}/${result.totalPages} reachable pages have schema markup`,
+          sourceLine,
           "",
           "Schema Types Found:",
         ];
-        for (const [type, count] of Object.entries(result.schemaTypesFound)) {
-          if (count > 0) {
-            lines.push(`  ${type}: ${count} page(s)`);
-          }
+        const typeCounts = Object.entries(result.schemaTypesFound).filter(([, count]) => count > 0);
+        for (const [type, count] of typeCounts) {
+          lines.push(`  ${type}: ${count} page(s)`);
+        }
+        if (typeCounts.length === 0) {
+          lines.push("  None of the tracked types");
         }
         lines.push("");
         lines.push("Page Details:");
         let omitted = 0;
+        let listed = 0;
         for (const page of result.pages) {
-          const status = page.exists ? (page.hasSchema ? "✅ Has Schema" : "❌ No Schema") : "⚠️  Not Found";
-          if (summary && page.exists && page.hasSchema) {
+          if (!page.exists) continue;
+          if (summary && page.hasSchema) {
             omitted++;
             continue;
           }
-          lines.push(`  ${page.pageName} (${page.url}): ${status}`);
+          listed++;
+          lines.push(`  ${page.pageName} (${page.url}): ${page.hasSchema ? "✅ Has Schema" : "❌ No Schema"}`);
           if (page.hasSchema) {
             const foundTypes = page.schemaTypes.filter((t) => t.found).map((t) => t.type);
             if (foundTypes.length > 0) {
@@ -312,16 +340,41 @@ export function createServer(): McpServer {
             }
           }
         }
+        if (listed === 0) {
+          lines.push(result.totalPages > 0 ? "  None without schema" : "  None: no page returned 200");
+        }
         if (summary && omitted > 0) {
           lines.push(`  (${omitted} page(s) already have schema and are omitted from this summary)`);
         }
+
+        // Not-found URLs are not schema problems, so they get their own section.
+        // From a sitemap they are still worth fixing: the sitemap lists a URL
+        // that redirects or is gone.
+        if (result.pagesNotFound > 0) {
+          lines.push("");
+          lines.push(
+            source.kind === "sitemap"
+              ? `Not checked: ${result.pagesNotFound} sitemap URL(s) did not return 200 (the sitemap lists a redirect or a missing page):`
+              : source.kind === "default"
+                ? `Not checked: ${result.pagesNotFound} common path(s) don't exist on this site (not a schema problem):`
+                : `Not checked: ${result.pagesNotFound} URL(s) did not return 200:`
+          );
+          for (const page of result.pages) {
+            if (page.exists) continue;
+            const status = page.httpStatus === 0 ? "no response" : String(page.httpStatus);
+            lines.push(`  ${page.pageName} (${page.url}): ${status}${page.redirectUrl ? ` → ${page.redirectUrl}` : ""}`);
+          }
+        }
+
         lines.push("");
         if (result.pagesWithoutSchema > 0) {
           lines.push(
             `Recommendation: Add schema markup to ${result.pagesWithoutSchema} pages without it.`
           );
         } else if (result.totalPages > 0) {
-          lines.push("✅ All pages have schema markup!");
+          lines.push(`✅ All reachable pages have schema markup (${result.totalPages}).`);
+        } else {
+          lines.push("⚠️  No page could be checked: none returned 200.");
         }
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
