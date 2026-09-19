@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.3] - 2026-09-19
+
+### Fixed
+
+- **`wp-ops schema-audit` checked no pages at all on many sites.** The script appended paths starting with `/` to a site URL it had already given a trailing slash, so every request went to `https://example.com//path/`. Sites answer that with a 301, and the audit skipped every page as "not found", homepage included. On imagewize.com it checked nothing and reported 0 of 11.
+  - The script is rebuilt along the lines of the 5.24.2 `schema_audit` MCP fix. Pages come from the site's sitemap (`wp-sitemap.xml`, `sitemap_index.xml`, then `sitemap.xml`; only the page sitemaps when there's an index), capped by a new `--max-pages` flag (default 25). A site with no sitemap falls back to the common paths, and the output says so.
+  - URLs that don't return 200 are listed in their own "NOT CHECKED" section with the status code and redirect target, and never count toward the totals.
+  - The "PAGES NEEDING SCHEMA MARKUP" list in the report was always empty. Its `grep -c ... || echo "0"` fallback printed `0` twice, which broke the numeric test. The list is now built during the audit.
+  - Each page is fetched once instead of up to six times.
+  - `--pages` accepts full URLs as well as paths.
+  - JSON-LD blocks spanning several lines are now read, and `Person` is among the detected types. The script now needs `perl` for this, which is present on macOS and standard Linux servers.
+- **The `schema_audit` MCP tool now detects schema types inside `@graph`.** It read only the top-level `@type`, so the Organization, WebSite and BreadcrumbList nodes that Yoast, Rank Math and The SEO Framework nest in an `@graph` array went uncounted. The imagewize.com homepage reported "None of the tracked types". The text fallback for JSON-LD that doesn't parse never matched either, because it lowercased the schema but not the type it searched for.
+
 ## [5.24.2] - 2026-09-19
 
 ### Fixed
