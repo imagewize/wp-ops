@@ -38,8 +38,12 @@ export interface DbPullResult {
   devBackupPath: string;
   prodUrl: string;
   devUrl: string;
+  prodHome: string;
+  devHome: string;
   multisiteFixedUp: boolean;
   searchReplaceOutput: string;
+  homeSearchReplaceOutput: string;
+  httpHomeSearchReplaceOutput: string;
 }
 
 // Ports scripts/backup/db-pull.sh's PULL_COMMAND to composable calls against the
@@ -47,11 +51,21 @@ export interface DbPullResult {
 // string: read both URLs, back up dev first, stream the remote export straight
 // into `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
 // either side), search-replace, optional multisite domain fixup, flush cache.
-// Both URLs are read from `wp option get siteurl` and then used as a search-replace
-// replacement and, for multisite, interpolated into UPDATEs on wp_blogs.domain and
-// wp_site.domain. If a wrapper ever prefixes that stdout again, a malformed value would
-// be written across the whole database before anyone noticed — which is exactly what
-// happened once. Fail before touching data instead.
+//
+// Two URL pairs get read and replaced, not one. `siteurl` and `home` diverge on
+// Bedrock (siteurl carries the `/wp` core subdirectory, home doesn't), and content
+// — nav menus, post guids, the `home` option itself — is written against `home`,
+// never `siteurl`. A search-replace keyed only on `siteurl` silently skips every
+// one of those: it matches nothing, exits 0, and the pulled site looks fine until
+// someone clicks a menu link and lands back on production. Both pairs are searched
+// unless they're identical (non-Bedrock installs, where siteurl === home already
+// covers it).
+//
+// Both pairs are also interpolated into UPDATEs on wp_blogs.domain and
+// wp_site.domain for multisite. If a wrapper ever prefixes that stdout again, a
+// malformed value would be written across the whole database before anyone
+// noticed — which is exactly what happened once. Fail before touching data
+// instead.
 function assertSiteUrl(url: string, env: string): string {
   if (!/^https?:\/\/[^\s/]+(?:\/[^\s]*)?$/.test(url)) {
     throw new Error(
@@ -92,6 +106,8 @@ export async function runDbPull(
 
   const prodUrl = assertSiteUrl((await runWpCliRaw(fromEntry, ["option", "get", "siteurl"])).stdout.trim(), fromEnv);
   const devUrl = assertSiteUrl((await runWpCliRaw(devEntry, ["option", "get", "siteurl"])).stdout.trim(), "development");
+  const prodHome = assertSiteUrl((await runWpCliRaw(fromEntry, ["option", "get", "home"])).stdout.trim(), fromEnv);
+  const devHome = assertSiteUrl((await runWpCliRaw(devEntry, ["option", "get", "home"])).stdout.trim(), "development");
 
   // Back up dev's current DB before overwriting it — same safety step db-pull.sh
   // takes, reusing the db_backup tool's own implementation rather than
@@ -121,6 +137,37 @@ export async function runDbPull(
     throw new Error(`search-replace failed (exit ${searchReplace.code}): ${searchReplace.stderr}`);
   }
 
+  // siteurl and home only differ on Bedrock (siteurl has /wp); running this pass
+  // unconditionally on a non-Bedrock install would just be a harmless no-op, but
+  // skipping it when they're equal saves a redundant full-table scan.
+  let homeSearchReplaceOutput = "";
+  if (prodHome !== prodUrl || devHome !== devUrl) {
+    const homeSearchReplaceArgs = ["search-replace", prodHome, devHome, "--all-tables", "--precise"];
+    if (multisite) homeSearchReplaceArgs.push(`--url=${prodUrl}`);
+    const homeSearchReplace = await runWpCliRaw(devEntry, homeSearchReplaceArgs);
+    if (homeSearchReplace.code !== 0) {
+      throw new Error(`search-replace (home URL) failed (exit ${homeSearchReplace.code}): ${homeSearchReplace.stderr}`);
+    }
+    homeSearchReplaceOutput = (homeSearchReplace.stdout + homeSearchReplace.stderr).trim();
+  }
+
+  // Content written before a site moved to HTTPS still carries http:// links to
+  // the production host. Neither pass above matches those, so replace the http://
+  // form of prod's home too.
+  let httpHomeSearchReplaceOutput = "";
+  const prodHomeHttp = prodHome.replace(/^https:\/\//, "http://");
+  if (prodHomeHttp !== prodHome) {
+    const httpHomeSearchReplaceArgs = ["search-replace", prodHomeHttp, devHome, "--all-tables", "--precise"];
+    if (multisite) httpHomeSearchReplaceArgs.push(`--url=${prodUrl}`);
+    const httpHomeSearchReplace = await runWpCliRaw(devEntry, httpHomeSearchReplaceArgs);
+    if (httpHomeSearchReplace.code !== 0) {
+      throw new Error(
+        `search-replace (http:// home URL) failed (exit ${httpHomeSearchReplace.code}): ${httpHomeSearchReplace.stderr}`
+      );
+    }
+    httpHomeSearchReplaceOutput = (httpHomeSearchReplace.stdout + httpHomeSearchReplace.stderr).trim();
+  }
+
   let multisiteFixedUp = false;
   if (multisite) {
     // wp_blogs.domain and wp_site.domain hold a bare hostname, so the scheme-prefixed
@@ -143,7 +190,11 @@ export async function runDbPull(
     devBackupPath: backup.filePath,
     prodUrl,
     devUrl,
+    prodHome,
+    devHome,
     multisiteFixedUp,
     searchReplaceOutput: (searchReplace.stdout + searchReplace.stderr).trim(),
+    homeSearchReplaceOutput,
+    httpHomeSearchReplaceOutput,
   };
 }

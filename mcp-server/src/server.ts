@@ -851,10 +851,18 @@ export function createServer(): McpServer {
           `Pulled ${site}/${fromEnv} database into development.`,
           `  ${fromEnv} URL: ${result.prodUrl}`,
           `  development URL: ${result.devUrl}`,
+          `  ${fromEnv} home: ${result.prodHome}`,
+          `  development home: ${result.devHome}`,
           `  Development backed up to: ${result.devBackupPath}`,
         ];
         if (result.multisiteFixedUp) lines.push("  Multisite domain fixup applied.");
         lines.push("", "search-replace output:", result.searchReplaceOutput);
+        if (result.homeSearchReplaceOutput) {
+          lines.push("", "search-replace output (home URL):", result.homeSearchReplaceOutput);
+        }
+        if (result.httpHomeSearchReplaceOutput) {
+          lines.push("", "search-replace output (http:// home URL):", result.httpHomeSearchReplaceOutput);
+        }
 
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {

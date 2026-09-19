@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.4] - 2026-09-19
+
+### Fixed
+
+- **`db-pull`/`db_pull` search-replace missed every link stored against a site's `home` URL.** Both the script and the MCP tool built their search-replace pair from `wp option get siteurl` alone. On Bedrock, `siteurl` carries the `/wp` core subdirectory (`https://example.com/wp`) while `home` doesn't (`https://example.com`) — and content (nav menus, post `guid`s, the `home` option itself) is written against `home`, never `siteurl`. A search-replace keyed only on `siteurl` matched nothing in that content, exited 0, and the pulled site looked fine until someone clicked a menu link and landed back on production. Found on `demo.imagewize.com` after a `--multisite` pull: every subsite's block-based Navigation menu (and several post `guid`s) still pointed at `https://demo.imagewize.com/...` instead of the local dev domain, even though `wp_blogs.domain`/`wp_site.domain` (the #234 fix) were both already correct.
+  - Both `home` and `siteurl` are now read for prod and dev, and a second `wp search-replace` pass runs against the `home` pair whenever it differs from the `siteurl` pair — which is always, on a Bedrock site. Non-Bedrock installs (where `siteurl === home`) skip the redundant pass.
+  - A third pass replaces the `http://` form of the production `home` URL when production runs on `https://`. Content written before a site moved to HTTPS still links to `http://example.com/...`, which neither the `siteurl` nor the `https://` `home` pass matches.
+  - `db-pull.sh`: new Step 6 "Running search-replace for home URL (front-end links)", inserted between the existing search-replace step and the multisite domain fixup; later step numbers shift down by one. The step always prints, so numbering stays contiguous when the `home` pass is skipped.
+  - `dbPull.ts`/`db_pull` MCP tool: `DbPullResult` gains `prodHome`/`devHome`/`homeSearchReplaceOutput`/`httpHomeSearchReplaceOutput`; the tool's reply now reports the home URLs and, when they ran, each extra search-replace pass's output alongside the existing siteurl output.
+
 ## [5.24.3] - 2026-09-19
 
 ### Fixed
