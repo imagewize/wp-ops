@@ -290,23 +290,6 @@ Before running backup operations on production:
 3. Deploy Nginx configuration to serve optimized formats automatically
 4. Original images serve as fallback for unsupported browsers
 
-## Delegating MCP Audits to Mistral Vibe
-
-Read-only wp-ops audits often return far more output than the answer needs. When Jasper asks for one of these, run it through a headless Vibe process instead of calling the `mcp__wp-ops__*` tool directly, so only a short summary lands in this session:
-
-`server_status`, `monitor`, `broken_link_audit`, `schema_audit`, `security_scan`, `remote_ttfb_audit`, `redirect_audit`, `ip_reputation_check`
-
-```bash
-vibe -p "Site: example.com. Env: production. Call wp_ops_server_status and wp_ops_monitor (hours=24). \
-Reply with at most 10 bullet lines covering problems only, or exactly 'OK - nothing notable'. \
-No raw tool output, no other actions." --max-turns 8 --max-price 0.25 --output text
-```
-
-- Run it with `run_in_background` and write the output to the scratchpad. For several sites, start one process per site in parallel.
-- Never pass `--auto-approve`/`--yolo`. Safety comes from `~/.vibe/config.toml` (mirrored in `.vibe/config.toml`): these audit tools are set to `permission = "always"`, and the tools that write, pull or run arbitrary commands are in `disabled_tools`. In `-p` mode, a tool that would need approval is silently not called and the run returns empty output. Treat empty output as "the tool didn't run", not "all clear".
-- Call the MCP tool directly when the output is small (`command_search`, `verify_post`, a single `wp_cli` read), when Jasper asks for the raw output, or when a Vibe finding needs checking before acting on it. The summary is another model's reading.
-- Everything that writes stays with Claude and needs Jasper's go-ahead: `db_pull`, `files_pull`, `db_backup`, `publish_post`, `admin_user_create`, `url_audit` with `replace`, `ssh_command`, `command_run`, `scp_file`.
-
 ## Notes for AI Assistants
 
 - When suggesting Ansible playbook modifications, maintain the existing error handling and backup patterns
