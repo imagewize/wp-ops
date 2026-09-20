@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.24.6] - 2026-09-20
+
+### Fixed
+
+- **`publish-post --update --dry-run` reported a clean run for an update the real run would hard-abort.** The Article-schema regression guard added for #217 lives in the PHP worker (`wp-cli/content-creation/publish-post.sh:349-361`), which reads the live post via `get_post()` and diffs its schema keys against the draft. The preflight above it is pure local file inspection with no remote read, so a `--dry-run` had nothing to diff against and always reported success — even for an update whose draft drops an Article schema field (e.g. `image`) present on the live post, which then aborts for real. Hit on imagewize.com post 13856. The dry-run message now says so explicitly when `--update` is passed: `Dry run — no changes made (Article schema regression not checked; runs at publish time)`. The MCP `publish_post` tool already evaluates this check before its dry-run return and was unaffected.
+
 ## [5.24.5] - 2026-09-19
 
 ### Fixed
