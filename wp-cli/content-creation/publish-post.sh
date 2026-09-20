@@ -290,7 +290,17 @@ fi
 rm -f "$PREFLIGHT_FILE"
 
 if [ "$DRY_RUN" == "yes" ]; then
-    print_info "Dry run — no changes made."
+    # The Article-schema regression guard (see build_php() below) reads the
+    # live post and diffs it against the draft — the only preflight-detectable
+    # condition that hard-aborts a real run. This preflight is otherwise pure
+    # local file inspection with no remote read, so it can't evaluate that
+    # guard; say so rather than reporting a clean run that a --update publish
+    # may still abort.
+    if [ -n "$UPDATE_ID" ]; then
+        print_info "Dry run — no changes made (Article schema regression not checked; runs at publish time)."
+    else
+        print_info "Dry run — no changes made."
+    fi
     exit 0
 fi
 
