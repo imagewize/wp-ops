@@ -1,5 +1,15 @@
 # CLI UX Plan: Command Manifest + Go Rewrite
 
+> **Status (2026-09-21):** **Phase G** raised against the shipped Phase F
+> picker: the catalog spans three stacks and the picker never said which
+> command needs which. G1 (platform badge per browse row), G2 (platform
+> counts per category), G4 (breadcrumb on the argument prompt) and G5
+> (typographic contrast, adaptive palette) are done on
+> `feature/cli-picker-platform-clarity`; G3 (manifest-driven argument
+> completion) and G6–G10 are not started. Shell completion was checked at
+> the same time and is working — it just stops at the command name, which
+> is G3. See Phase G below.
+>
 > **Status (2026-08-04):** **4.0.0 shipped** — the bash CLI (`./wp-ops`) and
 > its installer (`install.sh`) are deleted, per this document's own Risks
 > section ("the bash implementation is deleted only at 4.0.0"). The Go CLI
@@ -595,6 +605,190 @@ touch `viewBrowse`), not a prerequisite for it.
 
 ---
 
+# Phase G — Platform clarity and picker legibility
+
+**Status (2026-09-21):** G1, G2, G4 and G5 done, on
+`feature/cli-picker-platform-clarity`. G3, G6–G10 not started. Raised
+against the shipped Phase F picker after sustained real use.
+
+## The problem
+
+Phase F fixed *structure* — the picker groups by category and drills down
+two levels like `trellis` does. What it did not fix is that the catalog
+spans three different stacks and the picker never says which is which.
+
+Three symptoms, from a walk through `wp-ops` → Backup → `db-pull`:
+
+1. **The browse list is silent about platform.** `describeRow`
+   (`go/internal/ui/model.go`) deliberately dropped the `[trellis]` /
+   `[wordpress]` row tags during the Phase F rewrite, on the grounds that
+   they were the quietest signal on the screen and the most responsible for
+   overflowing the row. That reasoning was sound *at the time*: rows shared
+   the terminal with a bordered preview pane and were laid out into
+   `m.width*2/5`. The preview pane is gone. The list has owned the full
+   width since, and the tags never came back — so `@platform`, which every
+   one of the 80 commands carries, appears nowhere until `DetailBody`
+   renders it *after* a command has been selected and the user is already
+   being prompted for its arguments. The question the tag answers ("will
+   this run against the site in front of me?") has to be answered before
+   that point, not after.
+2. **The category screen is silent too.** `Backup (10)` does not say that 9
+   of those 10 need Trellis, or that SEO's 7 are all plain-WordPress. So the
+   screen that exists to route you into a category withholds the one fact
+   that decides which category is any use to you.
+3. **`--platform` exists, but not where you browse.** `wp-ops list
+   --platform trellis` and `wp-ops search --platform` both work
+   (`cmd/list.go`). The picker has no equivalent, and neither do the
+   per-category commands — `wp-ops backup --platform trellis` is rejected as
+   an unknown command.
+
+And a fourth, from the prompt screen itself: it prints the usage block and
+nothing else. `stageBrowse` shows a `wp-ops > Backup >` breadcrumb;
+`stageFields`/`stageFreeText` show no breadcrumb and no command name, so the
+one screen where you have to decide what to type is the one screen that
+doesn't say what you're typing it into.
+
+### Legibility, separately
+
+The picker had four styles total (`model.go`'s var block): a pink cursor,
+an orange `(server)` tag, a red error, a grey category header. Command names
+and descriptions rendered at identical weight, which is what makes a
+full-height browse screen read as a wall of text rather than a list. All
+four colours were bare 256-colour indexes chosen against a dark background;
+grey `245` is close to invisible on a light terminal, and the picker renders
+inline in whatever terminal the user already has open.
+
+### Shell completion: works, but stops at the command name
+
+Checked while investigating a report of `wp-ops back<TAB>` doing nothing.
+It isn't broken: `_wp-ops` is installed in
+`/opt/homebrew/share/zsh/site-functions/`, `$_comps[wp-ops]` resolves, and
+`wp-ops __complete` returns in ~7ms. Driven through a pty against the
+reporter's own interactive zsh, `wp-ops back<TAB>` completes inline to
+`wp-ops backup ` (a single match, so zsh fills it silently with no menu —
+which is what reads as "nothing happened"), `wp-ops db-<TAB>` offers
+`db-backup db-pull`, and `wp-ops backup <TAB>` offers all ten.
+
+The real gap is one level further in: completion stops at the command name.
+`wp-ops db-pull <TAB>` offers nothing, even though the manifest declares
+`site-name` and `environment` with `{production|staging}` choices. See G3.
+
+## Findings
+
+| # | Change | Tier | Effort | Status |
+|---|---|---|---|---|
+| G1 | Platform badge (`trellis` / `wp` / `any`) per row in the browse list | 1 | Small | **Done** |
+| G2 | Platform counts per category on the category screen | 1 | Small | **Done** |
+| G3 | Argument completion from the manifest — `wp-ops db-pull <TAB>` offers `@arg` choices | 1 | Medium | Not started |
+| G4 | Breadcrumb + command name on the argument-prompt screen | 1 | Trivial | **Done** |
+| G5 | Typographic contrast (bold name, faint description) and an adaptive palette | 1 | Small | **Done** |
+| G6 | `--platform trellis` should mean "trellis + any", not "trellis only" | 2 | Small | Not started |
+| G7 | In-picker platform filter, cycled with a key | 2 | Medium | Not started |
+| G8 | Context detection — surface the detected Trellis/Bedrock project and rank by it | 2 | Medium | Not started |
+| G9 | A single outer frame instead of bare rows | 3 | Small | Not started |
+| G10 | Recent-commands section on the category screen | 3 | Medium | Not started |
+
+**Done (G1):** browse rows grow a right-hand platform badge — `trellis`,
+`wp`, `any` — beside the existing `(server)` tag. `any` renders faint
+rather than coloured: it's 32 of the 80 commands and the one value that
+constrains nothing, so it should recede while the two that *do* constrain
+carry colour. It is still rendered rather than left blank, because an
+absent badge reads as missing data, not as "no constraint".
+
+The overflow that justified removing these tags in Phase F cannot recur,
+because the new `browseLayout` measures rather than assumes: it computes
+`nameW` from the visible rows (as before), subtracts the tag columns from
+what's left, and drops a tag column outright rather than let the
+description fall below `minDescWidth` (20 cells). Platform outranks server
+in that contest — every row carries a platform, `(server)` applies to 7 of
+80 — and the server column is only reserved at all when a row currently in
+view actually needs it, so most screens spend nothing on it.
+`TestViewBrowse_RowsFitTerminalWidth` (unchanged from Phase F) still pins
+the invariant at 60/80/100/140 columns, and
+`TestBrowseLayout_TagsYieldToDescription` pins the yield order.
+`TestViewBrowse_NoPlatformTag`, which pinned the Phase F removal, is
+replaced by `TestViewBrowse_PlatformBadge`, with a comment recording that
+the reversal is deliberate and why the original constraint no longer holds.
+
+**Done (G2):** `categoryOption` gains a `platformMix` (trellis / wordpress /
+any counts), computed in `buildCategoryOptions` from the same entries the
+count comes from, and rendered as a right-hand column:
+
+```
+> All categories (80)  Search or browse the whole catalog       29 trellis  19 wp  32 any
+  Monitoring     (18)  Log monitoring, uptime checks, and traf… 11 trellis   1 wp   6 any
+  Backup         (10)  Database and file backups — Ansible and…  9 trellis   1 wp
+  SEO            ( 7)  Redirect, schema, orphan-content audits…              7 wp
+  Images         ( 7)  Image resizing, WebP/AVIF conversion, a…                     7 any
+```
+
+Fixed-width slots, blank where a count is zero, rather than a
+`"9 trellis · 1 wp"` join — so the three platforms line up into columns
+down the screen instead of shuffling sideways as counts drop out. The
+column yields entirely when the terminal is too narrow to keep blurbs at
+`minBlurbWidth` (32 cells); below about 82 columns the blurb keeps the room.
+The label column, meanwhile, now sizes to the longest label actually present
+(clamped to 14–22) rather than the flat `%-22s` it was — six columns wider
+than "All categories", the longest label it ever holds, and the space the
+mix column mostly spends.
+
+**Done (G4):** `viewPrompt` prints the breadcrumb `stageBrowse` already
+prints, completed with the command name: `wp-ops > Backup > database-pull`.
+The category is read from the selected entry's own `DisplayCategory`, not
+from `m.browseCategory`, which is empty whenever the command was reached via
+"All categories" or by typing a filter. The detail viewport's chrome budget
+goes from 6 rows to 8 to make room, now named `promptChromeRows` instead of
+a bare literal in `detailHeight`.
+
+**Done (G5):** every colour becomes a `lipgloss.AdaptiveColor` carrying its
+original dark-terminal value plus a darker light-terminal counterpart, and
+two new hues are added for the platform badges (blue for trellis, green for
+wordpress). Command names render bold, descriptions faint, so the two
+columns are distinguishable at a glance.
+
+Rows are now assembled from separately-styled cells rather than one string
+passed through a single style. That's a requirement, not a preference:
+lipgloss emits a reset after every `Render`, so the old
+`cursorStyle.Render("> " + row)` silently lost its own colour from the point
+of any nested tag onward. The selected row uses *replacement* styles
+(`selectedNameStyle`, `selectedDescStyle`) instead of a row-wide wrapper,
+which also means the cursor row no longer paints its whole description pink.
+
+**G3 (not started):** `registerCatalogCommands` (`cmd/dispatch.go`) sets
+`ValidArgsFunction` for category → basename completion but nothing for a
+command's own arguments. `manifest.Param` already carries `Choices` and
+`Default` for every `@arg`, so `wp-ops db-pull <TAB>` → site names, then
+`production|staging`, is a matter of wiring positional completion off the
+entry's `Args`. Highest-value item left in tier 1.
+
+**G6 (not started):** `Catalog.FilterByPlatform` matches `entry.Platform ==
+platform` exactly, so `--platform trellis` returns 29 commands and hides the
+32 `any` ones — the image converters, git helpers and release scripts that
+run perfectly well on a Trellis box. The flag reads as "what can I run
+here?", and the honest answer for a Trellis user is 41, not 29. `any`
+should be included in a `trellis` or `wordpress` filter, with a separate
+`--platform-only` if the strict form turns out to be wanted. Note this also
+changes `defaultPlatform()`'s behaviour under `trellis ops` (`cmd/invoked.go`).
+
+**G7 (not started):** a key in the picker (Tab, say) cycling
+`All → Trellis → WordPress`, reflected in the breadcrumb. Makes G6's filter
+reachable from the screen where the browsing actually happens. Worth doing
+after G6, so the two agree on what a platform filter means.
+
+**G8 (not started):** `internal/detect` already finds a Trellis project or a
+Bedrock site by walking up from `$PWD`, and the picker ignores it entirely.
+Launched inside a project it could head the screen with
+`Context: Trellis · ~/code/example.com` and sort non-matching commands last,
+rendered faint. Deliberately sort-and-dim rather than hide: a command you
+can't run *here* is still a command you may want to read about.
+
+**G9/G10 (not started):** see "Picker visual density vs. upstream Bubble Tea
+examples" above for G9's reasoning. G10 needs a small state file
+(`~/.config/wp-ops/`), which is also where Phase D's registry lands — worth
+doing together rather than inventing a second state location.
+
+---
+
 # Milestones
 
 | # | Scope | Version | Status |
@@ -606,6 +800,7 @@ touch `viewBrowse`), not a prerequisite for it.
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
 | F | Command discovery: category-first default views, picker grouping | 3.20.0 | **In progress** — options 1–3 done, merged (PR #146); option 4 not started. See Phase F below |
+| G | Platform clarity in the picker, argument completion, legibility | 5.25.0 | **In progress** — G1, G2, G4, G5 done; G3 and G6–G10 not started. See Phase G below |
 
 ## Immediate fixes (do now, independent of the plan)
 
