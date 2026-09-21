@@ -11,9 +11,12 @@ import (
 
 // TestCategoryBasenameCompletions ports the manual pass in
 // docs/m4-go-cli-completion.md task 4: `wp-ops <category> <TAB>` offers
-// every basename in that category, deduplicated, and stops completing once
-// a basename is already present (the rest of argv belongs to the
-// underlying script, not to wp-ops).
+// every basename in that category, deduplicated.
+//
+// It used to also assert that completion *stopped* at the basename, on the
+// grounds that the rest of argv belongs to the underlying script. Phase G
+// item G3 reverses that deliberately: the manifest declares that argv, so
+// wp-ops can complete it — see TestCategoryCompletionsReachArguments below.
 //
 // Uses directoryScope: after Option C1 "scripts" is no longer a display
 // category, only a hidden back-compat alias, and this test is about the
@@ -43,12 +46,14 @@ func TestCategoryBasenameCompletions(t *testing.T) {
 		t.Errorf("want db-backup among scripts completions, got %v", got)
 	}
 
-	got2, directive2 := fn(nil, []string{"db-backup"}, "")
+	// An unresolvable name still yields nothing: there is no entry whose
+	// arguments could be completed.
+	got2, directive2 := fn(nil, []string{"no-such-command"}, "")
 	if directive2 != cobra.ShellCompDirectiveNoFileComp {
-		t.Errorf("directive with a basename already chosen = %v, want ShellCompDirectiveNoFileComp", directive2)
+		t.Errorf("directive after an unknown name = %v, want ShellCompDirectiveNoFileComp", directive2)
 	}
 	if len(got2) != 0 {
-		t.Errorf("want no completions once a basename is already chosen, got %v", got2)
+		t.Errorf("want no completions after an unresolvable name, got %v", got2)
 	}
 }
 
@@ -84,12 +89,12 @@ func TestRootBasenameCompletions(t *testing.T) {
 		}
 	}
 
-	got2, directive2 := rootBasenameCompletions(nil, []string{"db-backup"}, "")
+	got2, directive2 := rootBasenameCompletions(nil, []string{"no-such-command"}, "")
 	if directive2 != cobra.ShellCompDirectiveNoFileComp {
-		t.Errorf("directive with a basename already chosen = %v, want ShellCompDirectiveNoFileComp", directive2)
+		t.Errorf("directive after an unknown name = %v, want ShellCompDirectiveNoFileComp", directive2)
 	}
 	if len(got2) != 0 {
-		t.Errorf("want no completions once a basename is already chosen, got %v", got2)
+		t.Errorf("want no completions after an unresolvable name, got %v", got2)
 	}
 }
 

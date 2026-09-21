@@ -40,6 +40,11 @@ func registerCatalogCommands(c *catalog.Catalog) {
 				os.Exit(executeEntry(entry, args))
 				return nil
 			},
+			// The full-key form reaches this command directly, so args is
+			// already just the script's own argv — no command name to strip.
+			ValidArgsFunction: func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+				return entryArgCompletions(entry, args, toComplete)
+			},
 		}
 		rootCmd.AddCommand(leaf)
 	}
@@ -106,29 +111,25 @@ func directoryScope(name string) categoryScope {
 }
 
 // categoryBasenameCompletions backs `wp-ops <category> <TAB>` completion:
-// bash's actual completion grammar (print_completion, wp-ops:2098) is
-// exactly two tokens — category, then a basename within it — and stops
-// there (cword >= 3 gets no completions, since anything past the basename
-// belongs to the underlying script's own argv). ValidArgsFunction is called
-// once per positional slot regardless of DisableFlagParsing, so this only
-// needs to guard on "am I completing the first arg after the category".
+// bash's completion grammar (print_completion, wp-ops:2098) was exactly two
+// tokens — category, then a basename within it — and stopped there, since
+// anything past the basename belongs to the underlying script's own argv.
+// Phase G item G3 goes one token further: wp-ops knows what that argv looks
+// like, because the manifest declares it, so a resolved command hands the
+// rest of the line to entryArgCompletions instead of giving up.
+// ValidArgsFunction is called once per positional slot regardless of
+// DisableFlagParsing, so args tells us which slot we're in.
 func categoryBasenameCompletions(scope categoryScope) func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return func(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		c := mustCatalog()
 		if len(args) != 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-		entries := scope.members(mustCatalog())
-		seen := make(map[string]bool, len(entries))
-		basenames := make([]string, 0, len(entries))
-		for _, e := range entries {
-			b := filepath.Base(e.Key)
-			if seen[b] {
-				continue
+			e, ok := scopedResolveForCompletion(c, scope, args[0])
+			if !ok {
+				return nil, cobra.ShellCompDirectiveNoFileComp
 			}
-			seen[b] = true
-			basenames = append(basenames, b)
+			return entryArgCompletions(e, args[1:], toComplete)
 		}
-		return basenames, cobra.ShellCompDirectiveNoFileComp
+		return basenames(scope.members(c)), cobra.ShellCompDirectiveNoFileComp
 	}
 }
 
@@ -140,22 +141,20 @@ func categoryBasenameCompletions(scope categoryScope) func(cc *cobra.Command, ar
 // fallback) is a valid invocation. Cobra calls ValidArgsFunction in
 // addition to its subcommand-name matching (not instead of), so this
 // supplements rather than replaces the category/subcommand completions.
+//
+// Past the basename it completes that command's own arguments (G3). This
+// is the path `wp-ops db-pull <TAB>` takes: a bare basename matches no
+// registered subcommand, so Cobra hands the whole line to root.
 func rootBasenameCompletions(cc *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	c := mustCatalog()
 	if len(args) != 0 {
-		return nil, cobra.ShellCompDirectiveNoFileComp
-	}
-	entries := mustCatalog().Entries
-	seen := make(map[string]bool, len(entries))
-	basenames := make([]string, 0, len(entries))
-	for _, e := range entries {
-		b := filepath.Base(e.Key)
-		if seen[b] {
-			continue
+		e, ok := resolveForCompletion(c, args[0])
+		if !ok {
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
-		seen[b] = true
-		basenames = append(basenames, b)
+		return entryArgCompletions(e, args[1:], toComplete)
 	}
-	return basenames, cobra.ShellCompDirectiveNoFileComp
+	return basenames(c.Entries), cobra.ShellCompDirectiveNoFileComp
 }
 
 // runCategory resolves a bare command name within a category, port of
