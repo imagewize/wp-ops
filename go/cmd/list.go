@@ -17,8 +17,11 @@ var allFlag bool
 var platformFlag string
 
 // platformFlagUsage is shared by `list` and `search` so the two can't drift
-// from each other or from catalog.Platforms.
-var platformFlagUsage = "Filter by platform: " + strings.Join(catalog.Platforms, ", ")
+// from each other or from catalog.Platforms. It spells out the widening
+// G6 introduced, since "trellis" no longer means what the bare word
+// suggests — see catalog.RunsOnPlatform.
+var platformFlagUsage = "Filter by platform (" + strings.Join(catalog.Platforms, ", ") +
+	"); trellis and wordpress also include the commands that need no WordPress"
 
 // validatePlatform rejects an unknown --platform value up front. Without it
 // a typo silently filters the catalog down to nothing, which reads as "no
@@ -91,10 +94,10 @@ func printCategorizedList(c *catalog.Catalog) {
 	fmt.Printf("Run '%s <category>' to see a category's commands (e.g. '%s backup')\n", n, n)
 	fmt.Printf("Run '%s list --all' to see every command with its description\n", n)
 	if asTrellisPlugin() {
-		// The scoped view hides ~two thirds of the catalog, so say where
-		// the rest is. Same binary, one word away — the cask installs
-		// both names.
-		fmt.Println("Showing @platform trellis commands only — run 'wp-ops' for the full catalog")
+		// The scoped view still hides the @platform wordpress commands, so
+		// say where the rest is. Same binary, one word away — the cask
+		// installs both names.
+		fmt.Println("Showing Trellis commands and the ones that need no WordPress — run 'wp-ops' for the full catalog")
 	} else {
 		fmt.Printf("Run '%s list --platform wordpress' to see only what runs on any WP site\n", n)
 	}
@@ -131,9 +134,10 @@ func printCategoryCommands(category string, entries []catalog.Entry) {
 	}
 
 	// Scope the listing the same way the category summary is scoped, so
-	// the counts agree. But a category with nothing tagged @platform
-	// trellis (SEO, Images, Git...) still has commands that run fine here,
-	// so fall back to the whole category rather than claiming it's empty.
+	// the counts agree. The fallback is much rarer since G6 widened the
+	// filter to admit @platform any — a category is only empty now when
+	// every command in it needs a WordPress that isn't Trellis — but it
+	// still beats printing an empty category.
 	scoped := filterEntriesByPlatform(entries, defaultPlatform())
 	unscoped := len(scoped) == 0
 	if unscoped {
@@ -151,14 +155,16 @@ func printCategoryCommands(category string, entries []catalog.Entry) {
 // filterEntriesByPlatform keeps the per-category listing consistent with
 // the counts in the category summary. Execution is deliberately not
 // filtered — naming a non-trellis command under `trellis ops` still runs
-// it; only what we *advertise* is scoped.
+// it; only what we *advertise* is scoped. Shares catalog.RunsOnPlatform
+// with FilterByPlatform so the category view and the summary can't disagree
+// about what a platform filter admits.
 func filterEntriesByPlatform(entries []catalog.Entry, platform string) []catalog.Entry {
 	if platform == "" {
 		return entries
 	}
 	var kept []catalog.Entry
 	for _, e := range entries {
-		if e.Platform == platform {
+		if catalog.RunsOnPlatform(e.Platform, platform) {
 			kept = append(kept, e)
 		}
 	}

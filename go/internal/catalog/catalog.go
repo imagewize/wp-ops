@@ -275,10 +275,37 @@ func (c *Catalog) Search(term string) []Entry {
 // a command executes, not what stack it needs).
 var Platforms = []string{"trellis", "wordpress", "any"}
 
-// FilterByPlatform returns a new Catalog containing only entries that match
-// the specified platform. If platform is empty, returns the original catalog.
-// This implements the @platform filtering for Option C2 from
-// docs/category-organization.md.
+// RunsOnPlatform reports whether a command tagged entryPlatform is usable by
+// someone whose stack is platform. The relation is deliberately not equality:
+// "any" means the command needs no WordPress at all, so it runs just as well
+// on a Trellis box as anywhere else, and hiding the image converters, git
+// helpers and release scripts from a --platform trellis listing answers a
+// question nobody asked. The flag reads as "what can I run here?" — see
+// docs/cli-ux-plan.md, Phase G item G6.
+//
+// The widening stops there. "wordpress" is not included in a "trellis"
+// filter even though a Trellis box does have a WordPress on it: rolling
+// that in makes --platform trellis return the entire catalog, at which
+// point the flag says nothing. The useful reading is "commands that assume
+// Trellis, plus the ones that assume nothing".
+//
+// An empty platform is the unfiltered case and matches everything;
+// --platform any stays exact, since "commands that need no WordPress" is a
+// real question and the only way left to ask it.
+func RunsOnPlatform(entryPlatform, platform string) bool {
+	if platform == "" {
+		return true
+	}
+	if entryPlatform == platform {
+		return true
+	}
+	return platform != "any" && entryPlatform == "any"
+}
+
+// FilterByPlatform returns a new Catalog containing only entries usable on
+// the specified platform, per RunsOnPlatform. If platform is empty, returns
+// the original catalog. This implements the @platform filtering for Option
+// C2 from docs/category-organization.md.
 func (c *Catalog) FilterByPlatform(platform string) *Catalog {
 	if platform == "" {
 		return c
@@ -286,7 +313,7 @@ func (c *Catalog) FilterByPlatform(platform string) *Catalog {
 
 	var filteredEntries []Entry
 	for _, entry := range c.Entries {
-		if entry.Platform == platform {
+		if RunsOnPlatform(entry.Platform, platform) {
 			filteredEntries = append(filteredEntries, entry)
 		}
 	}

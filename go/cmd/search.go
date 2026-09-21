@@ -60,9 +60,12 @@ func runSearch(term string) {
 		}
 		// Always badged, not just under --platform: search is the surface
 		// where you're comparing unfamiliar commands, so "will this run
-		// against my site" is exactly the question the badge answers. Under
-		// --platform every row carries the same value and it's redundant.
-		if m.Platform != "" && platformSearchFlag == "" {
+		// against my site" is exactly the question the badge answers. Kept
+		// under --platform too since G6: a --platform trellis result set
+		// now mixes [trellis] rows with [any] ones, so the badge still
+		// distinguishes them. Only --platform any is uniform, being the one
+		// filter that stayed exact.
+		if m.Platform != "" && platformSearchFlag != "any" {
 			tag += "[" + m.Platform + "] "
 		}
 		fmt.Printf("  %-40s %s%s\n", m.Key, tag, m.Description)

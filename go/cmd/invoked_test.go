@@ -85,8 +85,16 @@ func TestFilterEntriesByPlatform(t *testing.T) {
 		t.Errorf("empty platform must not filter: got %d, want 3", len(got))
 	}
 
+	// G6: the filter admits @platform any alongside its own, so the
+	// per-category listing under `trellis ops` keeps the image converters
+	// and release scripts that run fine on a Trellis box.
 	got := filterEntriesByPlatform(entries, "trellis")
-	if len(got) != 1 || got[0].Key != "trellis/backup/database-pull" {
-		t.Errorf("platform trellis: got %v, want just the trellis entry", got)
+	if len(got) != 2 {
+		t.Fatalf("platform trellis: got %d entries, want 2 (the trellis one plus the any one)", len(got))
+	}
+	for _, e := range got {
+		if e.Platform == "wordpress" {
+			t.Errorf("platform trellis leaked a wordpress entry: %s", e.Key)
+		}
 	}
 }
