@@ -4,11 +4,10 @@
 > picker: the catalog spans three stacks and the picker never said which
 > command needs which. G1 (platform badge per browse row), G2 (platform
 > counts per category), G4 (breadcrumb on the argument prompt) and G5
-> (typographic contrast, adaptive palette) are done on
-> `feature/cli-picker-platform-clarity`; G3 (manifest-driven argument
-> completion) and G6–G10 are not started. Shell completion was checked at
-> the same time and is working — it just stops at the command name, which
-> is G3. See Phase G below.
+> (typographic contrast, adaptive palette) shipped in 5.25.0. G3
+> (manifest-driven argument completion) and G6 (`--platform` includes
+> `any`) are done on `feature/cli-arg-completion-platform-filter`, which
+> closes tier 1. G7–G10 are not started. See Phase G below.
 >
 > **Status (2026-08-04):** **4.0.0 shipped** — the bash CLI (`./wp-ops`) and
 > its installer (`install.sh`) are deleted, per this document's own Risks
@@ -607,8 +606,9 @@ touch `viewBrowse`), not a prerequisite for it.
 
 # Phase G — Platform clarity and picker legibility
 
-**Status (2026-09-21):** G1, G2, G4 and G5 done, on
-`feature/cli-picker-platform-clarity`. G3, G6–G10 not started. Raised
+**Status (2026-09-21):** tier 1 is closed — G1, G2, G4 and G5 shipped in
+5.25.0; G3 and G6 are done on
+`feature/cli-arg-completion-platform-filter`. G7–G10 not started. Raised
 against the shipped Phase F picker after sustained real use.
 
 ## The problem
@@ -679,10 +679,10 @@ The real gap is one level further in: completion stops at the command name.
 |---|---|---|---|---|
 | G1 | Platform badge (`trellis` / `wp` / `any`) per row in the browse list | 1 | Small | **Done** |
 | G2 | Platform counts per category on the category screen | 1 | Small | **Done** |
-| G3 | Argument completion from the manifest — `wp-ops db-pull <TAB>` offers `@arg` choices | 1 | Medium | Not started |
+| G3 | Argument completion from the manifest — `wp-ops db-pull <TAB>` offers `@arg` choices | 1 | Medium | **Done** |
 | G4 | Breadcrumb + command name on the argument-prompt screen | 1 | Trivial | **Done** |
 | G5 | Typographic contrast (bold name, faint description) and an adaptive palette | 1 | Small | **Done** |
-| G6 | `--platform trellis` should mean "trellis + any", not "trellis only" | 2 | Small | Not started |
+| G6 | `--platform trellis` should mean "trellis + any", not "trellis only" | 2 | Small | **Done** |
 | G7 | In-picker platform filter, cycled with a key | 2 | Medium | Not started |
 | G8 | Context detection — surface the detected Trellis/Bedrock project and rank by it | 2 | Medium | Not started |
 | G9 | A single outer frame instead of bare rows | 3 | Small | Not started |
@@ -754,21 +754,75 @@ of any nested tag onward. The selected row uses *replacement* styles
 (`selectedNameStyle`, `selectedDescStyle`) instead of a row-wide wrapper,
 which also means the cursor row no longer paints its whole description pink.
 
-**G3 (not started):** `registerCatalogCommands` (`cmd/dispatch.go`) sets
-`ValidArgsFunction` for category → basename completion but nothing for a
-command's own arguments. `manifest.Param` already carries `Choices` and
-`Default` for every `@arg`, so `wp-ops db-pull <TAB>` → site names, then
-`production|staging`, is a matter of wiring positional completion off the
-entry's `Args`. Highest-value item left in tier 1.
+**Done (G3):** `cmd/complete.go` turns the already-parsed `@arg`/`@flag`
+data into completions, wired into all three invocation forms — the bare
+basename (`rootBasenameCompletions`), category + name
+(`categoryBasenameCompletions`) and the full key (a `ValidArgsFunction` on
+each hidden per-entry command). Each resolves the command exactly as
+execution does, including the category-first preference `runCategory`
+dispatches on; an ambiguous basename completes nothing, since the entries
+behind it may declare different arguments and it wouldn't run either.
 
-**G6 (not started):** `Catalog.FilterByPlatform` matches `entry.Platform ==
-platform` exactly, so `--platform trellis` returns 29 commands and hides the
-32 `any` ones — the image converters, git helpers and release scripts that
-run perfectly well on a Trellis box. The flag reads as "what can I run
-here?", and the honest answer for a Trellis user is 41, not 29. `any`
-should be included in a `trellis` or `wordpress` filter, with a separate
-`--platform-only` if the strict form turns out to be wanted. Note this also
-changes `defaultPlatform()`'s behaviour under `trellis ops` (`cmd/invoked.go`).
+What a slot offers depends on what the manifest knows about it:
+
+| Slot | Offers |
+|------|--------|
+| `@arg` with `{a\|b}` choices | those values, described |
+| `site` / `site-name` | the site names in the detected Trellis project's `group_vars/*/wordpress_sites.yml` |
+| a path-shaped name (`input`, `*-file`, `*-dir`, …) | hands back to the shell's own file completion |
+| anything else | one line of ActiveHelp: name, required/optional, description |
+| a token starting with `-` | the command's `@flag` names, plus `--help` and `--where` |
+
+Three decisions worth recording:
+
+- **A bracketed value is never offered as a completion.** `{example.com}`,
+  `{~/wp-cli.phar}`, `{/opt/plesk/php/8.2/bin/php}` are placeholders showing
+  the shape of an answer, not defaults; inserting one would be worse than
+  offering nothing. They appear as "e.g." inside the hint instead.
+- **Site names come from the project, silently.** `resolveTrellisDir()`
+  confirms a detected directory interactively, which a completion function
+  must never do, so `completionSites()` takes `$TRELLIS_DIR` or a silently
+  detected project and reads it with a line scanner
+  (`internal/detect/sites.go`) rather than pulling a YAML dependency into
+  the binary for four lines of well-known structure. This is a stopgap:
+  M5's shared site registry is where site names belong once it exists.
+- **Flags are skipped, not parsed, when counting slots.** wp-ops re-parses
+  no script's flag grammar (`DisableFlagParsing` everywhere), so it cannot
+  know whether the token after `--host` is that flag's value or the next
+  positional. Counting only non-flag tokens is right for the common cases
+  and, in the `--flag value positional` case, offers the previous slot —
+  wrong in a way that costs a keystroke, not a mistake, since nothing is
+  inserted without the user picking it.
+
+Verified against the reporter's own interactive zsh through a pty, the same
+way the completion investigation above was: `wp-ops db-pull <TAB>` offers
+the project's site names, `wp-ops db-pull example.com <TAB>` offers
+`production staging`, and `wp-ops jpg-to-webp <TAB>` prints the hint above
+a file menu. Two assertions in `dispatch_test.go` pinned the old grammar
+("no completions once a basename is already chosen"); they now pin the
+unresolvable-name case, with a comment recording that the reversal is
+deliberate.
+
+**Done (G6):** `catalog.RunsOnPlatform` replaces the bare
+`entry.Platform == platform` test, and `--platform trellis` now returns the
+Trellis commands plus the `any` ones — 61 of 80 rather than 29. The flag
+reads as "what can I run here?", and hiding the image converters, git
+helpers and release scripts answered a question nobody asked. Same for
+`--platform wordpress` (51), and for the listing scope under `trellis ops`,
+which takes the same path through `defaultPlatform()`.
+
+The widening stops there. Rolling `wordpress` into a `trellis` filter would
+return the whole catalog, at which point the flag says nothing; the useful
+reading is "commands that assume Trellis, plus the ones that assume
+nothing". `--platform any` stays exact, since "what needs no WordPress at
+all" is a real question and that is the only way left to ask it — which is
+also why the separate `--platform-only` this item floated wasn't needed.
+
+`list.go`'s per-category `filterEntriesByPlatform` shares `RunsOnPlatform`
+so the category view and the summary counts can't disagree about what a
+filter admits, and `search` keeps its `[platform]` badge under `--platform`
+now: a filtered result set mixes `[trellis]` rows with `[any]` ones, so the
+badge still distinguishes them.
 
 **G7 (not started):** a key in the picker (Tab, say) cycling
 `All → Trellis → WordPress`, reflected in the breadcrumb. Makes G6's filter
@@ -800,7 +854,7 @@ doing together rather than inventing a second state location.
 | M5 | Shared site registry, `--on <env>` SSH dispatch | 4.1.0 | Not started |
 | M6 | `trellis-wpops` symlink | 4.1.0 | Not started |
 | F | Command discovery: category-first default views, picker grouping | 3.20.0 | **In progress** — options 1–3 done, merged (PR #146); option 4 not started. See Phase F below |
-| G | Platform clarity in the picker, argument completion, legibility | 5.25.0 | **In progress** — G1, G2, G4, G5 done; G3 and G6–G10 not started. See Phase G below |
+| G | Platform clarity in the picker, argument completion, legibility | 5.25.0–5.26.0 | **In progress** — tier 1 closed: G1, G2, G4, G5 in 5.25.0, G3 and G6 in 5.26.0. G7–G10 not started. See Phase G below |
 
 ## Immediate fixes (do now, independent of the plan)
 
