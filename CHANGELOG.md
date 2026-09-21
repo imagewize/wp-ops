@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.26.0] - 2026-09-21
+
+### Added
+
+- **Shell completion now completes a command's arguments, not just its name.** `wp-ops db-pull <TAB>` offered nothing, even though the script header declares `site` and `env` with `{production|staging}` right there in its manifest — the CLI had the answer parsed and indexed and never put it on screen. It now completes the argument slots too, on all three invocation forms (bare basename, category + name, full key), resolving the command exactly as execution does. An ambiguous basename completes nothing, since the entries behind it may declare different arguments and it wouldn't run either. This closes tier 1 of `docs/cli-ux-plan.md` Phase G.
+  - Declared `{a|b}` choices become the completion values, carrying the argument's description.
+  - `site` and `site-name` complete from the `group_vars/*/wordpress_sites.yml` of the Trellis project in front of you — `$TRELLIS_DIR` when set, otherwise a project detected from the working directory, silently: unlike running a playbook, a completion function must never stop to confirm what it found. A stopgap until M5's shared site registry exists.
+  - An argument that holds a path (`input`, `*-file`, `*-dir`, …) hands the slot back to the shell's own file completion instead of suppressing it.
+  - Anything else gets one line of ActiveHelp naming the argument, whether it is required, and what it means. A bracketed manifest value is deliberately never offered as a completion: `{example.com}`, `{~/wp-cli.phar}` and `{/opt/plesk/php/8.2/bin/php}` are placeholders showing the shape of an answer, not defaults, so they appear as "e.g." inside the hint instead.
+  - Typing a dash offers the command's own `@flag` lines plus `--help` and `--where`, which every command handles regardless of executor. Flags are skipped rather than parsed when working out which slot is being filled — wp-ops re-parses no script's flag grammar, so it cannot know whether the token after `--host` is that flag's value or the next positional.
+
+### Changed
+
+- **`--platform trellis` now includes the commands that need no WordPress at all.** It matched `@platform` exactly, so it returned the 29 Trellis commands and hid the 32 tagged `@platform any` — the image converters, git helpers and release scripts that run perfectly well on a Trellis box. The flag reads as "what can I run here?", and that answer was wrong by 32 commands; it now returns 61. Same for `--platform wordpress` (51), and for the listing scope under `trellis ops`, which takes the same path.
+  - The widening stops there. Rolling `wordpress` into a `trellis` filter would return the whole catalog, at which point the flag says nothing. `--platform any` stays exact, since "what needs no WordPress at all" is a real question and that is the only way left to ask it.
+  - `wp-ops search` keeps its `[platform]` badge under `--platform` now: a filtered result set mixes `[trellis]` rows with `[any]` ones, so the badge still distinguishes them.
+
 ## [5.25.0] - 2026-09-21
 
 ### Added

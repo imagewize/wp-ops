@@ -62,7 +62,9 @@ Every command also carries a **platform** — `trellis` (needs a Trellis project
 `wordpress` (any WP install: Valet, Herd, cPanel, Bedrock, Trellis), or `any` (no
 WordPress involved). `wp-ops search` badges each result with it, and
 `wp-ops list --platform <value>` filters to what will actually run against the site
-in front of you.
+in front of you. `trellis` and `wordpress` both include the `any` commands, since
+an image converter or a release script runs fine wherever you are; `--platform any`
+is the one that stays exact, for "what needs no WordPress at all".
 
 The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
 
@@ -71,6 +73,13 @@ The scripts, playbooks, and guides are embedded in the binary, so once it's on y
 Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
 
 `wp-ops init` installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after install — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
+
+Completion goes past the command name into its arguments, off the same manifest that
+renders `--help`: `wp-ops db-pull <TAB>` offers the site names from the Trellis
+project you're standing in, `wp-ops db-pull example.com <TAB>` offers
+`production staging`, an argument that takes a path falls back to ordinary filename
+completion, and anything else prints a one-line hint saying what the argument is.
+Typing a dash offers the command's own flags.
 
 ### As a trellis-cli plugin
 

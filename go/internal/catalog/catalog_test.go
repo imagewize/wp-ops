@@ -344,3 +344,78 @@ func TestExamplesNameTheCommand(t *testing.T) {
 		}
 	}
 }
+
+// TestRunsOnPlatform pins the widening from Phase G item G6: a platform
+// filter answers "what can I run here?", so it admits the @platform any
+// commands alongside its own. The two directions that must stay closed are
+// the ones that would make the flag useless (trellis admitting wordpress,
+// and vice versa) and the one that would make --platform any unaskable.
+func TestRunsOnPlatform(t *testing.T) {
+	cases := []struct {
+		entry, filter string
+		want          bool
+	}{
+		{"trellis", "trellis", true},
+		{"any", "trellis", true},
+		{"wordpress", "trellis", false},
+
+		{"wordpress", "wordpress", true},
+		{"any", "wordpress", true},
+		{"trellis", "wordpress", false},
+
+		// --platform any stays exact: "needs no WordPress at all" is a real
+		// question, and this is the only way left to ask it.
+		{"any", "any", true},
+		{"trellis", "any", false},
+		{"wordpress", "any", false},
+
+		// The unfiltered case, and an entry with no @platform at all.
+		{"trellis", "", true},
+		{"", "", true},
+		{"", "trellis", false},
+	}
+
+	for _, tc := range cases {
+		if got := RunsOnPlatform(tc.entry, tc.filter); got != tc.want {
+			t.Errorf("RunsOnPlatform(%q, %q) = %v, want %v", tc.entry, tc.filter, got, tc.want)
+		}
+	}
+}
+
+// TestFilterByPlatformIncludesAny is TestRunsOnPlatform against the real
+// catalog: the unit test above can't catch a FilterByPlatform that stopped
+// calling it, and the counts are the thing G6 was raised about.
+func TestFilterByPlatformIncludesAny(t *testing.T) {
+	c, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	counts := map[string]int{}
+	for _, e := range c.Entries {
+		counts[e.Platform]++
+	}
+
+	trellis := c.FilterByPlatform("trellis")
+	if want := counts["trellis"] + counts["any"]; len(trellis.Entries) != want {
+		t.Errorf("--platform trellis returned %d entries, want %d (%d trellis + %d any)",
+			len(trellis.Entries), want, counts["trellis"], counts["any"])
+	}
+	for _, e := range trellis.Entries {
+		if e.Platform == "wordpress" {
+			t.Errorf("--platform trellis leaked a wordpress command: %s", e.Key)
+		}
+	}
+
+	wordpress := c.FilterByPlatform("wordpress")
+	if want := counts["wordpress"] + counts["any"]; len(wordpress.Entries) != want {
+		t.Errorf("--platform wordpress returned %d entries, want %d (%d wordpress + %d any)",
+			len(wordpress.Entries), want, counts["wordpress"], counts["any"])
+	}
+
+	anyOnly := c.FilterByPlatform("any")
+	if len(anyOnly.Entries) != counts["any"] {
+		t.Errorf("--platform any returned %d entries, want %d — it must stay exact",
+			len(anyOnly.Entries), counts["any"])
+	}
+}
