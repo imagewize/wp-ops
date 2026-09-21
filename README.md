@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="assets/logo.svg" alt="WordPress Operations Logo" width="128" height="128">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img src="assets/logo.svg" alt="wp-ops wind rose logo" width="128" height="128">
+  </picture>
   <h1>WP OPS</h1>
 </div>
 <div align="center">
@@ -259,6 +262,38 @@ Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Cl
 | Tool | Description | Docs |
 |------|-------------|------|
 | **Server Diagnostics** | Diagnose PHP-FPM, MariaDB, and server issues | [→](docs/troubleshooting/README.md) |
+
+## Wheel of Time Inspiration
+
+Imagewize's projects take their names from *The Wheel of Time* —
+[Aviendha](https://github.com/imagewize/aviendha),
+[Nynaeve](https://github.com/imagewize/nynaeve),
+[Elayne](https://github.com/imagewize/elayne),
+[Aludra](https://github.com/imagewize/aludra),
+[Machin Shin](https://github.com/imagewize/mshin) — and each carries a mark
+drawn from its namesake. wp-ops keeps its plain, descriptive name, because it
+ships as a binary, a Homebrew cask and a trellis-cli plugin and has to be
+typed. It takes its **mark** from the Windfinders.
+
+The Windfinders are the Sea Folk's channelers: they find the wind, bind it to
+work, and bring the ship to whichever port the bargain names.
+
+- **Find, then do** — `wp-ops search`, `wp-ops docs` and `wp-ops list` find a
+  command; then it runs. That two-verb shape is the whole tool, and it is what
+  a Windfinder does with the wind.
+- **Many ports, one navigator** — one binary, and every site, server and
+  environment is a command away.
+- **A wind rose** — the star-shaped figure of wind direction is itself called a
+  wind rose, so the mark is a navigation symbol and a botanical one at once,
+  which is the language the other marks already speak.
+
+It rhymes with Machin Shin without colliding, too: Machin Shin is the wind that
+hunts in the dark, the Windfinder is the wind that carries you where you meant
+to go. Same element, opposite intent.
+
+The mark is an original drawing rather than an adaptation of an existing icon
+set, so it carries no third-party licence. The alternates considered, and the
+reasoning behind the choice, live in [`assets/logos/`](assets/logos/README.md).
 
 ## Requirements
 

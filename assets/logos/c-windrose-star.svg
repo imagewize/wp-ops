@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#21759B">
+  <title>Wind rose, eight equal points</title>
+  <path d="M12 1.5L13.63 8.35L12 12L10.37 8.35Z"/>
+  <path d="M22.5 12L15.65 13.63L12 12L15.65 10.37Z"/>
+  <path d="M12 22.5L10.37 15.65L12 12L13.63 15.65Z"/>
+  <path d="M1.5 12L8.35 10.37L12 12L8.35 13.63Z"/>
+  <path d="M17.66 6.34L14.99 10.85L12 12L13.15 9.01Z"/>
+  <path d="M17.66 17.66L13.15 14.99L12 12L14.99 13.15Z"/>
+  <path d="M6.34 17.66L9.01 13.15L12 12L10.85 14.99Z"/>
+  <path d="M6.34 6.34L10.85 9.01L12 12L9.01 10.85Z"/>
+</svg>

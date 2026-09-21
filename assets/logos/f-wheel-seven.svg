@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+     fill="none" stroke="#21759B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <title>Seven-spoked wheel</title>
+  <circle cx="12" cy="12" r="9"/>
+  <path d="M12 9L12 3"/>
+  <path d="M14.35 10.13L19.04 6.39"/>
+  <path d="M14.92 12.67L20.77 14"/>
+  <path d="M13.3 14.7L15.9 20.11"/>
+  <path d="M10.7 14.7L8.1 20.11"/>
+  <path d="M9.08 12.67L3.23 14"/>
+  <path d="M9.65 10.13L4.96 6.39"/>
+  <circle cx="12" cy="12" r="3"/>
+</svg>

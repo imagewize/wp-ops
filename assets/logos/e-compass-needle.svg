@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+     fill="none" stroke="#21759B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <title>Compass needle</title>
+  <circle cx="12" cy="12" r="9.5"/>
+  <path d="M12 4.5L13.6 9.23L12 12L10.4 9.23Z" fill="#21759B"/>
+  <path d="M12 19.5L10.4 14.77L12 12L13.6 14.77Z" opacity="0.45"/>
+</svg>

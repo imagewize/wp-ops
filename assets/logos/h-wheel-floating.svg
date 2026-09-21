@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+     fill="none" stroke="#21759B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <title>Seven-spoked wheel, floating spokes</title>
+  <circle cx="12" cy="12" r="9.5"/>
+  <path d="M12 8.8L12 4.2"/>
+  <path d="M14.5 10L18.1 7.14"/>
+  <path d="M15.12 12.71L19.6 13.74"/>
+  <path d="M13.39 14.88L15.38 19.03"/>
+  <path d="M10.61 14.88L8.62 19.03"/>
+  <path d="M8.88 12.71L4.4 13.74"/>
+  <path d="M9.5 10L5.9 7.14"/>
+  <circle cx="12" cy="12" r="3.2"/>
+</svg>
