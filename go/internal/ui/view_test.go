@@ -65,15 +65,134 @@ func TestViewBrowse_ServerTagSurvivesNarrowTerminal(t *testing.T) {
 	}
 }
 
-// TestViewBrowse_NoPlatformTag pins the deliberate removal: platform was the
-// quietest signal on the screen and the one most responsible for overflowing
-// the row. DetailBody states it a keystroke later, before anything runs.
-func TestViewBrowse_NoPlatformTag(t *testing.T) {
+// TestViewBrowse_PlatformBadge reverses an earlier decision, deliberately.
+// Platform tags were dropped from this list when rows shared the terminal
+// with a bordered preview pane and could not fit; that pane is gone, the
+// columns are measured rather than assumed (see the width test above), and
+// the list being silent about platform meant "does this need Trellis?" was
+// only answerable after committing to a command. Phase G1,
+// docs/cli-ux-plan.md.
+func TestViewBrowse_PlatformBadge(t *testing.T) {
 	out := browseModel(140, longRowEntries()).viewBrowse()
-	for _, tag := range []string{"[trellis]", "[any]", "[wordpress]"} {
-		if strings.Contains(out, tag) {
-			t.Errorf("viewBrowse() still renders the %s row tag:\n%s", tag, out)
+	for _, badge := range []string{"trellis", "any"} {
+		if !strings.Contains(stripANSI(out), badge) {
+			t.Errorf("viewBrowse() is missing the %q platform badge:\n%s", badge, out)
 		}
+	}
+
+	wp := []catalog.Entry{{Key: "wp-cli/seo/redirect-audit", DisplayCategory: "seo", Platform: "wordpress",
+		Description: "Audit redirects"}}
+	if out := stripANSI(browseModel(140, wp).viewBrowse()); !strings.Contains(out, "wp") {
+		t.Errorf("viewBrowse() is missing the wordpress badge:\n%s", out)
+	}
+}
+
+// TestBrowseLayout_TagsYieldToDescription — the columns that overflowed the
+// old layout now give way instead. Platform outranks server because every
+// row carries a platform; both go before the description drops under
+// minDescWidth.
+func TestBrowseLayout_TagsYieldToDescription(t *testing.T) {
+	entries := longRowEntries()
+
+	wide := browseModel(140, entries).browseLayout(0, len(entries))
+	if !wide.showPlatform || !wide.showServer {
+		t.Errorf("at 140 cols both tag columns should fit, got %+v", wide)
+	}
+
+	narrow := browseModel(60, entries).browseLayout(0, len(entries))
+	if !narrow.showPlatform {
+		t.Errorf("at 60 cols platform should outlast the server column, got %+v", narrow)
+	}
+	if narrow.showServer {
+		t.Errorf("at 60 cols the server column should have yielded, got %+v", narrow)
+	}
+
+	tiny := browseModel(36, entries).browseLayout(0, len(entries))
+	if tiny.showPlatform || tiny.showServer {
+		t.Errorf("at 36 cols both tag columns should yield, got %+v", tiny)
+	}
+	if tiny.descW < 1 {
+		t.Errorf("descW = %d, want at least 1", tiny.descW)
+	}
+}
+
+// TestBrowseLayout_ServerColumnOnlyWhenNeeded — 7 of 80 commands are
+// @runs server, so reserving the column on every screen would cost every
+// description nine cells for a tag almost no row uses.
+func TestBrowseLayout_ServerColumnOnlyWhenNeeded(t *testing.T) {
+	local := []catalog.Entry{
+		{Key: "scripts/images/jpg-to-webp", Platform: "any", Description: "Convert JPG to WebP"},
+	}
+	if l := browseModel(140, local).browseLayout(0, 1); l.showServer {
+		t.Errorf("no visible row runs on the server, but the column was reserved: %+v", l)
+	}
+}
+
+// TestViewCategory_PlatformMix — the category screen's whole job is to point
+// you at a category, and "can I run any of this here?" is part of that
+// choice. Phase G2, docs/cli-ux-plan.md.
+func TestViewCategory_PlatformMix(t *testing.T) {
+	m := Model{
+		stage:  stageCategory,
+		width:  120,
+		height: 40,
+		categories: []categoryOption{
+			{label: "All categories", count: 3, blurb: "Search or browse the whole catalog",
+				mix: platformMix{trellis: 2, wordpress: 1}},
+			{key: "backup", label: "Backup", count: 2, blurb: "Database and file backups",
+				mix: platformMix{trellis: 2}},
+		},
+	}
+
+	out := stripANSI(m.viewCategory())
+	if !strings.Contains(out, " 2 trellis") {
+		t.Errorf("viewCategory() is missing the trellis count:\n%s", out)
+	}
+	if !strings.Contains(out, " 1 wp") {
+		t.Errorf("viewCategory() is missing the wordpress count:\n%s", out)
+	}
+	// A zero count renders as blanks, not "0 any" — a category with nothing
+	// for a platform should read as empty space, not as a row of noise.
+	if strings.Contains(out, "0 any") {
+		t.Errorf("viewCategory() rendered a zero count:\n%s", out)
+	}
+
+	for _, line := range strings.Split(out, "\n") {
+		if n := len([]rune(line)); n > 120 {
+			t.Errorf("category row of %d cells overflows 120:\n%q", n, line)
+		}
+	}
+}
+
+// TestCategoryLayout_MixYieldsToBlurb — on a terminal too narrow to carry
+// both, the blurb keeps the room: the mix is a refinement, the blurb is what
+// tells you what the category is.
+func TestCategoryLayout_MixYieldsToBlurb(t *testing.T) {
+	opts := []categoryOption{{label: "All categories", count: 80, blurb: "Search or browse the whole catalog"}}
+
+	if l := (Model{width: 120, categories: opts}).categoryLayout(); !l.showMix {
+		t.Errorf("at 120 cols the mix column should fit, got %+v", l)
+	}
+	l := (Model{width: 70, categories: opts}).categoryLayout()
+	if l.showMix {
+		t.Errorf("at 70 cols the mix column should have yielded, got %+v", l)
+	}
+	if l.blurbW < minBlurbWidth {
+		t.Errorf("blurbW = %d, want at least %d once the mix yields", l.blurbW, minBlurbWidth)
+	}
+}
+
+// TestCategoryLayout_LabelColumnSizesToContent — the label column was a flat
+// %-22s, six columns wider than the longest label it ever holds.
+func TestCategoryLayout_LabelColumnSizesToContent(t *testing.T) {
+	short := []categoryOption{{label: "Backup"}, {label: "SEO"}}
+	if got := (Model{width: 120, categories: short}).categoryLayout().labelW; got != minLabelWidth {
+		t.Errorf("labelW with short labels = %d, want the %d floor", got, minLabelWidth)
+	}
+
+	long := []categoryOption{{label: strings.Repeat("x", 40)}}
+	if got := (Model{width: 120, categories: long}).categoryLayout().labelW; got != maxLabelWidth {
+		t.Errorf("labelW with a 40-char label = %d, want the %d ceiling", got, maxLabelWidth)
 	}
 }
 

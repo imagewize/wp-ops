@@ -46,6 +46,35 @@ type categoryOption struct {
 	label string
 	count int
 	blurb string
+	mix   platformMix
+}
+
+// platformMix is a category's command count broken down by @platform. It
+// answers the question the category screen could not previously answer —
+// "is there anything in here I can run against the site in front of me?" —
+// without drilling in and reading 18 rows (Phase G1/G2,
+// docs/cli-ux-plan.md).
+type platformMix struct {
+	trellis   int
+	wordpress int
+	any       int
+}
+
+func countPlatforms(entries []catalog.Entry) platformMix {
+	var mix platformMix
+	for _, e := range entries {
+		switch e.Platform {
+		case "trellis":
+			mix.trellis++
+		case "wordpress":
+			mix.wordpress++
+		default:
+			// "any", and anything unset — an entry with no @platform
+			// constrains nothing, which is what "any" means.
+			mix.any++
+		}
+	}
+	return mix
 }
 
 // buildCategoryOptions lists "All categories" followed by every active
@@ -56,27 +85,63 @@ func buildCategoryOptions(c *catalog.Catalog) []categoryOption {
 		label: "All categories",
 		count: len(c.Entries),
 		blurb: "Search or browse the whole catalog",
+		mix:   countPlatforms(c.Entries),
 	}}
 	for _, cat := range c.DisplayCategories() {
+		entries := c.CommandsInDisplay(cat)
 		opts = append(opts, categoryOption{
 			key:   cat,
 			label: catalog.CategoryDisplayNames[cat],
-			count: len(c.CommandsInDisplay(cat)),
+			count: len(entries),
 			blurb: catalog.CategoryBlurbs[cat],
+			mix:   countPlatforms(entries),
 		})
 	}
 	return opts
 }
 
+// Every colour is an AdaptiveColor rather than a bare 256-colour index. The
+// picker renders inline, in whatever terminal the user already has open, and
+// the original palette was picked against a dark background only — grey 245
+// on a light terminal is close to invisible, and 212/214 wash out. Each pair
+// keeps the original dark value and adds a darker light-mode counterpart.
 var (
-	headerStyle         = lipgloss.NewStyle().Bold(true)
-	dimStyle            = lipgloss.NewStyle().Faint(true)
-	cursorStyle         = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
-	serverTag           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
-	errorStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
-	noteStyle           = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	accentColor    = lipgloss.AdaptiveColor{Light: "#af005f", Dark: "212"}
+	warnColor      = lipgloss.AdaptiveColor{Light: "#af5f00", Dark: "214"}
+	errColor       = lipgloss.AdaptiveColor{Light: "#af0000", Dark: "203"}
+	mutedColor     = lipgloss.AdaptiveColor{Light: "#585858", Dark: "245"}
+	trellisColor   = lipgloss.AdaptiveColor{Light: "#005f87", Dark: "117"}
+	wordpressColor = lipgloss.AdaptiveColor{Light: "#00875f", Dark: "114"}
+)
+
+var (
+	headerStyle = lipgloss.NewStyle().Bold(true)
+	dimStyle    = lipgloss.NewStyle().Faint(true)
+	cursorStyle = lipgloss.NewStyle().Bold(true).Foreground(accentColor)
+	// Rows are drawn as separately-styled cells rather than one string run
+	// through a single style, because lipgloss emits a reset after every
+	// Render: wrapping an already-styled substring drops the outer colour
+	// from everything past the inner segment. nameStyle/descStyle give the
+	// two columns different weights (the old list rendered both plain, which
+	// is what made a full screen read as a wall), and the "selected" variants
+	// replace — rather than nest inside — a row-wide cursor style.
+	nameStyle         = lipgloss.NewStyle().Bold(true)
+	selectedNameStyle = lipgloss.NewStyle().Bold(true).Foreground(accentColor)
+	descStyle         = dimStyle
+	selectedDescStyle = lipgloss.NewStyle()
+	// Platform badges. "any" is deliberately faint: it's the majority of the
+	// catalog (32 of 80) and the one value that constrains nothing, so it
+	// should recede while "trellis" and "wp" carry colour.
+	trellisTag          = lipgloss.NewStyle().Foreground(trellisColor)
+	wordpressTag        = lipgloss.NewStyle().Foreground(wordpressColor)
+	anyTag              = dimStyle
+	serverTag           = lipgloss.NewStyle().Foreground(warnColor)
+	errorStyle          = lipgloss.NewStyle().Foreground(errColor)
+	noteStyle           = lipgloss.NewStyle().Foreground(warnColor)
 	footerStyle         = dimStyle
-	categoryHeaderStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("245"))
+	crumbStyle          = lipgloss.NewStyle().Foreground(mutedColor)
+	categoryHeaderStyle = lipgloss.NewStyle().Bold(true).Foreground(mutedColor)
+	countStyle          = dimStyle
 	minPaneHeight       = 10
 	// Name-column bounds for the browse list. The column sizes to the longest
 	// visible basename so short categories don't get a gutter of dead space,
@@ -95,6 +160,26 @@ var (
 	// avoid. 20 rows keeps the list useful while leaving prior output
 	// visible above it, same bargain `fzf --height 40%` makes.
 	maxInlineRows = 20
+	// Tag-column widths for the browse list: "trellis" is the longest
+	// platform badge, "(server)" the only server one.
+	platformColWidth = 7
+	serverColWidth   = 8
+	// minDescWidth is the point below which a tag column is dropped rather
+	// than narrowed further. Tags always yield to the description: the
+	// detail screen repeats them in full a keystroke later, a sentence cut
+	// at 15 characters is just gone.
+	minDescWidth = 20
+	// Category-screen column bounds. The label column used to be a flat
+	// %-22s, six columns wider than the longest label it ever holds ("All
+	// categories", 14) — dead space the platform-mix column can use instead.
+	minLabelWidth = 14
+	maxLabelWidth = 22
+	// mixColWidth is the platform-mix column: "29 trellis" (10), gap,
+	// "19 wp" (5), gap, "32 any" (6).
+	mixColWidth = 25
+	// minBlurbWidth is the floor the mix column will not push a category
+	// blurb below; under it the mix is dropped and the blurb keeps the room.
+	minBlurbWidth = 32
 )
 
 // Model is the Bubble Tea model backing the interactive picker. It replaces
@@ -291,7 +376,6 @@ func wrapBlock(s string, width int) string {
 	}
 	return strings.Join(out, "\n")
 }
-
 
 func (m *Model) cursorEntry() int {
 	if m.cursor >= len(m.filtered) {
@@ -553,18 +637,89 @@ func (m Model) viewCategory() string {
 	b.WriteString(dimStyle.Render("Usage: wp-ops [--help] [--version] <command> [<args>]"))
 	b.WriteString("\n\n")
 
+	l := m.categoryLayout()
 	for i, opt := range m.categories {
-		line := fmt.Sprintf("%-22s (%2d)  %s", opt.label, opt.count, opt.blurb)
-		if i == m.catCursor {
-			b.WriteString(cursorStyle.Render("> " + line))
-		} else {
-			b.WriteString("  " + line)
-		}
+		b.WriteString(m.categoryRow(opt, i == m.catCursor, l))
 		b.WriteString("\n")
 	}
 
 	b.WriteString("\n" + m.footer("↑/↓ move · enter select · esc quit", "↑/↓ · enter · esc"))
 	return b.String()
+}
+
+// categoryLayout apportions the terminal width across the category screen's
+// four columns: label, count, blurb, and the platform mix.
+type categoryLayout struct {
+	labelW, blurbW int
+	showMix        bool
+}
+
+func (m Model) categoryLayout() categoryLayout {
+	total := m.width
+	if total <= 0 {
+		total = fallbackWidth
+	}
+
+	l := categoryLayout{labelW: minLabelWidth}
+	for _, opt := range m.categories {
+		if n := len([]rune(opt.label)); n > l.labelW {
+			l.labelW = n
+		}
+	}
+	if l.labelW > maxLabelWidth {
+		l.labelW = maxLabelWidth
+	}
+
+	// 2 cursor gutter, 1 gap, 4 for "(NN)", 2 gap.
+	l.blurbW = total - l.labelW - 9
+	if l.blurbW-(mixColWidth+2) >= minBlurbWidth {
+		l.showMix = true
+		l.blurbW -= mixColWidth + 2
+	}
+	if l.blurbW < 1 {
+		l.blurbW = 1
+	}
+	return l
+}
+
+func (m Model) categoryRow(opt categoryOption, selected bool, l categoryLayout) string {
+	labelStyle := nameStyle
+	blurbStyle := descStyle
+	gutter := "  "
+	if selected {
+		labelStyle, blurbStyle = selectedNameStyle, selectedDescStyle
+		gutter = cursorStyle.Render("> ")
+	}
+
+	label := fmt.Sprintf("%-*s", l.labelW, truncate(opt.label, l.labelW))
+	count := fmt.Sprintf("(%2d)", opt.count)
+	blurb := truncate(opt.blurb, l.blurbW)
+
+	row := gutter + labelStyle.Render(label) + " " + countStyle.Render(count) + "  "
+	if !l.showMix {
+		return row + blurbStyle.Render(blurb)
+	}
+	return strings.TrimRight(
+		row+blurbStyle.Render(fmt.Sprintf("%-*s", l.blurbW, blurb))+"  "+renderMix(opt.mix),
+		" ")
+}
+
+// renderMix draws a category's platform breakdown as three fixed-width
+// slots, blank where the count is zero. Fixed slots rather than a
+// "9 trellis · 1 wp" join so the three platforms line up into columns down
+// the screen instead of shuffling sideways as counts drop out.
+func renderMix(p platformMix) string {
+	return mixSlot(p.trellis, "trellis", trellisTag) + "  " +
+		mixSlot(p.wordpress, "wp", wordpressTag) + "  " +
+		mixSlot(p.any, "any", anyTag)
+}
+
+func mixSlot(n int, label string, style lipgloss.Style) string {
+	width := 3 + len(label) // "NN " plus the label
+	if n == 0 {
+		return strings.Repeat(" ", width)
+	}
+	return style.Render(fmt.Sprintf("%2d %s", n, label))
 }
 
 // viewBrowse renders the command list as a single full-width column — name,
@@ -589,7 +744,7 @@ func (m Model) viewBrowse() string {
 		crumb = catalog.CategoryDisplayNames[m.browseCategory]
 	}
 	fmt.Fprintf(&b, "%s > %s > %s\n\n",
-		headerStyle.Render("wp-ops"), crumb, string(m.filterQuery))
+		headerStyle.Render("wp-ops"), crumbStyle.Render(crumb), string(m.filterQuery))
 
 	visible := m.viewportHeight() - 6
 	if visible < 5 {
@@ -602,13 +757,7 @@ func (m Model) viewBrowse() string {
 		b.WriteString("\n")
 	}
 
-	nameW := m.nameColumnWidth(start, end)
-	descW := m.width
-	if descW <= 0 {
-		descW = fallbackWidth
-	}
-	// 2 for the cursor gutter, 2 for the gap after the name column.
-	descW -= nameW + 4
+	l := m.browseLayout(start, end)
 
 	// lastCat starts empty so the window's first visible row always gets a
 	// header, even mid-scroll — reorients the user after paging rather than
@@ -624,13 +773,7 @@ func (m Model) viewBrowse() string {
 			lastCat = e.DisplayCategory
 		}
 
-		name := truncate(filepath.Base(e.Key), nameW)
-		row := fmt.Sprintf("%-*s  %s", nameW, name, m.describeRow(e, descW))
-		if i == m.cursorEntry() {
-			b.WriteString(cursorStyle.Render("> " + row))
-		} else {
-			b.WriteString("  " + row)
-		}
+		b.WriteString(browseRow(e, i == m.cursorEntry(), l))
 		b.WriteString("\n")
 	}
 
@@ -657,31 +800,115 @@ func (m Model) footer(full, short string) string {
 	return footerStyle.Render(truncate(hints, width))
 }
 
-// describeRow renders a row's description column, right-aligning the
-// "(server)" warning within it when the width allows. Platform ("[trellis]",
-// "[wordpress]") deliberately no longer appears per row: it was the quietest
-// signal on the screen and the one most responsible for overflowing the row,
-// and DetailBody now states it in full a keystroke later, before anything
-// runs. "(server)" stays because "this will not run against your local site"
-// is worth knowing while still scanning the list.
-func (m Model) describeRow(e catalog.Entry, width int) string {
-	tag := ""
-	if e.RunsOn == "server" {
-		tag = " (server)"
+// rowLayout is how one browse screen's width is divided between the name,
+// description, and the two right-hand tag columns. Computed once per frame
+// from the rows actually in view, not per row, so the columns line up.
+type rowLayout struct {
+	nameW, descW int
+	showPlatform bool
+	showServer   bool
+}
+
+// browseLayout apportions the terminal width across the browse list's
+// columns.
+//
+// Platform tags were removed from this list once before, when rows shared
+// the terminal with a bordered preview pane and a 28-column name plus
+// "[platform]" plus "(server)" could not fit in m.width*2/5. That pane is
+// gone: the list owns the full width now, and the columns are measured
+// rather than assumed, so the overflow that justified dropping them cannot
+// recur — see TestViewBrowse_RowsFitTerminalWidth. Platform is back because
+// "will this run against the site in front of me?" is the question the list
+// was silent on, and the answer arrived only after committing to a command
+// (Phase G1, docs/cli-ux-plan.md).
+func (m Model) browseLayout(start, end int) rowLayout {
+	total := m.width
+	if total <= 0 {
+		total = fallbackWidth
 	}
-	descW := width - len(tag)
-	if descW < 12 {
-		// Too narrow to carry both; the description wins.
-		descW, tag = width, ""
+
+	l := rowLayout{nameW: m.nameColumnWidth(start, end)}
+	// 2 for the cursor gutter, 2 for the gap after the name column.
+	avail := total - l.nameW - 4
+
+	// The server column is reserved only when a row in view actually needs
+	// it: 7 of 80 commands are @runs server, so holding 9 columns open on
+	// every screen would cost every description more than the tag is worth.
+	for i := start; i < end && i < len(m.filtered); i++ {
+		if m.filtered[i].RunsOn == "server" {
+			l.showServer = true
+			break
+		}
 	}
-	if descW < 1 {
-		return ""
+
+	// Both tag columns yield to the description before it gets too narrow to
+	// read, and platform outranks server: every row carries a platform,
+	// while "(server)" applies to a handful.
+	l.descW = avail
+	if avail-(platformColWidth+1) >= minDescWidth {
+		l.showPlatform = true
+		l.descW -= platformColWidth + 1
 	}
-	desc := fmt.Sprintf("%-*s", descW, truncate(e.Description, descW))
-	if tag == "" {
-		return strings.TrimRight(desc, " ")
+	if l.showServer && l.descW-(serverColWidth+1) >= minDescWidth {
+		l.descW -= serverColWidth + 1
+	} else {
+		l.showServer = false
 	}
-	return desc + serverTag.Render(tag)
+	if l.descW < 1 {
+		l.descW = 1
+	}
+	return l
+}
+
+// platformBadge renders an entry's @platform as a short tag. "wordpress" is
+// abbreviated because the column is sized by "trellis" and a seven-column
+// budget is worth more to the description than the extra six characters.
+func platformBadge(platform string) (string, lipgloss.Style) {
+	switch platform {
+	case "trellis":
+		return "trellis", trellisTag
+	case "wordpress":
+		return "wp", wordpressTag
+	default:
+		return "any", anyTag
+	}
+}
+
+// browseRow renders one command row: name, description, platform badge, and
+// the "(server)" warning.
+//
+// The tail is built right-to-left so a row with nothing to its right ends at
+// its last word instead of in a run of terminal-painted spaces — a cell is
+// padded only when a non-empty cell follows it. Column alignment survives
+// that because every column starts at a fixed offset; only the last one on
+// each row is ragged, and it has nothing to line up with.
+func browseRow(e catalog.Entry, selected bool, l rowLayout) string {
+	nameCell, descCell := nameStyle, descStyle
+	gutter := "  "
+	if selected {
+		nameCell, descCell = selectedNameStyle, selectedDescStyle
+		gutter = cursorStyle.Render("> ")
+	}
+
+	tail := ""
+	if l.showServer && e.RunsOn == "server" {
+		tail = " " + serverTag.Render("(server)")
+	}
+	if l.showPlatform {
+		badge, style := platformBadge(e.Platform)
+		if tail != "" {
+			badge = fmt.Sprintf("%-*s", platformColWidth, badge)
+		}
+		tail = " " + style.Render(badge) + tail
+	}
+
+	desc := truncate(e.Description, l.descW)
+	if tail != "" {
+		desc = fmt.Sprintf("%-*s", l.descW, desc)
+	}
+
+	name := fmt.Sprintf("%-*s", l.nameW, truncate(filepath.Base(e.Key), l.nameW))
+	return gutter + nameCell.Render(name) + "  " + descCell.Render(desc) + tail
 }
 
 // nameColumnWidth sizes the name column to the longest basename actually on
