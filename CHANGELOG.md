@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.25.0] - 2026-09-21
+
+### Added
+
+- **The interactive picker now says which stack each command needs.** 29 of the 80 commands need Trellis, 19 need some WordPress install, 32 need neither — and the picker said nothing about it until after a command had been selected and the argument prompt was already up. `@platform` is on every command in the catalog; it just never reached the screens where the choice is made. See `docs/cli-ux-plan.md` Phase G.
+  - Browse rows carry a platform badge (`trellis` / `wp` / `any`) in a right-hand tag column, beside the existing `(server)` warning. `any` renders faint — it constrains nothing, so it recedes — but is still printed, because a blank reads as missing data rather than as "no constraint".
+  - Row tags were removed during the Phase F rewrite because they overflowed a list that then shared the terminal with a bordered preview pane. That pane is gone, and the new `browseLayout` measures the columns instead of assuming them: a tag column is dropped outright rather than let a description fall below 20 cells, platform outranking `(server)`, and the server column is only reserved when a row in view actually needs it.
+  - The category screen carries a platform breakdown per category — `9 trellis  1 wp` — in fixed-width slots so the three platforms line up down the screen. It yields to the category blurb below roughly 82 columns. Its label column now sizes to the longest label present instead of a flat 22 columns.
+- **The argument prompt names the command you're about to run.** It printed a usage block and nothing else; the browse list's `wp-ops > Backup >` breadcrumb stopped at the moment of selection. It now reads `wp-ops > Backup > database-pull`, with the category taken from the command's own entry (so it's correct when the command was reached through "All categories" or by typing a filter).
+
+### Changed
+
+- **The picker's palette adapts to light terminals.** Every colour was a bare 256-colour index picked against a dark background; grey 245 is close to invisible on a light one, and the picker renders inline in whatever terminal is already open. Each is now a `lipgloss.AdaptiveColor` keeping its dark value and adding a light-mode counterpart, plus two new hues for the platform badges.
+- **Command names render bold and descriptions faint in the picker**, instead of both at the same weight — the thing that made a full browse screen read as a wall of text. Rows are assembled from separately-styled cells rather than one string run through a single style, which also fixes a latent bug: lipgloss emits a reset after every render, so the old row-wide cursor style was silently dropped from the point of any nested tag onward. A selected row no longer paints its whole description pink.
+
+
 ## [5.24.6] - 2026-09-20
 
 ### Fixed
