@@ -180,6 +180,11 @@ var (
 	// minBlurbWidth is the floor the mix column will not push a category
 	// blurb below; under it the mix is dropped and the blurb keeps the room.
 	minBlurbWidth = 32
+	// promptChromeRows is everything viewPrompt draws around the detail
+	// viewport — breadcrumb, two blank lines, the prompt, the footer and
+	// their separators — which the viewport's own height has to leave room
+	// for.
+	promptChromeRows = 8
 )
 
 // Model is the Bubble Tea model backing the interactive picker. It replaces
@@ -336,8 +341,7 @@ func (m *Model) syncDetail() {
 // the remaining rows as blanks, so a command declaring no arguments used to
 // push the prompt nine empty lines down the screen.
 func detailHeight(body string, budget int) int {
-	// 6 covers the blank line, prompt, and footer rendered beneath it.
-	max := budget - 6
+	max := budget - promptChromeRows
 	if max < minPaneHeight {
 		max = minPaneHeight
 	}
@@ -971,6 +975,22 @@ func truncate(s string, n int) string {
 // actually needed: while typing the values it documents.
 func (m Model) viewPrompt() string {
 	var b strings.Builder
+
+	// The same breadcrumb stageBrowse prints. Without it this screen opened
+	// with nothing but a usage line, so the one place you have to decide
+	// what to type was also the one place that never said which command you
+	// were about to run (Phase G4, docs/cli-ux-plan.md). Taken from the
+	// selected entry's own category rather than m.browseCategory, which is
+	// empty whenever the user reached the command from "All categories" or
+	// by typing a filter.
+	crumb := catalog.CategoryDisplayNames[m.selected.DisplayCategory]
+	if crumb == "" {
+		crumb = "All categories"
+	}
+	fmt.Fprintf(&b, "%s > %s > %s\n\n",
+		headerStyle.Render("wp-ops"),
+		crumbStyle.Render(crumb),
+		nameStyle.Render(m.selected.CommandName()))
 
 	b.WriteString(m.detail.View())
 	b.WriteString("\n\n")

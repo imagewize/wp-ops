@@ -196,6 +196,29 @@ func TestCategoryLayout_LabelColumnSizesToContent(t *testing.T) {
 	}
 }
 
+// TestViewPrompt_Breadcrumb — this screen is where you decide what to type,
+// and before Phase G4 it was the only screen that never named the command
+// you were about to run. The category comes from the entry itself, not from
+// m.browseCategory, which is empty whenever the command was reached through
+// "All categories" or a typed filter.
+func TestViewPrompt_Breadcrumb(t *testing.T) {
+	m := Model{
+		stage:  stageFreeText,
+		width:  120,
+		height: 40,
+		detail: viewport.New(120, minPaneHeight),
+		selected: catalog.Entry{Key: "trellis/backup/database-pull", ShortName: "database-pull",
+			DisplayCategory: "backup", Platform: "trellis", Description: "Pull a database"},
+		browseCategory: "",
+	}
+	m.input = freshInput("site")
+
+	out := stripANSI(m.viewPrompt())
+	if !strings.Contains(out, "wp-ops > Backup > database-pull") {
+		t.Errorf("viewPrompt() is missing the breadcrumb:\n%s", out)
+	}
+}
+
 // TestNameColumnWidth_SizesToVisibleRows keeps a narrow category from
 // inheriting the widest category's gutter, while clamping so one long
 // outlier can't push every description off the right edge.
@@ -252,8 +275,8 @@ func TestDetailHeight_ShrinksToContent(t *testing.T) {
 	}
 
 	long := strings.Repeat("line\n", 40)
-	if got := detailHeight(long, maxInlineRows); got != maxInlineRows-6 {
-		t.Errorf("detailHeight(40-line body) = %d, want the %d budget", got, maxInlineRows-6)
+	if got := detailHeight(long, maxInlineRows); got != maxInlineRows-promptChromeRows {
+		t.Errorf("detailHeight(40-line body) = %d, want the %d budget", got, maxInlineRows-promptChromeRows)
 	}
 }
 
