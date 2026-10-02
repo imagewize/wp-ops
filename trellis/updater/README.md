@@ -56,10 +56,12 @@ The updater script specifically preserves the following files/directories:
 - `database-backup.yml`, `database-pull.yml`, `database-push.yml` - Database management
 - `files-backup.yml`, `files-pull.yml`, `files-push.yml` - Uploads management
 - `uploads.yml` - Uploads sync playbook
+- `alantin-*.yml` - alant.in (Laravel) playbooks: databases, workers, wildcard certificate
 
 ### Custom Nginx Configurations
 - `nginx-includes/` - Custom Nginx configs (SEO redirects, asset expiry, security rules)
 - `roles/nginx/templates/nginx.conf.j2` - Custom Nginx main config (rate limiting, etc.)
+- `roles/wordpress-setup/tasks/nginx.yml` - Patched core task file: the SSL cert/key copy tasks skip sites with `ssl.remote: true` (cert issued on the server, e.g. alant.in wildcard), plus a guard that fails early if that cert is missing. Excluded from the rsync, so **upstream changes to it are flagged in the excluded-file diff check and must be merged by hand**. Without the patch, provisioning alant.in fails trying to copy a cert from the control machine
 
 ### Custom Documentation
 - `docs/` - Project-specific documentation
@@ -74,6 +76,7 @@ After upgrading, you should manually review and potentially merge changes from t
    - `roles/mariadb/templates/` - If you added custom MariaDB settings
    - `roles/wordpress-setup/templates/` - If you modified PHP-FPM pool templates
    - `roles/nginx/templates/nginx.conf.j2` - If you customized rate limiting or other Nginx settings
+   - `roles/wordpress-setup/tasks/nginx.yml` - Carries the `ssl.remote` patch; re-apply it on top of any upstream change
 
 2. **New variables** - Check upstream `main.yml` files for new useful variables you may want to adopt
 

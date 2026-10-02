@@ -241,6 +241,8 @@ rsync -av --delete \
   --exclude="CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md" \
   --exclude="roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2" \
   --exclude="roles/nginx/templates/nginx.conf.j2" \
+  --exclude="roles/wordpress-setup/tasks/nginx.yml" \
+  --exclude="alantin-*.yml" \
   $TEMP_DIR/trellis/ $TRELLIS_DIR/
 
 echo "✓ Trellis files updated"
@@ -262,6 +264,7 @@ EXCLUDED_FILES=(
   "group_vars/staging/wordpress_sites.yml"
   "roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2"
   "roles/nginx/templates/nginx.conf.j2"
+  "roles/wordpress-setup/tasks/nginx.yml"
 )
 
 UPSTREAM_CHANGES_DIR=$DIFF_DIR/excluded-file-diffs
