@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.27.0] - 2026-10-10
+
+### Changed
+
+- **`publish-post` turns the site-name title suffix off, and the meta-title limit is 60.** The SEO Framework appends "| Site" to every title, which cost about 12 of the roughly 55 characters a title can use, and a blog post on an unbranded topic gets nothing back for them. Google now shows the site name beside the title link anyway. `publish-post` sets `_tsf_title_no_blogname` to 1 on every post it publishes, so the meta title in the draft header is the whole title. Existing posts are untouched, so a before/after comparison stays clean.
+  - Both `publish-post` and `verify-post` warned above 55 characters on the assumption that the suffix was appended. They now warn above 60, and the message no longer mentions a suffix.
+  - `verify-post` gains a check that the suffix is off, as a warning rather than a failure: posts published before this change legitimately keep it.
+  - The `publish_post` docs now say plainly that this is The SEO Framework only. Its postmeta keys are the only ones written, so a site on Yoast SEO or another plugin gets a meta title, description and suffix setting that nothing reads.
+
 ## [5.26.0] - 2026-09-21
 
 ### Added

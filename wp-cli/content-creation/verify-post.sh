@@ -81,6 +81,7 @@ echo "ldjson=" . substr_count( $c, 'application/ld+json' ) . "\n";
 echo "scripts=" . substr_count( $c, '<script' ) . "\n";
 echo "thumbnail=" . ( get_post_thumbnail_id( $post->ID ) ?: '0' ) . "\n";
 echo "meta_title=" . ( get_post_meta( $post->ID, '_genesis_title', true ) ?: '' ) . "\n";
+echo "title_no_blogname=" . ( get_post_meta( $post->ID, '_tsf_title_no_blogname', true ) ?: '0' ) . "\n";
 echo "meta_desc_len=" . strlen( (string) get_post_meta( $post->ID, '_genesis_description', true ) ) . "\n";
 preg_match_all( '/<!-- wp:([a-z0-9-]+\/[a-z0-9-]+) (\{[^}]*\} )?\/-->/', $c, $m );
 echo "selfclosing=" . count( $m[0] ) . "\n";
@@ -160,10 +161,15 @@ else
     print_pass "No self-closing custom blocks (none can have saved empty)"
 fi
 if [ -n "$META_TITLE" ]; then
-    if [ "${#META_TITLE}" -gt 55 ]; then
-        print_warn "Meta title is ${#META_TITLE} chars (>55) — truncates once '| Site' is appended"
+    if [ "${#META_TITLE}" -gt 60 ]; then
+        print_warn "Meta title is ${#META_TITLE} chars (>60) — truncates in SERPs"
     else
         print_pass "Meta title set (${#META_TITLE} chars)"
+    fi
+    if [ "$(val title_no_blogname)" = "1" ]; then
+        print_pass "Site-name title suffix is off (_tsf_title_no_blogname)"
+    else
+        print_warn "Site-name suffix is still on — the SERP title gets '| Site' appended; set _tsf_title_no_blogname to 1"
     fi
 else
     print_warn "No _genesis_title set — the SEO plugin will fall back to the post title"
