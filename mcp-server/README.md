@@ -85,6 +85,11 @@ Scaffold — twenty tools implemented so far:
   back off it, and every other check passes because the source and the stored bytes still agree.
   `dryRun: true` runs the header parse and preflight checks with
   no writes and doesn't need `confirm`; a real write requires `confirm: true`.
+  **SEO plugin: The SEO Framework only.** The meta title and description go to its postmeta keys
+  (`_genesis_title`, `_genesis_description`), and the title-suffix switch is `_tsf_title_no_blogname`.
+  No other SEO plugin reads those keys. On a site running Yoast SEO or another plugin the post still
+  publishes and the checks pass, but the meta title, meta description and suffix setting are written
+  and then ignored, and the plugin falls back to its own defaults. Set them in that plugin instead.
 - **`verify_post`** — read-only companion to `publish_post`: compares what's STORED in `post_content`
   against what actually RENDERS on the live page for an already-published post. Catches JSON-LD stripped
   by kses, self-closing custom blocks that saved empty, broken internal links, and a missing featured

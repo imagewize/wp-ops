@@ -14,6 +14,8 @@
 #     rebuilt per target rather than shared
 #   - sets The SEO Framework meta (_genesis_title / _genesis_description) and
 #     turns the site-name title suffix off (_tsf_title_no_blogname)
+#     (The SEO Framework only: another SEO plugin, e.g. Yoast, does not read
+#     these keys, so the title, description and suffix are written and ignored)
 #   - assigns terms, warning rather than silently creating unknown tags
 #   - preflights: duplicate slug, short body, JSON-LD block count
 #   - verifies AFTER the write that the stored bytes and <script> count match
