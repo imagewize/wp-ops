@@ -12,7 +12,8 @@
 #     rewrites the Article JSON-LD `image` field to the resulting *verified*
 #     upload URL — the attachment URL differs per environment, so the body is
 #     rebuilt per target rather than shared
-#   - sets The SEO Framework meta (_genesis_title / _genesis_description)
+#   - sets The SEO Framework meta (_genesis_title / _genesis_description) and
+#     turns the site-name title suffix off (_tsf_title_no_blogname)
 #   - assigns terms, warning rather than silently creating unknown tags
 #   - preflights: duplicate slug, short body, JSON-LD block count
 #   - verifies AFTER the write that the stored bytes and <script> count match
@@ -197,7 +198,7 @@ print_info "Meta desc:  ${#META_DESC} chars"
 print_info "Tags:       ${TAGS:-<none>}"
 print_info "Category:   ${CATEGORY:-<none>}"
 
-[ "${#META_TITLE}" -gt 55 ] && print_warn "Meta title is ${#META_TITLE} chars (>55) — will truncate once '| Site' is appended"
+[ "${#META_TITLE}" -gt 60 ] && print_warn "Meta title is ${#META_TITLE} chars (>60) — will truncate in SERPs (the site-name suffix is turned off)"
 [ "${#META_DESC}" -gt 155 ] && print_warn "Meta description is ${#META_DESC} chars (>155) — will truncate in SERPs"
 
 STAMP=$(date +%s)
@@ -395,6 +396,7 @@ if ( is_wp_error( \$id ) ) { echo "ERROR: " . \$id->get_error_message() . "\n"; 
 \$meta_desc  = base64_decode( '$(printf '%s' "$META_DESC" | base64)' );
 if ( \$meta_title ) { update_post_meta( \$id, '_genesis_title', \$meta_title ); }
 if ( \$meta_desc )  { update_post_meta( \$id, '_genesis_description', \$meta_desc ); }
+update_post_meta( \$id, '_tsf_title_no_blogname', 1 );
 if ( '$thumb_id' )  { update_post_meta( \$id, '_thumbnail_id', (int) '$thumb_id' ); }
 
 \$cat = trim( base64_decode( '$(printf '%s' "$CATEGORY" | base64)' ) );
