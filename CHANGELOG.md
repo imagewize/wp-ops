@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.28.1] - 2026-10-12
+
+### Fixed
+
+- **`wp_cli` no longer asks for `confirm` on read-only meta and term lookups.** `isReadOnlyWpCommand()` only knew one command whose verb is the third token (`cron event list`), so `wp post meta list 123` fell on the "needs confirm" side, even though it only reads. That lookup is the first step of every live-post edit (`_thumbnail_id`, `_genesis_title`, `_tsf_title_no_blogname`), so a pure read kept producing a confirm prompt, which weakens what the prompt means for real writes.
+  - Added nested resources: `post meta|term`, `term meta`, `user meta|term`, `comment meta`, `network meta`, `menu item|location`, `theme mod`, `language core|plugin|theme`. The third token must still be a read verb (`list`, `get`, `pluck`, ...).
+  - Writes stay gated: `update`, `add`, `delete`, `patch`, `set`, `install` are not read verbs. `config` still always needs `confirm`.
+  - Checked against 21 cases (reads pass, writes on each new resource refused, existing `cron`/`config` behavior unchanged).
+
 ## [5.28.0] - 2026-10-12
 
 ### Fixed
