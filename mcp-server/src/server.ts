@@ -679,11 +679,12 @@ export function createServer(): McpServer {
   server.tool(
     "publish_post",
     "Publish or update a WordPress blog post from a local HTML draft carrying the `<!-- SUGGESTED ... -->` " +
-      "header (slug, title, meta title, meta description, tags, category). Parses that header, strips it from " +
-      "the body, writes the post, sets The SEO Framework meta and terms, and then VERIFIES that the stored " +
+      "header (slug, title, meta title, meta description, tags, category). Parses that header, strips it and " +
+      "every other leading HTML comment (NOTE, FEATURED IMAGE, …) from the body, writes the post, sets The SEO Framework meta and terms, and then VERIFIES that the stored " +
       "bytes and <script>/JSON-LD counts match the source — the failure this guards against (kses stripping " +
       "schema, a self-closing block saving empty) is silent and invisible in a post_content diff. A draft " +
-      "containing a self-closing custom block is REFUSED before the write unless allowSelfClosingBlocks is set. " +
+      "containing a self-closing custom block is REFUSED before the write unless allowSelfClosingBlocks is set, " +
+      "and one with a non-block HTML comment left in the body (a stray note) unless allowHtmlComments is set. " +
       "Requires confirm: true, only after explicit user approval.",
     {
       site: siteSchema.describe("Site key from the wp-ops site registry (config/sites.json)"),
@@ -728,6 +729,13 @@ export function createServer(): McpServer {
             "Those save EMPTY via WP-CLI, so this is refused by default; only correct for a genuinely " +
             "dynamic, server-rendered block."
         ),
+      allowHtmlComments: z
+        .boolean()
+        .default(false)
+        .describe(
+          "Publish even though the body contains non-block HTML comments (`<!-- NOTE: … -->`, `<!-- CTA: … -->`) " +
+            "after the header is stripped. They ship in the public page source, so this is refused by default."
+        ),
       allowSchemaRegression: z
         .boolean()
         .default(false)
@@ -754,6 +762,7 @@ export function createServer(): McpServer {
       imageAlt,
       imageAttachmentId,
       allowSelfClosingBlocks,
+      allowHtmlComments,
       allowSchemaRegression,
       dryRun,
       confirm,
@@ -774,6 +783,7 @@ export function createServer(): McpServer {
           imageAlt,
           imageAttachmentId,
           allowSelfClosingBlocks,
+          allowHtmlComments,
           allowSchemaRegression,
           dryRun,
         });

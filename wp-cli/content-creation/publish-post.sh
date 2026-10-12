@@ -55,6 +55,7 @@
 # @flag     --status     optional  {publish|draft}  Post status (default: publish)
 # @flag     --allow-self-closing-blocks  optional  Publish even though self-closing custom blocks will save empty
 # @flag     --allow-schema-regression    optional  With --update, publish even though it drops live Article schema fields
+# @flag     --allow-html-comments        optional  Publish even though the body has non-block HTML comments (stray notes)
 # @flag     --dry-run    optional  Parse and preflight only; make no changes
 # @example  wp-ops publish-post post.html
 # @example  wp-ops publish-post post.html example.com production --image featured.jpg
@@ -140,6 +141,7 @@ POST_STATUS="publish"
 DRY_RUN="no"
 ALLOW_SELF_CLOSING="no"
 ALLOW_SCHEMA_REGRESSION="no"
+ALLOW_HTML_COMMENTS="no"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -149,13 +151,14 @@ while [ $# -gt 0 ]; do
         --status)  POST_STATUS="$2"; shift 2 ;;
         --allow-self-closing-blocks) ALLOW_SELF_CLOSING="yes"; shift ;;
         --allow-schema-regression)   ALLOW_SCHEMA_REGRESSION="yes"; shift ;;
+        --allow-html-comments)       ALLOW_HTML_COMMENTS="yes"; shift ;;
         --dry-run) DRY_RUN="yes";   shift ;;
         *) print_error "Unknown option: $1"; exit 1 ;;
     esac
 done
 
 if [ -z "$DRAFT_FILE" ]; then
-    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--allow-self-closing-blocks] [--allow-schema-regression] [--dry-run]"
+    print_error "Usage: $0 <draft-file> [site-name] [local|production|both] [--image f] [--alt t] [--update id] [--status s] [--allow-self-closing-blocks] [--allow-schema-regression] [--allow-html-comments] [--dry-run]"
     exit 1
 fi
 [ ! -f "$DRAFT_FILE" ] && { print_error "Draft file not found: $DRAFT_FILE"; exit 1; }
@@ -205,12 +208,47 @@ print_info "Category:   ${CATEGORY:-<none>}"
 
 STAMP=$(date +%s)
 
+# Strip what a draft carries for humans: the SUGGESTED header, every other
+# leading HTML comment (NOTE, PAGE, FEATURED IMAGE, …, single- or multi-line)
+# and Blade doc-comments anywhere. Whatever is left ships in the public page
+# source, and no later check can notice, because the stored bytes match this
+# stripped body exactly (#246). Same rule as stripDraftHeader() in the MCP's
+# publishPost.ts and as import-page-draft.sh — keep the three in step.
+strip_draft_comments() {
+    python3 - "$1" "$2" <<'PY'
+import re, sys
+s = open(sys.argv[1], encoding='utf-8').read()
+s = re.sub(r'^[ \t]*\{\{--.*?--\}\}[ \t]*\n?', '', s, flags=re.S | re.M)
+s = re.sub(r'^<!--\s*SUGGESTED .*?-->[ \t]*\n?', '', s, flags=re.M)
+while True:
+    t = s.lstrip()
+    m = re.match(r'<!--(?!\s*/?wp:).*?-->', t, re.S)
+    if not m:
+        s = t
+        break
+    s = t[m.end():]
+open(sys.argv[2], 'w', encoding='utf-8').write(s)
+PY
+}
+
+# Prints each non-block HTML comment left in a stripped body, one per line —
+# stray notes (`<!-- CTA: … -->`) that would ship in the page source. Core's
+# <!--more--> and <!--nextpage--> are content, not notes.
+stray_html_comments() {
+    python3 - "$1" <<'PY'
+import re, sys
+s = open(sys.argv[1], encoding='utf-8').read()
+for c in re.findall(r'<!--(?!\s*/?wp:)(?!\s*(?:more|nextpage|noteaser)\b).*?-->', s, re.S):
+    print(re.sub(r'\s+', ' ', c)[:70])
+PY
+}
+
 # Write the header-stripped body to $1. Kept as a function because the Article
 # JSON-LD `image` is rewritten per environment (attachment URLs differ), so the
 # body is rebuilt for each target rather than shared.
 prepare_body() {
     local out="$1" image_url="$2"
-    grep -v '^<!-- SUGGESTED ' "$DRAFT_FILE" | grep -v '^{{--' | sed '/./,$!d' > "$out"
+    strip_draft_comments "$DRAFT_FILE" "$out"
 
     if [ -n "$image_url" ]; then
         # Parse the JSON properly rather than sed-ing at it: the Article block is
@@ -287,6 +325,22 @@ if [ -n "$SELF_CLOSING_NAMES" ]; then
         echo "        These save EMPTY when written via WP-CLI. Hand-build the full serialized" >&2
         echo "        markup, or pass --allow-self-closing-blocks to publish anyway (only correct" >&2
         echo "        for a genuinely dynamic, server-rendered block)." >&2
+        rm -f "$PREFLIGHT_FILE"; exit 1
+    fi
+fi
+# Same reasoning: an HTML comment is invisible on the page, so a stray note
+# passes every visual and byte-level check and ships in the public source.
+STRAY_COMMENTS=$(stray_html_comments "$PREFLIGHT_FILE")
+if [ -n "$STRAY_COMMENTS" ]; then
+    STRAY_COUNT=$(printf '%s\n' "$STRAY_COMMENTS" | wc -l | tr -d ' ')
+    STRAY_FIRST=$(printf '%s\n' "$STRAY_COMMENTS" | head -1)
+    if [ "$ALLOW_HTML_COMMENTS" == "yes" ]; then
+        print_warn "$STRAY_COUNT non-block HTML comment(s) in the body, e.g. $STRAY_FIRST"
+        print_warn "Publishing anyway (--allow-html-comments) — they ship in the page source."
+    else
+        print_error "Draft body contains $STRAY_COUNT non-block HTML comment(s), e.g. $STRAY_FIRST"
+        echo "        These are stored and shipped in the public page source. Remove them, or" >&2
+        echo "        pass --allow-html-comments if they are intended." >&2
         rm -f "$PREFLIGHT_FILE"; exit 1
     fi
 fi

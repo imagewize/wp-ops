@@ -86,6 +86,9 @@ echo "meta_desc_len=" . strlen( (string) get_post_meta( $post->ID, '_genesis_des
 preg_match_all( '/<!-- wp:([a-z0-9-]+\/[a-z0-9-]+) (\{[^}]*\} )?\/-->/', $c, $m );
 echo "selfclosing=" . count( $m[0] ) . "\n";
 echo "selfclosing_names=" . implode( ',', array_unique( $m[1] ) ) . "\n";
+preg_match_all( '/<!--(?!\s*\/?wp:)(?!\s*(?:more|nextpage|noteaser)\b).*?-->/s', $c, $hc );
+echo "html_comments=" . count( $hc[0] ) . "\n";
+echo "html_comment_first=" . ( $hc[0] ? substr( preg_replace( '/\s+/', ' ', $hc[0][0] ), 0, 70 ) : '' ) . "\n";
 preg_match_all( '/href="(\/[^"#][^"]*)"/', $c, $lm );
 echo "internal_links=" . count( array_unique( $lm[1] ) ) . "\n";
 echo "internal_list=" . implode( ' ', array_unique( $lm[1] ) ) . "\n";
@@ -137,6 +140,8 @@ META_TITLE=$(val meta_title)
 META_DESC_LEN=$(val meta_desc_len 0)
 SELFCLOSING=$(val selfclosing 0)
 SELFCLOSING_NAMES=$(val selfclosing_names)
+HTML_COMMENTS=$(val html_comments 0)
+HTML_COMMENT_FIRST=$(val html_comment_first)
 INTERNAL_LINKS=$(val internal_links 0)
 INTERNAL_LIST=$(val internal_list)
 
@@ -159,6 +164,15 @@ if [ "$SELFCLOSING" -gt 0 ]; then
     FAILED=1
 else
     print_pass "No self-closing custom blocks (none can have saved empty)"
+fi
+# A warning, not a failure: the post is live either way and an intended comment
+# is possible. A leaked draft note is invisible on the page and only shows up in
+# the source (#246).
+if [ "$HTML_COMMENTS" -gt 0 ]; then
+    print_warn "$HTML_COMMENTS non-block HTML comment(s) in post_content, e.g. $HTML_COMMENT_FIRST"
+    echo "        They ship in the public page source; remove them if they are draft notes."
+else
+    print_pass "No non-block HTML comments"
 fi
 if [ -n "$META_TITLE" ]; then
     if [ "${#META_TITLE}" -gt 60 ]; then

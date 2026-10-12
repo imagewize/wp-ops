@@ -60,14 +60,34 @@ export function parseDraftHeader(raw: string): DraftHeader {
   };
 }
 
-// Strip the SUGGESTED header and any Blade doc-comments — WordPress would
-// otherwise store them as literal text in post_content.
+// Strip what a draft carries for humans before the first block: the SUGGESTED
+// header, and every other leading HTML comment (NOTE, PAGE, FEATURED IMAGE, …),
+// single- or multi-line, plus Blade doc-comments anywhere. Anything left in
+// post_content ships in the public page source, and verify_post cannot notice:
+// the stored bytes match the stripped source exactly (#246).
+//
+// The same rule lives in publish-post.sh and import-page-draft.sh (python3, so
+// multi-line comments work) — keep the three in step; drifting copies are how
+// #244 reached the CLI and not the MCP.
 export function stripDraftHeader(raw: string): string {
-  return raw
-    .split("\n")
-    .filter((l) => !/^<!--\s*SUGGESTED /.test(l) && !/^\{\{--/.test(l))
-    .join("\n")
-    .replace(/^\s*\n+/, "");
+  let s = raw
+    .replace(/^[ \t]*\{\{--[\s\S]*?--\}\}[ \t]*\n?/gm, "")
+    .replace(/^<!--\s*SUGGESTED .*?-->[ \t]*\n?/gm, "");
+  for (;;) {
+    const t = s.replace(/^\s+/, "");
+    const m = /^<!--(?!\s*\/?wp:)[\s\S]*?-->/.exec(t);
+    if (!m) return t;
+    s = t.slice(m[0].length);
+  }
+}
+
+// A non-block HTML comment left in the body after the header strip: a stray
+// note (`<!-- CTA: … -->`, `<!-- TODO -->`) that would ship in the page source.
+// Core's <!--more--> and <!--nextpage--> tags are content, not notes.
+export const STRAY_HTML_COMMENT_RE = /<!--(?!\s*\/?wp:)(?!\s*(?:more|nextpage|noteaser)\b)[\s\S]*?-->/g;
+
+export function strayHtmlComments(body: string): string[] {
+  return (body.match(STRAY_HTML_COMMENT_RE) ?? []).map((c) => c.replace(/\s+/g, " ").slice(0, 70));
 }
 
 function phpQuote(s: string): string {
@@ -230,6 +250,8 @@ export async function runPublishPost(
     imageAttachmentId?: number;
     /** Publish even though the draft has self-closing custom blocks that will save empty. */
     allowSelfClosingBlocks?: boolean;
+    /** Publish even though the body has non-block HTML comments (stray notes). */
+    allowHtmlComments?: boolean;
     /** Update even though it drops Article schema fields the live post has. */
     allowSchemaRegression?: boolean;
     dryRun?: boolean;
@@ -304,6 +326,20 @@ export async function runPublishPost(
       );
     }
     warnings.push(`${detail} Published anyway — allowSelfClosingBlocks was set.`);
+  }
+
+  // Fails for the same reason: an HTML comment is invisible on the page, so a
+  // stray note sails through every visual and byte-level check and ships in the
+  // public source. Header comments are already stripped; these are mid-body.
+  const stray = strayHtmlComments(body);
+  if (stray.length) {
+    const detail =
+      `Draft body contains ${stray.length} non-block HTML comment(s), e.g. ${stray[0]} — ` +
+      "these are stored and shipped in the public page source.";
+    if (!options.allowHtmlComments) {
+      throw new Error(`${detail} Remove them, or pass allowHtmlComments: true if they are intended.`);
+    }
+    warnings.push(`${detail} Published anyway — allowHtmlComments was set.`);
   }
 
   // On an update, the state worth diffing against is the live post — the one
