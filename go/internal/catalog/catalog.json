@@ -3228,6 +3228,15 @@
         "raw": "template     optional  {template-no-header.blade.php}  Optional _wp_page_template value to set"
       }
     ],
+    "flags": [
+      {
+        "name": "--allow-html-comments",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Import even though the body has non-block HTML comments (stray notes)",
+        "raw": "--allow-html-comments  optional  Import even though the body has non-block HTML comments (stray notes)"
+      }
+    ],
     "examples": [
       "wp-ops import-page-draft draft.html 7673",
       "wp-ops import-page-draft draft.html 7673 example.com both template-no-header.blade.php"
@@ -3374,6 +3383,13 @@
         "required": false,
         "description": "With --update, publish even though it drops live Article schema fields",
         "raw": "--allow-schema-regression    optional  With --update, publish even though it drops live Article schema fields"
+      },
+      {
+        "name": "--allow-html-comments",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Publish even though the body has non-block HTML comments (stray notes)",
+        "raw": "--allow-html-comments        optional  Publish even though the body has non-block HTML comments (stray notes)"
       },
       {
         "name": "--dry-run",

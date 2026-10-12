@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.28.0] - 2026-10-12
+
+### Fixed
+
+- **Draft notes no longer leak into the public page source.** Drafts carry header comments for humans, not only the `<!-- SUGGESTED … -->` lines the tools parse: `NOTE`, `PAGE`, `FEATURED IMAGE`, `SEO FRAMEWORK FIELDS`. Only part of that was stripped, so the rest was stored in `post_content` and served in the page source. Readers never see an HTML comment, and `verify-post` passed because the stored bytes matched the stripped source exactly. On imagewize.com this had shipped one post's `FEATURED IMAGE` line and three pages' `SUGGESTED`/`NOTE` blocks, one of them naming a project that was not public yet ([#246](https://github.com/imagewize/wp-ops/issues/246)).
+  - `publish-post`, `publish_post` and `import-page-draft` now strip the same thing: every HTML comment before the first block that is not a block comment (single- or multi-line), every `SUGGESTED` line, and Blade `{{-- --}}` comments anywhere, including multi-line ones. `import-page-draft` stripped only `{{--` lines before; the two publish paths also left `NOTE` and similar comments in.
+  - One rule in three places, since the bash scripts and the MCP's TypeScript cannot share code. The bash scripts use python3 (already a `publish-post` dependency) so multi-line comments work, and each copy says the other two exist. Checked for identical output from the TypeScript and Python versions on 113 real drafts.
+
+### Added
+
+- **Stray HTML comments in the body are refused before the write.** A non-block comment left further down a draft (`<!-- CTA: … -->`, `<!-- TODO -->`) ships the same way. It is now refused, with the first one quoted, unless `--allow-html-comments` (`publish-post`, `import-page-draft`) or `allowHtmlComments: true` (`publish_post`) is passed. Core's `<!--more-->`, `<!--nextpage-->` and `<!--noteaser-->` are content and stay allowed. Nine of the 112 drafts this was tested on carried such a note.
+- **`verify-post` / `verify_post` warn on non-block HTML comments in stored content**, so posts and pages that already leaked can be found. A warning, not a failure: the content is live either way, and an intended comment is possible.
+
 ## [5.27.1] - 2026-10-12
 
 ### Fixed

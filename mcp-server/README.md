@@ -72,12 +72,15 @@ Scaffold — twenty tools implemented so far:
   lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
 - **`publish_post`** — publishes or updates a WordPress blog post from a local HTML draft carrying the
   `<!-- SUGGESTED ... -->` header (slug, title, meta title, meta description, tags, category). Parses
-  that header, strips it from the body, writes the post, sets The SEO Framework meta and terms, and then
+  that header, strips it and every other leading HTML comment (`NOTE`, `PAGE`, `FEATURED IMAGE`, …,
+  single- or multi-line) plus Blade `{{-- --}}` comments from the body, writes the post, sets The SEO Framework meta and terms, and then
   VERIFIES the stored bytes and `<script>`/JSON-LD counts against the source — catching the silent
   failures (kses stripping schema, a self-closing block saving empty) that don't show up in a
   `post_content` diff. A draft containing a self-closing custom block (`<!-- wp:ns/block {...} /-->`,
   which saves EMPTY via WP-CLI) is refused before the write, naming the offending blocks, unless
-  `allowSelfClosingBlocks: true` is set. Optionally uploads a featured image (`imagePath`) or attaches
+  `allowSelfClosingBlocks: true` is set. A non-block HTML comment left further down the body (a stray
+  `<!-- CTA: … -->` note) is refused the same way unless `allowHtmlComments: true`: it is invisible on the
+  page, passes every other check, and ships in the public page source. Optionally uploads a featured image (`imagePath`) or attaches
   an existing one (`imageAttachmentId`) — either way the image URL is written into the Article JSON-LD
   `image` field. With `updateId`, an update whose Article
   JSON-LD drops a field the live post already has is refused too, unless `allowSchemaRegression: true` —
@@ -92,8 +95,8 @@ Scaffold — twenty tools implemented so far:
   and then ignored, and the plugin falls back to its own defaults. Set them in that plugin instead.
 - **`verify_post`** — read-only companion to `publish_post`: compares what's STORED in `post_content`
   against what actually RENDERS on the live page for an already-published post. Catches JSON-LD stripped
-  by kses, self-closing custom blocks that saved empty, broken internal links, and a missing featured
-  image. `checkLinks: true` (default) also requests every internal link in the post and reports non-200
+  by kses, self-closing custom blocks that saved empty, broken internal links, a missing featured
+  image, and non-block HTML comments (leaked draft notes) in the stored content, as a warning. `checkLinks: true` (default) also requests every internal link in the post and reports non-200
   responses.
 - **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
   search-replace, backing up the current development database first. Requires the site's `development`

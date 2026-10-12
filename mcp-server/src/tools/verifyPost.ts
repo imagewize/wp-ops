@@ -56,6 +56,9 @@ echo "meta_desc_len=" . strlen( (string) get_post_meta( $post->ID, '_genesis_des
 preg_match_all( '/<!-- wp:([a-z0-9-]+\/[a-z0-9-]+) (\{[^}]*\} )?\/-->/', $c, $m );
 echo "selfclosing=" . count( $m[0] ) . "\n";
 echo "selfclosing_names=" . implode( ',', array_unique( $m[1] ) ) . "\n";
+preg_match_all( '/<!--(?!\s*\/?wp:)(?!\s*(?:more|nextpage|noteaser)\b).*?-->/s', $c, $hc );
+echo "html_comments=" . count( $hc[0] ) . "\n";
+echo "html_comment_first=" . ( $hc[0] ? substr( preg_replace( '/\s+/', ' ', $hc[0][0] ), 0, 70 ) : '' ) . "\n";
 preg_match_all( '/href="(\/[^"#][^"]*)"/', $c, $lm );
 echo "internal_list=" . implode( ' ', array_unique( $lm[1] ) ) . "\n";
 `.trim();
@@ -98,6 +101,7 @@ export async function runVerifyPost(
   const metaTitle = kv.meta_title ?? "";
   const metaDescLen = Number(kv.meta_desc_len ?? 0);
   const selfClosing = Number(kv.selfclosing ?? 0);
+  const htmlComments = Number(kv.html_comments ?? 0);
   const permalink = kv.permalink ?? "";
 
   const checks: VerifyCheck[] = [];
@@ -122,6 +126,21 @@ export async function runVerifyPost(
             "when written via WP-CLI; hand-build the serialized markup instead",
         }
       : { name: "self-closing-blocks", status: "pass", detail: "No self-closing custom blocks" }
+  );
+
+  // A warning, not a failure: the post is live either way, and an intended
+  // comment is possible. A leaked draft note (NOTE, CTA, FEATURED IMAGE) is
+  // invisible on the page and only shows up in the source (#246).
+  checks.push(
+    htmlComments > 0
+      ? {
+          name: "html-comments",
+          status: "warn",
+          detail:
+            `${htmlComments} non-block HTML comment(s) in post_content, e.g. ${kv.html_comment_first} — ` +
+            "they ship in the public page source; remove them if they are draft notes",
+        }
+      : { name: "html-comments", status: "pass", detail: "No non-block HTML comments" }
   );
 
   if (!metaTitle) {
