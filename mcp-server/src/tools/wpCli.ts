@@ -32,8 +32,19 @@ const SAFE_READ_VERBS = new Set([
 // Kept as an explicit per-command allowlist rather than blindly checking args[2] for every
 // command, since args[2] is often an arbitrary caller-supplied value (an option name, a
 // post ID, ...) that could coincidentally collide with a SAFE_READ_VERBS entry.
+// Without the meta/term entries, a plain read like "wp post meta list 123" needed confirm,
+// which is the first lookup on every live-post edit. Writes stay gated: update/add/delete/
+// patch/set are not in SAFE_READ_VERBS.
 const NESTED_RESOURCE_VERBS: Record<string, Set<string>> = {
   cron: new Set(["event", "schedule"]),
+  post: new Set(["meta", "term"]),
+  term: new Set(["meta"]),
+  user: new Set(["meta", "term"]),
+  comment: new Set(["meta"]),
+  network: new Set(["meta"]),
+  menu: new Set(["item", "location"]),
+  theme: new Set(["mod"]),
+  language: new Set(["core", "plugin", "theme"]),
 };
 
 // "wp config" is WP-CLI's dedicated interface onto wp-config.php constants —
