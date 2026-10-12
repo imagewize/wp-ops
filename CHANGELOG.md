@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.27.1] - 2026-10-12
+
+### Fixed
+
+- **The `publish_post` and `verify_post` MCP tools now match the 5.27.0 CLI change.** 5.27.0 only changed the bash scripts. The MCP tools are a separate TypeScript build, so an MCP publish still left the site-name title suffix on, still warned above 55 characters, and `verify_post` never checked the suffix. Meanwhile the MCP README already said the tool writes `_tsf_title_no_blogname`. Found on the first real MCP publish after the release, where the suffix had to be set by hand.
+  - `publish_post` sets `_tsf_title_no_blogname` to 1 on every post it creates or updates, like `publish-post.sh`.
+  - Both tools warn above 60 characters instead of 55. The message no longer mentions "| Site", which is no longer appended.
+  - `verify_post` gains the `title-suffix` check. It warns rather than fails, since posts published before 5.27.0 legitimately keep the suffix.
 ## [5.27.0] - 2026-10-10
 
 ### Changed
