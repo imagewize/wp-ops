@@ -280,8 +280,8 @@ export async function runPublishPost(
   if (sourceBytes < 500) {
     throw new Error(`Body is only ${sourceBytes} bytes — refusing to publish a near-empty post`);
   }
-  if (header.metaTitle.length > 55) {
-    warnings.push(`Meta title is ${header.metaTitle.length} chars (>55) — will truncate once "| Site" is appended`);
+  if (header.metaTitle.length > 60) {
+    warnings.push(`Meta title is ${header.metaTitle.length} chars (>60) — truncates in SERPs`);
   }
   if (header.metaDescription.length > 155) {
     warnings.push(`Meta description is ${header.metaDescription.length} chars (>155) — will truncate in SERPs`);
@@ -390,6 +390,7 @@ $mt = base64_decode( '${phpQuote(header.metaTitle)}' );
 $md = base64_decode( '${phpQuote(header.metaDescription)}' );
 if ( $mt ) { update_post_meta( $id, '_genesis_title', $mt ); }
 if ( $md ) { update_post_meta( $id, '_genesis_description', $md ); }
+update_post_meta( $id, '_tsf_title_no_blogname', 1 );
 ${thumbnailId ? `update_post_meta( $id, '_thumbnail_id', ${thumbnailId} );` : ""}
 
 $cat = base64_decode( '${phpQuote(header.category)}' );
