@@ -1701,6 +1701,83 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/monitoring/store-audit",
+    "description": "Audit a store's public URL with Min (AI-shopping readiness, truth check) and optionally gate on grade or checks",
+    "script_path": "scripts/monitoring/store-audit.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "curl,jq"
+    ],
+    "args": [
+      {
+        "name": "url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://shop.example.com",
+        "description": "Public store URL to audit",
+        "raw": "url  required  {https://shop.example.com}  Public store URL to audit"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--fail-under",
+        "required_raw": "optional",
+        "required": false,
+        "default": "B",
+        "description": "Exit 2 when the grade is worse than this (A-F)",
+        "raw": "--fail-under  optional  {B}  Exit 2 when the grade is worse than this (A-F)"
+      },
+      {
+        "name": "--fail-on",
+        "required_raw": "optional",
+        "required": false,
+        "default": "truth_check,ai_crawler_access",
+        "description": "Exit 2 when any of these checks has status fail or warn",
+        "raw": "--fail-on     optional  {truth_check,ai_crawler_access}  Exit 2 when any of these checks has status fail or warn"
+      },
+      {
+        "name": "--speed",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also run PageSpeed (slow, up to a minute)",
+        "raw": "--speed       optional  {}  Also run PageSpeed (slow, up to a minute)"
+      },
+      {
+        "name": "--no-product",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip the product-page checks, including the truth check",
+        "raw": "--no-product  optional  {}  Skip the product-page checks, including the truth check"
+      },
+      {
+        "name": "--json",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Print the condensed result as JSON only",
+        "raw": "--json        optional  {}  Print the condensed result as JSON only"
+      },
+      {
+        "name": "--endpoint",
+        "required_raw": "optional",
+        "required": false,
+        "default": "https://imagewize.com/wp-json/min/mcp",
+        "description": "Min MCP endpoint (default: WP_OPS_MIN_MCP_URL or imagewize.com)",
+        "raw": "--endpoint    optional  {https://imagewize.com/wp-json/min/mcp}  Min MCP endpoint (default: WP_OPS_MIN_MCP_URL or imagewize.com)"
+      }
+    ],
+    "examples": [
+      "wp-ops store-audit https://shop.example.com",
+      "wp-ops store-audit --fail-under B --fail-on truth_check https://shop.example.com"
+    ],
+    "manifest_category": "monitoring",
+    "platform": "any",
+    "mutates": false,
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/monitoring/traffic-by-country",
     "description": "Filter a server's Nginx access log by visitor country and show real page visits",
     "script_path": "scripts/monitoring/traffic-by-country.sh",

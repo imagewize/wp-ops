@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.30.0] - 2026-10-13
+
+### Added
+
+- **`wp-ops store-audit` — a deploy gate for store health.** Audits a store's public URL with Min's hosted MCP server (`audit-store`, then `audit-product` for the price/stock truth check, `--speed` adds PageSpeed) and exits non-zero when the result is not good enough, so a GitHub Action, GitLab job or cron can fail a deploy that breaks schema, blocks AI crawlers or makes the page price disagree with the shop's Store API. Plain `bash`, `curl` and `jq` — no Node, no SSH, works on macOS bash 3.2.
+  - `--fail-under B` exits 2 when the grade is worse than B; `--fail-on truth_check,ai_crawler_access` exits 2 when any named check has status fail or warn. Exit 1 means bad usage or an audit that could not complete (bad credentials, unreachable endpoint, daily limit reached), so a broken pipeline is never mistaken for a regression.
+  - `--json` prints the condensed result (grade, failing checks with evidence, fixes, `gate_failed`, `gate_reasons`) for scripts; when `GITHUB_STEP_SUMMARY` is set the grade and failing checks are appended to the job summary.
+  - Credentials come from `WP_OPS_MIN_MCP_USER` / `WP_OPS_MIN_MCP_PASSWORD` (an application password); the password is handed to curl through a private temp file, never on a command line. `WP_OPS_MIN_MCP_URL` or `--endpoint` overrides the default `https://imagewize.com/wp-json/min/mcp`.
+  - Covered by a Go test that runs the script against a fake MCP server: grade and check gates, JSON output, JSON and event-stream replies, tool selection, and the exit-1 error paths.
+
 ## [5.29.0] - 2026-10-13
 
 ### Added
