@@ -14,7 +14,7 @@
 </div>
 
 <div align="center">
-wp-ops is a CLI for WordPress operations — deployments, database and files backup, security scanning, monitoring, and content workflows — backed by manifest-driven scripts, Ansible playbooks, and guides, optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows.
+wp-ops is a CLI and an MCP server for WordPress operations — deployments, database and files backup, security scanning, monitoring, and content workflows — backed by manifest-driven scripts, Ansible playbooks, and guides, optimized for <a href="https://roots.io/trellis/">Trellis</a>/<a href="https://roots.io/bedrock/">Bedrock</a> workflows. Run it yourself from the terminal, or let Claude and other MCP clients call the same operations as tools.
 </div>
 
 ## Contents
@@ -31,7 +31,7 @@ wp-ops is a CLI for WordPress operations — deployments, database and files bac
 
 ## wp-ops CLI
 
-The single entry point for everything in this repo — a single binary that auto-discovers commands across every category, groups them by domain, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
+The command-line entry point for everything in this repo (the [MCP server](#mcp-server) exposes the same operations to AI clients) — a single binary that auto-discovers commands across every category, groups them by domain, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
 
 ```bash
 # Recommended: Homebrew
@@ -246,7 +246,7 @@ Standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in 
 
 ## MCP Server
 
-Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
+The second way to use wp-ops, alongside the CLI. Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 
