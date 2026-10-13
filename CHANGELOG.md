@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.29.0] - 2026-10-13
+
 ### Added
 
 - **`store_audit` MCP tool.** Audits a store's public URL through Min's hosted MCP server (`audit-store`, then `audit-product` for the price/stock truth check, optionally `audit-speed`) and returns the grade, failing checks with evidence and recommended fixes as one condensed result. Closes the audit → fix → re-audit loop next to `wp_cli` and `ssh_command`. Needs `WP_OPS_MIN_MCP_USER` / `WP_OPS_MIN_MCP_PASSWORD` (an application password); `WP_OPS_MIN_MCP_URL` overrides the endpoint.
