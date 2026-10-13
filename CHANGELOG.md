@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.30.1] - 2026-10-13
+
+### Changed
+
+- **README slimmed from 310 to about 170 lines, and now presents wp-ops as both a CLI and an MCP server.** The tagline says so, and the MCP Server section sits directly after the CLI section instead of after Scripts.
+- Detail moved out of the README into guides that `wp-ops docs` searches: `docs/cli/usage.md` (categories and platforms, the picker, completion, guide search, where commands run) and `docs/cli/trellis-cli-plugin.md` (`trellis ops`, `TRELLIS_DIR` / `WP_SITE_DIR`). The server-side log monitor instructions moved to `trellis/monitoring/README.md`, and the Wheel of Time section is cut to a short paragraph, since `assets/logos/README.md` already holds the reasoning.
+
 ## [5.30.0] - 2026-10-13
 
 ### Added
