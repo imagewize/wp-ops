@@ -7,6 +7,11 @@ import { isReadOnlyWpCommand, runWpCli, truncateWpCliOutput } from "./tools/wpCl
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
+import {
+  formatStoreAudit,
+  resolveMinConnection,
+  runStoreAudit,
+} from "./tools/storeAudit.js";
 import { runMonitor } from "./tools/monitor.js";
 import { runServerStatus } from "./tools/serverStatus.js";
 import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
@@ -444,6 +449,42 @@ export function createServer(): McpServer {
         }
 
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "store_audit",
+    "Audit a store's public URL with Min (the Imagewize WooCommerce auditor): AI-shopping readiness grade A–F, " +
+      "failing checks with evidence, recommended fixes, and optionally the product-page truth check (do the " +
+      "price/stock the page advertises match the WooCommerce Store API?) and PageSpeed. Needs no SSH — it scans " +
+      "the public site — so use it first to find problems, fix them with wp_cli / ssh_command, then call it " +
+      "again to confirm the grade moved. Requires WP_OPS_MIN_MCP_USER and WP_OPS_MIN_MCP_PASSWORD. " +
+      "Each call counts against the account's daily scan limit and stores a lead record.",
+    {
+      url: z.string().url().describe("Public store URL, e.g. https://shop.example"),
+      product: z
+        .boolean()
+        .default(true)
+        .describe("Also run the product-page checks, including the price/stock truth check"),
+      speed: z
+        .boolean()
+        .default(false)
+        .describe("Also run Google PageSpeed (slow: up to a minute)"),
+      full: z.boolean().default(false).describe("Include the complete raw reports (large)"),
+    },
+    async ({ url, product, speed, full }) => {
+      try {
+        const conn = resolveMinConnection();
+        const summary = await runStoreAudit(conn, { url, product, speed, full });
+        const failed = summary.steps.find((s) => s.step === "audit-store" && !s.ok);
+        return {
+          content: [{ type: "text" as const, text: formatStoreAudit(summary) }],
+          ...(failed ? { isError: true } : {}),
+        };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
