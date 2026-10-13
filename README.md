@@ -20,12 +20,12 @@ wp-ops is a CLI and an MCP server for WordPress operations — deployments, data
 ## Contents
 
 - [wp-ops CLI](#wp-ops-cli)
+- [MCP Server](#mcp-server)
 - [Trellis](#trellis)
 - [Bedrock](#bedrock)
 - [WP-CLI](#wp-cli)
 - [Nginx](#nginx)
 - [Scripts](#scripts)
-- [MCP Server](#mcp-server)
 - [WordPress Utilities](#wordpress-utilities)
 - [Troubleshooting](#troubleshooting)
 
@@ -169,6 +169,10 @@ one into a project, `wp-ops docs -l <term>` gives you the path:
 cat "$(wp-ops docs -l age-verification | head -1)"
 ```
 
+## MCP Server
+
+The second way to use wp-ops, alongside the CLI. Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
+
 ## Trellis
 
 If you have trellis-cli, every command below is also reachable as
@@ -243,10 +247,6 @@ Standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in 
 | **Backups** | Trellis-aware database and full-site backups | [→](scripts/README.md#backup-scripts) |
 | **Images, WooCommerce & Files** | Batch resize, WebP conversion, square-canvas padding, Openverse image search/download, WooCommerce product variations, theme/package sync, find & replace | [→](scripts/README.md#image-utilities) |
 | **Content Reporting** | Published-post counts by year/month | [→](scripts/README.md#content-reporting) |
-
-## MCP Server
-
-The second way to use wp-ops, alongside the CLI. Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Claude (and other MCP-compatible clients) can call them directly instead of running the underlying scripts by hand. Scaffold stage — twenty tools so far, spanning security/SEO audits, backups, dev-site sync, content publishing/verification, SSH/SCP passthrough, and a catalog bridge (`command_search`/`command_run`) that exposes the full CLI catalog without a dedicated tool per command. See [mcp-server/README.md](mcp-server/README.md) for the full tool list, setup, transports (stdio/Streamable HTTP), and Docker usage.
 
 ## WordPress Utilities
 
