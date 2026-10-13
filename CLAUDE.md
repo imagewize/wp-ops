@@ -41,6 +41,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
 - **docs/** - Documentation. Design and planning docs sit at the top level as
   loose `.md` files; the subdirectories are operational guides, which carry no
   runnable commands and so have no CLI category of their own:
+  - `docs/cli/` - How the `wp-ops` binary works: usage reference (categories, platforms, completion, guide search) and the trellis-cli plugin
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (guides plus the `.conf.j2` templates they describe)
   - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)
   - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup

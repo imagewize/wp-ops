@@ -102,6 +102,17 @@ ansible-playbook monitoring/trellis/setup-monitoring.yml -e site=example.com -e 
 
 **Via wp-ops:** these playbooks are also runnable through the [`wp-ops`](../../README.md) CLI (`wp-ops trellis --help` to list them), e.g. `wp-ops trellis traffic-report -e site=example.com -e env=production`. Requires `TRELLIS_DIR` set to your Trellis project — see [trellis/README.md](../README.md#via-the-wp-ops-cli).
 
+## Running the monitors from wp-ops
+
+The log monitors read `/srv/www/<site>/logs/` and `/var/log/` directly, so they execute on the host. They are tagged `(server)` in `wp-ops` listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
+
+```bash
+ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
+ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 48
+```
+
+Nothing needs to be installed on the server for that — the script is streamed to its stdin. The access-log monitors want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it they fall back to a line-count estimate. `error-monitor` needs neither gawk nor a log path — it takes the domain, and connecting as `root` additionally gets you the systemd sections (critical errors, PHP segfaults, OOM kills) that the `web` user can't read. `wp-ops --json` reports the local/server split as a `runs_on` field.
+
 ## Alternative Access Methods
 
 While we recommend using root SSH access with key-based authentication, you can use alternative approaches if you prefer:
