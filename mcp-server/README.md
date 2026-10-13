@@ -118,6 +118,17 @@ Scaffold — twenty tools implemented so far:
 - **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
   remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
   it is absolute. Uploads require `confirm: true`.
+- **`store_audit`** — audits a store's *public* URL with [Min](https://github.com/imagewize/min)'s hosted
+  MCP server (no SSH, no site registry entry needed): AI-shopping readiness grade A–F, failing checks with
+  evidence, recommended fixes, and — by default — the product-page checks including the **truth check**
+  (do the price and stock the page advertises match the shop's own WooCommerce Store API?). `speed: true`
+  adds PageSpeed (slow); `full: true` includes the raw reports. Chains Min's `audit-store` →
+  `audit-product` → `audit-speed` tools, which is why it is one call here. Use it first to find problems,
+  fix them with `wp_cli` / `ssh_command`, then call it again to confirm the grade moved. Configure with
+  `WP_OPS_MIN_MCP_USER` (WordPress login) and `WP_OPS_MIN_MCP_PASSWORD` (an application password for a
+  user allowed to run audits) in the server's environment; `WP_OPS_MIN_MCP_URL` overrides the default
+  `https://imagewize.com/wp-json/min/mcp`. Each call counts against that user's daily scan limit on the
+  Min site and stores a lead record there.
 
 ### The catalog bridge
 
@@ -348,6 +359,7 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__server_status": { "allowed": true },
       "mcp__wp-ops__broken_link_audit": { "allowed": true },
       "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
+      "mcp__wp-ops__store_audit": { "allowed": true },
       "mcp__wp-ops__ip_reputation_check": { "allowed": true },
       "mcp__wp-ops__ssh_command": { "allowed": true },
       "mcp__wp-ops__scp_file": { "allowed": true },
