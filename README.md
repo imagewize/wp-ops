@@ -56,118 +56,14 @@ wp-ops doctor                # check dependencies and environment
 wp-ops <command> --where     # print the path to a command's script
 ```
 
-Categories group by **domain**, not by directory: `wp-ops backup` lists all ten
-backup commands whether they're Ansible playbooks under `trellis/` or shell scripts
-under `scripts/`. The directory names still work as aliases (`wp-ops trellis
-database-backup`), they're just no longer how the catalog presents itself.
+Commands are grouped by **domain** and tagged with a **platform** (`trellis`, `wordpress` or `any`), so `wp-ops list --platform wordpress` shows only what runs against the site in front of you. The scripts, playbooks and guides are embedded in the binary — once it's on your PATH you can delete the clone.
 
-Every command also carries a **platform** — `trellis` (needs a Trellis project),
-`wordpress` (any WP install: Valet, Herd, cPanel, Bedrock, Trellis), or `any` (no
-WordPress involved). `wp-ops search` badges each result with it, and
-`wp-ops list --platform <value>` filters to what will actually run against the site
-in front of you. `trellis` and `wordpress` both include the `any` commands, since
-an image converter or a release script runs fine wherever you are; `--platform any`
-is the one that stays exact, for "what needs no WordPress at all".
+Run `wp-ops doctor` first to see which external tools (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are installed, and `wp-ops init` once for `<TAB>` completion in zsh, bash or fish. Homebrew installs also provide `trellis-ops`, so everything is reachable as `trellis ops <...>` from [trellis-cli](https://github.com/roots/trellis-cli).
 
-The scripts, playbooks, and guides are embedded in the binary, so once it's on your PATH nothing else needs to stay around — you can delete the clone after building.
+More detail:
 
-`wp-ops` with no arguments opens an interactive picker: categories first, then a fuzzy-filterable command list, then the chosen command's full help (usage, requirements, examples, args) printed above its argument prompts — no `fzf` dependency. It renders inline rather than taking over the screen, so earlier output stays visible above it and the last frame stays in your scrollback after it exits.
-
-Run `wp-ops doctor` first — it reports which of the external tools these scripts rely on (WP-CLI, Ansible, ImageMagick, `gh`, `cwebp`, Node, …) are actually installed, so you find out before a command fails partway through.
-
-`wp-ops init` installs `wp-ops <TAB>` completion for zsh, bash, or fish, auto-detected from `$SHELL`. Worth running right after install — the Homebrew cask this ships as doesn't wire up completions on its own the way a Homebrew formula would.
-
-Completion goes past the command name into its arguments, off the same manifest that
-renders `--help`: `wp-ops db-pull <TAB>` offers the site names from the Trellis
-project you're standing in, `wp-ops db-pull example.com <TAB>` offers
-`production staging`, an argument that takes a path falls back to ordinary filename
-completion, and anything else prints a one-line hint saying what the argument is.
-Typing a dash offers the command's own flags.
-
-### As a trellis-cli plugin
-
-The Homebrew cask installs the same binary under a second name, `trellis-ops`,
-which [trellis-cli](https://github.com/roots/trellis-cli) picks up as a plugin —
-it scans `$PATH` for `trellis-*` executables and turns each into a subcommand. So
-everything below is also reachable from inside the tool you already have open:
-
-```bash
-trellis ops                              # Trellis-relevant categories
-trellis ops backup database-pull         # same as: wp-ops backup database-pull
-trellis ops search backup
-```
-
-`trellis ops` scopes its **listing** to the commands tagged `@platform trellis`;
-run plain `wp-ops` for the full catalog. Running a command is never scoped — name
-any command and it works. See the [Trellis command reference](#command-reference)
-for what that surface contains.
-
-Unlike core `trellis` subcommands, a plugin doesn't need you to be inside a Trellis
-project — trellis-cli registers plugins from `$PATH` before it resolves a project at
-all, so `trellis ops doctor` runs from anywhere while `trellis info` refuses. The
-Ansible commands do still need a project, but they always did: wp-ops locates it
-itself by walking up from your current directory, exactly as under bare `wp-ops`.
-
-Requires trellis-cli new enough to have plugin support (v1.19.0 or later) and the
-default `load_plugins: true`. If you built from source instead of installing the
-cask, make the alias yourself:
-
-```bash
-ln -s "$(command -v wp-ops)" /usr/local/bin/trellis-ops
-```
-
-Two categories resolve their project directory from an environment variable — but you
-don't need to export it by hand if you're standing inside the project: wp-ops detects
-it by walking up from your current directory and asks before using what it finds.
-Setting the variable explicitly is only required when you're running from elsewhere
-(e.g. from this repo's own directory) or non-interactively (CI, cron), where there's
-no prompt to confirm a detected guess:
-
-```bash
-# Ansible playbooks (wp-ops trellis <playbook>) need a Trellis project's ansible.cfg/inventory/group_vars
-export TRELLIS_DIR=/path/to/your/trellis
-wp-ops trellis database-backup -e site=example.com -e env=production
-trellis ops trellis database-backup -e site=example.com -e env=production   # identical
-
-# WP-CLI scripts (wp-ops wp-cli <script>) need a real WordPress/Bedrock install
-export WP_SITE_DIR=/path/to/your/bedrock-site
-wp-ops wp-cli scanner-wrapper
-wp-ops wp-cli-pattern-validate web/app/themes/your-theme/patterns/ --fix
-```
-
-Detection deliberately only matches a project you're actually standing inside, so an
-unrelated Trellis checkout sitting next to your current repo won't be picked up.
-
-`docs/nginx/`, `docs/troubleshooting/`, and `docs/bedrock/` hold guides and config templates rather than runnable scripts, so they carry no commands and no CLI category — reach them through `wp-ops docs` instead.
-
-A good deal of what this repo knows is written down rather than scripted, so `wp-ops docs` searches the prose the way `wp-ops search` searches the catalog:
-
-```bash
-wp-ops docs                  # list every guide
-wp-ops docs "search-replace" # show matching lines, grouped by document
-wp-ops docs oom -w           # whole words only (so "oom" skips "server room")
-wp-ops docs oom -l           # paths only, for piping: wp-ops docs oom -l | xargs $EDITOR
-```
-
-When `wp-ops search` finds no command for a term, it checks the documentation and points you there.
-
-Everything else runs on your own machine, including the commands that touch a server — Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH from here. The exception is the log monitors, which read `/srv/www/<site>/logs/` and `/var/log/` directly and execute on the host. Those are tagged `(server)` in listings and search, and running one locally prints the SSH invocation rather than failing on a missing log path:
-
-```bash
-ssh web@example.com 'bash -s' < scripts/monitoring/monitor.sh
-ssh root@example.com 'bash -s' < scripts/monitoring/error-monitor.sh example.com 48
-```
-
-Nothing needs to be installed on the server for that — the script is streamed to its stdin. The access-log monitors want `gawk` there for accurate time filtering (Ubuntu ships mawk, so `apt install gawk`); without it they fall back to a line-count estimate. `error-monitor` needs neither gawk nor a log path — it takes the domain, and connecting as `root` additionally gets you the systemd sections (critical errors, PHP segfaults, OOM kills) that the `web` user can't read. `wp-ops --json` reports the local/server split as a `runs_on` field.
-
-Every catalog entry is something that runs. Copy-paste-into-a-theme reference
-material — PHP snippets, the age-verification component — lives under
-`docs/wordpress-utilities/` instead, reachable through `wp-ops docs`. To pull
-one into a project, `wp-ops docs -l <term>` gives you the path:
-
-```bash
-cat "$(wp-ops docs -l age-verification | head -1)"
-```
+- [Using the CLI](docs/cli/usage.md) — categories and platforms, the interactive picker, completion, `wp-ops docs` guide search, and which commands run on the server
+- [trellis-cli plugin](docs/cli/trellis-cli-plugin.md) — `trellis ops`, plus the `TRELLIS_DIR` and `WP_SITE_DIR` project directories
 
 ## MCP Server
 
@@ -177,7 +73,7 @@ The second way to use wp-ops, alongside the CLI. Exposes wp-ops operations as [M
 
 If you have trellis-cli, every command below is also reachable as
 `trellis ops <...>` — same binary, same behaviour, no project required.
-See [As a trellis-cli plugin](#as-a-trellis-cli-plugin).
+See [the trellis-cli plugin guide](docs/cli/trellis-cli-plugin.md).
 
 ```bash
 trellis ops                                    # Trellis-relevant categories only
@@ -191,12 +87,7 @@ you name it. Plain `wp-ops` shows the full catalog.
 
 ### Command reference
 
-`wp-ops list --platform trellis` (equivalently, `trellis ops`) is the always-current,
-grouped-and-counted listing — a hand-copied table here would just be one more place
-for that catalog to drift out of sync, the way this section previously did. Run it
-directly, or `wp-ops search <term>` / `trellis ops search <term>` to find one command.
-`(runs on server)` in that output marks the log readers that execute on the host —
-running one locally prints the SSH invocation instead of failing.
+`wp-ops list --platform trellis` (equivalently, `trellis ops`) is the always-current, grouped-and-counted listing; `wp-ops search <term>` finds one command. `(runs on server)` marks the log readers that execute on the host — see [Running the monitors from wp-ops](trellis/monitoring/README.md#running-the-monitors-from-wp-ops).
 
 ### Guides
 
@@ -265,35 +156,7 @@ Standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in 
 
 ## Wheel of Time Inspiration
 
-Imagewize's projects take their names from *The Wheel of Time* —
-[Aviendha](https://github.com/imagewize/aviendha),
-[Nynaeve](https://github.com/imagewize/nynaeve),
-[Elayne](https://github.com/imagewize/elayne),
-[Aludra](https://github.com/imagewize/aludra),
-[Machin Shin](https://github.com/imagewize/mshin) — and each carries a mark
-drawn from its namesake. wp-ops keeps its plain, descriptive name, because it
-ships as a binary, a Homebrew cask and a trellis-cli plugin and has to be
-typed. It takes its **mark** from the Windfinders.
-
-The Windfinders are the Sea Folk's channelers: they find the wind, bind it to
-work, and bring the ship to whichever port the bargain names.
-
-- **Find, then do** — `wp-ops search`, `wp-ops docs` and `wp-ops list` find a
-  command; then it runs. That two-verb shape is the whole tool, and it is what
-  a Windfinder does with the wind.
-- **Many ports, one navigator** — one binary, and every site, server and
-  environment is a command away.
-- **A wind rose** — the star-shaped figure of wind direction is itself called a
-  wind rose, so the mark is a navigation symbol and a botanical one at once,
-  which is the language the other marks already speak.
-
-It rhymes with Machin Shin without colliding, too: Machin Shin is the wind that
-hunts in the dark, the Windfinder is the wind that carries you where you meant
-to go. Same element, opposite intent.
-
-The mark is an original drawing rather than an adaptation of an existing icon
-set, so it carries no third-party licence. The alternates considered, and the
-reasoning behind the choice, live in [`assets/logos/`](assets/logos/README.md).
+Imagewize's projects take their names from *The Wheel of Time*. wp-ops keeps a plain, descriptive name because it has to be typed, and takes its **mark** — an original wind rose — from the Windfinders, the Sea Folk channelers who find the wind and bring the ship to port. The reasoning and the alternates considered are in [`assets/logos/`](assets/logos/README.md).
 
 ## Requirements
 
