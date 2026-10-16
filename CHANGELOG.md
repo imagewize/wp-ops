@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.34.0] - 2026-10-16
+
+### Removed
+
+- **The 15 commands deprecated in 5.33.0**, as step 4 of the command audit (`docs/command-audit-2026-10.md`): `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test` and `diagnostic-transients`. Catalog is now 65 commands.
+  - The `release` and `diagnostics` categories had no commands left, so they no longer appear in `wp-ops list`, the picker or shell completion. The `images`, `seo` and `misc` category blurbs were reworded to match what is left.
+  - Docs that described the removed commands were trimmed: `scripts/README.md`, `wp-cli/README.md`, `wp-cli/diagnostics/README.md` and the image resize guide. The browser-based `transient-debug-browser.php` stays.
+
 ## [5.33.0] - 2026-10-16
 
 ### Deprecated

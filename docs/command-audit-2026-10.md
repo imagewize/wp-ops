@@ -1,6 +1,6 @@
 # Command Audit: Keep, Cut, Merge
 
-> **Status:** In progress, 2026-10-16. Steps 1 to 3 of the [order of work](#proposed-order-of-work) are done: the audit, the `deprecated` manifest field, and 15 commands deprecated in 5.33.0 (`release-theme` was removed outright). Removal and the MCP trim are still open. The Keep, Cut and Merge tables below are the original draft; the [Status](#status) section records what changed after a closer look. Each remaining action ships as its own PR.
+> **Status:** In progress, 2026-10-16. Steps 1 to 4 of the [order of work](#proposed-order-of-work) are done: the audit, the `deprecated` manifest field, 15 commands deprecated in 5.33.0 and removed in 5.34.0 (`release-theme` was removed outright). Only the MCP trim is still open. The Keep, Cut and Merge tables below are the original draft; the [Status](#status) section records what changed after a closer look. Each remaining action ships as its own PR.
 > **Scope:** The 81 CLI commands and 21 MCP tools in 5.30.1.
 > **Related:** [wp-ops-recommendations.md](wp-ops-recommendations.md) (gaps), [mcp-server-recommendations.md](mcp-server-recommendations.md) (MCP roadmap), [category-organization.md](category-organization.md) (grouping)
 
@@ -99,7 +99,7 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 ## Status
 
-**Deprecated (5.33.0), 15 commands:** `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test`, `diagnostic-transients`. Each has no internal caller and no live use found. They warn on every run and are removed no sooner than the next minor release.
+**Deprecated (5.33.0), removed (5.34.0), 15 commands:** `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test`, `diagnostic-transients`. Each has no internal caller and no live use found. They warned on every run in 5.33.0 and were removed in 5.34.0.
 
 **Held back after a closer look.** The tables above were drafted before these were checked, and the findings change them:
 
