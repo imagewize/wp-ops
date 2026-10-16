@@ -222,6 +222,12 @@ func executeEntry(e catalog.Entry, args []string) int {
 		return 0
 	}
 
+	// stderr, so --json and other stdout consumers are unaffected; the MCP
+	// server captures it with the rest of the output.
+	if msg := deprecationWarning(e); msg != "" {
+		fmt.Fprintln(os.Stderr, msg)
+	}
+
 	isHelp := len(args) > 0 && (args[0] == "--help" || args[0] == "-h")
 	ext := filepath.Ext(e.ScriptPath)
 
@@ -391,4 +397,14 @@ func suggestSimilar(c *catalog.Catalog, input string) (string, bool) {
 		return bestMatch, true
 	}
 	return "", false
+}
+
+// deprecationWarning is the line printed to stderr when a command carrying a
+// @deprecated directive runs. Empty for every other command.
+func deprecationWarning(e catalog.Entry) string {
+	if e.Deprecated == "" {
+		return ""
+	}
+	return fmt.Sprintf("warning: %s is deprecated and will be removed in a future release. %s",
+		filepath.Base(e.Key), e.Deprecated)
 }

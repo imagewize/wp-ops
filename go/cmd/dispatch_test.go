@@ -201,3 +201,14 @@ func TestDirectoryAliasesRegistered(t *testing.T) {
 		}
 	}
 }
+
+func TestDeprecationWarning(t *testing.T) {
+	if got := deprecationWarning(catalog.Entry{Key: "scripts/backup/db-backup"}); got != "" {
+		t.Errorf("deprecationWarning on a normal command = %q, want empty", got)
+	}
+	got := deprecationWarning(catalog.Entry{Key: "scripts/backup/database-backup", Deprecated: "Use db-backup instead."})
+	want := "warning: database-backup is deprecated and will be removed in a future release. Use db-backup instead."
+	if got != want {
+		t.Errorf("deprecationWarning = %q, want %q", got, want)
+	}
+}

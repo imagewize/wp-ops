@@ -165,7 +165,8 @@ func main() {
 				// that forgets the directive both land on the cautious side.
 				// Lint has already rejected values other than true/false by
 				// the time this runs.
-				Mutates: cmd.Mutates != "false",
+				Mutates:    cmd.Mutates != "false",
+				Deprecated: cmd.Deprecated,
 			}
 
 			if cmd.Desc != "" {

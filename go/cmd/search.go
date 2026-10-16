@@ -68,6 +68,9 @@ func runSearch(term string) {
 		if m.Platform != "" && platformSearchFlag != "any" {
 			tag += "[" + m.Platform + "] "
 		}
+		if m.Deprecated != "" {
+			tag += "(deprecated) "
+		}
 		fmt.Printf("  %-40s %s%s\n", m.Key, tag, m.Description)
 	}
 	fmt.Println()
