@@ -1,6 +1,6 @@
 # Command Audit: Keep, Cut, Merge
 
-> **Status:** Draft for review, 2026-10-16. Nothing in this document is implemented. It proposes what to do; each action ships as its own PR after sign-off.
+> **Status:** In progress, 2026-10-16. Steps 1 to 3 of the [order of work](#proposed-order-of-work) are done: the audit, the `deprecated` manifest field, and 15 commands deprecated in 5.33.0 (`release-theme` was removed outright). Removal and the MCP trim are still open. The Keep, Cut and Merge tables below are the original draft; the [Status](#status) section records what changed after a closer look. Each remaining action ships as its own PR.
 > **Scope:** The 81 CLI commands and 21 MCP tools in 5.30.1.
 > **Related:** [wp-ops-recommendations.md](wp-ops-recommendations.md) (gaps), [mcp-server-recommendations.md](mcp-server-recommendations.md) (MCP roadmap), [category-organization.md](category-organization.md) (grouping)
 
