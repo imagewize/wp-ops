@@ -27,7 +27,7 @@ Then checked the rest of `~/code` (Oct 16, 2026) two ways: the same transcript s
 - `command_search` is used in `duurzaam-doede` and `ecotuin`.
 - wp-ops MCP calls appear only in `seo-strategy`, `imagewize.com`, `ecotuin` and `min`.
 - **No Cut candidate below has live use outside this repo.** Their only appearances are was→now mapping tables from the script migration (`imagewize.com/scripts/README.md`, `seo-strategy/tools/scripts/README.md`), which document the old script names, not current use. `setup-monitoring` is the exception: `seo-strategy/RUN.md` tells the reader to run it, so it stays.
-- **Release workflows (warder, elayne, nynaeve).** None calls the Release group. Elayne and Warder ship through a GitHub Actions `create-release.yml` that zips the repo and attaches it to a release. Nynaeve's `CLAUDE.md` says `release-theme.sh` "no longer applies" (it resolves the theme inside `imagewize.com`, where Nynaeve is now a git-ignored Composer snapshot, so it would generate an empty changelog), and bumps the four version places by hand. Nynaeve's `AGENTS.md` still tells agents to run it, which contradicts that. Warder publishes to WordPress.org with "an external, generic deploy script"; whether that is `deploy-plugin-wporg` is unconfirmed.
+- **Release workflows (warder, elayne, nynaeve).** None calls the Release group. Elayne and Warder ship through a GitHub Actions `create-release.yml` that zips the repo and attaches it to a release. Nynaeve's `CLAUDE.md` says `release-theme.sh` "no longer applies" (it resolves the theme inside `imagewize.com`, where Nynaeve is now a git-ignored Composer snapshot, so it would generate an empty changelog), and bumps the four version places by hand. Nynaeve's `AGENTS.md` still tells agents to run it, which contradicts that. Warder publishes to WordPress.org without wp-ops: its own `bin/prepare-svn.sh` stages the `trunk/`, `tags/` and `assets/` layout, then Claude does the SVN steps by hand from the instructions in Warder's `CLAUDE.md` ("Publishing to WordPress.org"). Its `deploy-wporg.yml` workflow was removed, and nothing in the repo references `deploy-plugin-wporg`.
 
 **Remaining blind spots.** Commands run by hand from a terminal in another repo leave no trace unless they reached shell history. Warp and zsh history were checked, but only for the last few weeks to months. A zero here means "no trace found", so the deprecation window in the order of work below is still the safety net.
 
@@ -76,11 +76,9 @@ Candidates for removal. Each needs the cross-repo check noted in the last column
 | `screenshot-url`, `screenshot-patterns`, `center-screenshots`, `trim-screenshots`, `png-to-webp` | Pattern screenshot toolkit, no use here | Elayne pattern screenshots may depend on it |
 | MCP `admin_user_create` | 0 real calls; creating admins is a destructive action best left to `wp_cli` with explicit `confirm` | Incident recovery use (see Aseonomics, Sep 2026)? Keep the CLI script either way |
 | `release-theme` | Broken for its main user: Nynaeve's `CLAUDE.md` says it no longer applies, and `AGENTS.md` still recommends it | Fix the `AGENTS.md` contradiction in nynaeve either way. Remove, or rework it to take a repo path instead of resolving inside `imagewize.com` |
-| `release-plugin`, `upload-release-asset`, `sync-extracted` | No live use found; Warder and Elayne release through GitHub Actions | Check for use in other plugin repos (alantin, ecotuin, koffie) |
+| `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg` | No live use found; Warder and Elayne release through GitHub Actions, and Warder's WordPress.org publishing is `bin/prepare-svn.sh` plus manual SVN | Check for use in other plugin repos (alantin, ecotuin, koffie) |
 | `check-ips`, `check-deny-ips` | Only a mapping-table mention; the MCP `ip_reputation_check` covers the same lookup | Trellis deny-list review habit |
 | `cf7-smoke-test`, `updown-webhook-handler`, `diagnostic-transients` | No references | Server-side hooks may call them by path, not by name |
-
-**Moved out of Cut pending confirmation:** `deploy-plugin-wporg`. Warder publishes to WordPress.org through "an external, generic deploy script", and this may be it. Ask before touching it.
 | MCP `broken_link_audit`, `remote_ttfb_audit` | 0 calls | Reachable through `command_run` if needed |
 
 Cutting an MCP tool does not remove the CLI command behind it. Of the MCP tools, `files_pull` also has 0 calls, but it is the only way for an agent to pull uploads, so keep it for now.
@@ -109,7 +107,6 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 ## Open questions
 
-- Is `deploy-plugin-wporg` the "external, generic deploy script" Warder uses to publish to WordPress.org?
 - Rework or remove `release-theme`? Nynaeve can't use it as written.
 - Is anyone else running wp-ops? The Homebrew tap is public, so removals are breaking changes for them. If so, steps 2 and 3 matter more.
 - Should `gh-traffic` stay in wp-ops? It is used constantly, but it is a GitHub utility, not a WordPress one.
