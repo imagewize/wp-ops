@@ -2,6 +2,7 @@
 # List all published posts and count lines
 #
 # @desc     Count published posts on example.com via SSH and save the list to /tmp/all_posts.csv
+# @deprecated Hardcoded to example.com. Use wp post list through the wp_cli tool instead.
 # @category diagnostics
 # @platform trellis
 # @runs     local

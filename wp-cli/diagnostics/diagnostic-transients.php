@@ -6,6 +6,7 @@
  * Usage: wp eval-file wp-content/themes/client/diagnostic-transients.php
  *
  * @desc     Diagnose WordPress transient storage (set/get round-trip, object cache, cron cleanup)
+ * @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
  * @category diagnostics
  * @platform wordpress
  * @runs     local

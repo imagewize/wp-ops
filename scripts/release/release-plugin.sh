@@ -21,6 +21,7 @@
 # - git repository with main branch
 #
 # @desc     Bump plugin version and generate an AI changelog entry (Claude or Codex)
+# @deprecated Plugin repos release through their own GitHub Actions workflow. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category release
 # @platform any
 # @runs     local

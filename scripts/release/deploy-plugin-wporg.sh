@@ -49,6 +49,7 @@ err()  { echo -e "${RED}✗ $1${NC}" >&2; }
 # The --help handler above prints lines 3-46 of this file verbatim, so this
 # manifest block is placed after that range to avoid altering its output.
 # @desc     Publish a plugin from its git working tree to the WordPress.org SVN repository
+# @deprecated WordPress.org publishing is done with each plugin's own SVN steps. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category release
 # @platform any
 # @runs     local

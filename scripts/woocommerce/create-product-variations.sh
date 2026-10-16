@@ -20,6 +20,7 @@
 #     See: wordpress-utilities/snippets/woocommerce-product-attributes-wpcli.md
 #
 # @desc     Bulk-create WooCommerce product variations via WP-CLI over Trellis vm shell
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category misc
 # @platform trellis
 # @runs     local

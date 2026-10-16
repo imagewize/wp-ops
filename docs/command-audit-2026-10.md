@@ -97,6 +97,26 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 | Traffic | `traffic-report` (Ansible, slow), `traffic-monitor`, `traffic-by-country`, `quick-status`, `server-monitor` | `traffic-monitor` for traffic; `server-monitor` for host health; drop `traffic-report` and `quick-status` |
 | MCP and CLI pairs | `publish_post` and `publish-post`, `verify_post` and `verify-post` | Keep both interfaces; they share code, so there is no maintenance cost |
 
+## Status
+
+**Deprecated (5.33.0), 15 commands:** `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test`, `diagnostic-transients`. Each has no internal caller and no live use found. They warn on every run and are removed no sooner than the next minor release.
+
+**Held back after a closer look.** The tables above were drafted before these were checked, and the findings change them:
+
+| Item | Why it stays for now |
+|---|---|
+| `database-backup`, `database-pull` | Not duplicates of `db-backup` and `db-pull`. They are the Ansible route, and `db-backup.sh` and `site-backup.sh` both point to them for automated, repeatable runs. The SSH scripts are the one-shot route. Two ways, on purpose. |
+| `wp-db-backup` | Backs up any local WordPress site (Valet, Herd, cPanel, Bedrock). A different job from `db-backup`, which pulls from a remote Trellis box. |
+| `check-ips`, `check-deny-ips` | `check-deny-ips` calls `check-ips`, and the MCP `ip_reputation_check` mirrors them. It is not a replacement for someone working in a terminal. |
+| `updown-webhook-handler` | Invoked by path from the server-side `updown-webhook-receiver.php`, so a deprecation notice would only land in a server log. |
+| `find-and-replace-files` | Called by `updraft-to-valet`, which stays. |
+| `updraft-to-valet`, `convert-screenshot-for-claude` | Open question from the Cut table is still unanswered. |
+| Screenshot toolkit (`screenshot-url`, `screenshot-patterns`, `center-screenshots`, `trim-screenshots`, `png-to-webp`) | Elayne pattern screenshots may depend on it. |
+| `traffic-report` | 17 calls in the last month in `seo-strategy`, so it is used. The advice to prefer `traffic-monitor` stands. |
+| `quick-status` | Not a replacement for `server-monitor` (HTTP status codes and errors, not CPU and memory). |
+| Security family (`security-scan`, `malware-scan`, `scanner-*`) | `security-scan` reads Nginx logs and `malware-scan` runs malware scanners. They are different jobs, and wp-ops#222 is still open. |
+| MCP `admin_user_create`, `broken_link_audit`, `remote_ttfb_audit` | MCP removals are a separate release, because clients load the tool list at process start. |
+
 ## Proposed order of work
 
 1. **Docs only (this PR).** Agree on the list.

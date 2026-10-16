@@ -14,6 +14,7 @@
  *   node cf7-smoke-test.js https://yoursite.com/contact/ --name "QA Bot" --email "qa@yoursite.com"
  *
  * @desc     Playwright smoke test verifying CF7 submissions still work after an Nginx rate-limit deploy
+ * @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
  * @category monitoring
  * @platform wordpress
  * @runs     local

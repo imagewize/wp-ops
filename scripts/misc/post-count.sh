@@ -39,6 +39,7 @@
 #   ./post-count.sh --ssh web@example.com --site /srv/www/aseonomics.com/current
 
 # @desc     Count published WordPress posts by year (or month), locally or over SSH
+# @deprecated Use wp post list through the wp_cli tool instead. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category misc
 # @platform wordpress
 # @runs     local

@@ -2,6 +2,7 @@
 """Download Openverse image URLs and optionally convert to WebP."""
 #
 # @desc     Download Openverse image URLs (single, repeated, or from a manifest file) and optionally convert to WebP
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local

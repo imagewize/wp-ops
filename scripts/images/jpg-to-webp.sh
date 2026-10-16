@@ -4,6 +4,7 @@
 # Usage: ./jpg-to-webp.sh <input.jpg> [output.webp] [quality] [width] [height]
 #
 # @desc     Convert a JPG to WebP with center-crop (Facebook OG ratio by default)
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local

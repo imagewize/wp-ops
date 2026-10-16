@@ -32,6 +32,7 @@
 # artifacts, and this script has no opinion about their release cadence.
 #
 # @desc     Check or update the extracted Galaxy role and WP-CLI package against their wp-ops sources
+# @deprecated No known users outside wp-ops maintenance. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category release
 # @platform any
 # @runs     local

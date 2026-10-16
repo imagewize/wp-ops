@@ -2,6 +2,7 @@
 """Query Openverse image API and print results."""
 #
 # @desc     Search the Openverse image API and print matching results
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local
