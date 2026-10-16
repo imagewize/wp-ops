@@ -13,6 +13,7 @@
 # Respects .distignore if present to exclude dev files from the zip.
 #
 # @desc     Upload a zipped plugin/theme as a GitHub Release asset (for when the release workflow didn't trigger)
+# @deprecated Plugin repos release through their own GitHub Actions workflow. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category release
 # @platform any
 # @runs     local

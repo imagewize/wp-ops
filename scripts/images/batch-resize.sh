@@ -27,6 +27,7 @@
 #   ./batch-resize.sh -w 1200 -H 630 -d *.jpg
 #
 # @desc     Batch resize and center-crop images for featured images
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local

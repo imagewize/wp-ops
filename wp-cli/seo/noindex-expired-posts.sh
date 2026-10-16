@@ -31,6 +31,7 @@
 # YYYY-MM-DD values; a post expires once its date is strictly before today.
 #
 # @desc     Set Yoast's noindex on published posts whose expiry date has passed
+# @deprecated Targets Yoast; the sites run by this repo use The SEO Framework. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category seo
 # @platform wordpress
 # @runs     local

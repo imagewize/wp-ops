@@ -520,6 +520,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -581,6 +582,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -652,6 +654,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -727,6 +730,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -812,6 +816,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": false,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -1241,6 +1246,7 @@
     "manifest_category": "misc",
     "platform": "wordpress",
     "mutates": false,
+    "deprecated": "Use wp post list through the wp_cli tool instead. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "misc",
     "annotated": true
   },
@@ -1416,6 +1422,7 @@
     "manifest_category": "monitoring",
     "platform": "wordpress",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "monitoring",
     "annotated": true
   },
@@ -2344,6 +2351,7 @@
     "manifest_category": "release",
     "platform": "any",
     "mutates": true,
+    "deprecated": "WordPress.org publishing is done with each plugin's own SVN steps. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "release",
     "annotated": true
   },
@@ -2393,6 +2401,7 @@
     "manifest_category": "release",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Plugin repos release through their own GitHub Actions workflow. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "release",
     "annotated": true
   },
@@ -2431,6 +2440,7 @@
     "manifest_category": "release",
     "platform": "any",
     "mutates": true,
+    "deprecated": "No known users outside wp-ops maintenance. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "release",
     "annotated": true
   },
@@ -2476,6 +2486,7 @@
     "manifest_category": "release",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Plugin repos release through their own GitHub Actions workflow. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "release",
     "annotated": true
   },
@@ -2592,6 +2603,7 @@
     "manifest_category": "misc",
     "platform": "trellis",
     "mutates": true,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "misc",
     "annotated": true
   },
@@ -3571,6 +3583,7 @@
     "manifest_category": "diagnostics",
     "platform": "wordpress",
     "mutates": false,
+    "deprecated": "No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -3591,6 +3604,7 @@
     "manifest_category": "diagnostics",
     "platform": "trellis",
     "mutates": false,
+    "deprecated": "Hardcoded to example.com. Use wp post list through the wp_cli tool instead.",
     "display_category": "diagnostics",
     "annotated": true
   },
@@ -3990,6 +4004,7 @@
     "manifest_category": "seo",
     "platform": "wordpress",
     "mutates": true,
+    "deprecated": "Targets Yoast; the sites run by this repo use The SEO Framework. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "seo",
     "annotated": true
   },

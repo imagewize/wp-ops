@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.33.0] - 2026-10-16
+
+### Deprecated
+
+- **15 commands that the command audit (`docs/command-audit-2026-10.md`) found unused:** `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test` and `diagnostic-transients`. Each now prints a warning to stderr and is badged `(deprecated)` in `list` and `search`. They keep working, and will be removed no sooner than the next minor release. If you rely on one, open an issue.
+  - Checked before marking: no internal callers, and no use in any repo under `~/code`. Commands with a caller or recent use were held back; the reasons are in the audit doc's new Status section.
+
 ## [5.32.0] - 2026-10-16
 
 ### Added

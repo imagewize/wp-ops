@@ -2,6 +2,7 @@
 # Pad an image onto a square canvas and export it as WebP
 #
 # @desc     Pad an image onto a square canvas and export it as WebP
+# @deprecated No known users. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local
