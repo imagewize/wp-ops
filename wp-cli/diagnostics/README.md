@@ -8,7 +8,6 @@ WordPress diagnostic tools for troubleshooting common issues in Trellis/Bedrock 
 - [Installation](#installation)
 - [Available Tools](#available-tools)
   - [Transient Diagnostics](#transient-diagnostics)
-  - [Post Listing Script](#post-listing-script)
 - [Best Practices](#best-practices)
 - [Contributing](#contributing)
 
@@ -27,16 +26,6 @@ This directory contains diagnostic scripts and tools designed to help debug Word
 
 Diagnostic tools are designed to be copied into your WordPress project as needed:
 
-### For WP-CLI Scripts
-```bash
-# Copy to your theme or plugin directory
-cp diagnostic-transients.php /path/to/site/web/app/themes/your-theme/
-
-# Or copy to wp-content root
-cp diagnostic-transients.php /path/to/site/web/wp-content/
-```
-
-### For Browser-Based Tools
 ```bash
 # Upload to wp-content directory (most common)
 scp transient-debug-browser.php user@server:/path/to/site/web/wp-content/
@@ -51,41 +40,7 @@ scp transient-debug-browser.php user@server:/path/to/site/web/wp-content/
 
 WordPress transients are a way to temporarily store cached data in the database. These tools help diagnose issues when transients aren't being stored, retrieved, or expired correctly.
 
-#### 1. CLI Transient Diagnostic (`diagnostic-transients.php`)
-
-**Purpose:** Run comprehensive transient diagnostics via WP-CLI on development or production servers.
-
-**Usage:**
-```bash
-# From Bedrock site root (development)
-wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
-
-# Via Trellis SSH
-trellis ssh production
-cd /srv/www/example.com/current
-wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
-```
-
-**Via wp-ops:** also runnable from the wp-ops checkout without copying the file first — set `WP_SITE_DIR` to your Bedrock site root: `WP_SITE_DIR=/path/to/site wp-ops wp-cli diagnostic-transients --path=web/wp`. See [`wp-ops`](../../README.md).
-
-**What It Tests:**
-1. **Transient Storage** - Verifies set/get operations work correctly
-2. **API Cache Status** - Checks specific cache (api_properties_list) existence and expiration
-3. **Object Cache Configuration** - Detects external cache systems (Redis, Memcached, LiteSpeed)
-4. **Database Transient Check** - Verifies transients exist in wp_options table
-5. **Transient Cleanup Cron** - Lists scheduled cleanup jobs
-6. **Business Hours Logic** - Tests time-based cache lifetime calculations
-7. **Recent Activity** - Shows transients created in the last hour
-
-**Output:** Terminal-formatted diagnostic report with recommendations
-
-**When to Use:**
-- Transients not persisting between requests
-- Cache appears to be cleared unexpectedly
-- API data not being cached properly
-- After enabling/disabling object cache plugins
-
-#### 2. Browser Transient Debugger (`transient-debug-browser.php`)
+#### Browser Transient Debugger (`transient-debug-browser.php`)
 
 **Purpose:** Web-based diagnostic tool for production servers where WP-CLI access may be limited or when you need to share results with non-technical stakeholders.
 
@@ -118,38 +73,9 @@ wp eval-file web/app/themes/your-theme/diagnostic-transients.php --path=web/wp
 - Want detailed database performance metrics
 - Testing after server configuration changes
 
-### Post Listing Script
-
-#### 1. List Posts Count (`list-posts-count.sh`)
-
-**Purpose:** List all published WordPress posts via WP-CLI in CSV format and count the results. Useful for content audits, diagnostics, and verifying post counts.
-
-**Usage:**
-```bash
-# Run the script (connects to production server)
-./list-posts-count.sh
-
-# Or copy and run directly:
-ssh web@example.com "cd /srv/www/example.com/current && wp post list --post_type=post --post_status=publish --fields=ID,post_title,post_name,post_date --path=web/wp --format=csv" > /tmp/all_posts.csv 2>&1
-wc -l /tmp/all_posts.csv
-```
-
-**What It Does:**
-- Connects via SSH to a WordPress server
-- Lists all published posts with ID, title, slug, and date fields
-- Outputs results in CSV format to `/tmp/all_posts.csv`
-- Counts the number of posts (lines in the CSV file)
-
-**Output:** CSV file with post data and line count to stdout
-
-**When to Use:**
-- Content audit and verification
-- Quick post count checks
-- Diagnostic investigation of post-related issues
-
 ### Common Issues Diagnosed
 
-Both tools help identify:
+The browser debugger helps identify:
 
 - **External object cache conflicts** - LiteSpeed, Redis, Memcached interfering with transients
 - **Database storage failures** - Transients not being written to wp_options table
@@ -169,13 +95,11 @@ Both tools help identify:
 ### Performance
 - Run diagnostics during low-traffic periods when possible
 - Browser diagnostic creates temporary test transients but cleans them up
-- CLI diagnostic is lightweight and safe for production use
 
 ### Workflow
-1. **Start with CLI diagnostic** - Faster, more detailed for developers
-2. **Use browser diagnostic** - When you need shareable results or detailed DB analysis
-3. **Document findings** - Copy output to your issue tracker or documentation
-4. **Test fixes** - Re-run diagnostic after implementing solutions
+1. **Use the browser diagnostic** - Shareable results and detailed DB analysis
+2. **Document findings** - Copy output to your issue tracker or documentation
+3. **Test fixes** - Re-run diagnostic after implementing solutions
 
 ### Interpreting Results
 
@@ -187,7 +111,7 @@ Both tools help identify:
 
 When adding new diagnostic tools to this directory:
 
-1. **Follow naming convention:** `diagnostic-{feature}.php` for CLI tools, `{feature}-debug-browser.php` for web tools
+1. **Follow naming convention:** `{feature}-debug-browser.php` for web tools
 2. **Include security:** Add access controls for browser-based tools
 3. **Document thoroughly:** Add inline comments explaining each test
 4. **Update this README:** Add tool description under "Available Tools"

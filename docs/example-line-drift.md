@@ -320,15 +320,9 @@ rather than a correctness one, and this document does not need to make it.
 scripts/git/create-pr.sh:27,28
 scripts/git/gh-traffic.sh:18
 scripts/git/git-log-oneline.sh:32
-scripts/images/batch-resize.sh:42
-scripts/images/make-square-webp.sh:15
-scripts/images/openverse_download.py:16
-scripts/images/openverse_search.py:17
 scripts/misc/convert-screenshot-for-claude.sh:28
 scripts/misc/find-and-replace-files.sh:36
-scripts/misc/post-count.sh:53
 scripts/monitoring/404-checker.sh:25,26
-scripts/monitoring/cf7-smoke-test.js:26
 scripts/monitoring/redirect-check.sh:12
 scripts/monitoring/remote-ttfb-ua.sh:24
 scripts/monitoring/server-monitor.sh:20
@@ -337,19 +331,13 @@ scripts/patterns/center-screenshots.sh:21
 scripts/patterns/screenshot-patterns.sh:38     ← has an env-var prefix
 scripts/patterns/screenshot-url.js:38
 scripts/patterns/trim-screenshots.sh:19
-scripts/release/deploy-plugin-wporg.sh:66
-scripts/release/release-plugin.sh:31
-scripts/release/upload-release-asset.sh:23
 scripts/sync/rsync-package-to-site.sh:49
 scripts/sync/rsync-theme.sh:37
-scripts/woocommerce/create-product-variations.sh:28,29
 trellis/security/check-deny-ips.sh:24,25
 trellis/security/check-ips.sh:19
 wp-cli/content-creation/import-page-draft.sh:36,37
 wp-cli/content-creation/page-creation.sh:24
 wp-cli/content-creation/wp-cli-pattern-validate.php:50   ← names retired `bedrock/`
-wp-cli/diagnostics/diagnostic-transients.php:13
-wp-cli/diagnostics/list-posts-count.sh:9
 wp-cli/security/scanner-general.php:41
 wp-cli/security/scanner-targeted.php:35
 wp-cli/security/scanner-wrapper.php:21

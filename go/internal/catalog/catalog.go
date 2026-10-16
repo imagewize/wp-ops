@@ -392,10 +392,8 @@ var DisplayOrder = []string{
 	"seo",
 	"security",
 	"misc",
-	"release",
 	"git",
 	"mcp-server",
-	"diagnostics",
 	"sync",
 }
 
@@ -405,18 +403,16 @@ var DisplayOrder = []string{
 // print as a header ("Trellis Commands:").
 var CategoryDisplayNames = map[string]string{
 	// Domain categories — DisplayOrder.
-	"monitoring":  "Monitoring",
-	"backup":      "Backup",
-	"content":     "Content",
-	"images":      "Images",
-	"seo":         "SEO",
-	"security":    "Security",
-	"misc":        "Misc",
-	"release":     "Release",
-	"git":         "Git",
-	"mcp-server":  "MCP Server",
-	"diagnostics": "Diagnostics",
-	"sync":        "Sync",
+	"monitoring": "Monitoring",
+	"backup":     "Backup",
+	"content":    "Content",
+	"images":     "Images",
+	"seo":        "SEO",
+	"security":   "Security",
+	"misc":       "Misc",
+	"git":        "Git",
+	"mcp-server": "MCP Server",
+	"sync":       "Sync",
 
 	// Directory categories — Categories, used by the hidden aliases.
 	"scripts": "Scripts",
@@ -430,16 +426,14 @@ var CategoryDisplayNames = map[string]string{
 // categories only; the directory aliases are hidden and never render a
 // blurb.
 var CategoryBlurbs = map[string]string{
-	"monitoring":  "Log monitoring, uptime checks, and traffic analysis",
-	"backup":      "Database and file backups — Ansible and shell",
-	"content":     "Block pattern screenshots, page creation, and pattern validation",
-	"images":      "Image resizing, WebP/AVIF conversion, and Openverse downloads",
-	"seo":         "Redirect, schema, orphan-content audits, and noindex management",
-	"security":    "Malware scanning, fail2ban, IP blocking, and admin recovery",
-	"misc":        "Trellis updater, WooCommerce variations, and one-off utilities",
-	"release":     "WordPress plugin/theme release and asset upload automation",
-	"git":         "PR creation, repo traffic stats, and git log helpers",
-	"mcp-server":  "MCP server development and runtime commands",
-	"diagnostics": "WordPress transient and post-count diagnostics",
-	"sync":        "rsync a theme or package into a site",
+	"monitoring": "Log monitoring, uptime checks, and traffic analysis",
+	"backup":     "Database and file backups — Ansible and shell",
+	"content":    "Block pattern screenshots, page creation, and pattern validation",
+	"images":     "SVG-to-JPG and SVG-to-PNG conversion for featured images",
+	"seo":        "Redirect, schema, and orphan-content audits",
+	"security":   "Malware scanning, fail2ban, IP blocking, and admin recovery",
+	"misc":       "Trellis updater and one-off utilities",
+	"git":        "PR creation, repo traffic stats, and git log helpers",
+	"mcp-server": "MCP server development and runtime commands",
+	"sync":       "rsync a theme or package into a site",
 }

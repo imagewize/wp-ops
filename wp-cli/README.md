@@ -39,9 +39,6 @@ wp post create --post_title="New Page" --post_status=publish --path=web/wp
 
 # Remote via Trellis
 trellis vm shell --workdir /srv/www/example.com/current -- wp post list --path=web/wp
-
-# Run diagnostics
-wp eval-file wp-cli/diagnostics/diagnostic-transients.php
 ```
 
 ---
@@ -182,9 +179,7 @@ Production-safe diagnostic scripts for identifying and troubleshooting WordPress
 
 ### Features
 
-- **Two Tool Formats**:
-  - CLI-based (`diagnostic-transients.php`) - For servers with WP-CLI access
-  - Web-based (`transient-debug-browser.php`) - For browser access with security token
+- **Web-based tool** (`transient-debug-browser.php`) - For browser access with security token
 
 - **Comprehensive Tests**:
   - Transient storage and API cache functionality
@@ -203,25 +198,9 @@ Production-safe diagnostic scripts for identifying and troubleshooting WordPress
 
 | Tool | Access Method | Use Case |
 |------|--------------|----------|
-| `diagnostic-transients.php` | WP-CLI | Development/production servers with CLI access |
 | `transient-debug-browser.php` | Web browser | Production servers or sharing with non-technical users |
 
 ### Usage Examples
-
-#### CLI Diagnostic (Recommended)
-
-```bash
-# Local development
-cd /path/to/bedrock
-wp eval-file diagnostic-transients.php --path=web/wp
-
-# Remote via Trellis
-ssh web@example.com "cd /srv/www/example.com/current && \
-  wp eval-file diagnostic-transients.php --path=web/wp"
-
-# Save output to file
-wp eval-file diagnostic-transients.php --path=web/wp > diagnostic-report.txt
-```
 
 #### Web-Based Diagnostic
 
