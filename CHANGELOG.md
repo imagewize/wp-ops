@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.37.0] - 2026-10-16
+
+### Changed
+
+- **The picker's category screen is easier to scan.**
+  - The blurb column sizes to the longest blurb instead of filling the terminal. On a wide screen the platform mix used to sit some 100 columns from the row it described; it now follows the text directly (113 columns for today's catalog).
+  - The selected row is highlighted across its full width with a quiet background band and a `▌` marker, instead of only colouring the label.
+  - Counts render as plain right-aligned numbers, `18` rather than `(18)` and ` 2` rather than `( 2)`.
+  - A faint rule under "All categories" separates the whole catalog from the categories in it.
+  - The footer says `type to search`. Typing on this screen has always jumped straight into a search across all commands, but nothing said so.
+
 ## [5.36.0] - 2026-10-16
 
 ### Deprecated

@@ -26,7 +26,8 @@ PATH nothing else needs to stay around — you can delete the clone after buildi
 `wp-ops` with no arguments opens an interactive picker: categories first, then a
 fuzzy-filterable command list, then the chosen command's full help (usage,
 requirements, examples, args) printed above its argument prompts — no `fzf`
-dependency. It renders inline rather than taking over the screen, so earlier output
+dependency. Start typing on the category screen to skip straight to a search across
+every command. It renders inline rather than taking over the screen, so earlier output
 stays visible above it and the last frame stays in your scrollback after it exits.
 
 ## Doctor

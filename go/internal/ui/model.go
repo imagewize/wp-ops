@@ -112,6 +112,10 @@ var (
 	mutedColor     = lipgloss.AdaptiveColor{Light: "#585858", Dark: "245"}
 	trellisColor   = lipgloss.AdaptiveColor{Light: "#005f87", Dark: "117"}
 	wordpressColor = lipgloss.AdaptiveColor{Light: "#00875f", Dark: "114"}
+	// selectBg is the selected category row's background: a quiet band
+	// rather than a colour, so the accent-coloured label stays the loudest
+	// thing on it.
+	selectBg = lipgloss.AdaptiveColor{Light: "#e4e4e4", Dark: "236"}
 )
 
 var (
@@ -142,6 +146,7 @@ var (
 	crumbStyle          = lipgloss.NewStyle().Foreground(mutedColor)
 	categoryHeaderStyle = lipgloss.NewStyle().Bold(true).Foreground(mutedColor)
 	countStyle          = dimStyle
+	ruleStyle           = dimStyle
 	minPaneHeight       = 10
 	// Name-column bounds for the browse list. The column sizes to the longest
 	// visible basename so short categories don't get a gutter of dead space,
@@ -637,7 +642,7 @@ func (m Model) viewCategory() string {
 	// Same opening line trellis prints above its command table. The picker
 	// is not the only way in — every row here is also reachable as
 	// `wp-ops <command>` — and without this the screen reads as if arrow
-	// keys were the only interface to 74 commands.
+	// keys were the only interface to the catalog.
 	b.WriteString(dimStyle.Render("Usage: wp-ops [--help] [--version] <command> [<args>]"))
 	b.WriteString("\n\n")
 
@@ -645,17 +650,25 @@ func (m Model) viewCategory() string {
 	for i, opt := range m.categories {
 		b.WriteString(m.categoryRow(opt, i == m.catCursor, l))
 		b.WriteString("\n")
+		// "All categories" is the whole catalog, not a tenth category; a
+		// rule under it keeps it from reading as one more row of the list.
+		if i == 0 && opt.key == "" && len(m.categories) > 1 {
+			b.WriteString("  " + ruleStyle.Render(strings.Repeat("─", l.rowW-2)) + "\n")
+		}
 	}
 
-	b.WriteString("\n" + m.footer("↑/↓ move · enter select · esc quit", "↑/↓ · enter · esc"))
+	// Typing already jumps into an unscoped search (updateCategory's
+	// KeyRunes branch); the footer says so, or nobody finds out.
+	b.WriteString("\n" + m.footer("type to search · ↑/↓ move · enter select · esc quit", "type · ↑/↓ · enter · esc"))
 	return b.String()
 }
 
 // categoryLayout apportions the terminal width across the category screen's
-// four columns: label, count, blurb, and the platform mix.
+// four columns: label, count, blurb, and the platform mix. rowW is the width
+// every row is padded to, so the selected row's highlight is one even bar.
 type categoryLayout struct {
-	labelW, blurbW int
-	showMix        bool
+	labelW, blurbW, rowW int
+	showMix              bool
 }
 
 func (m Model) categoryLayout() categoryLayout {
@@ -674,54 +687,92 @@ func (m Model) categoryLayout() categoryLayout {
 		l.labelW = maxLabelWidth
 	}
 
-	// 2 cursor gutter, 1 gap, 4 for "(NN)", 2 gap.
-	l.blurbW = total - l.labelW - 9
-	if l.blurbW-(mixColWidth+2) >= minBlurbWidth {
+	// The blurb column sizes to the longest blurb rather than to whatever
+	// the terminal has left. Filling the terminal is what parked the
+	// platform mix ~100 columns from its row on a wide screen; sized to
+	// content, the mix sits right after the text it describes.
+	longest := 0
+	for _, opt := range m.categories {
+		if n := len([]rune(opt.blurb)); n > longest {
+			longest = n
+		}
+	}
+
+	// 2 cursor gutter, the label, 1 gap, 3 for the count, 2 gap.
+	fixed := l.labelW + 8
+	avail := total - fixed
+	if avail-(mixColWidth+2) >= minBlurbWidth {
 		l.showMix = true
-		l.blurbW -= mixColWidth + 2
+		avail -= mixColWidth + 2
+	}
+	l.blurbW = avail
+	if longest > 0 && longest < l.blurbW {
+		l.blurbW = longest
 	}
 	if l.blurbW < 1 {
 		l.blurbW = 1
+	}
+	l.rowW = fixed + l.blurbW
+	if l.showMix {
+		l.rowW += mixColWidth + 2
 	}
 	return l
 }
 
 func (m Model) categoryRow(opt categoryOption, selected bool, l categoryLayout) string {
-	labelStyle := nameStyle
-	blurbStyle := descStyle
+	// Every cell, gaps included, carries the row background when selected:
+	// lipgloss resets after each Render, so a background applied to the
+	// row as a whole would stop at the first styled cell.
+	bg := func(s lipgloss.Style) lipgloss.Style {
+		if selected {
+			return s.Background(selectBg)
+		}
+		return s
+	}
+	labelStyle, blurbStyle := nameStyle, descStyle
 	gutter := "  "
 	if selected {
 		labelStyle, blurbStyle = selectedNameStyle, selectedDescStyle
-		gutter = cursorStyle.Render("> ")
+		gutter = bg(cursorStyle).Render("▌") + bg(lipgloss.NewStyle()).Render(" ")
 	}
+	gap := func(n int) string { return bg(lipgloss.NewStyle()).Render(strings.Repeat(" ", n)) }
 
 	label := fmt.Sprintf("%-*s", l.labelW, truncate(opt.label, l.labelW))
-	count := fmt.Sprintf("(%2d)", opt.count)
-	blurb := truncate(opt.blurb, l.blurbW)
+	count := fmt.Sprintf("%3d", opt.count)
+	blurb := fmt.Sprintf("%-*s", l.blurbW, truncate(opt.blurb, l.blurbW))
 
-	row := gutter + labelStyle.Render(label) + " " + countStyle.Render(count) + "  "
-	if !l.showMix {
-		return row + blurbStyle.Render(blurb)
+	row := gutter + bg(labelStyle).Render(label) + gap(1) + bg(countStyle).Render(count) + gap(2) +
+		bg(blurbStyle).Render(blurb)
+	if l.showMix {
+		row += gap(2) + renderMix(opt.mix, bg)
 	}
-	return strings.TrimRight(
-		row+blurbStyle.Render(fmt.Sprintf("%-*s", l.blurbW, blurb))+"  "+renderMix(opt.mix),
-		" ")
+	if !selected {
+		// Unselected rows have nothing to paint past the last character.
+		return strings.TrimRight(row, " ")
+	}
+	return row
 }
 
 // renderMix draws a category's platform breakdown as three fixed-width
 // slots, blank where the count is zero. Fixed slots rather than a
 // "9 trellis · 1 wp" join so the three platforms line up into columns down
-// the screen instead of shuffling sideways as counts drop out.
-func renderMix(p platformMix) string {
-	return mixSlot(p.trellis, "trellis", trellisTag) + "  " +
-		mixSlot(p.wordpress, "wp", wordpressTag) + "  " +
-		mixSlot(p.any, "any", anyTag)
+// the screen instead of shuffling sideways as counts drop out. bg adds the
+// selected row's background to each slot and gap.
+func renderMix(p platformMix, bg func(lipgloss.Style) lipgloss.Style) string {
+	blank := bg(lipgloss.NewStyle())
+	gap := blank.Render("  ")
+	return mixSlot(p.trellis, "trellis", bg(trellisTag), blank) + gap +
+		mixSlot(p.wordpress, "wp", bg(wordpressTag), blank) + gap +
+		mixSlot(p.any, "any", bg(anyTag), blank)
 }
 
-func mixSlot(n int, label string, style lipgloss.Style) string {
+// mixSlot renders an empty slot with blank rather than the tag's style, so
+// on an unselected row it is plain spaces the caller can trim, not spaces
+// wrapped in a faint escape that survive strings.TrimRight.
+func mixSlot(n int, label string, style, blank lipgloss.Style) string {
 	width := 3 + len(label) // "NN " plus the label
 	if n == 0 {
-		return strings.Repeat(" ", width)
+		return blank.Render(strings.Repeat(" ", width))
 	}
 	return style.Render(fmt.Sprintf("%2d %s", n, label))
 }
