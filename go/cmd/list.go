@@ -177,6 +177,9 @@ func printCategoryEntries(entries []catalog.Entry) {
 		if e.RunsOn == "server" {
 			tag = "(server) "
 		}
+		if e.Deprecated != "" {
+			tag += "(deprecated) "
+		}
 		fmt.Printf("  %-32s %s%s\n", filepath.Base(e.Key), tag, e.Description)
 	}
 }

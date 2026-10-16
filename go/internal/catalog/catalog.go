@@ -77,6 +77,10 @@ type Entry struct {
 	// omitting it would make "read-only" and "field missing entirely" look
 	// identical to any consumer reading the JSON.
 	Mutates bool `json:"mutates"`
+	// Deprecated is the @deprecated message (what to use instead); empty means
+	// the command is not deprecated. omitempty keeps catalog.json unchanged for
+	// every command that is not, and lets older consumers ignore the field.
+	Deprecated string `json:"deprecated,omitempty"`
 	// DisplayCategory is the grouping used by every human-facing surface —
 	// list.go's category views, the interactive picker, and the per-category
 	// Cobra commands (dispatch.go). It equals Category except for the

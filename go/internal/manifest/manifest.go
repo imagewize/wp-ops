@@ -63,6 +63,15 @@ type Command struct {
 	// works the same way for all of them. catalog.Entry resolves it to a
 	// bool — absent means mutating, the fail-safe reading.
 	Mutates string
+	// Deprecated is the @deprecated message: what to use instead, in a
+	// sentence. Non-empty means the command is deprecated. It is shown by
+	// list/search/--help and printed to stderr every time the command runs, so
+	// a removal is announced for a release or two before it happens.
+	Deprecated string
+	// deprecatedSeen records that the directive appeared at all, so Lint can
+	// reject a bare "@deprecated" with no message — a warning that does not
+	// say what to use instead is not worth emitting.
+	deprecatedSeen bool
 
 	// Annotated is true when the script had at least one recognized @
 	// directive at all — the Go equivalent of bash's has_manifest(), which
@@ -103,7 +112,7 @@ var (
 var directivesHandled = map[string]bool{
 	"@desc": true, "@category": true, "@runs": true, "@requires": true,
 	"@doc": true, "@example": true, "@arg": true, "@flag": true, "@platform": true,
-	"@mutates": true,
+	"@mutates": true, "@deprecated": true,
 }
 
 // DirectiveLines returns every recognized "@directive value" line found in
@@ -210,6 +219,11 @@ func Parse(key, scriptPath string) (*Command, error) {
 			if cmd.Mutates == "" {
 				cmd.Mutates = value
 			}
+		case "@deprecated":
+			cmd.deprecatedSeen = true
+			if cmd.Deprecated == "" {
+				cmd.Deprecated = value
+			}
 		case "@requires":
 			if cmd.Requires == nil && value != "" {
 				cmd.Requires = strings.Fields(value)
@@ -278,6 +292,10 @@ func Lint(cmd *Command, repoRoot string) []string {
 		default:
 			errs = append(errs, fmt.Sprintf("%s: @mutates '%s' must be true or false", cmd.Key, cmd.Mutates))
 		}
+	}
+
+	if cmd.deprecatedSeen && cmd.Deprecated == "" {
+		errs = append(errs, fmt.Sprintf("%s: @deprecated needs a message saying what to use instead", cmd.Key))
 	}
 
 	for _, p := range append(append([]Param{}, cmd.Args...), cmd.Flags...) {

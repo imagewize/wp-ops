@@ -44,6 +44,9 @@ const entrySchema = z
     // "mutates" by isReadOnlyCommand below, so a stale catalog costs an extra
     // confirmation rather than skipping one.
     mutates: z.boolean().optional(),
+    // The @deprecated message: what to use instead. Absent for every
+    // command that is not deprecated.
+    deprecated: z.string().optional(),
   })
   .passthrough();
 
@@ -160,6 +163,7 @@ export function formatEntryDetail(e: CatalogEntry): string {
   const lines = [
     `${e.key}`,
     `  ${e.description}`,
+    ...(e.deprecated ? ["", `DEPRECATED: ${e.deprecated}`] : []),
     "",
     `script:   ${e.script_path}`,
     `platform: ${e.platform ?? "any"}   runs on: ${e.runs_on ?? "local"}`,
@@ -194,6 +198,7 @@ export function formatSearchResults(matches: CatalogEntry[], query: string): str
     const tags = [e.platform ?? "any"];
     if (e.runs_on === "server") tags.push("server");
     if (!isReadOnlyCommand(e)) tags.push("needs confirm");
+    if (e.deprecated) tags.push("deprecated");
     return `  ${e.key.padEnd(48)} [${tags.join(", ")}] ${e.description}`;
   });
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.32.0] - 2026-10-16
+
+### Added
+
+- **`@deprecated` manifest directive.** `# @deprecated Use db-backup instead.` in a script header marks the command deprecated, so a removal is announced for a release or two before it happens (step 2 of `docs/command-audit-2026-10.md`).
+  - `wp-ops list --all` and `wp-ops search` badge the command `(deprecated)`.
+  - Every run, and `--help`, prints `warning: <command> is deprecated and will be removed in a future release. <message>` to stderr, so `--json` and other stdout consumers are unaffected and the MCP server captures it with the rest of the output.
+  - The MCP `command_search` flags it: a `deprecated` tag in the result list and a `DEPRECATED:` line in the detail view.
+  - `catalog.json` carries a `deprecated` field (omitted when empty, so nothing changes for other commands). The stable `--json` list output is left as it was.
+  - Lint rejects a bare `@deprecated` with no message, since a warning that does not say what to use instead is not worth emitting.
+  - No command is deprecated in this release; marking the audit's candidates is the next change.
+
 ## [5.31.0] - 2026-10-16
 
 ### Removed

@@ -229,3 +229,35 @@ func TestDirectiveLines_StopsAtLine80(t *testing.T) {
 		}
 	}
 }
+
+func TestParse_Deprecated(t *testing.T) {
+	cmd, err := Parse("scripts/backup/old-backup", "testdata/deprecated.sh")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if got, want := cmd.Deprecated, "Use db-backup instead."; got != want {
+		t.Errorf("Deprecated = %q, want %q", got, want)
+	}
+	if errs := Lint(cmd, "../../.."); len(errs) != 0 {
+		t.Errorf("Lint on a deprecated command with a message = %v, want none", errs)
+	}
+
+	plain, err := Parse("scripts/backup/db-backup", "testdata/db-backup.sh")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if plain.Deprecated != "" {
+		t.Errorf("db-backup Deprecated = %q, want \"\" (directive absent)", plain.Deprecated)
+	}
+}
+
+func TestLint_DeprecatedNeedsMessage(t *testing.T) {
+	cmd, err := Parse("scripts/backup/bare", "testdata/deprecated-bare.sh")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	errs := Lint(cmd, "../../..")
+	if len(errs) != 1 {
+		t.Fatalf("Lint errors = %v, want exactly one (bare @deprecated)", errs)
+	}
+}
