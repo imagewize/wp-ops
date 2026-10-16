@@ -75,7 +75,7 @@ Candidates for removal. Each needs the cross-repo check noted in the last column
 | `list-posts-count`, `post-count` | Hardcoded `example.com` path; `wp_cli` does this in one call | None expected |
 | `screenshot-url`, `screenshot-patterns`, `center-screenshots`, `trim-screenshots`, `png-to-webp` | Pattern screenshot toolkit, no use here | Elayne pattern screenshots may depend on it |
 | MCP `admin_user_create` | 0 real calls; creating admins is a destructive action best left to `wp_cli` with explicit `confirm` | Incident recovery use (see Aseonomics, Sep 2026)? Keep the CLI script either way |
-| `release-theme` | Broken for its main user: Nynaeve's `CLAUDE.md` says it no longer applies, and `AGENTS.md` still recommends it | Fix the `AGENTS.md` contradiction in nynaeve either way. Remove, or rework it to take a repo path instead of resolving inside `imagewize.com` |
+| `release-theme` | **Decided: remove.** Broken for its main user (Nynaeve's `CLAUDE.md` says it no longer applies), and every theme now documents its own release steps, which Claude or Vibe follow directly | Remove the stale `release-theme.sh` instruction from `nynaeve/AGENTS.md` in the same change |
 | `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg` | No live use found; Warder and Elayne release through GitHub Actions, and Warder's WordPress.org publishing is `bin/prepare-svn.sh` plus manual SVN | Check for use in other plugin repos (alantin, ecotuin, koffie) |
 | `check-ips`, `check-deny-ips` | Only a mapping-table mention; the MCP `ip_reputation_check` covers the same lookup | Trellis deny-list review habit |
 | `cf7-smoke-test`, `updown-webhook-handler`, `diagnostic-transients` | No references | Server-side hooks may call them by path, not by name |
@@ -107,6 +107,5 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 ## Open questions
 
-- Rework or remove `release-theme`? Nynaeve can't use it as written.
 - Is anyone else running wp-ops? The Homebrew tap is public, so removals are breaking changes for them. If so, steps 2 and 3 matter more.
 - Should `gh-traffic` stay in wp-ops? It is used constantly, but it is a GitHub utility, not a WordPress one.
