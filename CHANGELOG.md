@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.35.0] - 2026-10-16
+
+### Removed
+
+- **Three MCP tools: `broken_link_audit`, `remote_ttfb_audit` and `admin_user_create`**, as step 5 of the command audit (`docs/command-audit-2026-10.md`). None had a real call in the last month, and every registered tool costs context tokens in each session. The server now registers 18 tools instead of 21.
+  - The CLI commands behind them are unchanged and stay reachable through `command_run`: `404-checker`, `remote-ttfb-ua` and `admin-user-create`.
+  - MCP clients load the tool list at process start, so restart any running client to drop the three tools. Remove their `mcp__wp-ops__broken_link_audit` and `mcp__wp-ops__remote_ttfb_audit` entries from `~/.claude/settings.json` if you pre-approved them.
+
 ## [5.34.0] - 2026-10-16
 
 ### Removed

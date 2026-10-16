@@ -1,6 +1,6 @@
 # Command Audit: Keep, Cut, Merge
 
-> **Status:** In progress, 2026-10-16. Steps 1 to 4 of the [order of work](#proposed-order-of-work) are done: the audit, the `deprecated` manifest field, 15 commands deprecated in 5.33.0 and removed in 5.34.0 (`release-theme` was removed outright). Only the MCP trim is still open. The Keep, Cut and Merge tables below are the original draft; the [Status](#status) section records what changed after a closer look. Each remaining action ships as its own PR.
+> **Status:** In progress, 2026-10-16. Steps 1 to 5 of the [order of work](#proposed-order-of-work) are done: the audit, the `deprecated` manifest field, 15 commands deprecated in 5.33.0 and removed in 5.34.0 (`release-theme` was removed outright). The three MCP tools were trimmed in 5.35.0. Only the held-back items and open questions remain. The Keep, Cut and Merge tables below are the original draft; the [Status](#status) section records what changed after a closer look. Each remaining action ships as its own PR.
 > **Scope:** The 81 CLI commands and 21 MCP tools in 5.30.1.
 > **Related:** [wp-ops-recommendations.md](wp-ops-recommendations.md) (gaps), [mcp-server-recommendations.md](mcp-server-recommendations.md) (MCP roadmap), [category-organization.md](category-organization.md) (grouping)
 
@@ -115,7 +115,7 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 | `traffic-report` | 17 calls in the last month in `seo-strategy`, so it is used. The advice to prefer `traffic-monitor` stands. |
 | `quick-status` | Not a replacement for `server-monitor` (HTTP status codes and errors, not CPU and memory). |
 | Security family (`security-scan`, `malware-scan`, `scanner-*`) | `security-scan` reads Nginx logs and `malware-scan` runs malware scanners. They are different jobs, and wp-ops#222 is still open. |
-| MCP `admin_user_create`, `broken_link_audit`, `remote_ttfb_audit` | MCP removals are a separate release, because clients load the tool list at process start. |
+| MCP `admin_user_create`, `broken_link_audit`, `remote_ttfb_audit` | Removed in 5.35.0, in a separate release because clients load the tool list at process start. The CLI commands stay, reachable through `command_run`. |
 
 ## Proposed order of work
 
