@@ -7,6 +7,7 @@
 # Created: 2026-07-09
 #
 # @desc     Fetch and display GitHub repo traffic: views, clones, and referrers (14-day window)
+# @deprecated Moved to its own GitHub CLI extension: gh extension install imagewize/gh-traffic, then run "gh traffic" with the same arguments.
 # @category git
 # @platform any
 # @runs     local
