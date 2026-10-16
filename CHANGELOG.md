@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.36.0] - 2026-10-16
+
+### Deprecated
+
+- **`gh-traffic`**, which now lives in its own repository as a GitHub CLI extension: [imagewize/gh-traffic](https://github.com/imagewize/gh-traffic). Install it with `gh extension install imagewize/gh-traffic` and run `gh traffic` with the same arguments and flags. It is the one command here that has nothing to do with WordPress. The wp-ops copy warns on every run, keeps working, and will be removed no sooner than the next minor release.
+
 ## [5.35.0] - 2026-10-16
 
 ### Removed
