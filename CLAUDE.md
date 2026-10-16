@@ -25,7 +25,6 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `scripts/woocommerce/` - WooCommerce automation scripts (product variation creation)
   - `scripts/release/` - Release automation
     - `scripts/release/release-plugin.sh` - WordPress plugin release automation
-    - `scripts/release/release-theme.sh` - WordPress theme release automation
   - `scripts/git/` - Git/GitHub utilities
     - `scripts/git/create-pr.sh` - AI-powered GitHub PR creation
     - `scripts/git/git-log-oneline.sh` - Compact git log output utility

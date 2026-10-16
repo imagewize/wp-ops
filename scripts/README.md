@@ -70,7 +70,6 @@ scripts/
 ├── release/                     # Release automation
 │   ├── deploy-plugin-wporg.sh  # Publish a plugin to the WordPress.org directory via SVN
 │   ├── release-plugin.sh       # WordPress plugin version release automation
-│   ├── release-theme.sh        # WordPress theme version release automation
 │   └── upload-release-asset.sh # Manual GitHub release zip upload (fallback for failed Actions)
 ├── sync/                        # File synchronization
 │   ├── rsync-package-to-site.sh  # Push a plugin/theme working copy into a Bedrock site
@@ -140,9 +139,6 @@ scripts/
 # Count just this year's blog posts, or a month-by-month breakdown
 ./scripts/misc/post-count.sh --ssh web@example.com --year 2026
 ./scripts/misc/post-count.sh --ssh web@example.com --months 2026
-
-# Release WordPress theme version
-./scripts/release/release-theme.sh theme-name 1.2.5
 
 # Publish a plugin to WordPress.org via SVN (stage + review, then commit)
 cd ~/code/my-plugin
@@ -995,115 +991,6 @@ Key points: WordPress.org SVN is a **release system, not Git** — only push fin
 ---
 
 ## Theme Management
-
-### release-theme.sh (346 lines)
-
-Automates WordPress theme version releases with AI-generated changelogs (Claude CLI or Codex).
-
-#### Features
-
-- **Supports Multiple Installations**:
-  - `demo/` directory (Bedrock structure)
-  - `site/` directory (Bedrock structure)
-  - Auto-detects available installations
-
-- **Semantic Versioning**:
-  - Validates X.Y.Z format
-  - Prevents invalid version numbers
-  - Supports pre-release suffixes (1.2.3-beta)
-
-- **AI-Generated Changelogs**:
-  - Supports Claude CLI or Codex for changelog generation
-  - Analyzes git diff since last tag
-  - Generates two changelog formats:
-    - **CHANGELOG.md**: Detailed Keep a Changelog format (Changed, Added, Fixed, Technical)
-    - **readme.txt**: Concise WordPress.org style
-
-- **Updates Three Files**:
-  - `style.css` - Version header
-  - `readme.txt` - Stable tag and changelog
-  - `CHANGELOG.md` - Detailed version history
-
-- **Safety Features**:
-  - Shows git diff before committing
-  - Optional `--commit` flag for automatic commits
-  - Preserves `.bak` backup files
-  - Color-coded output with progress indicators
-
-#### Usage
-
-```bash
-# Release version (manual commit)
-./scripts/release/release-theme.sh theme-name 1.2.5
-
-# Release with automatic commit
-./scripts/release/release-theme.sh theme-name 1.0.0 --commit
-
-# Specify AI tool
-./scripts/release/release-theme.sh theme-name 1.2.5 --ai=codex
-./scripts/release/release-theme.sh theme-name 1.0.0 --commit --ai=claude
-
-# Examples
-./scripts/release/release-theme.sh elayne 1.2.5
-./scripts/release/release-theme.sh nynaeve 2.0.0 --commit
-```
-
-#### Configuration
-
-Edit script to set theme paths:
-
-```bash
-# Bedrock installation directories
-DEMO_DIR="$HOME/code/example.com/demo/web/app/themes"
-SITE_DIR="$HOME/code/example.com/site/web/app/themes"
-```
-
-#### Example Changelog Output
-
-**CHANGELOG.md format:**
-```markdown
-## [1.2.5] - 2025-01-15
-
-### Changed
-- Updated navigation menu styling for better mobile responsiveness
-- Improved block pattern spacing consistency
-
-### Added
-- New testimonials block pattern
-- Support for WebP and AVIF image formats
-
-### Fixed
-- Hero section alignment on tablet devices
-- Missing alt text in gallery patterns
-
-### Technical
-- Updated Tailwind CSS to 3.4.0
-- Optimized build process with reduced bundle size
-```
-
-**readme.txt format:**
-```
-= 1.2.5 =
-* Updated navigation menu for mobile
-* Added testimonials block pattern
-* Fixed hero section tablet alignment
-```
-
-#### Requirements
-
-```bash
-# Install Claude CLI (recommended)
-npm install -g @anthropics/claude-cli
-
-# Configure API key
-export ANTHROPIC_API_KEY="your-key-here"
-
-# Or install Codex CLI (alternative)
-npm install -g @openai/codex
-export OPENAI_API_KEY="your-key-here"
-```
-
----
 
 ### rsync-theme.sh
 
