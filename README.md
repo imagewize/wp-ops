@@ -33,6 +33,10 @@ wp-ops is a CLI and an MCP server for WordPress operations — deployments, data
 
 The command-line entry point for everything in this repo (the [MCP server](#mcp-server) exposes the same operations to AI clients) — a single binary that auto-discovers commands across every category, groups them by domain, and renders real `--help`, guided prompts, and shell completions from each command's manifest.
 
+<p align="center">
+  <img src="assets/screenshots/picker.png" alt="The wp-ops interactive picker: categories with command counts, descriptions and a trellis/wp/any platform breakdown" width="800">
+</p>
+
 ```bash
 # Recommended: Homebrew
 brew install imagewize/tap/wp-ops
