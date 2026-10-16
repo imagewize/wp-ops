@@ -6,7 +6,7 @@ underlying scripts by hand.
 
 ## Status
 
-Scaffold — twenty tools implemented so far:
+Scaffold — eighteen tools implemented so far:
 
 - **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
   against a registered site/environment. For remote environments it streams the scanner
@@ -59,17 +59,9 @@ Scaffold — twenty tools implemented so far:
   provisioned yet.
 - **`server_status`** — runs `scripts/monitoring/server-monitor.sh` for a live CPU, memory, disk,
   top-processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent-OOM-killer snapshot of a server over SSH.
-- **`broken_link_audit`** — runs `scripts/monitoring/404-checker.sh` to check a site's internal links for
-  broken (4xx/5xx) responses. `global` mode (default) checks homepage links (~30s); `spider` recursively
-  crawls the site (~5-10 min).
-- **`remote_ttfb_audit`** — runs `scripts/monitoring/remote-ttfb-ua.sh` to measure TTFB from the server
-  itself (over SSH, avoiding local network/DNS skew) across multiple user agents (default, Googlebot,
-  AhrefsBot, Screaming Frog).
 - **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
   ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
   `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
-- **`admin_user_create`** — creates a temporary WordPress administrator via WP-CLI (`user create`), for
-  lockout recovery. The password is generated and returned once, never stored. Requires `confirm: true`.
 - **`publish_post`** — publishes or updates a WordPress blog post from a local HTML draft carrying the
   `<!-- SUGGESTED ... -->` header (slug, title, meta title, meta description, tags, category). Parses
   that header, strips it and every other leading HTML comment (`NOTE`, `PAGE`, `FEATURED IMAGE`, …,
@@ -163,6 +155,8 @@ its own `@mutates` directive, sitting alongside `@runs` and `@platform` in the
 script header and carried through `catalog.json`. Only an explicit
 `@mutates false` counts as read-only, so a script that never says either way is
 treated as if it writes.
+
+Three commands no longer have a dedicated tool and are reached through `command_run`: `404-checker` (broken-link audit), `remote-ttfb-ua` (TTFB from the server across user agents) and `admin-user-create` (temporary administrator, lockout recovery; needs `confirm: true`).
 
 Marking a new read-only command is therefore a one-line manifest edit plus
 `go generate ./internal/catalog/` — no second list to remember. This replaced a
@@ -341,7 +335,7 @@ connecting to this server.
 ## Permissions (pre-approve read-only tools)
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
-`server_status`, `broken_link_audit`, `remote_ttfb_audit`, `ip_reputation_check`, read-only
+`server_status`, `ip_reputation_check`, read-only
 `ssh_command`, `scp_file` downloads, and read-only `wp_cli` commands) are safe to run without
 confirmation — `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace
 preview unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
@@ -357,8 +351,6 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__url_audit": { "allowed": true },
       "mcp__wp-ops__monitor": { "allowed": true },
       "mcp__wp-ops__server_status": { "allowed": true },
-      "mcp__wp-ops__broken_link_audit": { "allowed": true },
-      "mcp__wp-ops__remote_ttfb_audit": { "allowed": true },
       "mcp__wp-ops__store_audit": { "allowed": true },
       "mcp__wp-ops__ip_reputation_check": { "allowed": true },
       "mcp__wp-ops__ssh_command": { "allowed": true },

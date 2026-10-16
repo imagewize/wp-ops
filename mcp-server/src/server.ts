@@ -14,10 +14,7 @@ import {
 } from "./tools/storeAudit.js";
 import { runMonitor } from "./tools/monitor.js";
 import { runServerStatus } from "./tools/serverStatus.js";
-import { runBrokenLinkAudit } from "./tools/brokenLinkAudit.js";
-import { runRemoteTtfbAudit } from "./tools/remoteTtfbAudit.js";
 import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
-import { runAdminUserCreate } from "./tools/adminUserCreate.js";
 import { runDbPull } from "./tools/dbPull.js";
 import { runFilesPull } from "./tools/filesPull.js";
 import { isReadOnlySshCommand, runScpFile, runSshCommand } from "./tools/sshPassthrough.js";
@@ -550,77 +547,6 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
-    "broken_link_audit",
-    "Check a site's internal links for broken (4xx/5xx) responses. `global` mode (default) checks all " +
-      "links found on the homepage (~30s); `spider` recursively crawls to a set depth (~5-10 min). Pass " +
-      "`siteUrl` or `site`+`env`.",
-    {
-      siteUrl: z.string().url().optional().describe('Site URL to check, e.g. "https://example.com"'),
-      site: siteSchema.optional().describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: envSchema.optional().describe('Environment key for that site, e.g. "staging", "production"'),
-      mode: z
-        .enum(["global", "spider"])
-        .default("global")
-        .describe("global checks homepage links only (fast); spider recursively crawls the whole site (slow)"),
-      timeoutSeconds: z.number().int().positive().optional().describe("curl max-time per request, in seconds"),
-      spiderLevel: z.number().int().positive().optional().describe("Spider crawl depth, only used in spider mode"),
-    },
-    async ({ siteUrl, site, env, mode, timeoutSeconds, spiderLevel }) => {
-      try {
-        let targetUrl = siteUrl;
-        if (site && env) {
-          const registry = loadRegistry();
-          const entry = resolveSiteEnv(registry, site, env);
-          if (entry.url) {
-            targetUrl = entry.url;
-          } else {
-            throw new Error(`Site entry for "${site}"/"${env}" has no URL field. Use the "siteUrl" parameter instead.`);
-          }
-        }
-        if (!targetUrl) {
-          throw new Error("Either provide 'siteUrl' or 'site' + 'env' parameters.");
-        }
-
-        const result = await runBrokenLinkAudit(targetUrl, mode, timeoutSeconds, spiderLevel);
-        const text = result.hasBrokenLinks
-          ? `❌ Broken link(s) found:\n\n${result.output}`
-          : `✅ No broken links found.\n\n${result.output}`;
-        return { content: [{ type: "text" as const, text }] };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
-      }
-    }
-  );
-
-  server.tool(
-    "remote_ttfb_audit",
-    "Measure TTFB (time to first byte) from the server itself — via SSH, so DNS/network distance from " +
-      "your machine doesn't skew it — across multiple user agents (default, Googlebot, AhrefsBot, " +
-      "Screaming Frog). Useful after a WAF or caching change to check bots aren't treated differently " +
-      "from regular visitors. Requires a site/env with an sshHost entry.",
-    {
-      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
-      urls: z.array(z.string().url()).min(1).describe('URL(s) to test, e.g. ["https://example.com/", "https://example.com/blog/"]'),
-    },
-    async ({ site, env, urls }) => {
-      try {
-        const registry = loadRegistry();
-        const entry = resolveSiteEnv(registry, site, env);
-        if (!entry.sshHost) {
-          throw new Error(`Site entry for "${site}"/"${env}" has no sshHost — remote_ttfb_audit runs curl on the server itself over SSH.`);
-        }
-        const output = await runRemoteTtfbAudit(entry.sshHost, urls);
-        return { content: [{ type: "text" as const, text: output }] };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
-      }
-    }
-  );
-
   function formatIpResult(r: IpCheckResult): string {
     if (r.error) return `  ${r.ip}: ERROR — ${r.error}`;
     const note = r.score === 0 ? " ⚠ CONSIDER REMOVING (score 0)" : r.score !== undefined && r.score <= 10 ? " ⚠ score dropped low" : "";
@@ -661,55 +587,6 @@ export function createServer(): McpServer {
 
         const results = await checkIpReputation(ips!);
         return { content: [{ type: "text" as const, text: results.map(formatIpResult).join("\n") }] };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
-      }
-    }
-  );
-
-  server.tool(
-    "admin_user_create",
-    "Create a temporary WordPress administrator via WP-CLI — for lockout recovery (lost admin password, " +
-      "a broken login plugin, an ownership handover with no working account). The password is generated " +
-      "and returned once, never stored. Requires confirm: true, only after explicit user approval.",
-    {
-      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
-      username: z.string().min(1).describe("Username for the new administrator"),
-      email: z.string().email().describe("Email address for the new administrator"),
-      role: z.string().default("administrator").describe("Role to assign"),
-      password: z
-        .string()
-        .optional()
-        .describe("Password to set. Defaults to a generated random password, returned once in the response."),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe("Required (true) — creates a privileged account. Only set after explicit user approval."),
-    },
-    async ({ site, env, username, email, role, password, confirm }) => {
-      try {
-        if (!confirm) {
-          throw new Error(
-            "Creating a WordPress admin account needs confirm: true. Re-run with confirm: true only " +
-              "after the user has explicitly approved this."
-          );
-        }
-        const registry = loadRegistry();
-        const entry = resolveSiteEnv(registry, site, env);
-        const result = await runAdminUserCreate(entry, username, email, role, password);
-
-        const lines = [`User created: ${result.username} <${result.email}> (role: ${result.role})`];
-        if (result.generatedPassword) {
-          lines.push("", `Password: ${result.generatedPassword}`, "", "Shown once — copy it now.");
-        }
-        lines.push(
-          "",
-          "Delete this user when no longer needed, via the wp_cli tool: " +
-            `{ site: "${site}", env: "${env}", args: ["user", "delete", "${username}", "--yes", "--reassign=1"], confirm: true }`
-        );
-        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
