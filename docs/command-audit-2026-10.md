@@ -16,7 +16,19 @@ Measured from the `seo-strategy` repo, which is the heaviest consumer:
 - Mentions across the repo's logs and docs, which reach back to Nov 2025.
 - zsh and Warp shell history.
 
-**Blind spots.** Other repos (nynaeve, elayne, plugins, client sites) are not measured. No MCP calls to wp-ops turned up in other projects' transcripts, but Release, Images, Sync and Git `create-pr` are the groups most likely to be used there. Treat "zero uses" as "zero uses in `seo-strategy`", and confirm elsewhere before removing anything.
+Then checked the rest of `~/code` (Oct 16, 2026) two ways: the same transcript scan across every project's Claude history, and a grep for `wp-ops <command>` in `.md`, `.sh`, `.yml`, `.json` and `.py` files outside this repo.
+
+**Cross-repo findings.**
+
+- `rsync-package-to-site` is core: about 170 transcript calls across 10 repos (marin 36, ecotuin 23, min 19, alantin 15, imagewize.com 13, warder-cookie-consent 12, aviendha 11, aludra 8, koffie 5).
+- `import-page-draft` is used in `ecotuin` (14 calls) as well as `seo-strategy`.
+- `create-pr` (11 mentions), `db-pull` (28) and `files-pull` (9) are used from the `imagewize.com` repo, and its docs also reference `database-backup` (12), `database-pull` (5) and `files-backup` (4).
+- `store-audit` has a dependent repo, `store-audit-action`, and is also used from `min`.
+- `command_search` is used in `duurzaam-doede` and `ecotuin`.
+- wp-ops MCP calls appear only in `seo-strategy`, `imagewize.com`, `ecotuin` and `min`.
+- **Every Cut candidate below has zero references** outside this repo: no docs, scripts or transcripts. That includes the whole Release group (`release-plugin`, `release-theme`, `deploy-plugin-wporg`, `upload-release-asset`, `sync-extracted`).
+
+**Remaining blind spots.** Commands run by hand from a terminal in another repo leave no trace unless they reached shell history. Warp and zsh history were checked, but only for the last few weeks to months. A zero here means "no trace found", so the deprecation window in the order of work below is still the safety net.
 
 ## Usage snapshot
 
@@ -31,7 +43,7 @@ Measured from the `seo-strategy` repo, which is the heaviest consumer:
 | MCP `verify_post` / CLI `verify-post` | 22 / 7 | |
 | CLI `gh-traffic` | ~140 shell history entries, 5 transcript calls | Run by hand in the terminal |
 | CLI `traffic-report` / `traffic-monitor` | 17 / 8 | `traffic-monitor` over SSH is the documented quick check |
-| CLI `rsync-package-to-site` | 8 | |
+| CLI `rsync-package-to-site` | 8 here, ~170 across 10 repos | Most-used command outside `seo-strategy` |
 | MCP `monitor`, `url_audit`, `ip_reputation_check`, `db_pull`, `server_status` | 1 to 3 each | |
 | MCP `schema_audit`, `redirect_audit`, `security_scan`, `broken_link_audit`, `store_audit`, `remote_ttfb_audit`, `files_pull`, `admin_user_create` | 0 | `schema_audit`, `redirect_audit` and `security_scan` appear in older repo notes, so they run periodically |
 
@@ -40,7 +52,8 @@ Measured from the `seo-strategy` repo, which is the heaviest consumer:
 Core, in regular use, no change:
 
 - MCP: `wp_cli`, `publish_post`, `verify_post`, `db_backup`, `ssh_command`, `scp_file`, `command_search`, `command_run`.
-- CLI: `import-page-draft`, `publish-post`, `verify-post`, `svg-to-jpg`, `svg-to-png`, `gh-traffic`, `traffic-monitor`, `ai-bot-monitor`, `db-backup`, `db-pull`, `files-pull`, `ssl-check`, `rsync-package-to-site`, `orphan-links-audit`, `schema-audit`, `redirect-audit`, `blog-audit`.
+- CLI: `import-page-draft`, `publish-post`, `verify-post`, `svg-to-jpg`, `svg-to-png`, `gh-traffic`, `traffic-monitor`, `ai-bot-monitor`, `db-backup`, `db-pull`, `files-pull`, `ssl-check`, `rsync-package-to-site`, `create-pr`, `store-audit`, `orphan-links-audit`, `schema-audit`, `redirect-audit`, `blog-audit`.
+- MCP `store_audit`: moved here from Cut. The CLI gate has a dependent repo (`store-audit-action`) and the tool shipped only days before this audit.
 - MCP `monitor`, `url_audit`, `db_pull`, `server_status`, `ip_reputation_check`: low volume, but each does something no other tool does.
 
 `command_search` and `command_run` are the catalog bridge from [mcp-server-recommendations.md](mcp-server-recommendations.md). They are what makes it safe to drop a dedicated MCP tool: the underlying CLI command stays reachable through the bridge. Do not cut them.
@@ -61,7 +74,9 @@ Candidates for removal. Each needs the cross-repo check noted in the last column
 | `list-posts-count`, `post-count` | Hardcoded `example.com` path; `wp_cli` does this in one call | None expected |
 | `screenshot-url`, `screenshot-patterns`, `center-screenshots`, `trim-screenshots`, `png-to-webp` | Pattern screenshot toolkit, no use here | Elayne pattern screenshots may depend on it |
 | MCP `admin_user_create` | 0 real calls; creating admins is a destructive action best left to `wp_cli` with explicit `confirm` | Incident recovery use (see Aseonomics, Sep 2026)? Keep the CLI script either way |
-| MCP `store_audit` | 0 calls and shipped 5.29.0, three days before this audit. The CLI `store-audit` gate is the part CI users need | Wait for real adoption before judging |
+| Release group: `release-plugin`, `release-theme`, `deploy-plugin-wporg`, `upload-release-asset`, `sync-extracted` | Zero references anywhere in `~/code`. Plugin and theme releases appear to go through other tooling | Confirm with a look at the warder, elayne and nynaeve release workflows before removing |
+| `check-ips`, `check-deny-ips` | Zero references; the MCP `ip_reputation_check` covers the same lookup | Trellis deny-list review habit |
+| `cf7-smoke-test`, `updown-webhook-handler`, `diagnostic-transients` | Zero references | Server-side hooks may call them by path, not by name |
 | MCP `broken_link_audit`, `remote_ttfb_audit` | 0 calls | Reachable through `command_run` if needed |
 
 Cutting an MCP tool does not remove the CLI command behind it. Of the MCP tools, `files_pull` also has 0 calls, but it is the only way for an agent to pull uploads, so keep it for now.
@@ -72,8 +87,8 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 | Family | Members | Proposed canonical |
 |---|---|---|
-| Database backup | `db-backup` (SSH, straight to your machine), `database-backup` (Ansible), `wp-db-backup`, `site-backup` | `db-backup`. Keep `site-backup` only for full Trellis-site backups (database, uploads, config) |
-| Database pull | `db-pull`, `database-pull` | `db-pull` |
+| Database backup | `db-backup` (SSH, straight to your machine), `database-backup` (Ansible), `wp-db-backup`, `site-backup` | `db-backup`. Keep `site-backup` only for full Trellis-site backups (database, uploads, config). `imagewize.com` docs still reference `database-backup`, so alias it for a release or two and update those docs |
+| Database pull | `db-pull`, `database-pull` | `db-pull`. Same alias note: `imagewize.com` docs reference `database-pull` |
 | Database push | `database-push` | Keep; no overlap, but name it `db-push` for symmetry |
 | Files | `files-backup`, `files-pull`, `files-push` | Keep as is |
 | Security scanning | `security-scan`, `security_scan` (MCP), `malware-scan`, `scanner-general`, `scanner-targeted`, `scanner-wrapper` | `malware-scan` as the one entry point; scanners become internal. Fix wp-ops#222 first |
@@ -90,6 +105,6 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 ## Open questions
 
-- Which repos outside `seo-strategy` call wp-ops, and which commands do they use? A one-off `grep -r "wp-ops "` across `~/code` would answer most of this.
+- Do the warder, elayne and nynaeve release workflows really bypass `release-plugin` and `release-theme`? The grep says yes; a quick read of their release docs would confirm it.
 - Is anyone else running wp-ops? The Homebrew tap is public, so removals are breaking changes for them. If so, steps 2 and 3 matter more.
 - Should `gh-traffic` stay in wp-ops? It is used constantly, but it is a GitHub utility, not a WordPress one.
