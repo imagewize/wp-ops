@@ -402,6 +402,7 @@
     "manifest_category": "git",
     "platform": "any",
     "mutates": false,
+    "deprecated": "Moved to its own GitHub CLI extension: gh extension install imagewize/gh-traffic, then run \"gh traffic\" with the same arguments.",
     "display_category": "git",
     "annotated": true
   },

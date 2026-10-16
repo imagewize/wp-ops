@@ -128,4 +128,4 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 ## Open questions
 
 - Is anyone else running wp-ops? The Homebrew tap is public, so removals are breaking changes for them. If so, steps 2 and 3 matter more.
-- Should `gh-traffic` stay in wp-ops? It is used constantly, but it is a GitHub utility, not a WordPress one.
+- ~~Should `gh-traffic` stay in wp-ops?~~ No. It moved to [imagewize/gh-traffic](https://github.com/imagewize/gh-traffic) as a `gh` extension (`gh traffic`). Deprecated here in 5.36.0; removal comes in a later minor release.
