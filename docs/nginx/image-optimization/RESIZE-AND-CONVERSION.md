@@ -224,23 +224,6 @@ This approach:
 - Converts to WebP in one step
 - No intermediate files created
 
-### Using the jpg-to-webp.sh Script
-
-For convenience, use the [`scripts/images/jpg-to-webp.sh`](../../../scripts/images/jpg-to-webp.sh) script which wraps this workflow:
-
-```bash
-# Basic usage (800x419 default, 1.91:1 aspect ratio for Facebook OG)
-./scripts/images/jpg-to-webp.sh input.jpg
-
-# Custom output filename
-./scripts/images/jpg-to-webp.sh input.jpg featured-image.webp
-
-# Custom dimensions and quality
-./scripts/images/jpg-to-webp.sh input.jpg featured-image.webp 90 1200 630
-```
-
-See the [scripts README](../../../scripts/README.md#jpg-to-webpsh) for full documentation.
-
 ## Converting to AVIF
 
 For even better compression, convert to AVIF format:

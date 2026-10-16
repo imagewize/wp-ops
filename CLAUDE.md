@@ -22,17 +22,13 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
 - **scripts/** - General utility scripts
   - `scripts/backup/` - Standalone backup shell scripts
   - `scripts/monitoring/` - Monitoring helper scripts
-  - `scripts/woocommerce/` - WooCommerce automation scripts (product variation creation)
-  - `scripts/release/` - Release automation
-    - `scripts/release/release-plugin.sh` - WordPress plugin release automation
   - `scripts/git/` - Git/GitHub utilities
     - `scripts/git/create-pr.sh` - AI-powered GitHub PR creation
     - `scripts/git/git-log-oneline.sh` - Compact git log output utility
   - `scripts/sync/` - File synchronization
     - `scripts/sync/rsync-theme.sh` - Theme synchronization
-  - `scripts/images/` - Image resizing and conversion
-    - `scripts/images/batch-resize.sh` - Batch image resize with center-crop
-    - `scripts/images/jpg-to-webp.sh` - Convert JPG images to WebP format
+  - `scripts/images/` - SVG to JPG/PNG rendering
+    - `scripts/images/svg-to-jpg.sh` - Render design SVGs to JPG
   - `scripts/patterns/` - WordPress block pattern screenshot toolkit (Playwright + sharp)
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities

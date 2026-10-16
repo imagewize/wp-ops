@@ -79,7 +79,7 @@ cat "$(wp-ops docs -l age-verification | head -1)"
 ## Where commands run
 
 Everything runs on your own machine, including the commands that touch a server —
-Ansible playbooks, `server-monitor`, and `post-count --ssh` all reach out over SSH
+Ansible playbooks, `server-monitor`, and `db-backup` all reach out over SSH
 from here. The exception is the log monitors, which execute on the host; they are
 tagged `(server)` in listings and search, and `wp-ops --json` reports the split as a
 `runs_on` field. See [Running the monitors on the server](../../trellis/monitoring/README.md#running-the-monitors-from-wp-ops).
