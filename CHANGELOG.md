@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.30.2] - 2026-10-16
+
+### Added
+
+- **`docs/command-audit-2026-10.md`: a keep/cut/merge proposal for the 81 CLI commands and 21 MCP tools.** Built from a month of Claude Code transcripts, repo history and shell history in the `seo-strategy` repo. About eighteen commands and three MCP tools are candidates to cut, and four families (database backup/pull, security scanning, traffic) overlap and are candidates to merge. Checked against every repo under `~/code`. Docs only, no behavior change.
+
 ## [5.30.1] - 2026-10-13
 
 ### Changed
