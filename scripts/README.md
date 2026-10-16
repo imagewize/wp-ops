@@ -6,7 +6,7 @@ Production-ready Bash, PHP, and Python scripts for WordPress operations, GitHub 
 
 This directory contains utility scripts organized into functional areas:
 
-- **GitHub Integration** - AI-powered pull request creation and repository traffic analytics
+- **GitHub Integration** - AI-powered pull request creation
 - **WordPress Management** - File synchronization of themes and packages into a site
 - **Local Sandboxes** - Bootstrap a local Valet WordPress site from a directory of UpdraftPlus backup zips
 - **Image Utilities** - Render design SVGs to JPG or PNG
@@ -26,7 +26,7 @@ scripts/
 │   └── site-backup.sh          # Trellis: complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
 │   ├── create-pr.sh            # AI-powered GitHub PR creation
-│   ├── gh-traffic.sh           # GitHub repo traffic: views, clones, and referrers
+│   ├── gh-traffic.sh           # Deprecated: use the `gh traffic` extension
 │   └── git-log-oneline.sh      # Show recent git commits as one-liners
 ├── images/                      # SVG to JPG/PNG rendering
 │   ├── svg-to-jpg.sh           # Render design SVGs to JPG via librsvg (native size or forced)
@@ -86,14 +86,10 @@ scripts/
 # Create GitHub PR with AI description
 ./scripts/git/create-pr.sh main "Add feature name"
 
-# Show GitHub repository traffic statistics (views only, by default)
-./scripts/git/gh-traffic.sh imagewize/nynaeve
-
-# Views, clones, and referrers for several repos at once
-./scripts/git/gh-traffic.sh --all imagewize/nynaeve imagewize/wp-ops
-
-# Just the cross-repo rollup table (views + clones), no per-repo detail
-./scripts/git/gh-traffic.sh --all --summary imagewize/nynaeve imagewize/wp-ops
+# GitHub repository traffic (deprecated script, moved to a gh extension)
+gh extension install imagewize/gh-traffic
+gh traffic imagewize/nynaeve
+gh traffic --all --summary imagewize/nynaeve imagewize/wp-ops
 
 # Show recent git commits as one-liners
 ./scripts/git/git-log-oneline.sh

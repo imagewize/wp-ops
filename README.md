@@ -133,7 +133,7 @@ Standalone Bash/PHP/Python/Node utilities — full docs, flags, and examples in 
 
 | Category | Includes | Docs |
 |------|-------------|------|
-| **GitHub** | PR creation, GitHub traffic stats, recent-commit log | [→](scripts/README.md#github-integration) |
+| **GitHub** | PR creation, recent-commit log | [→](scripts/README.md#github-integration) |
 | **Monitoring & Security** | Traffic/security/AI-bot monitoring, 404 & redirect checking, TLS certificate checks, store audits, updown.io webhooks | [→](scripts/README.md#monitoring-scripts) |
 | **Backups** | Trellis-aware database and full-site backups | [→](scripts/README.md#backup-scripts) |
 | **Sync & Files** | Theme and package sync into a site, find & replace, SVG to JPG/PNG rendering | [→](scripts/README.md#theme-management) |
