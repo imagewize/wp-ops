@@ -2398,64 +2398,6 @@
   },
   {
     "category": "scripts",
-    "key": "scripts/release/release-theme",
-    "description": "Bump theme version and generate an AI changelog entry (Claude or Codex)",
-    "script_path": "scripts/release/release-theme.sh",
-    "runs_on": "local",
-    "runs": "local",
-    "requires": [
-      "claude"
-    ],
-    "args": [
-      {
-        "name": "theme-name",
-        "required_raw": "required",
-        "required": true,
-        "default": "elayne",
-        "description": "Theme slug (demo/ or site/ Bedrock installation)",
-        "raw": "theme-name  required  {elayne}  Theme slug (demo/ or site/ Bedrock installation)"
-      },
-      {
-        "name": "version",
-        "required_raw": "required",
-        "required": true,
-        "default": "1.2.5",
-        "description": "New theme version",
-        "raw": "version     required  {1.2.5}  New theme version"
-      }
-    ],
-    "flags": [
-      {
-        "name": "--commit",
-        "required_raw": "optional",
-        "required": false,
-        "description": "Auto-commit the version bump and changelog",
-        "raw": "--commit    optional  {}  Auto-commit the version bump and changelog"
-      },
-      {
-        "name": "--ai",
-        "required_raw": "optional",
-        "required": false,
-        "choices": [
-          "claude",
-          "codex",
-          "vibe"
-        ],
-        "description": "AI CLI to use (default: claude, or the only one installed)",
-        "raw": "--ai        optional  {claude|codex|vibe}  AI CLI to use (default: claude, or the only one installed)"
-      }
-    ],
-    "examples": [
-      "wp-ops release-theme nynaeve 1.0.0 --commit"
-    ],
-    "manifest_category": "release",
-    "platform": "any",
-    "mutates": true,
-    "display_category": "release",
-    "annotated": true
-  },
-  {
-    "category": "scripts",
     "key": "scripts/release/sync-extracted",
     "description": "Check or update the extracted Galaxy role and WP-CLI package against their wp-ops sources",
     "script_path": "scripts/release/sync-extracted.sh",

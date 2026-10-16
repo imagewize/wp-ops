@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.31.0] - 2026-10-16
+
+### Removed
+
+- **`wp-ops release-theme` (`scripts/release/release-theme.sh`).** It resolved a theme under `site/` or `demo/` inside the `imagewize.com` monorepo and diffed that path's history against `main`. Themes are now standalone repos (Nynaeve is a git-ignored Composer snapshot there), so the script produced an empty changelog for its main user. Each theme documents its own four-place version bump, which Claude or Vibe follow directly. Part of the command audit in `docs/command-audit-2026-10.md`. Catalog is now 80 commands.
+
 ## [5.30.2] - 2026-10-16
 
 ### Added

@@ -339,7 +339,6 @@ scripts/patterns/screenshot-url.js:38
 scripts/patterns/trim-screenshots.sh:19
 scripts/release/deploy-plugin-wporg.sh:66
 scripts/release/release-plugin.sh:31
-scripts/release/release-theme.sh:33
 scripts/release/upload-release-asset.sh:23
 scripts/sync/rsync-package-to-site.sh:49
 scripts/sync/rsync-theme.sh:37
