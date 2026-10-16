@@ -182,6 +182,55 @@ func TestCategoryLayout_MixYieldsToBlurb(t *testing.T) {
 	}
 }
 
+// TestCategoryLayout_BlurbColumnSizesToContent — the blurb column used to
+// take whatever width the terminal had left, which on a wide screen parked
+// the platform mix far from the row it belongs to.
+func TestCategoryLayout_BlurbColumnSizesToContent(t *testing.T) {
+	opts := []categoryOption{{label: "Backup", blurb: "Database and file backups"}}
+	l := (Model{width: 200, categories: opts}).categoryLayout()
+	if l.blurbW != len("Database and file backups") {
+		t.Errorf("blurbW = %d at 200 cols, want the longest blurb's %d", l.blurbW, len("Database and file backups"))
+	}
+	if want := minLabelWidth + 8 + l.blurbW + mixColWidth + 2; l.rowW != want {
+		t.Errorf("rowW = %d, want %d", l.rowW, want)
+	}
+}
+
+// TestViewCategory_SelectedRowIsEvenBar — the highlighted row is padded to
+// the layout width so its background reads as one bar, and the rule under
+// "All categories" separates it from the real categories.
+func TestViewCategory_SelectedRowIsEvenBar(t *testing.T) {
+	m := Model{
+		stage: stageCategory,
+		width: 120,
+		categories: []categoryOption{
+			{label: "All categories", count: 3, blurb: "Search or browse the whole catalog", mix: platformMix{any: 3}},
+			{key: "backup", label: "Backup", count: 2, blurb: "Database and file backups", mix: platformMix{trellis: 2}},
+		},
+		catCursor: 1,
+	}
+	l := m.categoryLayout()
+	lines := strings.Split(stripANSI(m.viewCategory()), "\n")
+	var rule, selected string
+	for _, line := range lines {
+		if strings.Contains(line, "──") {
+			rule = line
+		}
+		if strings.Contains(line, "Backup") {
+			selected = line
+		}
+	}
+	if rule == "" {
+		t.Errorf("no rule under All categories:\n%s", strings.Join(lines, "\n"))
+	}
+	if n := len([]rune(selected)); n != l.rowW {
+		t.Errorf("selected row is %d cells, want padded to rowW %d: %q", n, l.rowW, selected)
+	}
+	if strings.Contains(selected, "(") {
+		t.Errorf("count should render without parentheses: %q", selected)
+	}
+}
+
 // TestCategoryLayout_LabelColumnSizesToContent — the label column was a flat
 // %-22s, six columns wider than the longest label it ever holds.
 func TestCategoryLayout_LabelColumnSizesToContent(t *testing.T) {
