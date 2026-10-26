@@ -293,22 +293,9 @@ ssh web@yoursite.com "tail -1000 /srv/www/yoursite.com/logs/access.log | grep -v
 
 ## Real-World Examples
 
-### Case Study: example.com
-
-**Before fail2ban** (November-December 2025):
-- 1,420 wp-login attempts from single IP (62.60.130.228)
-- 860 wp-login attempts from single IP (141.98.11.120)
-- 742 wp-login attempts from single IP (91.224.92.114)
-- 40+ unique attacker IPs identified
-- **No automatic blocking** - attacks continued unabated
-
-**After fail2ban enabled** (2026-01-01):
-- First attacker detected within 7 hours (167.99.215.209)
-- **Automatic blocking** after 6 failed attempts
-- 10-minute temporary bans deter most attackers
-- Zero maintenance required
-
-**Outcome**: All previous attacks would have been stopped after 6 attempts instead of hundreds.
+The before-and-after numbers from a production server (1,420 login attempts from
+a single IP before fail2ban, the first ban within seven hours after) are in
+[fail2ban on Trellis](https://imagewize.com/fail2ban-wordpress-brute-force-trellis/).
 
 ### Typical Attack Pattern
 
