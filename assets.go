@@ -3,7 +3,7 @@
 // files) so a binary built without a live checkout — e.g. one installed via
 // `brew install imagewize/tap/wp-ops` — can extract them to a cache
 // directory and run exactly as it would from a git clone. See
-// docs/m4-go-cli-completion.md, task 6, "Script distribution: embed vs.
+// docs/dev/m4-go-cli-completion.md, task 6, "Script distribution: embed vs.
 // locate."
 //
 // This file lives at the repo root, not under go/, because go:embed

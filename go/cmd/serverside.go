@@ -29,7 +29,7 @@ import (
 //
 // db-backup isn't in this list: it's @runs local now — it SSHes out and
 // streams straight to this machine, the same shape as db-pull. See
-// docs/wp-ops-recommendations.md Gap 6.
+// docs/dev/wp-ops-recommendations.md Gap 6.
 var backupCommands = map[string]bool{
 	"scripts/backup/site-backup": true,
 }

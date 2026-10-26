@@ -12,7 +12,7 @@
 > notes below for scoping calls made along the way (`internal/exec/wpcli.go`
 > and `snippet.go` remain M4 as planned; the per-entry Cobra commands use
 > `DisableFlagParsing` rather than typed flags — see task 7's note). Parent
-> plan: `docs/cli-ux-plan.md` (Phase C, milestone M3, target **4.0.0-beta**).
+> plan: `docs/dev/cli-ux-plan.md` (Phase C, milestone M3, target **4.0.0-beta**).
 
 ## Goal
 
@@ -297,5 +297,5 @@ PR #140 merged to `main` with CI green; `go/internal/catalog/gen` has direct
 unit tests (`gen/main_test.go`) rather than only transitive coverage via
 `catalog_test.go` + the parity script; and the server-side guard is a full
 port rather than a documented gap (`go/cmd/serverside.go`, see task 7). Next
-up: M4 — see `docs/cli-ux-plan.md`'s milestone table and
-`docs/m4-go-cli-completion.md` for the task breakdown.
+up: M4 — see `docs/dev/cli-ux-plan.md`'s milestone table and
+`docs/dev/m4-go-cli-completion.md` for the task breakdown.

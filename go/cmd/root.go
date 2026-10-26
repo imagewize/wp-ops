@@ -1,6 +1,6 @@
 // Package cmd wires the Cobra command tree for the wp-ops Go CLI: dynamic
 // per-catalog-entry commands (full key + category-short forms), list,
-// search, doctor, and --json/--version. See docs/m3-go-skeleton.md, task 7.
+// search, doctor, and --json/--version. See docs/dev/m3-go-skeleton.md, task 7.
 package cmd
 
 import (

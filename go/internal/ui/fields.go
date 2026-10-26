@@ -1,7 +1,7 @@
 // Package ui implements the interactive Bubble Tea picker that replaces
 // bash's fzf_menu()/interactive_command_menu() (wp-ops:1962, wp-ops:2047)
 // and their shared prompt_manifest_args() guided-prompting helper
-// (wp-ops:484). See docs/m4-go-cli-completion.md, task 3.
+// (wp-ops:484). See docs/dev/m4-go-cli-completion.md, task 3.
 package ui
 
 import (

@@ -53,7 +53,7 @@ type categoryOption struct {
 // answers the question the category screen could not previously answer —
 // "is there anything in here I can run against the site in front of me?" —
 // without drilling in and reading 18 rows (Phase G1/G2,
-// docs/cli-ux-plan.md).
+// docs/dev/cli-ux-plan.md).
 type platformMix struct {
 	trellis   int
 	wordpress int
@@ -79,7 +79,7 @@ func countPlatforms(entries []catalog.Entry) platformMix {
 
 // buildCategoryOptions lists "All categories" followed by every active
 // category in catalog.Categories' curated order — the same set and order
-// cmd's compact `list` view uses (Phase F, docs/cli-ux-plan.md, option 3).
+// cmd's compact `list` view uses (Phase F, docs/dev/cli-ux-plan.md, option 3).
 func buildCategoryOptions(c *catalog.Catalog) []categoryOption {
 	opts := []categoryOption{{
 		label: "All categories",
@@ -194,7 +194,7 @@ var (
 
 // Model is the Bubble Tea model backing the interactive picker. It replaces
 // both fzf_menu() and interactive_command_menu() (open decision #3 in
-// docs/m4-go-cli-completion.md): a category-select stage (Phase F, option 3)
+// docs/dev/m4-go-cli-completion.md): a category-select stage (Phase F, option 3)
 // leading into a filterable list, followed by a full-width help block and
 // guided per-field prompting on selection.
 type Model struct {
@@ -231,7 +231,7 @@ type Model struct {
 // New builds the initial model from a catalog. Entries are grouped by
 // category (in catalog.Categories' curated order, same order list.go's
 // summary view uses) and alphabetically by key within a category — see
-// filterEntries. Phase F, docs/cli-ux-plan.md: grouping (rather than a flat
+// filterEntries. Phase F, docs/dev/cli-ux-plan.md: grouping (rather than a flat
 // alphabetical-by-key list) is what lets viewBrowse print a category header
 // above each run of entries instead of an undifferentiated name wall.
 func New(c *catalog.Catalog) Model {
@@ -396,7 +396,7 @@ func (m *Model) cursorEntry() int {
 // updateCategory handles input for stageCategory, the outermost stage: pick
 // "All categories" or one specific category, then drill into stageBrowse
 // scoped to that choice. Port of trellis-cli's two-level nav (Phase F,
-// docs/cli-ux-plan.md, option 3) — mirrored here rather than replacing
+// docs/dev/cli-ux-plan.md, option 3) — mirrored here rather than replacing
 // stageBrowse so the flat, cross-category filter/search from option 2 stays
 // available as the default (cursor starts on "All categories").
 func (m Model) updateCategory(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -790,7 +790,7 @@ func mixSlot(n int, label string, style, blank lipgloss.Style) string {
 // competing for one terminal's width, so the fix is to stop splitting it:
 // the list gets the full width here, and everything the preview used to show
 // moves to the post-selection detail block (viewPrompt), where it also gets
-// the full width. See docs/trellis-cli-comparison.md §5.
+// the full width. See docs/dev/trellis-cli-comparison.md §5.
 func (m Model) viewBrowse() string {
 	var b strings.Builder
 
@@ -875,7 +875,7 @@ type rowLayout struct {
 // recur — see TestViewBrowse_RowsFitTerminalWidth. Platform is back because
 // "will this run against the site in front of me?" is the question the list
 // was silent on, and the answer arrived only after committing to a command
-// (Phase G1, docs/cli-ux-plan.md).
+// (Phase G1, docs/dev/cli-ux-plan.md).
 func (m Model) browseLayout(start, end int) rowLayout {
 	total := m.width
 	if total <= 0 {
@@ -1030,7 +1030,7 @@ func (m Model) viewPrompt() string {
 	// The same breadcrumb stageBrowse prints. Without it this screen opened
 	// with nothing but a usage line, so the one place you have to decide
 	// what to type was also the one place that never said which command you
-	// were about to run (Phase G4, docs/cli-ux-plan.md). Taken from the
+	// were about to run (Phase G4, docs/dev/cli-ux-plan.md). Taken from the
 	// selected entry's own category rather than m.browseCategory, which is
 	// empty whenever the user reached the command from "All categories" or
 	// by typing a filter.

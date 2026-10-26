@@ -34,7 +34,7 @@ func mustCatalog() *catalog.Catalog {
 
 // repoRoot locates the directory every script path is resolved relative to.
 // Three sources, in priority order — see "Script distribution: embed vs.
-// locate" in docs/m4-go-cli-completion.md (M4 task 6):
+// locate" in docs/dev/m4-go-cli-completion.md (M4 task 6):
 //
 //  1. WP_OPS_ROOT — a development override, pointing at a live checkout.
 //  2. A live checkout, found by walking up from the running binary's own

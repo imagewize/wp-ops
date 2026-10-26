@@ -72,7 +72,7 @@ func registerCatalogCommands(c *catalog.Catalog) {
 	}
 
 	// Hidden back-compat aliases for the directory names. Option C1
-	// (docs/category-organization.md) moved the visible grouping from
+	// (docs/dev/category-organization.md) moved the visible grouping from
 	// directories to @category domains, which would otherwise have deleted
 	// `wp-ops trellis <playbook>` and `wp-ops wp-cli <script>` — forms the
 	// README and three years of muscle memory still use. Hidden so

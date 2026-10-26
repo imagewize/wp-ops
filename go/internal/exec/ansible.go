@@ -218,7 +218,7 @@ func WithWPOpsRoot(args []string, root string) []string {
 // declarations, so e.g. "wp-ops database-backup example.com production"
 // becomes ["-e", "site=example.com", "-e", "env=production"] — the same
 // ergonomics db-pull.sh/db-backup.sh already have, without a bespoke script
-// per playbook (see docs/wp-ops-recommendations.md, Gap 6a).
+// per playbook (see docs/dev/wp-ops-recommendations.md, Gap 6a).
 //
 // Required @arg entries are consumed positionally, in manifest order.
 // Anything after that is read as "--name value" or "--name=value" against

@@ -33,9 +33,11 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities
     - `scripts/misc/find-and-replace-files.sh` - Batch find-and-replace files across projects
-- **docs/** - Documentation. Design and planning docs sit at the top level as
-  loose `.md` files; the subdirectories are operational guides, which carry no
+- **docs/** - Documentation. Design and planning docs (ADRs, milestone trackers,
+  audits, evaluations) live in `docs/dev/`, out of the way of readers looking for
+  a guide; the other subdirectories are operational guides, which carry no
   runnable commands and so have no CLI category of their own:
+  - `docs/dev/` - Design and planning docs for wp-ops itself. New ones go here, not at the `docs/` top level
   - `docs/cli/` - How the `wp-ops` binary works: usage reference (categories, platforms, completion, guide search) and the trellis-cli plugin
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (guides plus the `.conf.j2` templates they describe)
   - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)

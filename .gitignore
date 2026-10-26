@@ -3,11 +3,11 @@ backup/.DS_Store
 create-pr.sh
 trellis/security/.env
 
-# Go CLI (go/ — see docs/m3-go-skeleton.md)
+# Go CLI (go/ — see docs/dev/m3-go-skeleton.md)
 go/wp-ops
 go/wp-ops-go-test
 
-# goreleaser's local build output (see docs/m4-go-cli-completion.md, task 6)
+# goreleaser's local build output (see docs/dev/m4-go-cli-completion.md, task 6)
 dist/
 
 # internal/catalog/catalog.json is committed, not ignored: go:embed requires

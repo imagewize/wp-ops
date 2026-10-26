@@ -37,7 +37,7 @@
 > against the actual installed binary run in isolation (empty `HOME`, no
 > repo checkout anywhere nearby), confirming the embedded-asset extraction
 > path works for a genuine brew-installed user, not just in a local test
-> harness. Parent plan: `docs/cli-ux-plan.md` (Phase C, milestone M4,
+> harness. Parent plan: `docs/dev/cli-ux-plan.md` (Phase C, milestone M4,
 > target **4.0.0**).
 
 ## Goal

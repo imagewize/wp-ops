@@ -1,7 +1,7 @@
 version: 2
 
-# Builds and releases the wp-ops Go CLI — see docs/m4-go-cli-completion.md,
-# task 6, and docs/cli-ux-plan.md's Phase C "Distribution" section. The
+# Builds and releases the wp-ops Go CLI — see docs/dev/m4-go-cli-completion.md,
+# task 6, and docs/dev/cli-ux-plan.md's Phase C "Distribution" section. The
 # scripts themselves are not part of this build: they're embedded at compile
 # time via the root-level `assets` package (assets.go), so this .goreleaser.yml
 # only needs to know about the Go binary.

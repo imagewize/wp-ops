@@ -2,12 +2,12 @@
 // and emits catalog.json: every discoverable command, manifest-parsed where
 // annotated, header-scrape-scraped as a fallback where not (currently just
 // mcp-server/*, the two commands Phase A never annotated — see
-// docs/m3-go-skeleton.md, task 3, decision #2).
+// docs/dev/m3-go-skeleton.md, task 3, decision #2).
 //
 // Invoked via `go generate ./...` against the catalog package (see the
 // //go:generate directive in catalog.go). Fails loudly (build breaks) on a
 // malformed manifest rather than degrading the catalog — see the parent
-// plan's "Build-time catalog" note in docs/cli-ux-plan.md.
+// plan's "Build-time catalog" note in docs/dev/cli-ux-plan.md.
 package main
 
 import (
@@ -71,7 +71,7 @@ func extensionsFor(category string) map[string]bool {
 // own @category value when present and non-empty, otherwise the directory
 // category unchanged. See DisplayCategory's doc comment for why this is kept
 // separate from Category. This implements Option C1 from
-// docs/category-organization.md: group by domain (@category) everywhere.
+// docs/dev/category-organization.md: group by domain (@category) everywhere.
 func displayCategoryFor(category, manifestCategory string) string {
 	if manifestCategory != "" {
 		return manifestCategory

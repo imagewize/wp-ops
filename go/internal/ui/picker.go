@@ -19,7 +19,7 @@ import (
 // screen buffer keeps no scrollback of its own and discards everything
 // drawn in it on exit, which is what made a bare `wp-ops` read as "a
 // separate prompt" rather than a command that printed something — see
-// docs/trellis-cli-comparison.md §1, where `trellis`'s staying-in-the-
+// docs/dev/trellis-cli-comparison.md §1, where `trellis`'s staying-in-the-
 // buffer behavior is the whole difference being closed. Inline rendering
 // is why Model caps its own height at maxInlineRows instead of filling
 // the window (model.go's viewportHeight).
