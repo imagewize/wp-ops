@@ -39,6 +39,10 @@ production URL is rewritten to your `.test` domain. Your current development dat
 is backed up to `database_backup/` first, so a pull is never a one-way trip.
 `database-push` and `files-push` go the other way — and back up the remote first.
 
+<p align="center">
+  <img src="assets/screenshots/database-pull.gif" alt="wp-ops database-pull running the Ansible playbook from production to development, ending with the development home URL on the .test domain" width="800">
+</p>
+
 ### 2. See who is hitting your server
 
 ```bash
