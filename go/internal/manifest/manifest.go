@@ -1,8 +1,8 @@
 // Package manifest parses the "@directive" manifest blocks documented in
-// docs/cli-ux-plan.md ("Directive format") out of a command script's header
+// docs/dev/cli-ux-plan.md ("Directive format") out of a command script's header
 // comment. It is a Go port of the bash implementation in wp-ops
 // (manifest_directive_lines, load_manifest, manifest_parse_param_line) —
-// see docs/m3-go-skeleton.md, task 2.
+// see docs/dev/m3-go-skeleton.md, task 2.
 package manifest
 
 import (

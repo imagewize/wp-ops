@@ -1,5 +1,5 @@
 // Command wp-ops discovers and runs the manifest-annotated scripts,
-// playbooks, and snippets in this repo. See docs/cli-ux-plan.md at the repo
+// playbooks, and snippets in this repo. See docs/dev/cli-ux-plan.md at the repo
 // root for architecture.
 package main
 

@@ -71,7 +71,7 @@ func TestViewBrowse_ServerTagSurvivesNarrowTerminal(t *testing.T) {
 // columns are measured rather than assumed (see the width test above), and
 // the list being silent about platform meant "does this need Trellis?" was
 // only answerable after committing to a command. Phase G1,
-// docs/cli-ux-plan.md.
+// docs/dev/cli-ux-plan.md.
 func TestViewBrowse_PlatformBadge(t *testing.T) {
 	out := browseModel(140, longRowEntries()).viewBrowse()
 	for _, badge := range []string{"trellis", "any"} {
@@ -130,7 +130,7 @@ func TestBrowseLayout_ServerColumnOnlyWhenNeeded(t *testing.T) {
 
 // TestViewCategory_PlatformMix — the category screen's whole job is to point
 // you at a category, and "can I run any of this here?" is part of that
-// choice. Phase G2, docs/cli-ux-plan.md.
+// choice. Phase G2, docs/dev/cli-ux-plan.md.
 func TestViewCategory_PlatformMix(t *testing.T) {
 	m := Model{
 		stage:  stageCategory,

@@ -115,7 +115,7 @@ and its test (the `serverSideExampleArgs` case and `accessLogCommands` prose),
 `catalog.json`), and the current-state docs `README.md` and `scripts/README.md`
 (usage examples, the file-tree listing — reordered alphabetically since
 `monitor.sh` now sorts before `redirect-check.sh` — and the cron example).
-Historical status docs (`docs/m3-go-skeleton.md`, `CHANGELOG.md`) were left
+Historical status docs (`docs/dev/m3-go-skeleton.md`, `CHANGELOG.md`) were left
 alone — they're dated records of what was true when written, not current
 reference material. The rest of Gap 1 (`traffic`, `security`, `ai-bots`,
 `image-resize`, `page-create`) stays as-is per the original recommendation —
@@ -242,7 +242,7 @@ to nine more Ansible playbooks, and a related-but-distinct one applies to five
 ### 6a. Ansible playbooks still needing `-e site=... -e env=...` — done, 2026-08-03
 
 Every one of these took exactly the `site`/`env` pair `db-pull` used to
-require, resolved from `docs/wp-ops-recommendations.md`'s own catalog
+require, resolved from `docs/dev/wp-ops-recommendations.md`'s own catalog
 (`./wp-ops --json`, filtered to `.yml` scripts):
 
 | Command | Extra args | Before |

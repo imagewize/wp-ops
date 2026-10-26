@@ -2,7 +2,7 @@
 // site directory from the current working directory, and confirms an
 // auto-detected candidate before it's used for anything destructive. Port of
 // wp-ops's detect_trellis_dir, detect_wp_site_dir, and confirm_detected_dir
-// — see docs/m3-go-skeleton.md, task 4.
+// — see docs/dev/m3-go-skeleton.md, task 4.
 package detect
 
 import (

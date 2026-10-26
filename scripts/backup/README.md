@@ -81,7 +81,7 @@ config when you're standing in it.
 
 ## Not yet written
 
-`docs/category-organization.md` (step 6) anticipates two siblings, neither of
+`docs/dev/category-organization.md` (step 6) anticipates two siblings, neither of
 which exists yet — `wp-site-backup.sh` (database + `wp-content`/`web/app` +
 config) and `wp-db-pull.sh` (remote to local with `search-replace`, plain
 `wp` rather than `trellis vm shell`). Keep any additions on distinct

@@ -146,7 +146,7 @@ func TestLint_MalformedCommandReportsEveryProblem(t *testing.T) {
 }
 
 // TestLint_PlatformValues guards the @platform directive added for Option C2
-// (docs/category-organization.md). A typo has to fail the build: caught here
+// (docs/dev/category-organization.md). A typo has to fail the build: caught here
 // it's one message, caught later the command silently vanishes from every
 // --platform filter, which reads as "no such command" rather than "bad tag".
 func TestLint_PlatformValues(t *testing.T) {

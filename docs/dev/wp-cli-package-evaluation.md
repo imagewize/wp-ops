@@ -116,7 +116,7 @@ the whole job. **Shipped**, as
 enough that a published package squatting it would collide with something.
 It's now `wp imagewize pattern-validate`, updated everywhere the old name was
 documented (`README.md`, `CLAUDE.md`, `docs/bedrock/`,
-`docs/category-organization.md`). Done ahead of publishing rather than after,
+`docs/dev/category-organization.md`). Done ahead of publishing rather than after,
 since renaming post-release is a breaking change.
 
 **Extracted and tagged.** The new repo carries `command.php` (the same file,

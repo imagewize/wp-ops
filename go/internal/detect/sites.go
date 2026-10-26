@@ -27,7 +27,7 @@ var (
 // has no business failing, printing, or pulling a YAML dependency into the
 // binary for four lines of well-known structure.
 //
-// This is a stopgap. M5's shared site registry (docs/cli-ux-plan.md) is
+// This is a stopgap. M5's shared site registry (docs/dev/cli-ux-plan.md) is
 // where site names are meant to come from once it exists; until then the
 // Trellis project in front of you is the only place the CLI can learn them.
 func TrellisSites(trellisDir string) []string {

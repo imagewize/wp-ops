@@ -10,7 +10,7 @@ import (
 )
 
 // TestCategoryBasenameCompletions ports the manual pass in
-// docs/m4-go-cli-completion.md task 4: `wp-ops <category> <TAB>` offers
+// docs/dev/m4-go-cli-completion.md task 4: `wp-ops <category> <TAB>` offers
 // every basename in that category, deduplicated.
 //
 // It used to also assert that completion *stopped* at the basename, on the
@@ -125,7 +125,7 @@ func TestRootBasenameCompletionsCoversAllEntries(t *testing.T) {
 // TestCategoryBasenameCompletionsScoped checks that a category's
 // completions only ever contain basenames that actually live in that
 // category — the point of the two-token grammar
-// (docs/m4-go-cli-completion.md task 4).
+// (docs/dev/m4-go-cli-completion.md task 4).
 func TestCategoryBasenameCompletionsScoped(t *testing.T) {
 	c, err := catalog.Load()
 	if err != nil {

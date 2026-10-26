@@ -1,6 +1,6 @@
 // Package exec runs the scripts a catalog entry points at: direct exec for
 // .sh/.js/.py commands (shell.go) and ansible-playbook for .yml commands
-// (ansible.go). See docs/m3-go-skeleton.md, tasks 5-6.
+// (ansible.go). See docs/dev/m3-go-skeleton.md, tasks 5-6.
 package exec
 
 import (

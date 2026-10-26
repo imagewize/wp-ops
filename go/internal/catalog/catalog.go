@@ -1,5 +1,5 @@
 // Package catalog embeds the build-time command catalog (catalog.json,
-// produced by ./gen — see docs/m3-go-skeleton.md, task 3) and exposes
+// produced by ./gen — see docs/dev/m3-go-skeleton.md, task 3) and exposes
 // lookup/search over it. No filesystem scan happens at runtime: a malformed
 // manifest fails the build (see gen/main.go), not the CLI's behavior.
 package catalog
@@ -85,7 +85,7 @@ type Entry struct {
 	// list.go's category views, the interactive picker, and the per-category
 	// Cobra commands (dispatch.go). It equals Category except for the
 	// scripts/** subcategories big enough to warrant their own top-level
-	// group (Phase F option 4, docs/cli-ux-plan.md): "monitoring", "images",
+	// group (Phase F option 4, docs/dev/cli-ux-plan.md): "monitoring", "images",
 	// "patterns", "release" (see gen/main.go's promotedScriptCategories).
 	// Deliberately kept separate from Category so --json (printJSON) keeps
 	// reporting the directory-based "category" field it has always
@@ -265,7 +265,7 @@ func (c *Catalog) Search(term string) []Entry {
 }
 
 // Platforms enumerates every legal @platform value, in narrowing-to-widening
-// order. Option C2 of docs/category-organization.md: this is the axis a
+// order. Option C2 of docs/dev/category-organization.md: this is the axis a
 // directory name can't encode — "will this run against the site in front of
 // me" — and it deliberately has three values rather than two, since needing
 // *a* WordPress (any host) is a different constraint from needing a Trellis
@@ -285,7 +285,7 @@ var Platforms = []string{"trellis", "wordpress", "any"}
 // on a Trellis box as anywhere else, and hiding the image converters, git
 // helpers and release scripts from a --platform trellis listing answers a
 // question nobody asked. The flag reads as "what can I run here?" — see
-// docs/cli-ux-plan.md, Phase G item G6.
+// docs/dev/cli-ux-plan.md, Phase G item G6.
 //
 // The widening stops there. "wordpress" is not included in a "trellis"
 // filter even though a Trellis box does have a WordPress on it: rolling
@@ -309,7 +309,7 @@ func RunsOnPlatform(entryPlatform, platform string) bool {
 // FilterByPlatform returns a new Catalog containing only entries usable on
 // the specified platform, per RunsOnPlatform. If platform is empty, returns
 // the original catalog. This implements the @platform filtering for Option
-// C2 from docs/category-organization.md.
+// C2 from docs/dev/category-organization.md.
 func (c *Catalog) FilterByPlatform(platform string) *Catalog {
 	if platform == "" {
 		return c
@@ -355,7 +355,7 @@ func (c *Catalog) FilterByPlatform(platform string) *Catalog {
 // (most-used-first) display order — a direct port of bash's CATEGORIES
 // array. Shared between the generator (task 3) and the catalog's own
 // Categories() method so the two can't drift.
-// Option D of docs/category-organization.md removed three entries here:
+// Option D of docs/dev/category-organization.md removed three entries here:
 // "nginx" and "troubleshooting" carried zero commands and were skipped on
 // every pass, and "bedrock" became documentation once its one command moved
 // to wp-cli/. All three now live under docs/.
@@ -369,13 +369,13 @@ var Categories = []string{
 // DisplayOrder lists DisplayCategory names in curated (most-used-first)
 // order — the DisplayCategory counterpart to Categories, consumed by
 // Catalog.DisplayCategories(). These are @category (domain) values, not
-// directories: Option C1 of docs/category-organization.md drops the old
+// directories: Option C1 of docs/dev/category-organization.md drops the old
 // directory-based split so all 9 backup commands group together whether
 // they live under scripts/ or trellis/. Ordered by command count
 // descending, with the "misc" catch-all last within its tier.
 //
 // Singletons were merged into neighbours rather than left as one-command
-// groups (the second of the two policies docs/category-organization.md
+// groups (the second of the two policies docs/dev/category-organization.md
 // leaves open): patterns + content-creation + wp-cli-config → "content",
 // woocommerce + updater → "misc". The "snippets" group those merges also
 // produced is gone again — step 7 of the same document demoted every
@@ -422,7 +422,7 @@ var CategoryDisplayNames = map[string]string{
 
 // CategoryBlurbs is a one-line summary per category — shown alongside its
 // command count in cmd's compact `list` view and ui's picker category-select
-// stage. Phase F, docs/cli-ux-plan.md. Keyed by DisplayOrder's domain
+// stage. Phase F, docs/dev/cli-ux-plan.md. Keyed by DisplayOrder's domain
 // categories only; the directory aliases are hidden and never render a
 // blurb.
 var CategoryBlurbs = map[string]string{

@@ -52,18 +52,18 @@ doc-only trees):
 ### The three axes, and where each one leaks
 
 **Axis 1 — mechanism.** `trellis/` is *mostly* Ansible but holds 3 shell
-scripts ([`trellis/security/check-ips.sh`](../trellis/security/check-ips.sh),
-`check-deny-ips.sh`, [`trellis/updater/trellis-updater.sh`](../trellis/updater/trellis-updater.sh)).
+scripts ([`trellis/security/check-ips.sh`](../../trellis/security/check-ips.sh),
+`check-deny-ips.sh`, [`trellis/updater/trellis-updater.sh`](../../trellis/updater/trellis-updater.sh)).
 `scripts/` is *mostly* bash but holds 3 Node and 2 Python commands. `wp-cli/`
 is a 9/4 split of shell and PHP. No directory is mechanism-pure.
 
 **Axis 2 — platform.** `scripts/` is 39% Trellis-coupled; `wp-cli/` is 31%.
 Neither name says so. All three scripts in `scripts/backup/` hard-code Trellis
 conventions — `web@host` and `/srv/www/<site>/current` in
-[`db-backup.sh`](../scripts/backup/db-backup.sh), `TRELLIS_DIR` +
-`trellis vm shell` in [`db-pull.sh`](../scripts/backup/db-pull.sh),
+[`db-backup.sh`](../../scripts/backup/db-backup.sh), `TRELLIS_DIR` +
+`trellis vm shell` in [`db-pull.sh`](../../scripts/backup/db-pull.sh),
 `/srv/backups` and the Bedrock `web/app/` layout in
-[`site-backup.sh`](../scripts/backup/site-backup.sh) — while the directory
+[`site-backup.sh`](../../scripts/backup/site-backup.sh) — while the directory
 name says only "standalone shell scripts." That is the defect that started
 this analysis.
 
@@ -83,7 +83,7 @@ That is the real cost of the current layout — not the naming.
 ### The CLI already half-solves this
 
 `gen/main.go`'s `promotedScriptCategories`
-([`gen/main.go:74-79`](../go/internal/catalog/gen/main.go#L74-L79)) promotes
+([`gen/main.go:74-79`](../../go/internal/catalog/gen/main.go#L74-L79)) promotes
 `scripts/**` subcategories with 4+ commands — `monitoring`, `images`,
 `patterns`, `release` — to their own top-level display group, so `wp-ops list`
 already shows ten groups rather than six. The machinery for "display grouping
@@ -149,7 +149,7 @@ file moves, no key changes.
 
 `Entry.Category` (directory) and `Entry.DisplayCategory` (human-facing
 grouping) are already distinct fields, deliberately so —
-[`catalog.go:62-73`](../go/internal/catalog/catalog.go#L62-L73) notes the
+[`catalog.go:62-73`](../../go/internal/catalog/catalog.go#L62-L73) notes the
 split exists precisely to keep `--json`'s directory-based `category` a stable
 contract while the human surfaces group differently. Today
 `displayCategoryFor()` applies the manifest category only for promoted
@@ -176,8 +176,8 @@ prevents. (It also makes the `promotedScriptCategories` threshold moot for
 promotion entry the moment a fourth is added.)
 
 **What it costs:** `displayCategoryFor()` in
-[`gen/main.go:82-89`](../go/internal/catalog/gen/main.go#L82-L89), the three
-tables in [`catalog.go:224-272`](../go/internal/catalog/catalog.go#L224-L272)
+[`gen/main.go:82-89`](../../go/internal/catalog/gen/main.go#L82-L89), the three
+tables in [`catalog.go:224-272`](../../go/internal/catalog/catalog.go#L224-L272)
 (`DisplayOrder`, `CategoryDisplayNames`, `CategoryBlurbs`), a catalog
 regeneration, and the display-category assertions in the catalog tests.
 **What it doesn't cost:** no file moves, no key changes, no `@doc` churn, no
@@ -238,7 +238,7 @@ This retires the naming problem outright. `scripts/backup/db-backup.sh` stays
 where it is and is honestly labelled `[trellis]`; a future `wp-db-backup.sh`
 sits beside it labelled `[wordpress]`. It also gives the MCP layer's
 already-host-agnostic model
-([`mcp-server/src/registry.ts:12-44`](../mcp-server/src/registry.ts#L12-L44) —
+([`mcp-server/src/registry.ts:12-44`](../../mcp-server/src/registry.ts#L12-L44) —
 four env shapes: `trellisDir`+`vmWorkdir`, `sshHost`+`remotePath`, `localPath`,
 or `url`, plus `wpBin`/`phpBin` overrides for cPanel/Plesk) a CLI-side
 counterpart.
@@ -303,12 +303,12 @@ covers cases like the Valet site above.
 **Verdict: worth doing, low stakes.** `nginx/` (0 commands, 5 docs) and
 `troubleshooting/` (0 commands, 6 docs) are pure documentation sitting at top
 level next to command directories, and both appear in `Categories`/
-`DisplayOrder` ([`catalog.go:205-237`](../go/internal/catalog/catalog.go#L205-L237))
+`DisplayOrder` ([`catalog.go:205-237`](../../go/internal/catalog/catalog.go#L205-L237))
 where they're always skipped for having zero commands — dead entries in the
 curated order.
 
 `wp-ops docs` walks every `.md` in the repo
-([`docs.go:191-206`](../go/cmd/docs.go#L191-L206)), so moving them costs
+([`docs.go:191-206`](../../go/cmd/docs.go#L191-L206)), so moving them costs
 nothing there. Only inbound `.md` cross-links (23 files reference `nginx/` or
 `troubleshooting/`) and the dead `Categories` entries need touching.
 

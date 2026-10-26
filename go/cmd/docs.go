@@ -1,6 +1,6 @@
 // Port of the bash CLI's "Documentation Search" section (wp-ops:1610-1736)
 // and its dispatch (wp-ops:2196-2211) — M4 task 5,
-// docs/m4-go-cli-completion.md. Unrelated to the per-command @doc manifest
+// docs/dev/m4-go-cli-completion.md. Unrelated to the per-command @doc manifest
 // directive (catalog.Entry.Doc, already surfaced by executors' --help and
 // --json): this is a full-text search over every *.md file in the repo,
 // independent of any command's manifest.

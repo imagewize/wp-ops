@@ -100,7 +100,7 @@ func TestRunsOnFor(t *testing.T) {
 	}
 }
 
-// TestDisplayCategoryFor covers Option C1 (docs/category-organization.md):
+// TestDisplayCategoryFor covers Option C1 (docs/dev/category-organization.md):
 // @category wins for every command regardless of which directory it lives
 // in, so a domain spread across two directories groups as one. The old
 // Phase F rule — promotion only for scripts/** subcategories with 4+
@@ -219,7 +219,7 @@ func TestCleanDescriptionTruncation(t *testing.T) {
 
 // TestFallbackDescription covers the header scrape used for un-annotated
 // files — the path that keeps mcp-server/* in the catalog without annotating
-// it (docs/m3-go-skeleton.md, decision #2).
+// it (docs/dev/m3-go-skeleton.md, decision #2).
 func TestFallbackDescription(t *testing.T) {
 	tests := []struct {
 		name    string

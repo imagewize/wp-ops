@@ -11,7 +11,7 @@ longer-term question of tighter coupling with the Go CLI binary.
 > "Current state" below now reflects the real tool count (twenty as of
 > `ssh_command`/`scp_file` in v5.18.0) — the earlier five/sixteen-tool notes here
 > were a running tally that kept falling behind each new tool; the full list now
-> lives in [`mcp-server/README.md`](../mcp-server/README.md) rather than being
+> lives in [`mcp-server/README.md`](../../mcp-server/README.md) rather than being
 > re-enumerated here, so this doc doesn't have to be kept in lockstep with every
 > new tool going forward. The Verification Checklist's two open items (dev
 > mode, all 20 tools invokable) were closed out 2026-09-04 — see that section.
@@ -25,7 +25,7 @@ longer-term question of tighter coupling with the Go CLI binary.
 The server exposes twenty tools — security/SEO audits, backups, dev-site sync,
 content publishing/verification, SSH/SCP passthrough, and a catalog bridge — backed
 by a Zod-validated site registry (`config/sites.json`). See
-[`mcp-server/README.md`](../mcp-server/README.md) for the full, current list; it's
+[`mcp-server/README.md`](../../mcp-server/README.md) for the full, current list; it's
 not re-enumerated here to avoid this doc drifting out of sync again.
 
 It's launched via the Go CLI (`wp-ops mcp-server dev` / `wp-ops mcp-server start` /
@@ -493,7 +493,7 @@ dependency itself becomes a distribution blocker. Until then, Option C stands.
 
 ## See Also
 
-- [MCP Server README](../mcp-server/README.md) — Full setup, configuration, and usage
-- [CLI UX Plan](./cli-ux-plan.md) — Overall CLI architecture and roadmap
-- [m3-go-skeleton.md](./m3-go-skeleton.md) — Go CLI implementation details
-- [m4-go-cli-completion.md](./m4-go-cli-completion.md) — Go CLI completion and distribution
+- [MCP Server README](../../mcp-server/README.md) — Full setup, configuration, and usage
+- [CLI UX Plan](cli-ux-plan.md) — Overall CLI architecture and roadmap
+- [m3-go-skeleton.md](m3-go-skeleton.md) — Go CLI implementation details
+- [m4-go-cli-completion.md](m4-go-cli-completion.md) — Go CLI completion and distribution

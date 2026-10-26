@@ -13,7 +13,7 @@ import (
 )
 
 // Argument completion from the manifest — Phase G item G3
-// (docs/cli-ux-plan.md). Completion used to stop at the command name:
+// (docs/dev/cli-ux-plan.md). Completion used to stop at the command name:
 // `wp-ops backup <TAB>` offered the ten basenames, and `wp-ops db-pull
 // <TAB>` offered nothing at all, even though the manifest declares
 // `site` and `env` with `{production|staging}` choices right there in the

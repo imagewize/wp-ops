@@ -33,7 +33,7 @@ func newTestCategoryModel() Model {
 }
 
 // TestUpdateCategoryTypingJumpsToBrowse covers the type-to-search fix
-// (docs/cli-ux-plan.md, Phase F "Also fixed alongside (4)"): Phase F option
+// (docs/dev/cli-ux-plan.md, Phase F "Also fixed alongside (4)"): Phase F option
 // 3 made stageCategory the picker's default screen but left typing a no-op
 // there, so a keypress had to go through arrow+Enter on "All categories"
 // first before search worked at all. Typing anywhere on this screen must

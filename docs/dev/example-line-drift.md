@@ -2,7 +2,7 @@
 
 > **Status (2026-08-05): implemented in 5.1.2.** Option 3 shipped as the
 > three commits §6 recommends — the test, the 47-line sweep, and the four Go
-> sites — plus the `docs/trellis-cli-comparison.md` fix. §7's open question
+> sites — plus the `docs/dev/trellis-cli-comparison.md` fix. §7's open question
 > (`search` vs `list` naming) is deliberately still open. Prose below is
 > preserved as written, so it describes the pre-fix state; measured against
 > `main` at 3a53555 (5.1.1).
@@ -176,13 +176,13 @@ invocation**: it works, but it is the one place where a future rename of
 Live and worth fixing:
 
 - `trellis/security/README.md:183, 234`
-- `docs/trellis-cli-comparison.md:150` — asserts `wp-ops db-backup --help`
+- `docs/dev/trellis-cli-comparison.md:150` — asserts `wp-ops db-backup --help`
   prints `Usage: wp-ops scripts/backup/db-backup`, which stopped being true in
   5.1.0. That document's own status header says rough edge #1 is fixed, so
   this line contradicts the header four sections above it.
 
-Leave alone: `docs/wp-ops-recommendations.md` (lines 15-22, 56, 78, 220-228)
-and `docs/go-mcp-parity.md:43` quote the path form *as the problem being
+Leave alone: `docs/dev/wp-ops-recommendations.md` (lines 15-22, 56, 78, 220-228)
+and `docs/dev/go-mcp-parity.md:43` quote the path form *as the problem being
 analyzed*. Rewriting them would destroy the record. `CHANGELOG.md` likewise.
 
 ## 4. Root cause, stated once
@@ -293,7 +293,7 @@ Option 3, as three commits.
    corrected to positional Ansible syntax, `check-deny-ips.sh:67`, and the two
    `trellis/security/README.md` lines.
 
-Then fix `docs/trellis-cli-comparison.md:150` as part of 3 or as a fourth
+Then fix `docs/dev/trellis-cli-comparison.md:150` as part of 3 or as a fourth
 one-line commit, and leave the historical documents alone.
 
 Expected end state: `wp-ops <anything> --help` names a command that resolves,
