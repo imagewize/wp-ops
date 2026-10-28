@@ -15,6 +15,7 @@
 # Requires: WP-CLI access to WordPress installation
 #
 # @desc     Identify orphaned pages, analyze internal linking, and export a page inventory
+# @deprecated Overlaps orphan-links-audit and is not tied to Trellis, Bedrock or Sage. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category seo
 # @platform wordpress
 # @runs     local

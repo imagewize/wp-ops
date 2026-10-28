@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.40.0] - 2026-10-28
+
+### Deprecated
+
+- **Two overlapping SEO audits:** `page-audit` and `orphan-pages-audit`. Each now prints a warning to stderr and is badged `(deprecated)` in `list` and `search`. They keep working, and will be removed no sooner than the next minor release. If you rely on one, open an issue.
+  - `orphan-links-audit`, `blog-audit`, `schema-audit` and `redirect-audit` stay: the command audit lists them as core, and `schema-audit` and `redirect-audit` back MCP tools.
+
+### Changed
+
+- **The Nginx guides are cut back to the Trellis includes.** `docs/nginx/README.md` is now a short deploy-and-scopes page, the image optimization guide keeps the WebP/AVIF include and how to generate the files, and the redirect guide drops its generic pattern, tooling and performance sections. The ImageMagick and cwebp tutorial (`RESIZE-AND-CONVERSION.md`) is removed; it stays in git history.
+- **The README's "Also in the box" table** matches what is left: the Nginx row names Trellis includes, and the snippets row now describes WP-CLI guides.
+
 ## [5.39.0] - 2026-10-28
 
 ### Removed
