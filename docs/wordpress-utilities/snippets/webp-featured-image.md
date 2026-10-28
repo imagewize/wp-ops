@@ -1,5 +1,7 @@
 # WebP Featured Image Conversion
 
+The WordPress side of this, and how to keep the original JPG for the share card: [WordPress WebP Featured Images Without Breaking og:image](https://wpvilla.in/wordpress-webp-featured-images-og-image-original-jpg/).
+
 Shell commands to convert images to WebP format optimized for WordPress featured images and Facebook Open Graph sharing.
 
 ## Quick Command
