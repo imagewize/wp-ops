@@ -199,7 +199,6 @@ func printJSON(c *catalog.Catalog) {
 		Path        string `json:"path"`
 		RunsOn      string `json:"runs_on"`
 		Requires    string `json:"requires"`
-		Doc         string `json:"doc"`
 	}
 
 	var lines []string
@@ -212,7 +211,6 @@ func printJSON(c *catalog.Catalog) {
 				Path:        e.Key,
 				RunsOn:      e.RunsOn,
 				Requires:    e.RequiresString(),
-				Doc:         e.Doc,
 			}
 
 			var buf bytes.Buffer

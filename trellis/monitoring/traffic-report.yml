@@ -13,7 +13,6 @@
 # @flag     log_path   optional  {/path/to/access.log}  Override the default per-site access log path
 # @example  wp-ops traffic-report example.com production
 # @example  wp-ops traffic-report example.com production --hours 48
-# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: traffic-report.yml

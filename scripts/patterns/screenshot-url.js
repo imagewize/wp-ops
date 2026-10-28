@@ -36,7 +36,6 @@
  * @flag     --selector  optional  {".entry-content > *:first-child"}  Comma-separated CSS selectors, tried in order
  * @flag     --full-page optional  {}  Skip selector matching and screenshot the entire page
  * @example  wp-ops screenshot-url http://example.test/my-page/ --out=pattern.png
- * @doc      scripts/patterns/README.md
  */
 
 const { chromium } = require('playwright');

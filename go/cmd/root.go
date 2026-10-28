@@ -123,7 +123,6 @@ func rootLong(name string) string {
 		{"", ""},
 		{name + " list", "List every command by category"},
 		{name + " search <term>", "Search commands by name or description"},
-		{name + " docs [term] [-l]", "Search the guides (no term lists them)"},
 		{name + " doctor", "Check dependencies and environment"},
 		{name + " init", "Install shell completions"},
 		{name + " mcp-register", "Show MCP registration snippets for Claude/Mistral/Codex"},

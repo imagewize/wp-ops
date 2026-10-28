@@ -55,7 +55,6 @@ type Command struct {
 	Args     []Arg
 	Flags    []Flag
 	Examples []string
-	Doc      string
 	// Mutates is the raw @mutates value ("true", "false", or "" when unset).
 	// Kept as the raw string rather than a bool for the same reason Runs and
 	// Platform are: "" has to stay distinguishable from an explicit value so
@@ -111,7 +110,7 @@ var (
 // docblock) is silently ignored, matching bash's case statement.
 var directivesHandled = map[string]bool{
 	"@desc": true, "@category": true, "@runs": true, "@requires": true,
-	"@doc": true, "@example": true, "@arg": true, "@flag": true, "@platform": true,
+	"@example": true, "@arg": true, "@flag": true, "@platform": true,
 	"@mutates": true, "@deprecated": true,
 }
 
@@ -228,10 +227,6 @@ func Parse(key, scriptPath string) (*Command, error) {
 			if cmd.Requires == nil && value != "" {
 				cmd.Requires = strings.Fields(value)
 			}
-		case "@doc":
-			if cmd.Doc == "" {
-				cmd.Doc = value
-			}
 		case "@example":
 			cmd.Examples = append(cmd.Examples, value)
 		case "@arg":
@@ -252,8 +247,8 @@ func (c *Command) RequiresString() string {
 }
 
 // Lint validates one command's directives, mirroring
-// lint_manifest_command(). repoRoot is used to resolve @doc paths. It
-// returns one message per problem found (nil/empty when clean).
+// lint_manifest_command(). repoRoot is kept for lint rules that resolve repo
+// paths. It returns one message per problem found (nil/empty when clean).
 func Lint(cmd *Command, repoRoot string) []string {
 	var errs []string
 
@@ -307,12 +302,6 @@ func Lint(cmd *Command, repoRoot string) []string {
 		case "required", "optional":
 		default:
 			errs = append(errs, fmt.Sprintf("%s: '%s' requiredness must be 'required' or 'optional', got '%s'", cmd.Key, p.Name, p.RequiredRaw))
-		}
-	}
-
-	if cmd.Doc != "" {
-		if _, err := os.Stat(repoRoot + "/" + cmd.Doc); err != nil {
-			errs = append(errs, fmt.Sprintf("%s: @doc points at a missing file '%s'", cmd.Key, cmd.Doc))
 		}
 	}
 

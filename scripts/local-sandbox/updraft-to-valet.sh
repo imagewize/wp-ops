@@ -59,7 +59,6 @@
 # @flag     --password        optional  {password}  Password to use with --reset-password (default: password)
 # @example  wp-ops updraft-to-valet ~/Downloads/client-backup client --wp-version 6.7.1
 # @example  wp-ops updraft-to-valet ~/Downloads/client-backup client --wp-version 6.6.2 --secure --reset-password admin
-# @doc      scripts/README.md
 
 set -euo pipefail
 

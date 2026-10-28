@@ -24,6 +24,5 @@
 # @arg      site-name    optional  {example.com}  Site directory under /srv/www
 # @arg      backup-type  optional  {production|staging|development}  Backup type
 # @example  wp-ops scripts/backup/db-backup example.com production
-# @doc      trellis/backup/README.md
 
 set -e

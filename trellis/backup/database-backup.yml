@@ -9,7 +9,6 @@
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging|development}  Target environment
 # @example  wp-ops database-backup example.com production
-# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: database-backup.yml

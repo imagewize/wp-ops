@@ -9,7 +9,6 @@
     "requires": [
       "ssh"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site-name",
@@ -68,7 +67,6 @@
     "requires": [
       "trellis"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site-name",
@@ -134,7 +132,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site-name",
@@ -165,7 +162,6 @@
       "wp",
       "gzip"
     ],
-    "doc": "scripts/backup/README.md",
     "flags": [
       {
         "name": "--path",
@@ -479,7 +475,6 @@
       "unzip",
       "gzip"
     ],
-    "doc": "scripts/README.md",
     "args": [
       {
         "name": "backup-dir",
@@ -631,7 +626,6 @@
     "requires": [
       "find"
     ],
-    "doc": "scripts/misc/README-FIND-AND-REPLACE.md",
     "args": [
       {
         "name": "filename",
@@ -774,7 +768,6 @@
     "requires": [
       "gawk"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "log_file",
@@ -817,7 +810,6 @@
     "script_path": "scripts/monitoring/error-monitor.sh",
     "runs_on": "server",
     "runs": "server",
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "domain",
@@ -863,7 +855,6 @@
     "requires": [
       "gawk"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "hours",
@@ -930,7 +921,6 @@
     "requires": [
       "ssh"
     ],
-    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "ssh-host",
@@ -968,7 +958,6 @@
     "requires": [
       "gawk"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "log_file",
@@ -1022,7 +1011,6 @@
     "requires": [
       "ssh"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "ssh-target",
@@ -1179,7 +1167,6 @@
       "python3",
       "geoip2fast"
     ],
-    "doc": "scripts/README.md",
     "args": [
       {
         "name": "country-code",
@@ -1269,7 +1256,6 @@
     "requires": [
       "gawk"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "log_file",
@@ -1316,7 +1302,6 @@
       "curl",
       "bc"
     ],
-    "doc": "docs/wordpress-utilities/speed-optimization/README.md",
     "args": [
       {
         "name": "url",
@@ -1346,7 +1331,6 @@
     "requires": [
       "grep"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "site_url",
@@ -1384,7 +1368,6 @@
     "requires": [
       "magick"
     ],
-    "doc": "scripts/patterns/README.md",
     "args": [
       {
         "name": "screenshots-dir",
@@ -1430,7 +1413,6 @@
     "requires": [
       "node"
     ],
-    "doc": "scripts/patterns/README.md",
     "args": [
       {
         "name": "input-file",
@@ -1500,7 +1482,6 @@
     "requires": [
       "node"
     ],
-    "doc": "scripts/patterns/README.md",
     "args": [
       {
         "name": "pattern-slug",
@@ -1530,7 +1511,6 @@
     "requires": [
       "node"
     ],
-    "doc": "scripts/patterns/README.md",
     "args": [
       {
         "name": "url",
@@ -1609,7 +1589,6 @@
     "requires": [
       "magick"
     ],
-    "doc": "scripts/patterns/README.md",
     "args": [
       {
         "name": "screenshots-dir",
@@ -1647,7 +1626,6 @@
     "requires": [
       "rsync"
     ],
-    "doc": "docs/bedrock/local-package-development/README.md",
     "args": [
       {
         "name": "kind",
@@ -1733,7 +1711,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1775,7 +1752,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1816,7 +1792,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1857,7 +1832,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1899,7 +1873,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1951,7 +1924,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/backup/README.md",
     "args": [
       {
         "name": "site",
@@ -1992,7 +1964,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "site",
@@ -2045,7 +2016,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "site",
@@ -2114,7 +2084,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "site",
@@ -2175,7 +2144,6 @@
     "requires": [
       "ansible-playbook"
     ],
-    "doc": "trellis/monitoring/README.md",
     "args": [
       {
         "name": "site",
@@ -2238,7 +2206,6 @@
       "jq",
       "trellis"
     ],
-    "doc": "trellis/security/README.md",
     "flags": [
       {
         "name": "--full",
@@ -2268,7 +2235,6 @@
     "requires": [
       "curl"
     ],
-    "doc": "trellis/security/README.md",
     "args": [
       {
         "name": "ip",
@@ -2298,7 +2264,6 @@
     "requires": [
       "git"
     ],
-    "doc": "trellis/updater/README.md",
     "flags": [
       {
         "name": "--yes",
@@ -2404,7 +2369,6 @@
     "requires": [
       "ssh"
     ],
-    "doc": "wp-cli/content-creation/PAGE-CREATION.md",
     "args": [
       {
         "name": "content-file",
@@ -2617,7 +2581,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "docs/bedrock/wp-cli-config/README.md",
     "args": [
       {
         "name": "path",
@@ -2692,7 +2655,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "docs/wordpress-utilities/snippets/admin-user-creation-wpcli.md",
     "args": [
       {
         "name": "username",
@@ -2772,7 +2734,6 @@
     "requires": [
       "ssh"
     ],
-    "doc": "wp-cli/security/README.md",
     "args": [
       {
         "name": "site-name",
@@ -2870,7 +2831,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/security/README.md",
     "args": [
       {
         "name": "path",
@@ -2900,7 +2860,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/security/README.md",
     "args": [
       {
         "name": "path",
@@ -2930,7 +2889,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/security/README.md",
     "args": [
       {
         "name": "path",
@@ -2960,7 +2918,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/seo/README.md",
     "flags": [
       {
         "name": "--path",
@@ -3006,7 +2963,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/seo/README.md",
     "flags": [
       {
         "name": "--host",
@@ -3061,7 +3017,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/seo/README.md",
     "flags": [
       {
         "name": "--path",
@@ -3108,7 +3063,6 @@
     "requires": [
       "wp"
     ],
-    "doc": "wp-cli/seo/README.md",
     "flags": [
       {
         "name": "--path",
@@ -3155,7 +3109,6 @@
     "requires": [
       "curl"
     ],
-    "doc": "wp-cli/seo/README.md",
     "flags": [
       {
         "name": "--url",
@@ -3201,7 +3154,6 @@
       "curl",
       "perl"
     ],
-    "doc": "wp-cli/seo/README.md",
     "args": [
       {
         "name": "site-url",

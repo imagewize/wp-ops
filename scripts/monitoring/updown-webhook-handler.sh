@@ -24,7 +24,6 @@
 # @arg      site_url    optional  {example.com}  Site domain (used to locate per-site logs)
 # @arg      event_type  optional  {down}  Event type from the updown.io webhook payload
 # @example  ssh web@example.com 'bash -s' < updown-webhook-handler.sh example.com down
-# @doc      trellis/monitoring/README.md
 #
 
 set -e

@@ -137,10 +137,6 @@ func DetailBody(e catalog.Entry) string {
 	// trellis-cli uses and the one `--help` output conventionally carries.
 	writeParamBlock(&b, "Options:", e.Flags)
 
-	if e.Doc != "" {
-		fmt.Fprintf(&b, "Docs: %s\n", e.Doc)
-	}
-
 	return strings.TrimRight(b.String(), "\n")
 }
 
@@ -206,9 +202,6 @@ func writeManifestHelpBody(b *strings.Builder, e catalog.Entry) {
 		fmt.Fprintln(b)
 	}
 
-	if e.Doc != "" {
-		fmt.Fprintf(b, "Docs: %s\n", e.Doc)
-	}
 	fmt.Fprintf(b, "Script: %s\n", e.ScriptPath)
 }
 

@@ -17,7 +17,6 @@
 # @arg      screenshots-dir  required  {./screenshots}  Directory of pattern-*.webp screenshots
 # @arg      width            optional  {900}  Resize width after trimming
 # @example  wp-ops trim-screenshots ./screenshots 900
-# @doc      scripts/patterns/README.md
 
 set -euo pipefail
 

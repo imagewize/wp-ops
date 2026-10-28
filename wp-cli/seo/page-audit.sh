@@ -25,7 +25,6 @@
 # @flag     --output    optional  {audits}  Output directory
 # @flag     --site-url  optional  {https://example.com}  Site URL for reports
 # @example  wp-ops page-audit --path web/wp --output reports/seo
-# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

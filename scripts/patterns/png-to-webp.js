@@ -34,7 +34,6 @@
  * @flag     --quality      optional  {85}  WebP quality 1-100
  * @flag     --dry-run      optional  {}  Show what would be done without writing files
  * @example  wp-ops png-to-webp --all --dir=./screenshots --quality=90
- * @doc      scripts/patterns/README.md
  */
 
 const sharp = require('sharp');

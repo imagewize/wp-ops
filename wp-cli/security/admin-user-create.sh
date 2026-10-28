@@ -40,7 +40,6 @@
 # @flag     --site-path  optional  {/var/www/example.com}  Site root on the server, required with --host
 # @example  wp-ops admin-user-create temp_admin temp@example.com
 # @example  wp-ops admin-user-create --path web/wp recovery recovery@example.com
-# @doc      docs/wordpress-utilities/snippets/admin-user-creation-wpcli.md
 
 set -euo pipefail
 

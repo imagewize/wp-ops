@@ -49,33 +49,9 @@ project you're standing in, `wp-ops db-pull example.com <TAB>` offers
 completion, and anything else prints a one-line hint saying what the argument is.
 Typing a dash offers the command's own flags.
 
-## Searching the guides
+## Guides
 
-A good deal of what this repo knows is written down rather than scripted, so
-`wp-ops docs` searches the prose the way `wp-ops search` searches the catalog:
-
-```bash
-wp-ops docs                  # list every guide
-wp-ops docs "search-replace" # show matching lines, grouped by document
-wp-ops docs oom -w           # whole words only (so "oom" skips "server room")
-wp-ops docs oom -l           # paths only, for piping: wp-ops docs oom -l | xargs $EDITOR
-```
-
-When `wp-ops search` finds no command for a term, it checks the documentation and
-points you there.
-
-`docs/nginx/`, `docs/troubleshooting/`, and `docs/bedrock/` hold guides and config
-templates rather than runnable scripts, so they carry no commands and no CLI
-category — reach them through `wp-ops docs`.
-
-Every catalog entry is something that runs. Copy-paste-into-a-theme reference
-material — WP-CLI guides and the speed-optimization notes — lives under
-`docs/wordpress-utilities/` instead. To pull one into a project, `wp-ops docs -l
-<term>` gives you the path:
-
-```bash
-cat "$(wp-ops docs -l wp-template | head -1)"
-```
+wp-ops carries no documentation of its own. The guides live on [wpvilla.in](https://wpvilla.in/), and every command explains itself with `wp-ops <command> --help`.
 
 ## Where commands run
 
