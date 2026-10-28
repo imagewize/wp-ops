@@ -1,5 +1,7 @@
 # Mail Configuration Issues
 
+The story of both failures and how to tell them apart: [WordPress Mail Not Arriving on Trellis: Two Different Failures That Look the Same](https://wpvilla.in/trellis-mail-not-sending-smtp-config-reset-and-bounces/).
+
 ## SSH User Access
 
 **Important**: When troubleshooting mail issues, use the appropriate SSH user:
