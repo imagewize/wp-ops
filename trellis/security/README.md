@@ -511,10 +511,10 @@ All security configurations live in Git (Trellis repository):
 ```bash
 # Always test Nginx config changes
 cd trellis
-ansible-playbook server.yml -e env=production --tags nginx --check
+ansible-playbook server.yml -e env=production --tags nginx-includes --check
 
 # Then deploy
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 ### 5. Document Everything
@@ -575,7 +575,7 @@ nano trellis/nginx-includes/all/deny-ips.conf.j2
 # deny 1.2.3.4;  # Description
 
 # 3. Deploy
-cd trellis && trellis provision --tags nginx production
+cd trellis && trellis provision --tags nginx-includes production
 ```
 
 ### Check IP Reputation

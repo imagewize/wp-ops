@@ -59,7 +59,7 @@ Create `trellis/nginx-includes/all/deny-ips.conf.j2`:
 # Managed via: trellis/nginx-includes/all/deny-ips.conf.j2
 # Last updated: {{ ansible_date_time.date }}
 #
-# Apply changes: cd trellis && trellis provision --tags nginx production
+# Apply changes: cd trellis && trellis provision --tags nginx-includes production
 #
 # IMPORTANT: Always verify IPs before adding to avoid blocking legitimate traffic
 # Check IP ownership: whois <IP>
@@ -83,13 +83,18 @@ deny 91.224.92.114;   # 742 wp-login attempts (Nov 2025)
 
 ```bash
 cd trellis
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 This will:
 1. Template `deny-ips.conf.j2` to `/etc/nginx/includes.d/all/deny-ips.conf`
 2. Test Nginx configuration for syntax errors
 3. Reload Nginx to apply new blocks
+
+Use the `nginx-includes` tag, not `nginx`. The includes are templated by the
+`wordpress-setup` role, which `--tags nginx` skips, so that run finishes
+without deploying the file. Check the deployed copy's timestamp under
+`/etc/nginx/includes.d/` if a change seems not to apply.
 
 **Verify:**
 ```bash
@@ -113,7 +118,7 @@ remove it.
 ```bash
 # After editing deny-ips.conf.j2 locally
 cd trellis
-ansible-playbook server.yml -e env=production --tags nginx --check
+ansible-playbook server.yml -e env=production --tags nginx-includes --check
 ```
 
 The `--check` flag runs in dry-run mode (no changes applied).
@@ -141,7 +146,7 @@ deny 1.2.3.4;  # Description: reason for block, date observed
 3. **Deploy:**
 ```bash
 cd trellis
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 ### Remove IP Block
@@ -154,7 +159,7 @@ trellis provision --tags nginx production
 2. **Deploy:**
 ```bash
 cd trellis
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 ### Bulk Add IPs
@@ -401,7 +406,7 @@ ssh admin_user@yoursite.com "grep '5.6.7.8' /etc/nginx/includes.d/all/deny-ips.c
 
 1. Edit `trellis/nginx-includes/all/deny-ips.conf.j2`
 2. Remove or comment out the line
-3. Deploy: `cd trellis && trellis provision --tags nginx production`
+3. Deploy: `cd trellis && trellis provision --tags nginx-includes production`
 
 ### Block Not Working
 
@@ -413,7 +418,7 @@ ssh admin_user@yoursite.com "cat /etc/nginx/includes.d/all/deny-ips.conf | grep 
 ```
 
 **If not there:**
-- Did you run `trellis provision --tags nginx`?
+- Did you run `trellis provision --tags nginx-includes`?
 - Check for typos in IP address
 - Ensure file is in correct location (`nginx-includes/all/`)
 
@@ -492,10 +497,10 @@ Quarterly, review your deny list and remove IPs that are no longer threats.
 ```bash
 # Dry-run test
 cd trellis
-ansible-playbook server.yml -e env=production --tags nginx --check
+ansible-playbook server.yml -e env=production --tags nginx-includes --check
 
 # If no errors, deploy for real
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 ### 5. Keep a Backup
@@ -528,7 +533,7 @@ touch trellis/nginx-includes/all/deny-ips.conf.j2
 
 ```bash
 cd trellis
-trellis provision --tags nginx production
+trellis provision --tags nginx-includes production
 ```
 
 ### View Current Blocks
