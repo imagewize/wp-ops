@@ -1,5 +1,7 @@
 # WordPress Cron with Trellis
 
+Why scheduled posts run late and how to change the interval: [Scheduled Posts Go Live Up to 15 Minutes Late on Trellis](https://wpvilla.in/trellis-wp-cron-interval-scheduled-posts-late-cron-interval/).
+
 ## Overview
 
 Trellis automatically configures **system cron** instead of WordPress's built-in WP-Cron for more reliable scheduled task execution.
