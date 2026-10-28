@@ -60,7 +60,7 @@ This created a **split-brain state** between database truth and cached routing.
 
 ## Resolution
 
-The fix required synchronizing **all three layers**:
+The fix required synchronizing **all the layers**:
 
 1. **Correct the site’s own URL settings**
    (Multisite does NOT update these automatically when changing slugs)
@@ -82,19 +82,18 @@ The fix required synchronizing **all three layers**:
    wp cache flush --path=web/wp
    ```
 
-4. **Flush Redis persistent cache (critical)**
+4. **Flush the Redis persistent cache (critical)**
 
-   ```bash
-   redis-cli FLUSHALL
-   ```
+   With a Redis object cache plugin active, `wp cache flush` (step 3) already
+   clears it. During the incident `redis-cli FLUSHALL` was also run; that
+   empties every Redis database on the server, so avoid it when other sites
+   share the instance.
 
-5. **Clear Multisite blog lookup cache**
+   The blog lookup (blog ID to path) lives in the object cache, so no separate
+   step is needed. An earlier version of this guide deleted `blog_lookup` rows
+   from `wp_sitemeta`; that was not shown to do anything and is dropped.
 
-   ```bash
-   wp db query "DELETE FROM wp_sitemeta WHERE meta_key LIKE '%blog_lookup%';"
-   ```
-
-6. **Rebuild rewrite rules**
+5. **Rebuild rewrite rules**
 
    ```bash
    wp rewrite flush --hard --path=web/wp
@@ -132,8 +131,8 @@ When renaming a Multisite subsite:
 1. Update the slug (DB or via tooling).
 2. Immediately update that site’s `home` and `siteurl`.
 3. Run a search-replace for old paths.
-4. Flush **persistent cache** (Redis).
-5. Flush WP cache + rewrite rules.
+4. Flush the object cache (`wp cache flush`, which clears Redis too).
+5. Flush rewrite rules.
 
 ### ❌ Avoid
 
@@ -153,10 +152,6 @@ wp --url=<new-url> option update home <new-url>
 wp --url=<new-url> search-replace '<old-path>' '<new-path>' --skip-columns=guid
 
 wp cache flush
-redis-cli FLUSHALL
-
-wp db query "DELETE FROM wp_sitemeta WHERE meta_key LIKE '%blog_lookup%';"
-
 wp rewrite flush --hard
 ```
 
