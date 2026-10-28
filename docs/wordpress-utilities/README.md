@@ -30,26 +30,9 @@ Cookie-based age verification system with modal interface and ACF integration.
 - `modal.css` - Modal styling
 - `footer.php` - Complete HTML template with ACF fields
 
-### [Analytics](analytics/)
+### Analytics
 
-Implementation guides and detection methods for popular analytics platforms.
-
-**Covered Platforms:**
-- Google Analytics (GA4 and Universal Analytics)
-- Google Site Kit plugin
-- Google Tag Manager
-- Matomo (self-hosted and cloud)
-
-**Features:**
-- Installation guides for plugin and manual implementations
-- curl-based detection scripts
-- Privacy compliance best practices
-- Performance optimization recommendations
-- Troubleshooting common issues
-
-**Key Files:**
-- `README.md` - Complete implementation and detection guide
-- Bash scripts for analytics detection across multiple platforms
+Implementation notes and curl-based detection for Site Kit, Google Analytics, Tag Manager and Matomo now live on the blog: [Which Analytics Is This WordPress Site Running?](https://wpvilla.in/detect-wordpress-analytics-curl-site-kit-gtm-matomo/).
 
 ### [Snippets](snippets/)
 
@@ -82,7 +65,7 @@ Performance testing tools and TTFB (Time To First Byte) analysis utilities.
 - Poor: > 1.8 seconds
 
 **Key Files:**
-- `README.md` - Command-line testing tools and interpretation guide
+- `README.md` - The bundled TTFB scripts, with a link to the full measuring guide
 
 ## Installation
 
@@ -162,6 +145,7 @@ fi
 # Quick check for analytics implementation
 curl -sL https://example.com | grep -E 'googlesitekit|matomo|gtag'
 ```
+See [the detection post](https://wpvilla.in/detect-wordpress-analytics-curl-site-kit-gtm-matomo/) for the full set of checks.
 
 ## Best Practices
 
