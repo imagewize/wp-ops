@@ -1,0 +1,27 @@
+# Serves photo.jpg.webp / photo.jpg.avif in place of photo.jpg when the browser
+# accepts them and the file sits next to the original.
+# Guide: https://wpvilla.in/serve-webp-avif-nginx-trellis-accept-header-bedrock-uploads/
+# Global include. The 00- prefix makes it load before assets-expiry.conf (includes
+# are read alphabetically and the first matching regex location wins), so it sets
+# its own expiry. No wordpress_sites.yml entry is needed.
+#
+# set/if instead of map: includes land inside the server block, where map is not allowed.
+
+location ~* ^/app/uploads/.+\.(jpg|jpeg|png)$ {
+    expires 1y;
+    add_header Vary Accept;
+
+    set $avif_suffix ".none";
+    set $webp_suffix ".none";
+    if ($http_accept ~* "image/avif") { set $avif_suffix ".avif"; }
+    if ($http_accept ~* "image/webp") { set $webp_suffix ".webp"; }
+
+    if (-f $document_root$uri$avif_suffix) {
+        rewrite ^ $uri$avif_suffix break;
+    }
+    if (-f $document_root$uri$webp_suffix) {
+        rewrite ^ $uri$webp_suffix break;
+    }
+
+    try_files $uri =404;
+}
