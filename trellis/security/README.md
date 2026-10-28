@@ -543,7 +543,7 @@ deny 62.60.130.228;
 ### Trellis Operations
 - **[trellis/backup](../backup/)** - Database and file backups
 - **[trellis/monitoring](../monitoring/)** - Server monitoring tools
-- **[trellis/provision](../provision/)** - Server provisioning guides
+- **[Provisioning guides](https://wpvilla.in/trellis-provision-tags-php-version-upgrade-checklist/)** - Server provisioning on the blog
 
 ### External Resources
 - [Trellis Security Documentation](https://roots.io/trellis/docs/security/)
