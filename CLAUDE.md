@@ -17,7 +17,6 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
 - **wp-cli/** - WordPress command-line operations
   - `wp-cli/content-creation/` - WP-CLI content creation, block patterns, and the `wp imagewize pattern-validate` command
   - `wp-cli/diagnostics/` - WordPress diagnostic tools
-  - `wp-cli/migration/` - WordPress migration documentation and URL update methods
   - `wp-cli/security/` - Malware detection and security scanning
 - **scripts/** - General utility scripts
   - `scripts/backup/` - Standalone backup shell scripts

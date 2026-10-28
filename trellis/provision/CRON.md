@@ -393,5 +393,5 @@ tail -f /var/log/syslog | grep -i cron
 ## Related Documentation
 
 - [Provisioning Guide](README.md) - Trellis provisioning commands
-- [Migration Guide](../../wp-cli/migration/REGULAR-TO-TRELLIS.md) - Migrating from traditional WordPress
+- [Migration guide](https://wpvilla.in/migrate-wordpress-to-trellis-bedrock-step-by-step/) - Migrating from traditional WordPress
 - [Deployment](https://roots.io/trellis/docs/deployments/) - Trellis deployment process

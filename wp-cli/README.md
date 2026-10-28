@@ -17,7 +17,6 @@ This directory contains production-tested WP-CLI utilities for:
 wp-cli/
 ├── content-creation/    # Block patterns, page creation, automation scripts
 ├── diagnostics/         # Troubleshooting and debugging tools
-├── migration/           # Site migration documentation and workflows
 └── seo/                # SEO audit tools and scripts
 ```
 
@@ -289,200 +288,12 @@ Production-safe diagnostic scripts for identifying and troubleshooting WordPress
 
 ## 3. Migration
 
-**Location:** `migration/`
+The migration guides live on the blog:
 
-Comprehensive guides for migrating WordPress sites to Trellis/Bedrock infrastructure.
-
-### Features
-
-- **Single-Site Migration** - Traditional WordPress to Trellis/Bedrock
-- **Multi-Site Migration** - Consolidating multiple sites to Trellis
-- **Full Bedrock Adoption** - Recommended approach with composer dependencies
-- **Path Compatibility Mode** - Quick migration without restructuring
-- **Domain Migration** - URL replacement workflows
-- **Testing Methodology** - `/etc/hosts` testing before DNS cutover
-
-### Documentation
-
-| File | Purpose |
-|------|---------|
-| `README.md` | Migration overview and quick reference (100+ lines) |
-| `REGULAR-TO-TRELLIS.md` | Complete single-site migration guide |
-| `MULTI-SITE-MIGRATION.md` | Multi-site consolidation strategies |
-
-### Migration Approaches
-
-#### Full Bedrock Adoption (Recommended)
-
-**Pros:**
-- Modern Composer-based dependency management
-- Improved security (wp-admin outside web root)
-- Environment-specific configuration (.env files)
-- Better version control (gitignore for WordPress core)
-- Trellis deployment integration
-
-**Cons:**
-- Requires path updates in database
-- More initial setup time
-- Plugin compatibility review needed
-
-#### Path Compatibility Mode
-
-**Pros:**
-- Faster migration
-- Minimal database changes
-- Lower risk for simple sites
-
-**Cons:**
-- Doesn't leverage Bedrock benefits
-- Future maintenance complexity
-- May need conversion later
-
-### Common Migration Workflow
-
-1. **Preparation**
-   - Backup current site (database + files)
-   - Document current configuration
-   - Test locally with Trellis development environment
-   - Identify custom code and plugins
-
-2. **Database Migration**
-   ```bash
-   # Export from old site
-   wp db export backup.sql
-
-   # Import to new site
-   wp db import backup.sql --path=web/wp
-
-   # Update URLs (Bedrock adoption)
-   wp search-replace '/wp-content/' '/app/' --all-tables --path=web/wp
-   wp search-replace 'http://old-domain.com' 'https://new-domain.com' --all-tables --path=web/wp
-   ```
-
-3. **File Migration**
-   ```bash
-   # Copy uploads
-   rsync -av old-site/wp-content/uploads/ \
-     bedrock/web/app/uploads/
-
-   # Copy themes (if custom)
-   rsync -av old-site/wp-content/themes/custom-theme/ \
-     bedrock/web/app/themes/custom-theme/
-
-   # Install plugins via Composer (recommended)
-   composer require wpackagist-plugin/plugin-name
-   ```
-
-4. **Testing with /etc/hosts**
-   ```bash
-   # Edit /etc/hosts before DNS change
-   sudo nano /etc/hosts
-
-   # Add line:
-   123.45.67.89 example.com www.example.com
-
-   # Test in browser before DNS cutover
-   # Remove line after DNS propagation
-   ```
-
-5. **DNS Cutover**
-   - Update A records to new server IP
-   - Monitor for issues
-   - Keep old site available for rollback
-
-6. **Post-Migration**
-   - Verify all pages load correctly
-   - Test forms and contact submissions
-   - Check SSL certificate
-   - Configure WordPress cron (Trellis uses system cron)
-   - Update Google Search Console
-   - Submit updated sitemap
-
-### Multi-Site Migration Strategies
-
-**Time-Saving Tips:**
-- **Batch preparation**: Set up all sites before first provision
-- **Descriptive naming**: Use clear directory names from start (`site-1-domain.com` not `site-1`)
-- **Configure together**: Add all sites to `wordpress_sites.yml` before provisioning
-- **Template configs**: Reuse vault structure and settings
-
-**Time Estimates:**
-- First site: 3-5 hours (learning curve)
-- Subsequent sites: 2-2.5 hours each
-- Multi-site batch: ~2 hours per site (after first)
-
-### Domain Migration Commands
-
-```bash
-# Simple domain change
-wp search-replace 'old-domain.com' 'new-domain.com' --all-tables --path=web/wp
-
-# HTTP to HTTPS
-wp search-replace 'http://example.com' 'https://example.com' --all-tables --path=web/wp
-
-# With dry run (test first)
-wp search-replace 'old-domain.com' 'new-domain.com' --all-tables --dry-run --path=web/wp
-
-# Precise mode (exact matches only)
-wp search-replace 'old-domain.com' 'new-domain.com' --all-tables --precise --path=web/wp
-```
-
-### Bedrock Path Conversion
-
-```bash
-# Update content paths
-wp search-replace '/wp-content/uploads/' '/app/uploads/' --all-tables --path=web/wp
-wp search-replace '/wp-content/themes/' '/app/themes/' --all-tables --path=web/wp
-wp search-replace '/wp-content/plugins/' '/app/plugins/' --all-tables --path=web/wp
-
-# Update includes paths (less common)
-wp search-replace 'wp-includes' 'wp/wp-includes' --all-tables --path=web/wp
-```
-
-### WordPress Cron Configuration
-
-Trellis disables WP-Cron and uses system cron instead:
-
-```bash
-# Trellis sets in .env
-DISABLE_WP_CRON=true
-
-# System cron runs every 15 minutes
-*/15 * * * * cd /srv/www/example.com/current && wp cron event run --due-now --path=web/wp
-
-# Verify cron is working
-ssh web@example.com "cd /srv/www/example.com/current && \
-  wp cron event list --path=web/wp"
-```
-
-### Troubleshooting Common Issues
-
-**Database connection errors:**
-- Check `.env` file database credentials
-- Verify database exists and user has permissions
-- Test connection: `wp db check --path=web/wp`
-
-**Missing uploads:**
-- Verify rsync completed successfully
-- Check file permissions: `chown -R web:www-data uploads/`
-- Confirm path in database matches Bedrock structure
-
-**Plugin compatibility:**
-- Test plugins individually
-- Check for hardcoded paths
-- Review plugin requirements (some may need Composer installation)
-
-**SSL errors:**
-- Verify Trellis SSL configuration in `wordpress_sites.yml`
-- Check nginx SSL certificates: `ls -la /etc/nginx/ssl/`
-- Test SSL: `curl -I https://example.com`
-
-**Permalink errors:**
-- Flush rewrite rules: `wp rewrite flush --path=web/wp`
-- Verify nginx configuration includes WordPress permalinks
-- Check `.htaccess` equivalent in nginx config
-
-**See also:** [migration/README.md](migration/README.md) and subdirectory documentation.
+- [Migrating a WordPress site to Trellis and Bedrock](https://wpvilla.in/migrate-wordpress-to-trellis-bedrock-step-by-step/)
+- [Testing a migration before DNS, and the cutover](https://wpvilla.in/trellis-migration-test-etc-hosts-letsencrypt-dns-cutover/)
+- [Migrating several sites onto one Trellis server](https://wpvilla.in/migrate-multiple-wordpress-sites-one-trellis-server/)
+- [wp search-replace for domain, HTTPS and Bedrock path changes](https://wpvilla.in/wp-search-replace-wordpress-url-domain-https-bedrock-paths/)
 
 ---
 
@@ -604,15 +415,6 @@ cd /srv/www/example.com/current
 4. **Delete web diagnostic files** - Remove after use for security
 5. **Regular health checks** - Run diagnostics monthly for proactive monitoring
 
-### Migration
-
-1. **Backup everything** - Database and files before migration
-2. **Test with /etc/hosts** - Verify before DNS change
-3. **Use dry-run first** - Test search-replace before applying
-4. **Document custom code** - Track plugins, themes, custom functionality
-5. **Plan rollback strategy** - Keep old site available during migration
-6. **Communicate changes** - Inform users of potential downtime
-7. **Verify after migration** - Check all functionality works correctly
 
 ### SEO
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The migration guides**, now four posts on wpvilla.in: [migrating a site to Trellis and Bedrock](https://wpvilla.in/migrate-wordpress-to-trellis-bedrock-step-by-step/), [testing before the DNS cutover](https://wpvilla.in/trellis-migration-test-etc-hosts-letsencrypt-dns-cutover/), [migrating several sites onto one server](https://wpvilla.in/migrate-multiple-wordpress-sites-one-trellis-server/) and [wp search-replace for domain and path changes](https://wpvilla.in/wp-search-replace-wordpress-url-domain-https-bedrock-paths/). `wp-cli/migration/` is gone, and the README, `CLAUDE.md` and `wp-cli/README.md` no longer point at it.
+
 ## [5.40.0] - 2026-10-28
 
 ### Deprecated
