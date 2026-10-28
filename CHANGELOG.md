@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.38.0] - 2026-10-28
 
+### Removed
+
+- **Generic WordPress material that has no Trellis, Bedrock or Sage tie-in**, from `docs/wordpress-utilities/`. None of it was a catalogued command, so the CLI is unaffected. It stays in git history.
+  - The `age-verification/` component (JS, CSS, `footer.php`, README). How it works is covered by [A Cookie-Based Age Gate for WordPress](https://wpvilla.in/wordpress-age-verification-modal-cookie-acf-jquery/).
+  - Five snippets: `woocommerce-product-attributes-wpcli.md`, `post-expiry-noindex.php` with its WP-CLI checks, `webp-featured-image.md` and the `admin-user-creation.php` functions.php snippet, which the `admin-user-create` command replaced.
+  - `admin-user-creation-wpcli.md` stays as that command's doc, and `wp-template-db-override-wpcli.md` stays as a Bedrock block-theme fix.
+
 ### Deprecated
 
 - **Three commands outside the Trellis, Bedrock and Sage focus:** `svg-to-png`, `convert-screenshot-for-claude` and `updraft-to-valet`. Each now prints a warning to stderr and is badged `(deprecated)` in `list` and `search`. They keep working, and will be removed no sooner than the next minor release. If you rely on one, open an issue.
