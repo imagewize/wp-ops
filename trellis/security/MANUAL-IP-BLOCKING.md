@@ -96,10 +96,15 @@ This will:
 # Check Nginx reloaded successfully
 ssh admin_user@yoursite.com "sudo systemctl status nginx"
 
-# Test blocked IP (from your machine, not the blocked IP!)
-curl -I https://yoursite.com -H "X-Forwarded-For: 62.60.130.228"
-# Should return: 403 Forbidden
+# Is the rule in the live config, and does the config parse?
+ssh admin_user@yoursite.com "sudo nginx -T 2>/dev/null | grep -n 'deny 62.60.130.228'"
+ssh admin_user@yoursite.com "sudo nginx -t"
 ```
+
+`deny` matches the connection's real address, so a spoofed `X-Forwarded-For`
+header proves nothing. For an end-to-end test, add your own IP on staging,
+confirm `curl -I https://staging.yoursite.com` returns `403 Forbidden`, then
+remove it.
 
 ### 3. Test Before Deploying
 
