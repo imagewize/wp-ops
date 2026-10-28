@@ -128,8 +128,8 @@ Every tool above wraps one wp-ops capability by hand, which caps what a client c
 see at whatever someone got round to porting. The repo has ~74 commands; a client
 seeing only the wrappers correctly answers "I can't do that" for the rest — even
 when the exact script exists. (This is not hypothetical: asking a wp-ops-only
-session for GitHub repo traffic got a reasoned "out of scope" while
-`scripts/git/gh-traffic.sh` sat two directories away.)
+session for GitHub repo traffic got a reasoned "out of scope" while the
+script for it sat two directories away.)
 
 These two tools expose the whole catalog instead of growing that list one wrapper
 at a time:
