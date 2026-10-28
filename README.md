@@ -136,10 +136,10 @@ sites are run with:
 | **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [scanners](wp-cli/security/README.md) · [server](trellis/security/README.md) |
 | **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [content](wp-cli/content-creation/README.md) · [SEO](wp-cli/seo/README.md) |
 | **Migration** | Moving single and multisite installs onto Trellis/Bedrock, URL update methods | [→](wp-cli/migration/README.md) |
-| **Nginx** | WebP/AVIF serving, browser caching and redirect templates for `nginx-includes/` | [images](docs/nginx/image-optimization/README.md) · [caching](docs/nginx/browser-caching/README.md) · [redirects](docs/nginx/redirects/README.md) |
+| **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` | [images](docs/nginx/image-optimization/README.md) · [caching](docs/nginx/browser-caching/README.md) · [redirects](docs/nginx/redirects/README.md) |
 | **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](docs/bedrock/local-package-development/README.md) · [wp-cli.yml](docs/bedrock/wp-cli-config/README.md) |
 | **Troubleshooting** | PHP-FPM, MariaDB, OOM and mail diagnostics | [→](docs/troubleshooting/README.md) |
-| **Scripts & snippets** | Theme sync, image rendering, PR helpers, drop-in PHP snippets | [scripts](scripts/README.md) · [snippets](docs/wordpress-utilities/snippets/README.md) |
+| **Scripts & guides** | Theme sync, PR helpers, WP-CLI snippets for Bedrock | [scripts](scripts/README.md) · [snippets](docs/wordpress-utilities/snippets/README.md) |
 
 ## Requirements
 
