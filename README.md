@@ -133,7 +133,7 @@ sites are run with:
 | **Backups** | Timestamped database and uploads backups from any environment | [→](trellis/backup/README.md) |
 | **Monitoring** | AI-crawler traffic, error surfacing, traffic by country, cron-scheduled reports | [→](trellis/monitoring/README.md) |
 | **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [scanners](wp-cli/security/README.md) · [server](trellis/security/README.md) |
-| **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [content](wp-cli/content-creation/README.md) · [SEO](wp-cli/seo/README.md) |
+| **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [SEO](wp-cli/seo/README.md) |
 | **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` | [images](docs/nginx/image-optimization/README.md) · [caching](docs/nginx/browser-caching/README.md) · [redirects](docs/nginx/redirects/README.md) |
 | **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](docs/bedrock/local-package-development/README.md) · [wp-cli.yml](docs/bedrock/wp-cli-config/README.md) |
 | **Troubleshooting** | PHP-FPM, MariaDB, OOM and mail diagnostics | [→](docs/troubleshooting/README.md) |

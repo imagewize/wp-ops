@@ -46,127 +46,13 @@ trellis vm shell --workdir /srv/www/example.com/current -- wp post list --path=w
 
 **Location:** `content-creation/`
 
-Tools and documentation for creating WordPress pages and Gutenberg block patterns in Trellis/Bedrock environments.
+Scripts for creating and publishing pages and posts from block markup: `page-creation.sh`, `import-page-draft.sh`, `publish-post.sh`, `verify-post.sh`, and the `wp imagewize pattern-validate` command. Each explains itself with `wp-ops <command> --help`.
 
-### Features
+The guides are on the blog:
 
-- **Local Development Workflow** - Trellis VM-based page creation
-- **Production Deployment** - Automated and manual deployment methods
-- **URL Sanitization** - Critical for avoiding mixed content warnings
-- **Block Pattern Standards** - Comprehensive requirements based on 141+ production patterns
-- **Automation Scripts** - Bash scripts for deployment
-
-### Documentation
-
-| File | Purpose |
-|------|---------|
-| `README.md` | Navigation guide to appropriate documentation |
-| `PAGE-CREATION.md` | Complete page creation workflow (1,000+ lines) |
-| `PATTERN-REQUIREMENTS.md` | Block pattern specification (1,150+ lines) |
-| `page-creation.sh` | Automated production deployment script |
-| `examples/example-page-content.html` | Sample Gutenberg block markup |
-
-### Key Topics
-
-**PAGE-CREATION.md** covers:
-- Local development workflow with Trellis VM
-- Production deployment (automated script and manual methods)
-- **CRITICAL: URL Sanitization** before production deployment
-  - Pattern URLs get hardcoded into database
-  - Development URLs (`.test`) must be replaced with production URLs (`.com`)
-  - Verification and search-replace workflows
-- Adding patterns to existing pages (3 methods with examples)
-- Common issues and troubleshooting
-- Best practices for security, performance, and SEO
-
-**PATTERN-REQUIREMENTS.md** covers:
-- Pattern header requirements (Title, Slug, Description, Categories)
-- Metadata attribute structure
-- Structural patterns (full-width, grids, constrained layouts)
-- Spacing and styling standards (theme variable usage mandatory)
-- Image handling (avoiding hardcoded media IDs)
-- Typography and responsive design
-- Accessibility and semantic HTML
-- PHP in patterns (security, escaping, limitations)
-- Internationalization (i18n)
-- **17 Common Mistakes** with explanations
-
-### Usage Examples
-
-#### Create Page Locally
-
-```bash
-# SSH into Trellis VM
-trellis vm shell
-
-# Navigate to WordPress directory
-cd /srv/www/example.com/current
-
-# Create page with pattern
-CONTENT='<!-- wp:pattern {"slug":"theme-name/hero-section"} /-->'
-wp post create --post_title="About Us" \
-  --post_content="$CONTENT" \
-  --post_status=publish \
-  --path=web/wp
-```
-
-#### Deploy to Production (Automated)
-
-```bash
-# Edit page-creation.sh with your details
-./content-creation/page-creation.sh
-```
-
-#### Verify URLs After Deployment
-
-```bash
-# Check for development URLs in production
-ssh web@example.com "cd /srv/www/example.com/current && \
-  wp db query \"SELECT COUNT(*) FROM wp_posts WHERE post_content LIKE '%.test%';\" --path=web/wp"
-
-# If found, run search-replace
-ssh web@example.com "cd /srv/www/example.com/current && \
-  wp search-replace 'http://example.test' 'https://example.com' --all-tables --precise --path=web/wp"
-```
-
-### Common Workflows
-
-#### Adding Pattern to Existing Page
-
-**Method 1: Direct Content Update**
-```bash
-# Get existing content
-EXISTING=$(wp post get 100 --field=content --path=web/wp)
-
-# Add pattern
-NEW_CONTENT="<!-- wp:pattern {\"slug\":\"theme/hero\"} /-->
-$EXISTING"
-
-# Update post
-wp post update 100 --post_content="$NEW_CONTENT" --path=web/wp
-```
-
-**Method 2: Using Heredoc**
-```bash
-wp post update 100 --post_content="$(cat <<'EOF'
-<!-- wp:pattern {"slug":"theme/hero"} /-->
-<!-- wp:pattern {"slug":"theme/features"} /-->
-EOF
-)" --path=web/wp
-```
-
-**Method 3: Python Escaping (Complex Content)**
-```python
-import subprocess
-content = """<!-- wp:pattern {"slug":"theme/hero"} /-->
-<!-- wp:paragraph -->
-<p>Content with "quotes" and 'apostrophes'</p>
-<!-- /wp:paragraph -->"""
-
-subprocess.run(['wp', 'post', 'update', '100', f'--post_content={content}', '--path=web/wp'])
-```
-
-**See also:** [content-creation/README.md](content-creation/README.md) and subdirectory documentation.
+- [Creating WordPress pages from block markup with WP-CLI on Trellis](https://wpvilla.in/create-wordpress-pages-block-markup-wp-cli-trellis-vm-production/)
+- [Writing block patterns as PHP files](https://wpvilla.in/wordpress-block-pattern-php-files-headers-escaping-images/)
+- [Block pattern layout rules](https://wpvilla.in/wordpress-block-pattern-layout-alignfull-grid-spacing-rules/)
 
 ---
 
@@ -403,7 +289,7 @@ cd /srv/www/example.com/current
 
 1. **Always test locally first** - Use Trellis development environment
 2. **Sanitize URLs before production** - Check for hardcoded development URLs
-3. **Follow pattern standards** - Use PATTERN-REQUIREMENTS.md as checklist
+3. **Follow pattern standards** - Run `wp imagewize pattern-validate` on the patterns directory
 4. **Version control patterns** - Commit pattern files to theme repository
 5. **Validate block markup** - Test in WordPress editor before automation
 

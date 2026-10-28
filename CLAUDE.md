@@ -218,7 +218,7 @@ ssh web@example.com "cd /srv/www/example.com/current && \
   wp search-replace 'http://example.test' 'https://example.com' --all-tables --precise --path=web/wp"
 ```
 
-**See also:** `wp-cli/content-creation/PAGE-CREATION.md` section "CRITICAL: URL Sanitization Before Production" for detailed workflows.
+**See also:** [Creating WordPress pages from block markup with WP-CLI on Trellis](https://wpvilla.in/create-wordpress-pages-block-markup-wp-cli-trellis-vm-production/), section "The part that bites: local URLs in the database".
 
 ## Important Considerations
 
