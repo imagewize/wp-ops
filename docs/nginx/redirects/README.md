@@ -96,14 +96,18 @@ trellis provision --tags nginx-includes production
 trellis provision --tags wordpress-setup production
 ```
 
+Do not use `--tags nginx`. The includes are templated by the `wordpress-setup`
+role, so that run finishes without deploying the file.
+
 ### 4. Verify Deployment
 
 ```bash
 # Check the config file was deployed
-ssh root@yoursite.com "cat /etc/nginx/includes.d/yoursite.com/seo-redirects.conf"
+ssh web@yoursite.com "ls -la --time-style=full-iso /etc/nginx/includes.d/yoursite.com/"
+ssh web@yoursite.com "grep -n 'old-url' /etc/nginx/includes.d/yoursite.com/seo-redirects.conf"
 
 # Test nginx config is valid
-ssh root@yoursite.com "nginx -t"
+ssh -t admin_user@yoursite.com "sudo nginx -t"
 
 # Test a redirect
 curl -I https://yoursite.com/old-url
@@ -155,15 +159,25 @@ location ~ ^/(\d{4})/(\d{2})/(.*)$ {
 }
 ```
 
-### 4. Preserve Query Strings
+### 4. Query Strings Are Not Preserved by `return`
 
 ```nginx
-# Query strings are automatically preserved
+# The query string is dropped
 location = /old-page/ {
     return 301 /new-page/;
 }
+# /old-page/?utm_source=google -> /new-page/
+
+# Append it to keep it
+location = /old-page/ {
+    return 301 /new-page/$is_args$args;
+}
 # /old-page/?utm_source=google -> /new-page/?utm_source=google
 ```
+
+`return` does not carry the query string over (`rewrite` does). Keep it for
+redirects people reach from campaigns; drop it when the destination is another
+site and the old parameters mean nothing there.
 
 ### 5. Add Comments and Dates
 
@@ -258,7 +272,7 @@ curl -I -s "$SITE/another-page/" | grep -q "301" && echo "✅ /another-page/ -> 
 
 ```bash
 # Find 404 errors in nginx logs
-ssh root@yoursite.com "grep ' 404 ' /srv/www/yoursite.com/logs/access.log | awk '{print \$7}' | sort | uniq -c | sort -rn | head -20"
+ssh web@yoursite.com "grep ' 404 ' /srv/www/yoursite.com/logs/access.log | awk '{print \$7}' | sort | uniq -c | sort -rn | head -20"
 ```
 
 ### 3. Use Screaming Frog SEO Spider
@@ -284,7 +298,7 @@ cd trellis
 trellis provision --tags nginx-includes production
 
 # 3. Or manually remove on server
-ssh root@yoursite.com "rm /etc/nginx/includes.d/yoursite.com/seo-redirects.conf && nginx -t && systemctl reload nginx"
+ssh -t admin_user@yoursite.com "sudo rm /etc/nginx/includes.d/yoursite.com/seo-redirects.conf && sudo nginx -t && sudo systemctl reload nginx"
 ```
 
 ## Performance Considerations
@@ -308,16 +322,16 @@ ssh root@yoursite.com "rm /etc/nginx/includes.d/yoursite.com/seo-redirects.conf 
 
 ```bash
 # 1. Verify file was deployed
-ssh root@yoursite.com "ls -la /etc/nginx/includes.d/yoursite.com/"
+ssh web@yoursite.com "ls -la --time-style=full-iso /etc/nginx/includes.d/yoursite.com/"
 
 # 2. Check nginx config syntax
-ssh root@yoursite.com "nginx -t"
+ssh -t admin_user@yoursite.com "sudo nginx -t"
 
 # 3. Check nginx error log
-ssh root@yoursite.com "tail -f /var/log/nginx/error.log"
+ssh -t admin_user@yoursite.com "sudo tail -f /var/log/nginx/error.log"
 
 # 4. Verify nginx was reloaded
-ssh root@yoursite.com "systemctl status nginx"
+ssh -t admin_user@yoursite.com "sudo systemctl status nginx"
 ```
 
 ### 404 Instead of Redirect
