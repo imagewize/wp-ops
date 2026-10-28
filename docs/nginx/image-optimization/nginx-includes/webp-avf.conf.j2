@@ -1,3 +1,7 @@
+# Serves .webp/.avif next to the original when the browser accepts them.
+# Guide: https://wpvilla.in/serve-webp-avif-nginx-trellis-accept-header-bedrock-uploads/
+# Site include: list it under nginx_includes in wordpress_sites.yml.
+
 map $http_accept $webp_suffix {
     default "";
     "~*image/webp" ".webp";

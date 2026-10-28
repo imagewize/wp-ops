@@ -134,7 +134,7 @@ sites are run with:
 | **Monitoring** | AI-crawler traffic, error surfacing, traffic by country, cron-scheduled reports | [→](trellis/monitoring/README.md) |
 | **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [routine](https://wpvilla.in/trellis-wordpress-security-routine-abuseipdb-fail2ban/) · [scanners](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) |
 | **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [SEO](wp-cli/seo/README.md) |
-| **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` | [images](docs/nginx/image-optimization/README.md) · [caching](docs/nginx/browser-caching/README.md) · [redirects](docs/nginx/redirects/README.md) |
+| **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` [images](https://wpvilla.in/serve-webp-avif-nginx-trellis-accept-header-bedrock-uploads/) · [caching](https://wpvilla.in/nginx-browser-caching-headers-trellis-all-includes-expires/) · [redirects](https://wpvilla.in/trellis-nginx-redirect-not-deployed-query-string-dropped/) |
 | **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](docs/bedrock/local-package-development/README.md) · [wp-cli.yml](docs/bedrock/wp-cli-config/README.md) |
 | **Troubleshooting** | PHP-FPM, MariaDB, OOM and mail diagnostics | [→](docs/troubleshooting/README.md) |
 | **Scripts & guides** | Theme sync, PR helpers, WP-CLI snippets for Bedrock | [scripts](scripts/README.md) · [snippets](docs/wordpress-utilities/snippets/README.md) |
