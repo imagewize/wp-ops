@@ -507,10 +507,10 @@ generate_block_recommendations() {
 
     echo ""
     echo -e "${CYAN}To block in Trellis:${NC}"
-    echo "1. Create roles/wordpress-setup/templates/deny-ips.conf.j2"
+    echo "1. Create trellis/nginx-includes/all/deny-ips.conf.j2"
     echo "2. Add the deny statements above"
-    echo "3. Add to wordpress_sites YAML: nginx_includes: deny-ips.conf"
-    echo "4. Run: trellis provision production"
+    echo "3. Run: trellis provision --tags nginx-includes production"
+    echo "   Guide: https://wpvilla.in/nginx-deny-list-trellis-cidr-whitelist-self-lockout/"
 }
 
 # ============================================================================
