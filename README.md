@@ -52,7 +52,7 @@ wp-ops security-scan example.com production    # wp-login/xmlrpc abuse, high-vol
 ```
 
 Reads the site's Nginx logs on the server — no analytics plugin, no third-party
-service. Pair it with the [fail2ban setup](trellis/security/README.md) to block what
+service. Pair it with the [fail2ban setup](https://wpvilla.in/fail2ban-wordpress-wp-login-trellis-nginx-deny-list/) to block what
 the scan finds.
 
 ### 3. Publish and verify content without opening wp-admin
@@ -132,7 +132,7 @@ sites are run with:
 | **Trellis** | Safe Trellis updates (`trellis-updater`) | [guide](https://wpvilla.in/update-trellis-without-losing-customisations-rsync-excludes/) |
 | **Backups** | Timestamped database and uploads backups from any environment | [→](trellis/backup/README.md) |
 | **Monitoring** | AI-crawler traffic, error surfacing, traffic by country, cron-scheduled reports | [→](trellis/monitoring/README.md) |
-| **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [scanners](wp-cli/security/README.md) · [server](trellis/security/README.md) |
+| **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [routine](https://wpvilla.in/trellis-wordpress-security-routine-abuseipdb-fail2ban/) · [scanners](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) |
 | **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [SEO](wp-cli/seo/README.md) |
 | **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` | [images](docs/nginx/image-optimization/README.md) · [caching](docs/nginx/browser-caching/README.md) · [redirects](docs/nginx/redirects/README.md) |
 | **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](docs/bedrock/local-package-development/README.md) · [wp-cli.yml](docs/bedrock/wp-cli-config/README.md) |

@@ -91,5 +91,5 @@ if ($return1 === 0 && $return2 === 0) {
 }
 
 echo "\n";
-echo "\033[0;33mFor documentation, see: wp-cli/security/SECURITY-GUIDE.md\033[0m\n";
+echo "\033[0;33mFor documentation, see: https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/\033[0m\n";
 echo "\n";

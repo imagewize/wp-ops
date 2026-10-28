@@ -209,14 +209,6 @@ WordPress security protection through fail2ban automatic IP blocking and manual 
   - fail2ban log monitoring
   - Integration with malware scanners
 
-### Documentation
-
-| File | Purpose |
-|------|---------|
-| `README.md` | Security overview and quick reference |
-| `FAIL2BAN.md` | fail2ban setup, configuration, and monitoring |
-| `MANUAL-IP-BLOCKING.md` | Permanent Nginx IP blocks for extreme cases |
-
 ### Quick Start
 
 **Enable fail2ban WordPress protection:**
@@ -258,10 +250,10 @@ ssh web@yoursite.com "grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.lo
 - Zero maintenance required
 
 **See also:**
-- [security/README.md](security/README.md) - Complete security guide
-- [security/FAIL2BAN.md](security/FAIL2BAN.md) - Automatic IP blocking setup
-- [security/MANUAL-IP-BLOCKING.md](security/MANUAL-IP-BLOCKING.md) - Manual IP blocks
-- [wp-cli/security](../wp-cli/security/) - Malware detection scanners
+- [fail2ban on Trellis](https://wpvilla.in/fail2ban-wordpress-wp-login-trellis-nginx-deny-list/)
+- [A permanent Nginx deny list](https://wpvilla.in/nginx-deny-list-trellis-cidr-whitelist-self-lockout/)
+- [A weekly and monthly security routine](https://wpvilla.in/trellis-wordpress-security-routine-abuseipdb-fail2ban/)
+- [Malware scanners](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) and [reading their results](https://wpvilla.in/reading-malware-scan-results-false-positives-wordpress-hardening/)
 
 ---
 

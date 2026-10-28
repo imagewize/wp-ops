@@ -129,7 +129,7 @@ trellis ssh production -- "cd /srv/www/example.com/current && \
 - cPanel/Plesk terminal: Use version-specific PHP binaries (e.g., `/opt/plesk/php/8.2/bin/php`)
 - Browser access: Requires IP whitelist, delete files immediately after use (security risk)
 - Local scan: Download WordPress via FTP and scan locally (safest for restricted hosting)
-- See `wp-cli/security/README.md` for complete installation and troubleshooting guide
+- See [the scanner post](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) for installation and troubleshooting
 
 ### Image Optimization
 
