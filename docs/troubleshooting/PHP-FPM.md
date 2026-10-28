@@ -1,5 +1,7 @@
 # PHP-FPM Troubleshooting Guide
 
+A worked case study using this guide: [Debugging PHP-FPM Memory Exhaustion on WordPress with WooCommerce and Trellis](https://wpvilla.in/debugging-php-fpm-memory-exhaustion-wordpress-woocommerce-trellis/).
+
 This guide covers PHP-FPM pool management, memory configuration, and troubleshooting for Trellis-managed WordPress servers.
 
 ## Table of Contents
