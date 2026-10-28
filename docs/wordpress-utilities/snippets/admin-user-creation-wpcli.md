@@ -226,19 +226,6 @@ wp user list --field=ID,user_login | grep temp_ | while IFS=, read -r id login; 
 done
 ```
 
-### Remove the PHP snippet if you used it
-
-If you previously used the `admin-user-creation.php` snippet:
-
-```bash
-# Remove from functions.php
-# Edit your theme's functions.php and delete the entire wpops_create_temporary_admin_user block
-
-# Or if you added it as a separate file in wp-content/mu-plugins/
-rm /srv/www/yoursite.com/current/web/wp-content/mu-plugins/admin-user-creation.php
-```
-
 ## See Also
 
-- [PHP Snippet Alternative](admin-user-creation.php) - For when WP-CLI is not available
 - [WP-CLI User Management Docs](https://developer.wordpress.org/cli/commands/user/)
