@@ -69,12 +69,12 @@ templates rather than runnable scripts, so they carry no commands and no CLI
 category — reach them through `wp-ops docs`.
 
 Every catalog entry is something that runs. Copy-paste-into-a-theme reference
-material — PHP snippets, the age-verification component — lives under
+material — WP-CLI guides and the speed-optimization notes — lives under
 `docs/wordpress-utilities/` instead. To pull one into a project, `wp-ops docs -l
 <term>` gives you the path:
 
 ```bash
-cat "$(wp-ops docs -l age-verification | head -1)"
+cat "$(wp-ops docs -l wp-template | head -1)"
 ```
 
 ## Where commands run

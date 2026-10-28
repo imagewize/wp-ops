@@ -8,45 +8,17 @@ This directory contains self-contained utilities that can be integrated into any
 
 ## Available Utilities
 
-### [Age Verification](age-verification/)
-
-Cookie-based age verification system with modal interface and ACF integration.
-
-**Features:**
-- Age-based content filtering (under 18, 18-23, over 24)
-- Cookie persistence with configurable expiration
-- Modal overlay interface
-- Dynamic content toggling for restricted elements
-- Advanced Custom Fields (ACF) integration for content management
-
-**Use Cases:**
-- Alcohol/cannabis industry websites
-- Adult content restriction
-- Age-gated promotions
-- Casino/gambling advertisement control
-
-**Key Files:**
-- `age-verification.js` - Core functionality
-- `modal.css` - Modal styling
-- `footer.php` - Complete HTML template with ACF fields
-
 ### Analytics
 
 Implementation notes and curl-based detection for Site Kit, Google Analytics, Tag Manager and Matomo now live on the blog: [Which Analytics Is This WordPress Site Running?](https://wpvilla.in/detect-wordpress-analytics-curl-site-kit-gtm-matomo/).
 
 ### [Snippets](snippets/)
 
-Small, self-contained PHP snippets ready to drop into `functions.php` or a custom plugin.
+WP-CLI guides for Trellis and Bedrock sites.
 
 **Available:**
-- `admin-user-creation.php` — Create temporary administrator user (remove after use!)
-- `admin-user-creation-wpcli.md` — WP-CLI commands for safe admin user creation (recommended)
-- `post-expiry-noindex.php` — Auto-noindex posts past their expiry date via Yoast SEO, using the site's configured WordPress timezone
-- `webp-featured-image.md` — Convert images to WebP format optimized for featured images and Open Graph
-
-**Key Files:**
-- `README.md` - Snippet index and usage notes
-- Individual `.php`/`.md` files — copy directly into your theme, plugin, or run from CLI
+- `admin-user-creation-wpcli.md` — WP-CLI commands for safe admin user creation
+- `wp-template-db-override-wpcli.md` — Fix block theme templates frozen by a Site Editor database override
 
 ### [Speed Optimization](speed-optimization/)
 
@@ -78,22 +50,16 @@ Each utility is self-contained and can be integrated independently:
 
 ### Via wp-ops
 
-These files are reference snippets, not runnable scripts, so the [`wp-ops`](../../README.md) CLI prints or copies them instead of executing them:
+These files are reference guides, not runnable scripts. Find them with `wp-ops docs`:
 
 ```bash
-wp-ops wordpress-utilities --help     # list all snippets
-wp-ops wordpress-utilities footer     # print a snippet to stdout
-wp-ops wordpress-utilities footer --copy   # copy it to the clipboard
-wp-ops wordpress-utilities footer --path   # print just the file path
-wp-ops wordpress-utilities footer > footer.php   # redirect straight into your theme
+wp-ops docs -l wp-template     # print the path of the matching guide
 ```
 
 ### General Prerequisites
 
 Most utilities may require one or more of:
 - WordPress 5.0+
-- jQuery (for JavaScript utilities)
-- Advanced Custom Fields (ACF) plugin (for age-verification)
 - WP-CLI (for command-line utilities)
 - PHP 7.4+ or 8.0+
 
@@ -107,26 +73,6 @@ Most utilities may require one or more of:
 4. **Version control**: Track customizations separately from source utilities
 
 ### Integration Examples
-
-**Age Verification in theme's functions.php:**
-```php
-// Enqueue age verification assets
-function enqueue_age_verification() {
-    wp_enqueue_style(
-        'age-verification-modal',
-        get_template_directory_uri() . '/age-verification/modal.css'
-    );
-
-    wp_enqueue_script(
-        'age-verification',
-        get_template_directory_uri() . '/age-verification/age-verification.js',
-        array('jquery'),
-        '1.0',
-        true
-    );
-}
-add_action('wp_enqueue_scripts', 'enqueue_age_verification');
-```
 
 **Speed Testing in deployment scripts:**
 ```bash
@@ -153,14 +99,13 @@ See [the detection post](https://wpvilla.in/detect-wordpress-analytics-curl-site
 
 - **Never commit sensitive data**: API keys, tracking IDs should be in environment variables
 - **Validate user input**: Especially for utilities that accept user data
-- **Keep dependencies updated**: Regularly update jQuery, ACF, and other dependencies
+- **Keep dependencies updated**: Regularly update plugins and other dependencies
 - **Use HTTPS**: All external script references should use secure protocols
 
 ### Performance
 
 - **Minimize JavaScript**: Only load scripts on pages where needed
 - **Use conditional loading**: Check for required conditions before enqueuing assets
-- **Optimize images**: WebP/AVIF formats for modal graphics
 - **Cache static assets**: Leverage browser caching for CSS/JS files
 
 ### Maintenance
@@ -178,18 +123,8 @@ Each utility follows this structure:
 ```
 utility-name/
 ├── README.md           # Complete documentation
-├── main-script.js      # Core functionality (if applicable)
-├── styles.css          # Component styles (if applicable)
-├── template.php        # WordPress template integration (if applicable)
 └── examples/           # Usage examples (optional)
 ```
-
-### Coding Standards
-
-- **WordPress Coding Standards**: PHP code follows WordPress coding standards
-- **ES5+ JavaScript**: Compatible with modern browsers and IE11+
-- **Semantic HTML**: Accessible markup with proper ARIA attributes
-- **BEM CSS**: Block Element Modifier naming convention where applicable
 
 ## Contributing
 

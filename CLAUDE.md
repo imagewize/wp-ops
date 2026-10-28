@@ -42,7 +42,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (guides plus the `.conf.j2` templates they describe)
   - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)
   - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup
-  - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `age-verification/`, `analytics/`, `snippets/`, `speed-optimization/`
+  - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `snippets/`, `speed-optimization/`
 
 ## Key Technologies
 
