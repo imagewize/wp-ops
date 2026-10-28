@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.41.0] - 2026-10-28
+
 ### Removed
 
 - **The Bedrock guides, the WP-CLI snippets and the speed-optimization pointer**, now four posts on wpvilla.in: [testing an unreleased plugin with a Composer path repository](https://wpvilla.in/bedrock-composer-path-repository-test-plugin-before-release-symlink-false/), [the standard `wp-cli.yml` and `pattern-validate`](https://wpvilla.in/bedrock-wp-cli-yml-and-pattern-validate-block-pattern-files/), [a frozen Site Editor template override](https://wpvilla.in/wordpress-block-template-frozen-site-editor-database-override-wp-cli/) and [creating a temporary admin when locked out](https://wpvilla.in/wordpress-locked-out-emergency-admin-user-wp-cli-ssh/); TTFB measuring was already [a post](https://wpvilla.in/measure-wordpress-ttfb-curl-wget-user-agents/). `docs/wordpress-utilities/` is gone entirely, as are the two READMEs under `docs/bedrock/`; `wp-cli.yml` stays with a header linking its post. The old admin-user guide gave 16-character passwords "~95 bits"; `openssl rand -base64 16` is 128 bits of randomness, and the post says so.
