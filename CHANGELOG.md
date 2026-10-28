@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.39.0] - 2026-10-28
+
+### Removed
+
+- **`gh-traffic`**, deprecated in 5.36.0. It lives on as a GitHub CLI extension: `gh extension install imagewize/gh-traffic`, then `gh traffic` with the same arguments and flags. The command is gone from `list`, `search`, the picker and shell completion.
+
 ## [5.38.0] - 2026-10-28
 
 ### Removed

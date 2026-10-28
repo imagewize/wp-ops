@@ -981,7 +981,7 @@ export function createServer(): McpServer {
     {
       command: z
         .string()
-        .describe('Command key from command_search, e.g. "scripts/git/gh-traffic". A unique basename like "gh-traffic" also resolves.'),
+        .describe('Command key from command_search, e.g. "scripts/git/create-pr". A unique basename like "create-pr" also resolves.'),
       args: z
         .array(z.string())
         .default([])

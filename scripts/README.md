@@ -26,7 +26,6 @@ scripts/
 │   └── site-backup.sh          # Trellis: complete site backup (DB + files + config)
 ├── git/                         # Git/GitHub utilities
 │   ├── create-pr.sh            # AI-powered GitHub PR creation
-│   ├── gh-traffic.sh           # Deprecated: use the `gh traffic` extension
 │   └── git-log-oneline.sh      # Show recent git commits as one-liners
 ├── images/                      # SVG to JPG/PNG rendering
 │   ├── svg-to-jpg.sh           # Render design SVGs to JPG via librsvg (native size or forced)
@@ -85,11 +84,6 @@ scripts/
 
 # Create GitHub PR with AI description
 ./scripts/git/create-pr.sh main "Add feature name"
-
-# GitHub repository traffic (deprecated script, moved to a gh extension)
-gh extension install imagewize/gh-traffic
-gh traffic imagewize/nynaeve
-gh traffic --all --summary imagewize/nynaeve imagewize/wp-ops
 
 # Show recent git commits as one-liners
 ./scripts/git/git-log-oneline.sh
