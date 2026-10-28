@@ -1,5 +1,7 @@
 # Nginx Redirect Configuration
 
+Why a redirect may not deploy, and why a 301 drops the query string: [My Trellis Nginx Redirect Did Nothing](https://wpvilla.in/trellis-nginx-redirect-not-deployed-query-string-dropped/).
+
 Trellis nginx-includes templates for managing SEO redirects and URL rewrites.
 
 ## Overview
