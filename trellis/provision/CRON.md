@@ -25,18 +25,20 @@ define('DISABLE_WP_CRON', false); // Default behavior
 
 Trellis disables WP-Cron and uses **system cron** for reliable, predictable execution:
 
-**1. WP-Cron is disabled** in `trellis/roles/deploy/vars/main.yml`:
+**1. WP-Cron is disabled.** `disable_wp_cron` defaults to `true` in
+`trellis/group_vars/all/helpers.yml` (and `roles/deploy/vars/main.yml`):
 
 ```yaml
 disable_wp_cron: true
 ```
 
-This sets `DISABLE_WP_CRON` constant to `true` in WordPress configuration.
+This sets the `DISABLE_WP_CRON` constant to `true` in WordPress configuration.
 
-**2. System cron job is created** at `/etc/cron.d/wordpress-{site_name}`:
+**2. System cron job is created** by the `wordpress-setup` role at
+`/etc/cron.d/wordpress-{site_name}` (dots in the site name become underscores):
 
 ```bash
-# Example: /etc/cron.d/wordpress-imagewize_com
+# Example: /etc/cron.d/wordpress-example_com
 #Ansible: example.com WordPress cron
 */15 * * * * web cd /srv/www/example.com/current && wp cron event run --due-now > /dev/null 2>&1
 ```
@@ -50,12 +52,14 @@ This sets `DISABLE_WP_CRON` constant to `true` in WordPress configuration.
 
 ### WordPress Multisite Cron
 
-For **WordPress multisite** installations, the cron configuration is different to ensure all subsites have their cron events processed:
+For **WordPress multisite** installations, a separate job is written to
+`/etc/cron.d/wordpress-multisite-{site_name}` so all subsites have their cron
+events processed. Its default interval is **every 30 minutes**, not 15:
 
 ```bash
-# Example: /etc/cron.d/wordpress-demo_imagewize_com
-#Ansible: demo.example.com WordPress cron
-*/15 * * * * web cd /srv/www/demo.example.com/current && (wp site list --field=url | xargs -n1 -I % wp --url=% cron event run --due-now) > /dev/null 2>&1
+# Example: /etc/cron.d/wordpress-multisite-demo_example_com
+#Ansible: demo.example.com WordPress network cron
+*/30 * * * * web cd /srv/www/demo.example.com/current && (wp site list --field=url | xargs -n1 -I % wp --url=% cron event run --due-now) > /dev/null 2>&1
 ```
 
 **What this does:**
@@ -232,13 +236,27 @@ wp cron event delete plugin_hook_name
 
 The default is every 15 minutes (`*/15`). To change:
 
-**Option 1: Edit Trellis Role (Recommended)**
+**Option 1: Set it per site in Trellis (Recommended)**
 
-Edit `trellis/roles/wordpress-setup/tasks/main.yml` and look for the cron task, then re-provision:
+In `trellis/group_vars/<env>/wordpress_sites.yml`:
+
+```yaml
+wordpress_sites:
+  example.com:
+    cron_interval: '*/5'             # single site, default '*/15'
+```
+
+For a multisite network the key is `cron_interval_multisite` (default `*/30`).
+A network can also skip the generated job with
+`multisite: { enabled: true, cron: false }`.
+
+Then re-provision:
 
 ```bash
-trellis provision production --tags wordpress-setup
+trellis provision --tags wordpress-setup production
 ```
+
+Check `/etc/cron.d/` on the server afterwards to confirm the change.
 
 **Option 2: Manual Edit (Not Recommended)**
 
@@ -298,7 +316,7 @@ sudo nano /etc/cron.d/wordpress-example_com
 
 Some legacy plugins may require direct access to `wp-cron.php`. While not recommended, you can enable this:
 
-**Add Nginx location block** in `trellis/roles/wordpress-setup/templates/wordpress-site.conf.j2`:
+**Add an Nginx location block** to the site template, `trellis/roles/wordpress-setup/templates/wordpress-site.conf.j2`:
 
 ```nginx
 # Allow direct wp-cron.php access (only if needed by legacy plugins)
@@ -310,10 +328,11 @@ location = /wp/wp-cron.php {
 }
 ```
 
-Then re-provision:
+Then re-provision. The site template belongs to the `wordpress-setup` role, so
+`--tags nginx` would not deploy it:
 
 ```bash
-trellis provision production --tags nginx
+trellis provision production --tags wordpress-setup
 ```
 
 **Warning:** This re-enables the WP-Cron problems mentioned above. Only use if absolutely necessary.
