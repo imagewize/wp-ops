@@ -193,47 +193,6 @@ location = /old-page/ {
 }
 ```
 
-## Common Redirect Patterns
-
-### WordPress Permalinks
-
-```nginx
-# Old post URLs -> New permalink structure
-location ~ ^/\d{4}/\d{2}/(.*)$ {
-    return 301 /$1;
-}
-```
-
-### Category Consolidation
-
-```nginx
-# Merge old categories into new category
-location ~ ^/category/old-cat-1/(.*)$ {
-    return 301 /category/new-category/$1;
-}
-
-location ~ ^/category/old-cat-2/(.*)$ {
-    return 301 /category/new-category/$1;
-}
-```
-
-### Custom Post Type URLs
-
-```nginx
-# Old CPT slug -> New CPT slug
-location ~ ^/old-portfolio/(.*)$ {
-    return 301 /portfolio/$1;
-}
-```
-
-### Language/Locale Redirects
-
-```nginx
-# Redirect old language URLs to new structure
-location ~ ^/en-us/(.*)$ {
-    return 301 /en/$1;
-}
-```
 
 ## Testing Redirects
 
@@ -263,30 +222,10 @@ curl -I -s "$SITE/old-page/" | grep -q "301" && echo "✅ /old-page/ -> 301" || 
 curl -I -s "$SITE/another-page/" | grep -q "301" && echo "✅ /another-page/ -> 301" || echo "❌ /another-page/ failed"
 ```
 
-## Finding URLs to Redirect
 
-### 1. Check Google Search Console
+## Finding URLs to redirect
 
-- **Coverage Report**: Find 404 errors
-- **Performance Report**: Find URLs with impressions but low clicks
-
-### 2. Analyze Server Logs
-
-```bash
-# Find 404 errors in nginx logs
-ssh web@yoursite.com "grep ' 404 ' /srv/www/yoursite.com/logs/access.log | awk '{print \$7}' | sort | uniq -c | sort -rn | head -20"
-```
-
-### 3. Use Screaming Frog SEO Spider
-
-- Crawl your site
-- Filter by "Response Code = 404"
-- Identify broken internal links
-
-### 4. Check Old Sitemaps
-
-- Compare old sitemap.xml with current sitemap
-- Find removed URLs that should redirect
+Start from your 404s: Google Search Console's coverage report, or `wp-ops 404-checker`, or the nginx access log. Compare the old and new sitemaps for removed URLs.
 
 ## Rollback
 
@@ -303,20 +242,6 @@ trellis provision --tags nginx-includes production
 ssh -t admin_user@yoursite.com "sudo rm /etc/nginx/includes.d/yoursite.com/seo-redirects.conf && sudo nginx -t && sudo systemctl reload nginx"
 ```
 
-## Performance Considerations
-
-### Redirect Limits
-
-- Nginx handles thousands of redirects efficiently
-- Each redirect is compiled to a hash table (O(1) lookup)
-- No significant performance impact up to ~10,000 redirects
-
-### Optimization Tips
-
-1. **Use exact matches** (`location =`) when possible (fastest)
-2. **Group similar patterns** with regex instead of individual rules
-3. **Place most frequently accessed redirects first**
-4. **Monitor redirect chains** (redirect should go directly to final URL)
 
 ## Troubleshooting
 
@@ -367,7 +292,3 @@ location = /page-b/ { return 301 /final-page/; }
 - [Roots Trellis Nginx Includes Docs](https://roots.io/trellis/docs/nginx-includes/)
 - [Nginx Location Directive](http://nginx.org/en/docs/http/ngx_http_core_module.html#location)
 - [Nginx Return Directive](http://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return)
-
-## Version History
-
-- **2025-11-30** - Initial version with SEO redirect examples and comprehensive documentation
