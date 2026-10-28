@@ -153,7 +153,6 @@ These utilities are provided as-is for use in WordPress projects. Refer to indiv
 For issues or questions:
 - Review the specific utility's README.md
 - Check WordPress Codex and plugin documentation
-- Consult related troubleshooting guides in [../troubleshooting/](../troubleshooting/)
 
 ---
 
