@@ -554,6 +554,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "images",
     "annotated": true
   },
@@ -668,6 +669,7 @@
     "manifest_category": "misc",
     "platform": "wordpress",
     "mutates": true,
+    "deprecated": "Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "misc",
     "annotated": true
   },
@@ -707,6 +709,7 @@
     "manifest_category": "misc",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "misc",
     "annotated": true
   },

@@ -33,6 +33,7 @@
 #   brew install --cask font-montserrat   # if your SVGs use Montserrat
 #
 # @desc     Export design SVGs to PNG with librsvg — lossless, best for text/logo banners
+# @deprecated Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category images
 # @platform any
 # @runs     local

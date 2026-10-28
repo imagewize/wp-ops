@@ -19,6 +19,7 @@
 #   Example: test-screenshot.png -> test-screenshot-for-claude.jpg
 #
 # @desc     Convert a PNG screenshot to JPEG (Claude Code's VSCode extension mislabels PNGs)
+# @deprecated Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category misc
 # @platform any
 # @runs     local
