@@ -5,7 +5,7 @@ Automatic IP blocking for WordPress brute force attacks using fail2ban.
 Part of the [wp-ops](https://github.com/imagewize/wp-ops) toolkit for WordPress operations and server management.
 
 **Why it matters, how it works, and the filter fix that stopped false bans:**
-[Stop WordPress Login Attacks Before They Reach Your Site: fail2ban on Trellis](https://imagewize.com/fail2ban-wordpress-brute-force-trellis/).
+[fail2ban for wp-login.php on Trellis: Turn the Jail On, Anchor the Filter, Keep an Nginx Deny List for the Rest](https://wpvilla.in/fail2ban-wordpress-wp-login-trellis-nginx-deny-list/).
 This page is the command reference.
 
 ---

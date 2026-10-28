@@ -295,7 +295,7 @@ ssh web@yoursite.com "tail -1000 /srv/www/yoursite.com/logs/access.log | grep -v
 
 The before-and-after numbers from a production server (1,420 login attempts from
 a single IP before fail2ban, the first ban within seven hours after) are in
-[fail2ban on Trellis](https://imagewize.com/fail2ban-wordpress-brute-force-trellis/).
+[fail2ban on Trellis](https://wpvilla.in/fail2ban-wordpress-wp-login-trellis-nginx-deny-list/).
 
 ### Typical Attack Pattern
 
