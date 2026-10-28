@@ -41,6 +41,7 @@
 # setup issue, not part of this repeatable workflow.
 #
 # @desc     Bootstrap a local Valet WordPress site from a directory of UpdraftPlus backup zips
+# @deprecated Outside the Trellis, Bedrock and Sage focus. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category misc
 # @platform wordpress
 # @runs     local

@@ -101,6 +101,8 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 **Deprecated (5.33.0), removed (5.34.0), 15 commands:** `noindex-expired-posts`, `openverse_search`, `openverse_download`, `batch-resize`, `jpg-to-webp`, `make-square-webp`, `create-product-variations`, `list-posts-count`, `post-count`, `release-plugin`, `upload-release-asset`, `sync-extracted`, `deploy-plugin-wporg`, `cf7-smoke-test`, `diagnostic-transients`. Each has no internal caller and no live use found. They warned on every run in 5.33.0 and were removed in 5.34.0.
 
+**Deprecated (5.38.0), 3 commands:** `svg-to-png`, `convert-screenshot-for-claude` and `updraft-to-valet`, for sitting outside the Trellis, Bedrock and Sage focus. `find-and-replace-files` is now called only by `updraft-to-valet`, so it goes when that does.
+
 **Held back after a closer look.** The tables above were drafted before these were checked, and the findings change them:
 
 | Item | Why it stays for now |
@@ -109,8 +111,8 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 | `wp-db-backup` | Backs up any local WordPress site (Valet, Herd, cPanel, Bedrock). A different job from `db-backup`, which pulls from a remote Trellis box. |
 | `check-ips`, `check-deny-ips` | `check-deny-ips` calls `check-ips`, and the MCP `ip_reputation_check` mirrors them. It is not a replacement for someone working in a terminal. |
 | `updown-webhook-handler` | Invoked by path from the server-side `updown-webhook-receiver.php`, so a deprecation notice would only land in a server log. |
-| `find-and-replace-files` | Called by `updraft-to-valet`, which stays. |
-| `updraft-to-valet`, `convert-screenshot-for-claude` | Open question from the Cut table is still unanswered. |
+| `find-and-replace-files` | Called by `updraft-to-valet`, which is now deprecated; it goes with it. |
+| `svg-to-jpg` | 115 calls across 23 sessions. It is the featured-image workflow, so it stays even though `svg-to-png` is deprecated. |
 | Screenshot toolkit (`screenshot-url`, `screenshot-patterns`, `center-screenshots`, `trim-screenshots`, `png-to-webp`) | Elayne pattern screenshots may depend on it. |
 | `traffic-report` | 17 calls in the last month in `seo-strategy`, so it is used. The advice to prefer `traffic-monitor` stands. |
 | `quick-status` | Not a replacement for `server-monitor` (HTTP status codes and errors, not CPU and memory). |

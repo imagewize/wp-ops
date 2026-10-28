@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.38.0] - 2026-10-28
+
+### Deprecated
+
+- **Three commands outside the Trellis, Bedrock and Sage focus:** `svg-to-png`, `convert-screenshot-for-claude` and `updraft-to-valet`. Each now prints a warning to stderr and is badged `(deprecated)` in `list` and `search`. They keep working, and will be removed no sooner than the next minor release. If you rely on one, open an issue.
+  - `svg-to-jpg` stays: the command audit logged 115 calls across 23 sessions.
+  - `find-and-replace-files` stays for now, but its only caller is `updraft-to-valet`.
+
 ## [5.37.0] - 2026-10-16
 
 ### Changed
