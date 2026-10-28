@@ -38,7 +38,6 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `docs/dev/` - Design and planning docs for wp-ops itself. New ones go here, not at the `docs/` top level
   - `docs/cli/` - How the `wp-ops` binary works: usage reference (categories, platforms, completion, guide search) and the trellis-cli plugin
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (the `.conf.j2` templates; each header links its wpvilla.in post)
-  - `docs/troubleshooting/` - Server and WordPress troubleshooting guides (OOM, PHP-FPM, MariaDB, mail)
   - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup
   - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `snippets/`, `speed-optimization/`
 
@@ -252,9 +251,10 @@ When updating post content via WP-CLI:
 ### Nginx Configuration
 
 Custom Nginx includes (browser caching, image optimization) must be:
-1. Copied to Trellis `nginx-includes/` directory
-2. Referenced in `wordpress_sites.*.nginx_includes` configuration
-3. Applied via `trellis provision <environment>`
+1. Copied to a Trellis `nginx-includes/` directory: `all/` for every site, or a folder named after the site key in `wordpress_sites.yml` for one site (there is no `nginx_includes` setting; Trellis only reads those folders)
+2. Applied via `trellis provision --tags nginx-includes <environment>`
+
+Includes are read inside the server block in alphabetical order, so `map` is not allowed there and the first matching regex `location` wins.
 
 ## Development Workflow
 
