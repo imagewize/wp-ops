@@ -3094,6 +3094,7 @@
     "manifest_category": "seo",
     "platform": "wordpress",
     "mutates": false,
+    "deprecated": "Overlaps orphan-links-audit, which finds orphans from the content itself. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "seo",
     "annotated": true
   },
@@ -3140,6 +3141,7 @@
     "manifest_category": "seo",
     "platform": "wordpress",
     "mutates": false,
+    "deprecated": "Overlaps orphan-links-audit and is not tied to Trellis, Bedrock or Sage. Open an issue at github.com/imagewize/wp-ops if you rely on it.",
     "display_category": "seo",
     "annotated": true
   },

@@ -103,6 +103,8 @@ Overlapping tools that do the same job. Pick one canonical name, keep the others
 
 **Deprecated (5.38.0), 3 commands:** `svg-to-png`, `convert-screenshot-for-claude` and `updraft-to-valet`, for sitting outside the Trellis, Bedrock and Sage focus. `find-and-replace-files` is now called only by `updraft-to-valet`, so it goes when that does.
 
+**Deprecated (5.40.0), 2 commands:** `page-audit` and `orphan-pages-audit`, which overlap `orphan-links-audit`. The other four `wp-cli/seo` scripts are in the Keep list and stay.
+
 **Held back after a closer look.** The tables above were drafted before these were checked, and the findings change them:
 
 | Item | Why it stays for now |

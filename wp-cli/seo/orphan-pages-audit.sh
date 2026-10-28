@@ -15,6 +15,7 @@
 # Requires: WP-CLI access to WordPress installation
 #
 # @desc     Find WordPress pages that exist but aren't linked from navigation menus
+# @deprecated Overlaps orphan-links-audit, which finds orphans from the content itself. Open an issue at github.com/imagewize/wp-ops if you rely on it.
 # @category seo
 # @platform wordpress
 # @runs     local
