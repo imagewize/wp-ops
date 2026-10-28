@@ -4,7 +4,7 @@
 - **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `updater/`
 - **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
 - **scripts/** - Utilities: `backup/`, `monitoring/`, `git/create-pr.sh`, `sync/rsync-theme.sh`
-- **docs/** - Design docs at the top level; guides in subdirectories: `nginx/` (server configs), `bedrock/` (Composer workflows), `wordpress-utilities/` (copy-paste components)
+- **docs/** - Design docs at the top level; guides in subdirectories: `nginx/` (Trellis include templates), `bedrock/` (the standard `wp-cli.yml`)
 - **Root docs**: `README.md`, `CLAUDE.md`, `CREATE-PR.md`, `AGENTS.md`, `CHANGELOG.md`, `LICENSE.md`
 - Keep new tools self-contained: add to appropriate category with a concise `README.md` and example configs.
 

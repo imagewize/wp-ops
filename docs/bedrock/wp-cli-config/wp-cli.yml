@@ -1,3 +1,6 @@
+# Standard wp-cli.yml for a Bedrock site root (next to composer.json).
+# Guide: https://wpvilla.in/bedrock-wp-cli-yml-and-pattern-validate-block-pattern-files/
+# The require line loads wp-cli/content-creation/wp-cli-pattern-validate.php; copy that file next to this one, or drop the line.
 path: web/wp
 server:
   docroot: web

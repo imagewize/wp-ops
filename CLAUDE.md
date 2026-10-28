@@ -38,8 +38,7 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `docs/dev/` - Design and planning docs for wp-ops itself. New ones go here, not at the `docs/` top level
   - `docs/cli/` - How the `wp-ops` binary works: usage reference (categories, platforms, completion, guide search) and the trellis-cli plugin
   - `docs/nginx/` - Web server configs: `browser-caching/`, `image-optimization/`, `redirects/` (the `.conf.j2` templates; each header links its wpvilla.in post)
-  - `docs/bedrock/` - Bedrock/Composer workflows: local package development, and the standard `wp-cli.yml` for Bedrock path setup
-  - `docs/wordpress-utilities/` - Copy-paste-into-a-project components and reference material: `snippets/`, `speed-optimization/`
+  - `docs/bedrock/` - The standard `wp-cli.yml` for Bedrock path setup (its header links the wpvilla.in post)
 
 ## Key Technologies
 
