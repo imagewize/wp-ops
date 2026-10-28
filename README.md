@@ -100,7 +100,7 @@ sudo mv wp-ops /usr/local/bin/   # or anywhere on your PATH
 wp-ops init
 ```
 
-The scripts, playbooks and guides are embedded in the binary — once it's on your PATH
+The scripts and playbooks are embedded in the binary — once it's on your PATH
 you can delete the clone.
 
 </details>
@@ -117,7 +117,6 @@ Running `wp-ops` with no arguments opens an interactive picker of every command:
 wp-ops search webp                  # find a command by name or description
 wp-ops backup --help                # every command in one category
 wp-ops list --platform wordpress    # only what works on any WordPress site, Trellis or not
-wp-ops docs oom                     # search the guides
 ```
 
 More in [Using the CLI](docs/cli/usage.md) and the
