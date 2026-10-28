@@ -135,8 +135,8 @@ sites are run with:
 | **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [routine](https://wpvilla.in/trellis-wordpress-security-routine-abuseipdb-fail2ban/) · [scanners](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) |
 | **Content & SEO** | Page creation, block pattern validation, redirect/schema/orphan-page audits | [SEO](wp-cli/seo/README.md) |
 | **Nginx** | WebP/AVIF serving, browser caching and redirect templates for Trellis `nginx-includes/` [images](https://wpvilla.in/serve-webp-avif-nginx-trellis-accept-header-bedrock-uploads/) · [caching](https://wpvilla.in/nginx-browser-caching-headers-trellis-all-includes-expires/) · [redirects](https://wpvilla.in/trellis-nginx-redirect-not-deployed-query-string-dropped/) |
-| **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](docs/bedrock/local-package-development/README.md) · [wp-cli.yml](docs/bedrock/wp-cli-config/README.md) |
-| **Scripts & guides** | Theme sync, PR helpers, WP-CLI snippets for Bedrock | [scripts](scripts/README.md) · [snippets](docs/wordpress-utilities/snippets/README.md) |
+| **Bedrock** | Testing unreleased packages via Composer `path` repos, standard `wp-cli.yml` | [packages](https://wpvilla.in/bedrock-composer-path-repository-test-plugin-before-release-symlink-false/) · [wp-cli.yml](https://wpvilla.in/bedrock-wp-cli-yml-and-pattern-validate-block-pattern-files/) |
+| **Scripts** | Theme sync, PR helpers, emergency admin creation | [scripts](scripts/README.md) · [admin recovery](https://wpvilla.in/wordpress-locked-out-emergency-admin-user-wp-cli-ssh/) |
 
 ## Requirements
 
