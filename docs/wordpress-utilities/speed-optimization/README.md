@@ -7,10 +7,8 @@ Measuring TTFB with `curl` and `wget`, the 0.8 s / 1.8 s thresholds, and why to 
 Two runnable scripts back the manual `curl`/`wget` checks above with repeatable,
 averaged measurements. They live in
 [`scripts/monitoring/`](../../../scripts/monitoring/), not this folder — everything
-under `wordpress-utilities/` is treated by the `wp-ops` CLI as a copy-paste
-reference snippet (printed or clipboard-copied, never executed), which doesn't
-fit an actual runnable tool. This README stays the docs home; `@doc` on both
-scripts points back here.
+under `wordpress-utilities/` is reference material, which doesn't fit an
+actual runnable tool.
 
 - [`../../scripts/monitoring/ttfb-test.sh`](../../../scripts/monitoring/ttfb-test.sh) —
   runs `curl` against a URL 5 times from your machine, averages

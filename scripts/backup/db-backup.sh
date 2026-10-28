@@ -30,7 +30,6 @@
 # @flag     --host       optional  {example.com}  SSH host to back up from (default: site-name)
 # @flag     --dest       optional  {database_backup}  Local destination directory
 # @example  wp-ops db-backup example.com production
-# @doc      trellis/backup/README.md
 
 set -euo pipefail
 

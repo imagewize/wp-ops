@@ -41,7 +41,6 @@
  * @requires wp
  * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
  * @example  wp-ops scanner-general
- * @doc      wp-cli/security/README.md
  */
 
 // ============================================================================

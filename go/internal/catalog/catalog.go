@@ -47,7 +47,6 @@ type Entry struct {
 	// ansible executor's --help) care about "either" specifically.
 	Runs     string           `json:"runs,omitempty"`
 	Requires []string         `json:"requires,omitempty"`
-	Doc      string           `json:"doc,omitempty"`
 	Args     []manifest.Param `json:"args,omitempty"`
 	Flags    []manifest.Param `json:"flags,omitempty"`
 	Examples []string         `json:"examples,omitempty"`

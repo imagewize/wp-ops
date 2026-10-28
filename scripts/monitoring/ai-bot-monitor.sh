@@ -21,7 +21,6 @@
 # @arg      output_file  optional  Path to save the report instead of printing it
 # @example  ssh web@example.com 'bash -s' < ai-bot-monitor.sh
 # @example  ssh web@example.com 'bash -s' < ai-bot-monitor.sh /srv/www/example.com/logs/access.log 168
-# @doc      trellis/monitoring/README.md
 
 set -e
 

@@ -22,7 +22,6 @@
 # @arg      page-title    required  {About}  Page title
 # @arg      page-slug     required  {about}  Page slug/post name
 # @example  wp-ops page-creation about-page-content.html "About" about
-# @doc      wp-cli/content-creation/PAGE-CREATION.md
 
 set -e  # Exit on error
 

@@ -31,7 +31,6 @@
 # @flag     --pages      optional  {/,/about/,/contact/}  Comma-separated page paths or URLs (default: sitemap pages)
 # @flag     --max-pages  optional  {25}  Maximum number of sitemap pages to check
 # @example  wp-ops schema-audit https://example.com --pages /,/services/,/contact/
-# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

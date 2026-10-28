@@ -21,7 +21,6 @@
 # @requires curl bc
 # @arg      url  required  {https://example.com}  URL to test
 # @example  wp-ops ttfb-test https://example.com
-# @doc      docs/wordpress-utilities/speed-optimization/README.md
 
 set -e
 

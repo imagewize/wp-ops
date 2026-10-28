@@ -154,7 +154,6 @@ func main() {
 				Platform:         cmd.Platform,
 				Runs:             cmd.Runs,
 				Requires:         cmd.Requires,
-				Doc:              cmd.Doc,
 				Args:             cmd.Args,
 				Flags:            cmd.Flags,
 				Examples:         cmd.Examples,
@@ -187,7 +186,7 @@ func main() {
 	// regressions), but a script can validly have zero manifest directives
 	// at all and fall back to the header scrape, and Lint() flags that
 	// exact case as "missing @desc" too. Only real malformations
-	// (bad @runs, malformed @arg/@flag, a dangling @doc) should break the
+	// (bad @runs, malformed @arg/@flag) should break the
 	// build.
 	var hardErrors []string
 	for _, e := range lintErrors {

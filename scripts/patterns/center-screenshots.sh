@@ -19,7 +19,6 @@
 # @arg      width            optional  {900}  Target canvas width
 # @arg      height           optional  {600}  Target canvas height
 # @example  wp-ops center-screenshots ./screenshots 900 600
-# @doc      scripts/patterns/README.md
 
 set -euo pipefail
 

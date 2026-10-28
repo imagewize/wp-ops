@@ -50,7 +50,6 @@
 # @flag     --show-bots   optional  Include bot traffic instead of filtering it out
 # @example  wp-ops traffic-by-country --host web@example.com NL
 # @example  wp-ops traffic-by-country -q --hours 24 --pattern "/contact/" US
-# @doc      scripts/README.md
 
 set -euo pipefail
 

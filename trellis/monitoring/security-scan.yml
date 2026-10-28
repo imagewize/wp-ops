@@ -14,7 +14,6 @@
 # @flag     log_path    optional  {/path/to/access.log}  Override the default per-site access log path
 # @example  wp-ops security-scan example.com production
 # @example  wp-ops security-scan example.com production --hours 48 --threshold 50
-# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: security-scan.yml

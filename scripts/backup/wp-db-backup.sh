@@ -45,7 +45,6 @@
 # @flag     --php-bin    optional  {/opt/plesk/php/8.2/bin/php}  PHP binary to run --wp-bin with
 # @example  wp-ops wp-db-backup --path ~/code/example
 # @example  wp-ops wp-db-backup --host user@example.com --site-path /home/user/public_html
-# @doc      scripts/backup/README.md
 
 set -euo pipefail
 
