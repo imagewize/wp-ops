@@ -1,5 +1,7 @@
 # MariaDB Troubleshooting Guide
 
+The provision failure walked through step by step: [Trellis Provision Fails at "Set root user password"](https://wpvilla.in/trellis-provision-set-root-user-password-fails-mariadb-provider-plugins/).
+
 This guide covers common MariaDB issues on Trellis-managed servers, including startup failures, plugin problems, and diagnostic approaches.
 
 ## Table of Contents
