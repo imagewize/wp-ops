@@ -20,6 +20,8 @@ WP-CLI guides for Trellis and Bedrock sites.
 - `admin-user-creation-wpcli.md` — WP-CLI commands for safe admin user creation
 - `wp-template-db-override-wpcli.md` — Fix block theme templates frozen by a Site Editor database override
 
+The non-Trellis snippets (WooCommerce attributes, post-expiry noindex, WebP featured images, the age gate) are on the blog; the [snippets README](snippets/README.md) links them.
+
 ### [Speed Optimization](speed-optimization/)
 
 Performance testing tools and TTFB (Time To First Byte) analysis utilities.

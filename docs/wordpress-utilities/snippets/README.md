@@ -2,6 +2,13 @@
 
 WP-CLI guides for Trellis and Bedrock sites.
 
+Guides that were not specific to Trellis or Bedrock now live on the blog:
+
+- [WooCommerce product attributes and variations with WP-CLI](https://wpvilla.in/woocommerce-product-attributes-variations-wp-cli-trellis-multisite/)
+- [Noindex posts after an expiry date with Yoast's `wpseo_robots` filter](https://wpvilla.in/wordpress-post-expiry-noindex-yoast-wpseo-robots-timezone/)
+- [WebP featured images without breaking `og:image`](https://wpvilla.in/wordpress-webp-featured-images-og-image-original-jpg/)
+- [A cookie-based age gate for WordPress](https://wpvilla.in/wordpress-age-verification-modal-cookie-acf-jquery/)
+
 ## Available Snippets
 
 ### [admin-user-creation-wpcli.md](admin-user-creation-wpcli.md)

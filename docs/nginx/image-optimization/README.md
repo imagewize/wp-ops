@@ -54,6 +54,8 @@ cavif --quality 80 photo.jpg
 find uploads/ -name "*.jpg" -exec cwebp -q 80 {} -o {}.webp \;
 ```
 
+Showing a WebP featured image while keeping a JPG for the share card is covered in [WordPress WebP Featured Images Without Breaking og:image](https://wpvilla.in/wordpress-webp-featured-images-og-image-original-jpg/).
+
 Install the tools with `brew install webp cavif` (macOS) or `apt-get install webp` (Ubuntu). Quality 75-85 suits photos; use 85-95 for images with text. Keep the originals: they are the fallback.
 
 A plugin that writes `.jpg.webp` files on upload works with the include too, for example [WebP Express](https://wordpress.org/plugins/webp-express/), [EWWW Image Optimizer](https://wordpress.org/plugins/ewww-image-optimizer/) or [ShortPixel](https://wordpress.org/plugins/shortpixel-image-optimiser/).
