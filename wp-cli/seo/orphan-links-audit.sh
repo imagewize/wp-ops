@@ -41,7 +41,6 @@
 # @flag     --output     optional  {audits}  Output directory
 # @example  wp-ops orphan-links-audit --host web@example.com
 # @example  wp-ops orphan-links-audit --path web/wp --output reports/seo
-# @doc      wp-cli/seo/README.md
 
 set -euo pipefail
 

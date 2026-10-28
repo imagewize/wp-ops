@@ -12,7 +12,6 @@
 # @flag     log_path  optional  {/path/to/access.log}  Override the default per-site access log path
 # @example  wp-ops quick-status example.com production
 # @example  wp-ops quick-status example.com production --log_path /var/log/custom.log
-# @doc      trellis/monitoring/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: quick-status.yml

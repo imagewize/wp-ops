@@ -34,7 +34,6 @@ func TestFormatHelp_AnnotatedPlaybook(t *testing.T) {
 		"env",
 		"production|staging|development",
 		"Requires: ansible-playbook",
-		"Docs: trellis/backup/README.md",
 		"Script: trellis/backup/database-backup.yml",
 		"Runs via ansible-playbook against the Trellis project at $TRELLIS_DIR",
 		"(currently: /srv/trellis-project)",

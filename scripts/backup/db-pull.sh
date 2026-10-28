@@ -33,7 +33,6 @@
 # @flag     --yes        optional  {}  Skip the confirmation prompt
 # @example  wp-ops db-pull example.com production
 # @example  wp-ops db-pull network.example.com production --multisite --yes
-# @doc      trellis/backup/README.md
 
 set -euo pipefail
 

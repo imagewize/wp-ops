@@ -22,7 +22,6 @@
 # @arg      output_file     optional  Path to save the report instead of printing it
 # @example  ssh web@example.com 'bash -s' < security-monitor.sh
 # @example  ssh web@example.com 'bash -s' < security-monitor.sh /srv/www/demo.example.com/logs/access.log 1 50
-# @doc      trellis/monitoring/README.md
 
 set -e
 

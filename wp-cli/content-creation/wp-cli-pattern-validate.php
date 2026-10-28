@@ -48,7 +48,6 @@
  * @flag     --compliance       optional  {}  Also run project-specific compliance checks
  * @flag     --compliance-only  optional  {}  Skip Gutenberg validation, only run compliance checks
  * @example  wp-ops wp-cli-pattern-validate web/app/themes/theme-name/patterns/ --fix
- * @doc      docs/bedrock/wp-cli-config/README.md
  */
 
 if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {

@@ -32,7 +32,6 @@
 # @arg      output_file  optional  Path to save the report instead of printing it
 # @example  ssh web@example.com 'bash -s' < error-monitor.sh
 # @example  ssh root@example.com 'bash -s' < error-monitor.sh example.com 48
-# @doc      trellis/monitoring/README.md
 
 set -uo pipefail
 

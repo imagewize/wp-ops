@@ -28,7 +28,6 @@
 # @flag     --yes  optional  {}  Skip the confirmation prompt before overwriting trellis/
 # @example  TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater
 # @example  wp-ops trellis-updater --yes
-# @doc      trellis/updater/README.md
 
 set -e  # Exit on error
 

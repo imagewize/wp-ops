@@ -41,9 +41,6 @@ func runSearch(term string) {
 
 	if len(matches) == 0 {
 		fmt.Printf("No commands match '%s'.\n\n", term)
-		if hasDocMatches(term) {
-			fmt.Printf("The documentation mentions it though — try %s docs %s.\n\n", cmdName(), term)
-		}
 		fmt.Printf("Run %s to browse everything by category.\n", cmdName())
 		os.Exit(1)
 	}

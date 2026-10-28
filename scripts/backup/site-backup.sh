@@ -21,7 +21,6 @@
 # @requires wp
 # @arg      site-name  optional  {example.com}  Site directory under /srv/www
 # @example  ssh web@example.com 'bash -s' < site-backup.sh example.com
-# @doc      trellis/backup/README.md
 
 set -euo pipefail
 

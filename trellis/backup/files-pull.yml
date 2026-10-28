@@ -11,7 +11,6 @@
 # @flag     delete  optional  {no}  yes = mirror the remote exactly, deleting local uploads the remote no longer has
 # @example  wp-ops files-pull example.com production
 # @example  wp-ops files-pull example.com production --delete yes
-# @doc      trellis/backup/README.md
 - import_playbook: variable-check.yml
   vars:
     playbook: files-pull.yml

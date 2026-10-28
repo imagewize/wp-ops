@@ -50,14 +50,6 @@ Each utility is self-contained and can be integrated independently:
 3. Copy the necessary files to your WordPress theme or plugin
 4. Follow the installation and configuration instructions
 
-### Via wp-ops
-
-These files are reference guides, not runnable scripts. Find them with `wp-ops docs`:
-
-```bash
-wp-ops docs -l wp-template     # print the path of the matching guide
-```
-
 ### General Prerequisites
 
 Most utilities may require one or more of:

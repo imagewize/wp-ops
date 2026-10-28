@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **The migration guides**, now four posts on wpvilla.in: [migrating a site to Trellis and Bedrock](https://wpvilla.in/migrate-wordpress-to-trellis-bedrock-step-by-step/), [testing before the DNS cutover](https://wpvilla.in/trellis-migration-test-etc-hosts-letsencrypt-dns-cutover/), [migrating several sites onto one server](https://wpvilla.in/migrate-multiple-wordpress-sites-one-trellis-server/) and [wp search-replace for domain and path changes](https://wpvilla.in/wp-search-replace-wordpress-url-domain-https-bedrock-paths/). `wp-cli/migration/` is gone, and the README, `CLAUDE.md` and `wp-cli/README.md` no longer point at it.
+- **The documentation feature.** The guides are moving to [wpvilla.in](https://wpvilla.in/), so wp-ops no longer searches or links documentation.
+  - `wp-ops docs` is gone, along with the "the documentation mentions it" hint in `search`.
+  - The `@doc` manifest directive is gone: the catalog `doc` field, the `Docs:` line in `--help`, the `doc` key in `list --json`, the `docs:` line in the MCP command detail, and the lint that checked the path. The `# @doc` lines are stripped from every script header.
+  - `command_search` and `command_run` clients that read the `doc` field will no longer see it.
 
 ## [5.40.0] - 2026-10-28
 

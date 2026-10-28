@@ -24,7 +24,6 @@
 # @flag     --full  optional  {}  Full JSON output per IP via check-ips.sh, instead of the compact summary
 # @example  wp-ops check-deny-ips
 # @example  wp-ops check-deny-ips --full
-# @doc      trellis/security/README.md
 
 set -euo pipefail
 

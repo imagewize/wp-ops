@@ -30,7 +30,6 @@
 # @arg      domain  optional  {example.com}  Site domain
 # @example  ssh web@example.com 'bash -s' < monitor.sh
 # @example  ssh web@example.com 'bash -s' < monitor.sh 24 othersite.com
-# @doc      trellis/monitoring/README.md
 
 set -e
 

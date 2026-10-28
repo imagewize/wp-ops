@@ -179,7 +179,6 @@ export function formatEntryDetail(e: CatalogEntry): string {
     lines.push("examples:");
     for (const ex of e.examples) lines.push(`  ${ex}`);
   }
-  if (e.doc) lines.push("", `docs: ${e.doc}`);
   return lines.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 

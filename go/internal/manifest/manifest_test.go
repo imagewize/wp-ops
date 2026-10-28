@@ -26,9 +26,6 @@ func TestParse_ShellScriptWithChoiceArgs(t *testing.T) {
 	if got, want := cmd.Requires, []string{"wp"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("Requires = %v, want %v", got, want)
 	}
-	if got, want := cmd.Doc, "trellis/backup/README.md"; got != want {
-		t.Errorf("Doc = %q, want %q", got, want)
-	}
 	if got, want := cmd.Examples, []string{"wp-ops scripts/backup/db-backup example.com production"}; !reflect.DeepEqual(got, want) {
 		t.Errorf("Examples = %v, want %v", got, want)
 	}
@@ -139,9 +136,9 @@ func TestLint_MalformedCommandReportsEveryProblem(t *testing.T) {
 
 	errs := Lint(cmd, "../../..")
 	// missing @desc, bad @runs, malformed @arg (no requiredness token), bad
-	// @flag requiredness, missing @doc target — five independent problems.
-	if len(errs) != 5 {
-		t.Fatalf("Lint() = %v (%d errors), want 5", errs, len(errs))
+	// @flag requiredness — four independent problems.
+	if len(errs) != 4 {
+		t.Fatalf("Lint() = %v (%d errors), want 4", errs, len(errs))
 	}
 }
 
