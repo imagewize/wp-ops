@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `provision/`, `updater/`
+- **trellis/** - Trellis-specific: `backup/`, `monitoring/`, `updater/`
 - **wp-cli/** - WordPress CLI tools: `content-creation/`, `diagnostics/`, `migration/`
 - **scripts/** - Utilities: `backup/`, `monitoring/`, `git/create-pr.sh`, `sync/rsync-theme.sh`
 - **docs/** - Design docs at the top level; guides in subdirectories: `nginx/` (server configs), `troubleshooting/` (server/WP), `bedrock/` (Composer workflows), `wordpress-utilities/` (copy-paste components)

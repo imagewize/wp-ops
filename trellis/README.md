@@ -20,7 +20,6 @@ This directory contains production-ready tools for:
 trellis/
 ├── backup/          # Database & file sync Ansible playbooks
 ├── monitoring/      # Nginx log analysis & security monitoring
-├── provision/       # Server setup & configuration guides
 ├── security/        # WordPress security tools (fail2ban, IP blocking)
 └── updater/         # Safe Trellis version upgrade tools
 ```
@@ -268,49 +267,12 @@ ssh web@yoursite.com "grep 'POST.*wp-login' /srv/www/yoursite.com/logs/access.lo
 
 ## 4. Provisioning & Setup
 
-**Location:** `provision/`
+The provisioning guides are on the blog:
 
-Documentation and guides for server provisioning, configuration, and WordPress cron management.
-
-### Documentation
-
-| File | Purpose |
-|------|---------|
-| `README.md` | Quick provisioning command reference |
-| `CRON.md` | WordPress cron system configuration |
-| `NEW-MACHINE.md` | New server setup guide |
-| `PROJECT-SETUP.md` | Initial project setup guide |
-
-### Key Topics
-
-**Provisioning Commands**
-- Development environment setup
-- Staging/production deployment
-- PHP version upgrades with correct tags
-- Nginx configuration updates
-
-**WordPress Cron Configuration**
-- WP-Cron vs system cron
-- Trellis default: system cron every 15 minutes
-- Multisite cron configuration
-- Verification and troubleshooting
-
-**PHP Version Upgrades**
-
-When upgrading PHP, **must** include these tags:
-
-```bash
-trellis provision --tags php,nginx,wordpress-setup,users,memcached production
-```
-
-Critical tags:
-- `php` - Installs new version
-- `nginx` - Updates PHP-FPM socket configuration
-- `wordpress-setup` - Creates PHP version-specific pool configuration
-- `users` - **Critical**: Updates sudoers for PHP-FPM reload (deployments fail without this)
-- `memcached` - Installs version-specific memcached extension
-
-**See also:** [provision/README.md](provision/README.md) and subdirectory documentation.
+- [Setting up a new Mac for Trellis development](https://wpvilla.in/new-mac-trellis-development-setup-lima-composer-node/)
+- [Cloning an existing Trellis and Bedrock project](https://wpvilla.in/clone-trellis-bedrock-project-lima-vm-first-provision/)
+- [Trellis provision tags and the PHP upgrade](https://wpvilla.in/trellis-provision-tags-php-version-upgrade-checklist/)
+- [WP-Cron on Trellis: the interval and how to change it](https://wpvilla.in/trellis-wp-cron-interval-scheduled-posts-late-cron-interval/)
 
 ---
 
@@ -354,9 +316,7 @@ git add -A
 git commit -m "Update Trellis to latest version"
 ```
 
-**See also:**
-- [updater/README.md](updater/README.md) - Complete updater documentation
-- [updater/manual-update.md](updater/manual-update.md) - Manual update instructions
+**See also:** [Updating Trellis without losing your customisations](https://wpvilla.in/update-trellis-without-losing-customisations-rsync-excludes/)
 
 ---
 

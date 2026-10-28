@@ -129,7 +129,7 @@ sites are run with:
 
 | Area | What's there | Docs |
 |------|--------------|------|
-| **Trellis** | Safe Trellis updates, provisioning reference, new-machine and project setup | [updater](trellis/updater/README.md) · [provision](trellis/provision/README.md) |
+| **Trellis** | Safe Trellis updates (`trellis-updater`) | [guide](https://wpvilla.in/update-trellis-without-losing-customisations-rsync-excludes/) |
 | **Backups** | Timestamped database and uploads backups from any environment | [→](trellis/backup/README.md) |
 | **Monitoring** | AI-crawler traffic, error surfacing, traffic by country, cron-scheduled reports | [→](trellis/monitoring/README.md) |
 | **Security** | Malware scanners with checksum verification, fail2ban, manual IP blocking, AbuseIPDB lookup | [scanners](wp-cli/security/README.md) · [server](trellis/security/README.md) |

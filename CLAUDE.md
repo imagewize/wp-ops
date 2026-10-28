@@ -11,7 +11,6 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
 - **trellis/** - Trellis-specific tools and workflows
   - `trellis/backup/` - Ansible playbooks for database/files backup, pull, and push operations
   - `trellis/monitoring/` - Nginx log monitoring and traffic analysis
-  - `trellis/provision/` - Provisioning guides and command reference
   - `trellis/security/` - fail2ban WordPress protection and manual IP blocking guides
   - `trellis/updater/` - Safe Trellis update scripts
 - **wp-cli/** - WordPress command-line operations
