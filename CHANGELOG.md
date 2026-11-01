@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP `ssh_command` now auto-approves read-only pipelines and three more commands.**
+  Unquoted pipes between allowlisted commands no longer need `confirm: true` —
+  previously every token was shell-quoted, so `find /home/web/monitoring -mtime +90 | wc -l`
+  was both rejected by the read-only check and, worse, silently sent to the remote
+  host with the pipe as a literal argument (the pipeline never ran). `find`, `awk`,
+  and `wc` join the allowlist: `find` is refused when it carries mutating primaries
+  (`-delete`, `-exec`, `-execdir`, `-ok`, `-okdir`, `-fprint*`, `-fls`), and `awk`
+  is refused when its program text contains escape hatches (`system()`, `getline`,
+  `close()`, `|`, or output redirection) or when it carries any option other than
+  `-F`/`-v` (gawk's `-i inplace`, `-o`, `--profile`, `-f` and friends can write
+  files or load code). A pipeline is auto-approved only when
+  every segment passes on its own; leading, trailing, or doubled pipes are
+  rejected. Quoted pipes (`"a|b"` as an argument) keep their literal meaning.
+
+### Fixed
+
+- **MCP `ssh_command` no longer drops empty quoted arguments.** `grep '' file`
+  was sent to the remote host as `grep file`, changing what the command did.
+  The tokenizer now keeps `''` and `""` as real empty arguments.
+
 ## [5.41.0] - 2026-10-28
 
 ### Removed

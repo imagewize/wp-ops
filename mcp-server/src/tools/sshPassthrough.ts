@@ -14,12 +14,14 @@ export interface SshCommandResult {
 // needs confirm: true. Each token is shell-quoted before being sent to ssh, so
 // even a command like "cat file > other" is treated as literal arguments to cat.
 const READ_ONLY_COMMANDS = new Set([
+  "awk",
   "cat",
   "date",
   "df",
   "dmesg",
   "du",
   "file",
+  "find",
   "free",
   "grep",
   "head",
@@ -42,22 +44,84 @@ const READ_ONLY_COMMANDS = new Set([
   "uname",
   "uptime",
   "vmstat",
+  "wc",
   "whoami",
 ]);
+
+// find mutates remote state through primaries like -delete and -exec, so it is
+// only read-only when none of those appear in its arguments.
+const FIND_MUTATING_PRIMARIES = new Set([
+  "-delete",
+  "-exec",
+  "-execdir",
+  "-ok",
+  "-okdir",
+  "-fprint",
+  "-fprint0",
+  "-fprintf",
+  "-fls",
+]);
+
+// awk can execute arbitrary remote commands via system()/| and write files via
+// redirection inside its program text, so it is only allowed without any of
+// those escape hatches.
+const AWK_ESCAPE_PATTERNS = [/system\s*\(/, /\|/, /getline/, /\bclose\s*\(/, />>/, /(^|[^<>])>/];
+
+function isReadOnlySegment(base: string, tokens: string[]): boolean {
+  if (!READ_ONLY_COMMANDS.has(base)) return false;
+  if (touchesCredentialPath(tokens)) return false;
+  if (base === "find") {
+    return !tokens
+      .slice(1)
+      .some((token) => FIND_MUTATING_PRIMARIES.has(token));
+  }
+  if (base === "awk") {
+    return tokens.slice(1).every((token) => {
+      // -F (field separator) and -v (variable) are the only options that stay
+      // read-only. gawk's -i inplace, -o/--pretty-print, --profile, -f progfile
+      // and -l/-E/--include can write files or load code, so any other option
+      // needs confirm: true. A bare "-" (stdin) is a plain operand.
+      if (/^-[Fv]/.test(token)) return true;
+      if (token.startsWith("-") && token !== "-") return false;
+      return !AWK_ESCAPE_PATTERNS.some((pattern) => pattern.test(token));
+    });
+  }
+  return true;
+}
 
 // Split a simple shell-like command string into tokens, respecting single and
 // double quotes and backslash escapes. This is intentionally minimal: it lets
 // callers pass arguments with spaces ("ls -la /some dir") without invoking a
 // local shell or letting ssh re-interpret metacharacters.
-function tokenizeCommand(command: string): string[] {
-  const tokens: string[] = [];
+// An unquoted "|" becomes a pipe operator token, so callers can validate and
+// rebuild pipelines. A quoted or escaped "|" ("echo 'a|b'") is a plain argument
+// like any other, as is an operator glued to other text ("a|b") — only a
+// standalone unquoted "|" counts.
+export type Token = { value: string; isPipe: boolean };
+
+export function tokenizeCommand(command: string): Token[] {
+  const tokens: Token[] = [];
   let current = "";
+  let currentQuoted = false;
   let quote: "'" | '"' | null = null;
   let escaped = false;
+
+  const flush = () => {
+    // A quoted empty string ("" or '') is a real, empty argument; only drop
+    // the buffer when nothing was typed at all.
+    if (current === "" && !currentQuoted) return;
+    tokens.push({
+      value: current,
+      isPipe: current === "|" && !currentQuoted,
+    });
+    current = "";
+    currentQuoted = false;
+  };
 
   for (const char of command) {
     if (escaped) {
       current += char;
+      currentQuoted = true;
       escaped = false;
       continue;
     }
@@ -74,14 +138,12 @@ function tokenizeCommand(command: string): string[] {
       continue;
     }
     if (char === '"' || char === "'") {
+      currentQuoted = true;
       quote = char;
       continue;
     }
     if (/\s/.test(char)) {
-      if (current !== "") {
-        tokens.push(current);
-        current = "";
-      }
+      flush();
       continue;
     }
     current += char;
@@ -89,12 +151,28 @@ function tokenizeCommand(command: string): string[] {
 
   if (escaped) {
     current += "\\";
+    currentQuoted = true;
   }
-  if (current !== "") {
-    tokens.push(current);
-  }
+  flush();
 
   return tokens;
+}
+
+// Split a token stream into pipeline segments at unquoted pipe operators.
+// Returns null when a pipe is leading, trailing, or doubled — those are shell
+// syntax errors or constructs this minimal parser should not approve.
+function splitPipeline(tokens: Token[]): Token[][] | null {
+  const segments: Token[][] = [[]];
+  for (const token of tokens) {
+    if (token.isPipe) {
+      if (segments[segments.length - 1].length === 0) return null;
+      segments.push([]);
+      continue;
+    }
+    segments[segments.length - 1].push(token);
+  }
+  if (segments[segments.length - 1].length === 0) return null;
+  return segments;
 }
 
 // Path fragments that indicate a credential-bearing file. Even a command in
@@ -122,14 +200,26 @@ function touchesCredentialPath(tokens: string[]): boolean {
     .some((token) => CREDENTIAL_PATH_PATTERNS.some((pattern) => pattern.test(token)));
 }
 
+// Read-only when the command is a simple command or a pipeline whose every
+// segment is read-only on its own. A pipe is only sent to the remote shell as
+// an operator if all segments pass, so "find ... | wc -l" can be auto-approved
+// while "find ... -delete" or "awk '...system(...)'" cannot.
 export function isReadOnlySshCommand(command: string): boolean {
   const tokens = tokenizeCommand(command);
-  const first = tokens[0];
-  if (!first) return false;
-  const base = path.basename(first);
-  if (!READ_ONLY_COMMANDS.has(base)) return false;
-  if (touchesCredentialPath(tokens)) return false;
-  return true;
+  if (tokens.length === 0) return false;
+  const segments = splitPipeline(tokens);
+  if (!segments) return false;
+  return segments.every((segment) => {
+    const base = path.basename(segment[0].value);
+    return isReadOnlySegment(base, segment.map((t) => t.value));
+  });
+}
+
+// Rebuild the remote command line: every token shell-quoted, except validated
+// pipe operators, which are passed through unquoted so the remote shell runs
+// them as a pipeline.
+export function buildRemoteCommand(tokens: Token[]): string {
+  return tokens.map((t) => (t.isPipe ? "|" : shellQuote(t.value))).join(" ");
 }
 
 export function runSshCommand(entry: EnvEntry, command: string): Promise<SshCommandResult> {
@@ -143,7 +233,7 @@ export function runSshCommand(entry: EnvEntry, command: string): Promise<SshComm
     throw new Error("No command tokens found.");
   }
 
-  const remoteCommand = tokens.map(shellQuote).join(" ");
+  const remoteCommand = buildRemoteCommand(tokens);
 
   return new Promise((resolve, reject) => {
     const child = spawn("ssh", [sshHost, remoteCommand]);
