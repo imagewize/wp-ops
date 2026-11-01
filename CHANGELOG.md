@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **MCP `ssh_command` tool description and README now say pipes run as pipelines.**
+  Both still claimed every shell metacharacter, pipe included, was passed as a
+  literal argument, so agents concluded `find ... | wc -l` could not work.
 - **MCP `ssh_command` no longer drops empty quoted arguments.** `grep '' file`
   was sent to the remote host as `grep file`, changing what the command did.
   The tokenizer now keeps `''` and `""` as real empty arguments.
