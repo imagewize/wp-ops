@@ -107,7 +107,9 @@ export function tokenizeCommand(command: string): Token[] {
   let escaped = false;
 
   const flush = () => {
-    if (current === "") return;
+    // A quoted empty string ("" or '') is a real, empty argument; only drop
+    // the buffer when nothing was typed at all.
+    if (current === "" && !currentQuoted) return;
     tokens.push({
       value: current,
       isPipe: current === "|" && !currentQuoted,

@@ -69,3 +69,10 @@ test("buildRemoteCommand passes only real pipes through unquoted", () => {
 test("credential paths still require confirmation inside a pipeline", () => {
   assert.equal(readOnly("cat .env | wc -l"), false);
 });
+
+test("empty quoted arguments are preserved", () => {
+  assert.deepEqual(tokenizeCommand("grep '' file").map((t) => t.value), ["grep", "", "file"]);
+  assert.deepEqual(tokenizeCommand('grep "" file').map((t) => t.value), ["grep", "", "file"]);
+  assert.equal(buildRemoteCommand(tokenizeCommand("grep '' file")), "'grep' '' 'file'");
+  assert.deepEqual(tokenizeCommand("  a   b  ").map((t) => t.value), ["a", "b"]);
+});

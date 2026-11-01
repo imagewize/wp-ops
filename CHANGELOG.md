@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every segment passes on its own; leading, trailing, or doubled pipes are
   rejected. Quoted pipes (`"a|b"` as an argument) keep their literal meaning.
 
+### Fixed
+
+- **MCP `ssh_command` no longer drops empty quoted arguments.** `grep '' file`
+  was sent to the remote host as `grep file`, changing what the command did.
+  The tokenizer now keeps `''` and `""` as real empty arguments.
+
 ## [5.41.0] - 2026-10-28
 
 ### Removed
