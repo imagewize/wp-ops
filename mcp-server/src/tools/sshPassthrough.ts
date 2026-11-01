@@ -76,9 +76,15 @@ function isReadOnlySegment(base: string, tokens: string[]): boolean {
       .some((token) => FIND_MUTATING_PRIMARIES.has(token));
   }
   if (base === "awk") {
-    return !tokens
-      .slice(1)
-      .some((token) => AWK_ESCAPE_PATTERNS.some((pattern) => pattern.test(token)));
+    return tokens.slice(1).every((token) => {
+      // -F (field separator) and -v (variable) are the only options that stay
+      // read-only. gawk's -i inplace, -o/--pretty-print, --profile, -f progfile
+      // and -l/-E/--include can write files or load code, so any other option
+      // needs confirm: true. A bare "-" (stdin) is a plain operand.
+      if (/^-[Fv]/.test(token)) return true;
+      if (token.startsWith("-") && token !== "-") return false;
+      return !AWK_ESCAPE_PATTERNS.some((pattern) => pattern.test(token));
+    });
   }
   return true;
 }
@@ -91,9 +97,9 @@ function isReadOnlySegment(base: string, tokens: string[]): boolean {
 // rebuild pipelines. A quoted or escaped "|" ("echo 'a|b'") is a plain argument
 // like any other, as is an operator glued to other text ("a|b") — only a
 // standalone unquoted "|" counts.
-type Token = { value: string; isPipe: boolean };
+export type Token = { value: string; isPipe: boolean };
 
-function tokenizeCommand(command: string): Token[] {
+export function tokenizeCommand(command: string): Token[] {
   const tokens: Token[] = [];
   let current = "";
   let currentQuoted = false;
