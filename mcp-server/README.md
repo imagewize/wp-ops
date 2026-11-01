@@ -102,8 +102,9 @@ Scaffold — eighteen tools implemented so far:
   to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
   as `db_push`.)
 - **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
-  tokenized and shell-quoted, so shell metacharacters become literal arguments; commands outside the
-  read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
+  tokenized and shell-quoted, so shell metacharacters (`;`, `&&`, `>`, `$(...)`) become literal arguments.
+  The exception is an unquoted standalone `|`, which runs as a real pipeline; it is auto-approved only when
+  every segment is read-only. Commands outside the read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
   still requires `confirm: true` if any argument targets a credential-bearing path — `wp-config.php`,
   `.env`, `.ssh/`, private key files, `.netrc`, `.pgpass`, `.git-credentials` — since "cat is read-only"
   doesn't make `cat wp-config.php` safe to run unconfirmed.

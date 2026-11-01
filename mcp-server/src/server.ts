@@ -853,8 +853,10 @@ export function createServer(): McpServer {
   server.tool(
     "ssh_command",
     "Run one ad-hoc shell command on the registered remote host over SSH. Commands are split into " +
-      "tokens and shell-quoted before being sent, so shell metacharacters are treated as literal " +
-      "arguments. Commands outside the read-only allowlist need confirm: true.",
+      "tokens and shell-quoted before being sent, so shell metacharacters (;, &&, >, $(...)) are " +
+      "treated as literal arguments. The one exception is an unquoted standalone | between commands, " +
+      "which runs as a real pipeline (e.g. find /path -mtime +90 | wc -l). A pipeline is auto-approved " +
+      "when every segment is on the read-only allowlist; otherwise it needs confirm: true.",
     {
       site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
       env: envSchema.describe('Environment key for that site, e.g. "staging", "production"'),
