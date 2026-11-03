@@ -121,6 +121,16 @@ you can delete the clone.
 
 </details>
 
+### Upgrading
+
+```bash
+brew update && brew upgrade --cask wp-ops
+```
+
+The cask is called `wp-ops`. `trellis-ops` is a second binary inside it, not a
+package of its own, so `brew upgrade trellis-ops` fails. Upgrading `wp-ops`
+updates both. A source build upgrades with `git pull` and the same `go build`.
+
 ## Finding your way around
 
 Running `wp-ops` with no arguments opens an interactive picker of every command:
