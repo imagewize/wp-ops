@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.42.0] - 2026-11-03
+
 ### Added
+
+- **`update-snapshot` and `update-compare`: before/after screenshots for update
+  rounds** (`scripts/updates/`). `update-snapshot <base-url> --out=<dir>` captures a
+  fixed page list (`--pages` or `--pages-file`, `name|/path/` lines) at desktop
+  (1920×1080) and mobile (390×844), and writes `manifest.json` with the HTTP status
+  per shot. `update-compare <before-dir> <after-dir>` diffs two runs with ImageMagick
+  (`--fuzz`, default 15%), writes a self-contained compare folder (`index.html` plus
+  `before/`, `after/`, `diff/`) with flagged shots first, and exits 1 when a shot
+  changed more than `--threshold` (default 0.5%) or is missing. Shots of different
+  heights are padded and still diffed. Built from the first manual round on
+  imagewize.com (Nov 3, 2026), where a plain full-page capture produced false
+  1–3% changes:
+  - each page is scrolled through and every image decoded (capped at 5s) before
+    capture, so two runs of an unchanged page are pixel-identical;
+  - hard per-capture `--timeout` (default 60s), and a fallback from `networkidle` to
+    `load` for pages that never go idle (the first prototype hung 10 minutes on one
+    homepage);
+  - no resizing, so tall pages diff exactly;
+  - `--mask` hides dynamic elements with `visibility:hidden`; the Contact Form 7
+    CAPTCHA is masked by default (`--no-default-mask` to keep it).
+  Playwright is resolved next to the script, then from the current directory; when
+  missing, the error names the folder to `npm install` in. Docs:
+  `scripts/updates/README.md`, a "See what an update changed" section in the root
+  README, and `scripts/README.md`.
+- `.gitignore`: `scripts/**/node_modules/` and `scripts/**/package-lock.json`, so a
+  per-script `npm install` (patterns, updates) can't be committed or embedded.
 
 - **MCP `ssh_command` now auto-approves read-only pipelines and three more commands.**
   Unquoted pipes between allowlisted commands no longer need `confirm: true` —
@@ -31,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP `ssh_command` no longer drops empty quoted arguments.** `grep '' file`
   was sent to the remote host as `grep file`, changing what the command did.
   The tokenizer now keeps `''` and `""` as real empty arguments.
+
+### Technical
+
+- Catalog regenerated (66 commands); `catalog_test.go` counts updated (+2).
 
 ## [5.41.0] - 2026-10-28
 
