@@ -14,3 +14,7 @@ dist/
 # it to exist for the package to compile at all (a chicken-and-egg problem
 # for `go generate` on a fresh clone otherwise), and committing it lets CI
 # detect drift with `git diff --exit-code` after regenerating.
+
+# Per-script npm installs (scripts/patterns, scripts/updates)
+scripts/**/node_modules/
+scripts/**/package-lock.json
