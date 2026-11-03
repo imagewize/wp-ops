@@ -1,0 +1,12 @@
+{
+  "name": "wp-ops-update-snapshots",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright capture for before/after WordPress update screenshots",
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
