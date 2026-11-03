@@ -57,6 +57,10 @@ scripts/
 │   ├── trim-screenshots.sh     # Trim whitespace from a directory of pattern screenshots (ImageMagick)
 │   ├── center-screenshots.sh   # Center screenshots on a fixed canvas (ImageMagick)
 │   └── README.md               # Setup and usage docs
+├── updates/                     # Before/after screenshots for update rounds
+│   ├── update-snapshot.js      # Capture a page list (desktop + mobile), scroll + decode first
+│   ├── update-compare.sh       # Diff two runs into a compare page; exit 1 over threshold
+│   └── README.md               # Setup and a full update round
 ├── sync/                        # File synchronization
 │   ├── rsync-package-to-site.sh  # Push a plugin/theme working copy into a Bedrock site
 │   └── rsync-theme.sh            # Theme file synchronization utility
@@ -190,6 +194,28 @@ Site-specific QA checks (e.g. verifying a custom carousel block's JS state) are 
 coupled to a particular block/theme to generalize usefully — write those as one-off
 Playwright scripts in the project itself, using `screenshot-url.js` as a starting
 point.
+
+---
+
+## Update Snapshots
+
+### updates/ toolkit
+
+Before/after screenshots for WordPress updates. `update-snapshot.js` captures a
+fixed page list at desktop and 390px mobile (scrolls each page and waits for image
+decode first, so unchanged pages diff at exactly 0%; hard per-page timeout; CF7
+CAPTCHA masked). `update-compare.sh` diffs two runs with ImageMagick and writes a
+self-contained compare folder (`index.html` + before/after/diff images), exiting 1
+when a shot changed more than `--threshold` percent.
+
+```bash
+wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt
+wp-ops update-snapshot http://example.test --out=snapshots/after --pages-file=pages.txt
+wp-ops update-compare snapshots/before snapshots/after --out=snapshots/compare
+```
+
+Setup (`npm install && npx playwright install chromium` in `scripts/updates/`) and
+the full round: [updates/README.md](updates/README.md).
 
 ---
 

@@ -66,7 +66,23 @@ Publishes an HTML draft with block markup (create or `--update`), uploads the fe
 image, then checks that the blocks, JSON-LD and links survived the write and render on
 the live page.
 
-### 4. Hand all of it to Claude
+### 4. See what an update changed
+
+```bash
+wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt
+# ...update plugins, theme or core...
+wp-ops update-snapshot http://example.test --out=snapshots/after --pages-file=pages.txt
+wp-ops update-compare snapshots/before snapshots/after   # % changed per page + compare page
+```
+
+Optional, for update rounds. Screenshots the same pages at desktop and mobile before
+and after an update, then writes a before/after/diff compare page and exits non-zero
+if any page changed. Pages are scrolled and images decoded before capture, so an
+unchanged page diffs at 0%, not "1–3%, probably fine". Setup and the full round
+(local before/after, then production against local):
+[scripts/updates/README.md](scripts/updates/README.md).
+
+### 5. Hand all of it to Claude
 
 The same operations are exposed as [MCP](https://modelcontextprotocol.io) tools —
 `db_pull`, `files_pull`, `monitor`, `publish_post`, `verify_post`, `security_scan` and
