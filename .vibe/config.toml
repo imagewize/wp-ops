@@ -13,7 +13,6 @@ include_project_context = true
 include_prompt_detail = true
 enable_update_checks = true
 api_timeout = 720.0
-tool_paths = []
 enabled_tools = []
 disabled_tools = []
 installed_agents = [
