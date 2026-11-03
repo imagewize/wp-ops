@@ -1702,6 +1702,163 @@
     "annotated": true
   },
   {
+    "category": "scripts",
+    "key": "scripts/updates/update-compare",
+    "description": "Diff two update-snapshot runs and build a before/after compare page",
+    "script_path": "scripts/updates/update-compare.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "magick"
+    ],
+    "args": [
+      {
+        "name": "before-dir",
+        "required_raw": "required",
+        "required": true,
+        "default": "snapshots/before",
+        "description": "Directory from the first update-snapshot run",
+        "raw": "before-dir   required  {snapshots/before}  Directory from the first update-snapshot run"
+      },
+      {
+        "name": "after-dir",
+        "required_raw": "required",
+        "required": true,
+        "default": "snapshots/after",
+        "description": "Directory from the second update-snapshot run",
+        "raw": "after-dir    required  {snapshots/after}  Directory from the second update-snapshot run"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--out",
+        "required_raw": "optional",
+        "required": false,
+        "default": "snapshots/compare",
+        "description": "Compare folder to write (default: \u003cafter-dir\u003e-compare)",
+        "raw": "--out        optional  {snapshots/compare}  Compare folder to write (default: \u003cafter-dir\u003e-compare)"
+      },
+      {
+        "name": "--fuzz",
+        "required_raw": "optional",
+        "required": false,
+        "default": "15",
+        "description": "Per-pixel color tolerance in percent",
+        "raw": "--fuzz       optional  {15}  Per-pixel color tolerance in percent"
+      },
+      {
+        "name": "--threshold",
+        "required_raw": "optional",
+        "required": false,
+        "default": "0.5",
+        "description": "Percent of changed pixels that flags a shot",
+        "raw": "--threshold  optional  {0.5}  Percent of changed pixels that flags a shot"
+      },
+      {
+        "name": "--title",
+        "required_raw": "optional",
+        "required": false,
+        "default": "\"example.com update, Nov 3\"",
+        "description": "Heading for the compare page",
+        "raw": "--title      optional  {\"example.com update, Nov 3\"}  Heading for the compare page"
+      }
+    ],
+    "examples": [
+      "wp-ops update-compare snapshots/before snapshots/after --out=snapshots/compare"
+    ],
+    "manifest_category": "monitoring",
+    "platform": "any",
+    "mutates": true,
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
+    "key": "scripts/updates/update-snapshot",
+    "description": "Screenshot a fixed page list for before/after update comparison",
+    "script_path": "scripts/updates/update-snapshot.js",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "args": [
+      {
+        "name": "base-url",
+        "required_raw": "required",
+        "required": true,
+        "default": "http://example.test",
+        "description": "Site base URL, no trailing slash",
+        "raw": "base-url      required  {http://example.test}  Site base URL, no trailing slash"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--out",
+        "required_raw": "required",
+        "required": true,
+        "default": "snapshots/before",
+        "description": "Output directory",
+        "raw": "--out         required  {snapshots/before}  Output directory"
+      },
+      {
+        "name": "--pages",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/,/contact/",
+        "description": "Comma-separated paths to capture",
+        "raw": "--pages       optional  {/,/contact/}  Comma-separated paths to capture"
+      },
+      {
+        "name": "--pages-file",
+        "required_raw": "optional",
+        "required": false,
+        "default": "pages.txt",
+        "description": "File with one path per line (\"name|/path/\" allowed)",
+        "raw": "--pages-file  optional  {pages.txt}  File with one path per line (\"name|/path/\" allowed)"
+      },
+      {
+        "name": "--viewports",
+        "required_raw": "optional",
+        "required": false,
+        "default": "desktop,mobile",
+        "description": "Viewports: desktop, tablet, mobile",
+        "raw": "--viewports   optional  {desktop,mobile}  Viewports: desktop, tablet, mobile"
+      },
+      {
+        "name": "--mask",
+        "required_raw": "optional",
+        "required": false,
+        "default": ".cookie-button",
+        "description": "Extra CSS selectors to hide before capture",
+        "raw": "--mask        optional  {.cookie-button}  Extra CSS selectors to hide before capture"
+      },
+      {
+        "name": "--no-default-mask",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Don't hide the Contact Form 7 CAPTCHA",
+        "raw": "--no-default-mask optional  {}  Don't hide the Contact Form 7 CAPTCHA"
+      },
+      {
+        "name": "--timeout",
+        "required_raw": "optional",
+        "required": false,
+        "default": "60",
+        "description": "Seconds per capture before giving up",
+        "raw": "--timeout     optional  {60}  Seconds per capture before giving up"
+      }
+    ],
+    "examples": [
+      "wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt"
+    ],
+    "manifest_category": "monitoring",
+    "platform": "any",
+    "mutates": true,
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
     "category": "trellis",
     "key": "trellis/backup/database-backup",
     "description": "Back up a site's database from any environment (development/staging/production)",
