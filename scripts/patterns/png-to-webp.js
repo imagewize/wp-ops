@@ -36,7 +36,17 @@
  * @example  wp-ops png-to-webp --all --dir=./screenshots --quality=90
  */
 
-const sharp = require('sharp');
+// Same lookup as screenshot-url.js: next to this script first, then the
+// current project. The Homebrew asset cache ships no node_modules.
+let sharp;
+try {
+  sharp = require(require.resolve('sharp', { paths: [__dirname, process.cwd()] }));
+} catch {
+  console.error('Error: sharp not found, neither next to this script nor in the current directory.');
+  console.error('Either run from a project that has sharp installed, or install it here:');
+  console.error(`  cd "${__dirname}" && npm install`);
+  process.exit(1);
+}
 const fs = require('fs');
 const path = require('path');
 
