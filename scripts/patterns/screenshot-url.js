@@ -38,7 +38,19 @@
  * @example  wp-ops screenshot-url http://example.test/my-page/ --out=pattern.png
  */
 
-const { chromium } = require('playwright');
+// Look for Playwright next to this script first (a wp-ops checkout after
+// `npm install` here), then in the current project (a site that already has
+// Playwright tests). A Homebrew install runs this script from wp-ops' asset
+// cache, where nothing is installed until you do it.
+let chromium;
+try {
+  ({ chromium } = require(require.resolve('playwright', { paths: [__dirname, process.cwd()] })));
+} catch {
+  console.error('Error: Playwright not found, neither next to this script nor in the current directory.');
+  console.error('Either run from a project that has Playwright installed, or install it here:');
+  console.error(`  cd "${__dirname}" && npm install && npx playwright install chromium`);
+  process.exit(1);
+}
 const fs = require('fs');
 const path = require('path');
 

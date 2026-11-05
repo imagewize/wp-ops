@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.42.1] - 2026-11-05
+
+### Fixed
+
+- **`screenshot-url` and `png-to-webp` failed from a Homebrew install with a bare
+  `Cannot find module` stack trace.** Both loaded Playwright/sharp with a plain
+  `require()`, which only searches next to the script, and the Homebrew asset cache
+  (`~/Library/Caches/wp-ops/assets-<version>/`) ships no `node_modules`. They now use
+  the same lookup `update-snapshot` got in 5.42.0: next to the script first, then the
+  current directory, so running from a site project that has Playwright works with no
+  extra install. When neither has it, the error names the folder to `npm install` in.
+  Found running `wp-ops screenshot-url` from the seo-strategy repo for a 390px page
+  check. `scripts/patterns/README.md` documents the lookup.
+
 ## [5.42.0] - 2026-11-03
 
 ### Added

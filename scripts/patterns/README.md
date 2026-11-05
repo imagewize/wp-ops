@@ -12,6 +12,12 @@ npm install
 npx playwright install chromium
 ```
 
+Not needed when you run from a site project that already has Playwright (and sharp,
+for `png-to-webp`) installed: `screenshot-url.js` and `png-to-webp.js` look next to
+themselves first, then in the current directory. A Homebrew install runs them from
+wp-ops' asset cache, which has no `node_modules`, so run them from such a project or
+install in the folder the error message names.
+
 Also requires ImageMagick for `trim-screenshots.sh` / `center-screenshots.sh`:
 
 ```bash
