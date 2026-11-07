@@ -46,6 +46,7 @@ scripts/
 │   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
 │   ├── ssl-check.sh            # TLS certificate expiry/issuer/subject check via openssl; --warn-days alerts (GitHub Actions workflow via .github/workflows/ssl-expiry.yml)
 │   ├── store-audit.sh          # Audit a store's public URL with Min (AI-shopping readiness, price/stock truth check); --fail-under / --fail-on exit 2 as a deploy gate (curl + jq)
+│   ├── checkout-check.js       # Walk shop > product > cart > checkout on a WooCommerce store without placing an order; per-step timings; exit 2 if a step fails (node + Playwright)
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── traffic-by-country.sh   # Filter Nginx logs by visitor country (geoip2fast) and show real visits
 │   ├── updown-webhook-handler.sh     # Webhook event handler

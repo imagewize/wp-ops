@@ -805,6 +805,77 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/monitoring/checkout-check",
+    "description": "Walk shop \u003e product \u003e cart \u003e checkout on a WooCommerce store without placing an order; per-step timings",
+    "script_path": "scripts/monitoring/checkout-check.js",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "node"
+    ],
+    "args": [
+      {
+        "name": "url",
+        "required_raw": "required",
+        "required": true,
+        "default": "https://shop.example.com",
+        "description": "Store base URL (a subsite path like http://demo.test/shop-site is fine)",
+        "raw": "url  required  {https://shop.example.com}  Store base URL (a subsite path like http://demo.test/shop-site is fine)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--product",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/product/test-item/",
+        "description": "Simple product to add to the cart (default: first on the shop page)",
+        "raw": "--product      optional  {/product/test-item/}  Simple product to add to the cart (default: first on the shop page)"
+      },
+      {
+        "name": "--category",
+        "required_raw": "optional",
+        "required": false,
+        "default": "/product-category/test/",
+        "description": "Category page to load (default: discovered from the shop page)",
+        "raw": "--category     optional  {/product-category/test/}  Category page to load (default: discovered from the shop page)"
+      },
+      {
+        "name": "--screenshots",
+        "required_raw": "optional",
+        "required": false,
+        "default": "shots",
+        "description": "Directory for a screenshot of each failed step",
+        "raw": "--screenshots  optional  {shots}  Directory for a screenshot of each failed step"
+      },
+      {
+        "name": "--json",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Print the result as JSON only",
+        "raw": "--json         optional  {}  Print the result as JSON only"
+      },
+      {
+        "name": "--timeout",
+        "required_raw": "optional",
+        "required": false,
+        "default": "30",
+        "description": "Seconds per page load before the step fails",
+        "raw": "--timeout      optional  {30}  Seconds per page load before the step fails"
+      }
+    ],
+    "examples": [
+      "wp-ops checkout-check https://shop.example.com",
+      "wp-ops checkout-check http://demo.imagewize.test/winespring --screenshots=shots --json"
+    ],
+    "manifest_category": "monitoring",
+    "platform": "any",
+    "mutates": false,
+    "display_category": "monitoring",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/monitoring/error-monitor",
     "description": "Surface errors from Nginx, PHP-FPM, WordPress, MySQL, and systemd for a domain",
     "script_path": "scripts/monitoring/error-monitor.sh",

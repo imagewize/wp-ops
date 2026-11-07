@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`checkout-check`: does buying still work?** (`scripts/monitoring/checkout-check.js`).
+  `wp-ops checkout-check <store-url>` opens a fresh browser session and walks the shop,
+  a category, a product page, add to cart (product page and shop-grid AJAX, plus the
+  mini-cart count), the cart page and the checkout page. The cart totals are cross-checked
+  against the WooCommerce Store API, and block and shortcode checkouts are both detected.
+  It places no order, so it is safe on production. Every step reports pass, fail or skip
+  with its timing (cart and checkout bypass the page cache, so those are an uncached speed
+  number); `--screenshots=<dir>` saves a screenshot of each failed step and `--json` prints
+  the result as JSON. Exit 0 when nothing failed, 1 when it could not run, 2 when a step
+  failed, so it can gate an update round. Variable products are skipped unless `--product`
+  points at a simple one. Tested against the Winespring demo subsite (block checkout).
+
 ## [5.42.1] - 2026-11-05
 
 ### Fixed
