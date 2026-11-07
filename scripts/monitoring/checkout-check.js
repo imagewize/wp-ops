@@ -217,6 +217,15 @@ async function run(opts) {
     if ((await el.count()) && (await el.isVisible().catch(() => false))) await el.fill(value);
   }
 
+  // First link on the current page whose path is exactly /<word>/ with no query
+  // (a plain match on "/cart" also hits remove-item and add-to-cart links).
+  async function pageLink(word) {
+    const hrefs = await page.locator(`a[href*="/${word}"]`).evaluateAll((as) => as.map((a) => a.href));
+    return hrefs.find((h) => {
+      try { const u = new URL(h); return !u.search && new RegExp(`/${word}/?$`).test(u.pathname); } catch { return false; }
+    }) || null;
+  }
+
   async function step(id, name, fn) {
     const t0 = Date.now();
     const r = { id, name, status: 'pass', note: '', ms: 0 };
@@ -255,6 +264,10 @@ async function run(opts) {
         return `${n} products listed`;
       }
       last = new Error(`no products listed at ${page.url()}`);
+    }
+    // An order form or landing page instead of a shop: fine when the product is given.
+    if (opts.product && !(last && /^HTTP /.test(last.message))) {
+      throw new Skip('no product grid on the shop page (order form or landing page); using --product');
     }
     throw last;
   });
@@ -329,8 +342,7 @@ async function run(opts) {
   await step(5, 'cart page', async (r) => {
     const cart = await storeCart();
     if (cart.items_count === 0) throw new Skip('cart is empty (add to cart did not run)');
-    const cartHref = await page.locator('a[href*="/cart"]').first().getAttribute('href').catch(() => null);
-    const nav = await go(cartHref && /^https?:/.test(cartHref) ? cartHref : abs('/cart/'));
+    const nav = await go((await pageLink('cart')) || abs('/cart/'));
     state.cartUrl = page.url();
     r.navMs = nav.ms;
     const rows = await page.locator(SEL.cartRows).count();
@@ -354,8 +366,7 @@ async function run(opts) {
   // 6 checkout
   await step(6, 'checkout page', async (r) => {
     if (!state.cartTotals) throw new Skip('no cart to check out');
-    const cartHref = await page.locator('a[href*="/checkout"]').first().getAttribute('href').catch(() => null);
-    const nav = await go(cartHref && /^https?:/.test(cartHref) ? cartHref : abs('/checkout/'));
+    const nav = await go((await pageLink('checkout')) || abs('/checkout/'));
     state.checkoutUrl = page.url();
     r.navMs = nav.ms;
     if (!/checkout/.test(new URL(page.url()).pathname)) throw new Error(`checkout redirected to ${page.url()}`);

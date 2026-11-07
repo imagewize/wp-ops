@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tested on the Winespring demo subsite of the local Trellis multisite: orders placed with
     cash on delivery and bank transfer, the Mailpit email found, the order deleted, and a
     switched-off bank transfer gateway enabled for the run and restored.
+  - Order-form shops (a shop page with no product grid) are handled: with `--product` that step
+    is skipped, not failed. Tested read-only on `workcycles.test` (shortcode checkout).
   - `checkout-check` is catalogued `@mutates true` because of `--place-order`, so the MCP
     `command_run` tool needs `confirm: true` for it; a read-only MCP wrapper is planned.
 
