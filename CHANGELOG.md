@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.43.1] - 2026-11-07
+
+### Fixed
+
+- **`checkout-check`: a block checkout with no payment methods no longer passes step 6.**
+  The payment selector included `.wc-block-components-radio-control--highlight-checked`, which
+  also matches the empty container, so a checkout that said "There are no payment methods
+  available" was still counted as "1 payment method(s)". Found by planting that break on a local
+  copy: the read-only run passed it and only `--place-order` caught it. The selector now counts
+  real options only. Because the options render a moment after the billing fields, the step now
+  waits for an option or the "no payment methods" message before counting. The planted break now
+  fails step 6 in a read-only run, and the unbroken checkout still passes it.
+
 ## [5.43.0] - 2026-11-07
 
 ### Added
