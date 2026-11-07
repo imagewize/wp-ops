@@ -60,7 +60,8 @@
  * @flag     --payment      optional  {cod}  Payment method id for --place-order (default: cod, bacs or cheque, whichever the checkout offers)
  * @flag     --enable-payment optional  {bacs}  Turn this offline gateway on for the run and restore it afterwards (needs --wp; shoppers can see it meanwhile)
  * @flag     --email        optional  {wp-ops-checkout-check+1@example.test}  Billing email for the test order (must start with wp-ops-checkout-check)
- * @flag     --mailpit      optional  {http://imagewize.test:8025}  Mailpit URL: check that the order confirmation email arrives
+ * @flag     --mailpit      optional  {http://imagewize.test:8025}  Mailpit or MailHog URL: check that the order confirmation email arrives (API auto-detected)
+ * @flag     --mailhog      optional  {http://localhost:8025}  Same as --mailpit
  * @flag     --cleanup      optional  {}  Delete the marked test order afterwards (needs --place-order and --wp)
  * @flag     --wp           optional  {trellis vm shell --workdir /srv/www/site/current -- wp}  WP-CLI command prefix for --cleanup
  * @flag     --wp-dir       optional  {~/code/site/trellis}  Directory to run the --wp command from
@@ -93,7 +94,7 @@ try {
 
 const MARKER = 'wp-ops-checkout-check';
 const USAGE = 'Usage: checkout-check.js <store-url> [--product=/path/] [--category=/path/] [--screenshots=dir] [--json] [--timeout=30]\n' +
-  '       [--place-order [--allow-production] [--payment=cod] [--enable-payment=bacs] [--email=wp-ops-checkout-check+1@example.test] [--mailpit=URL]\n' +
+  '       [--place-order [--allow-production] [--payment=cod] [--enable-payment=bacs] [--email=wp-ops-checkout-check+1@example.test] [--mailpit=URL|--mailhog=URL]\n' +
   '        [--cleanup --wp="<wp-cli prefix>" [--wp-dir=dir] [--wp-user=1]]]';
 
 function parseArgs(argv) {
@@ -112,6 +113,7 @@ function parseArgs(argv) {
     else if (a.startsWith('--enable-payment=')) opts.enablePayment = a.slice(17);
     else if (a.startsWith('--email=')) opts.email = a.slice(8);
     else if (a.startsWith('--mailpit=')) opts.mailpit = a.slice(10).replace(/\/+$/, '');
+    else if (a.startsWith('--mailhog=')) opts.mailpit = a.slice(10).replace(/\/+$/, '');
     else if (a.startsWith('--wp=')) opts.wp = a.slice(5);
     else if (a.startsWith('--wp-dir=')) opts.wpDir = a.slice(9).replace(/^~(?=\/|$)/, os.homedir());
     else if (a.startsWith('--wp-user=')) opts.wpUser = a.slice(10);
@@ -168,8 +170,8 @@ const SEL = {
   products: 'li.product, .wc-block-product, .wp-block-post.product, .wc-block-grid__product',
   productLink: 'li.product a[href*="/product/"], .wc-block-product a[href*="/product/"], .wp-block-post.product a[href*="/product/"], .wc-block-grid__product a[href*="/product/"]',
   price: '.price .amount, .wp-block-woocommerce-product-price, .woocommerce-Price-amount, .wc-block-components-product-price',
-  addButton: 'button.single_add_to_cart_button, form.cart button[type="submit"], .wp-block-add-to-cart-form button[type="submit"]',
-  variations: 'form.variations_form, table.variations, .wc-block-add-to-cart-with-options-variation-selector',
+  addButton: 'button.single_add_to_cart_button, form.cart button[type="submit"], .wp-block-add-to-cart-form button[type="submit"], .wc-block-add-to-cart-with-options button[type="submit"]',
+  variations: 'form.variations_form, table.variations, .wp-block-woocommerce-add-to-cart-with-options-variation-selector',
   ajaxButton: 'a.ajax_add_to_cart.product_type_simple, .wc-block-components-product-button button:not(.disabled)',
   miniCart: '.wc-block-mini-cart__badge, .cart-contents-count, .cart-count, .header-cart-count',
   cartRows: 'tr.cart_item, .wc-block-cart-items__row',
@@ -212,9 +214,77 @@ async function run(opts) {
     }, opts.base);
   }
 
+  // Click the visible label like a shopper (the block checkout only registers
+  // real clicks). Themes that hide the input and its label fall back to a click
+  // in the page, which classic checkouts accept.
+  async function tick(locator) {
+    const id = await locator.getAttribute('id');
+    const label = id ? page.locator(`label[for="${id}"]`).first() : null;
+    if (label && (await label.isVisible().catch(() => false))) await label.click();
+    else if (await locator.isVisible().catch(() => false)) await locator.click();
+    else await locator.evaluate((n) => n.click());
+  }
+
   async function fillIf(selector, value) {
     const el = page.locator(selector).first();
     if ((await el.count()) && (await el.isVisible().catch(() => false))) await el.fill(value);
+  }
+
+  // Pick an option for every attribute of a classic variation form until the
+  // add-to-cart button is usable. Returns the chosen options, e.g. "color=Red".
+  async function chooseVariation() {
+    const form = page.locator('form.variations_form').first();
+    if (!(await form.count())) return chooseBlockVariation();
+    const selects = form.locator('select[name^="attribute_"]');
+    const n = await selects.count();
+    const usable = 'button.single_add_to_cart_button:not(.disabled):not(.wc-variation-selection-needed):not(.wc-variation-is-unavailable)';
+    for (let k = 0; k < 4; k++) {
+      const picked = [];
+      for (let i = 0; i < n; i++) {
+        const sel = selects.nth(i);
+        const opts = await sel.locator('option:not([value=""]):not([disabled])').evaluateAll((os) => os.map((o) => [o.value, o.textContent.trim()]));
+        if (!opts.length) continue;
+        const [val, label] = opts[Math.min(k, opts.length - 1)];
+        await sel.selectOption(val);
+        picked.push(`${(await sel.getAttribute('name')).replace('attribute_', '')}=${label}`);
+      }
+      await page.waitForTimeout(800);
+      if (await page.locator(usable).count()) return picked.join(', ');
+    }
+    throw new Error('no variation combination made add to cart available (all combinations unavailable?)');
+  }
+
+  // WooCommerce's block variation selector: one group per attribute, with
+  // radio "chips" (or a select) inside; the form has .is-invalid until valid.
+  async function chooseBlockVariation() {
+    const form = page.locator('form.wc-block-add-to-cart-with-options').first();
+    const groups = form.locator('.wp-block-woocommerce-add-to-cart-with-options-variation-selector-attribute');
+    const n = await groups.count();
+    if (!n) throw new Skip('variable product with a variation selector this check does not know (pass a simple --product)');
+    for (let k = 0; k < 4; k++) {
+      const picked = [];
+      for (let i = 0; i < n; i++) {
+        const g = groups.nth(i);
+        const name = (await g.locator('[class*="attribute-name"]').first().innerText().catch(() => `attribute ${i + 1}`)).trim();
+        const chips = g.locator('.wc-block-product-filter-chips__item:not([disabled])');
+        const cn = await chips.count();
+        if (cn) {
+          const chip = chips.nth(Math.min(k, cn - 1));
+          picked.push(`${name}=${(await chip.innerText()).trim()}`);
+          await chip.click();
+        } else {
+          const sel = g.locator('select').first();
+          const vals = await sel.locator('option:not([value=""]):not([disabled])').evaluateAll((os) => os.map((o) => [o.value, o.textContent.trim()]));
+          if (!vals.length) continue;
+          const [val, label] = vals[Math.min(k, vals.length - 1)];
+          await sel.selectOption(val);
+          picked.push(`${name}=${label}`);
+        }
+      }
+      await page.waitForTimeout(800);
+      if (!(await form.evaluate((f) => f.classList.contains('is-invalid')))) return picked.join(', ');
+    }
+    throw new Error('no variation combination made the add-to-cart form valid');
   }
 
   // First link on the current page whose path is exactly /<word>/ with no query
@@ -288,10 +358,7 @@ async function run(opts) {
     if (!target) throw new Skip('no product found (shop step failed; pass --product)');
     await go(target);
     state.productUrl = page.url();
-    if (await page.locator(SEL.variations).count()) {
-      state.variable = true;
-      throw new Skip('variable product: pass --product with a simple product to test add to cart');
-    }
+    if (await page.locator(SEL.variations).count()) state.variable = true;
     if (!(await page.locator(SEL.price).first().isVisible().catch(() => false))) throw new Error('no visible price');
     if (!(await page.locator(SEL.addButton).first().isVisible().catch(() => false))) throw new Error('add-to-cart button not visible');
     return 'price and add-to-cart visible';
@@ -299,10 +366,11 @@ async function run(opts) {
 
   // 4 add to cart
   await step(4, 'add to cart', async () => {
-    if (!state.productUrl || state.variable) throw new Skip('no simple product page to add from');
+    if (!state.productUrl) throw new Skip('no product page to add from');
     if (page.url() !== state.productUrl) await go(state.productUrl);
     const before = (await storeCart()).items_count;
     const notes = [];
+    if (state.variable) notes.push(`variation: ${await chooseVariation()}`);
     await Promise.all([
       page.waitForLoadState('load').catch(() => {}),
       page.locator(SEL.addButton).first().click(),
@@ -311,6 +379,7 @@ async function run(opts) {
     const after = await storeCart();
     if (after.items_count <= before) throw new Error(`cart did not change after clicking add to cart (${before} -> ${after.items_count})`);
     notes.push(`product page add OK (${after.items_count} in cart)`);
+    if (state.variable) state.variableAdded = true;
 
     // Mini-cart count, if the theme has one.
     const badge = page.locator(SEL.miniCart).first();
@@ -422,11 +491,14 @@ async function run(opts) {
       const method = wanted.find((m) => ids.includes(m));
       if (!method) throw new Error(`no offline payment method to use (offered: ${ids.join(', ') || 'none'}; wanted: ${wanted.join(', ')})`);
       r.payment = method;
-      await page.locator(`input[value="${method}"][name="radio-control-wc-payment-method-options"], #payment_method_${method}`).first().check({ force: true });
+      await tick(page.locator(`input[value="${method}"][name="radio-control-wc-payment-method-options"], #payment_method_${method}`).first());
+      if (!(await page.locator(`input[value="${method}"][name="radio-control-wc-payment-method-options"], #payment_method_${method}`).first().evaluate((n) => n.checked))) {
+        throw new Error(`could not select the ${method} payment method`);
+      }
 
       for (const sel of ['#terms', '.wc-block-checkout__terms input[type="checkbox"]']) {
         const box = page.locator(sel).first();
-        if ((await box.count()) && !(await box.isChecked())) await box.check({ force: true });
+        if ((await box.count()) && !(await box.evaluate((n) => n.checked))) await tick(box);
       }
 
       // The block checkout re-prices after the method changes; click only once
@@ -470,14 +542,11 @@ async function run(opts) {
       const deadline = Date.now() + 20000;
       let found;
       while (Date.now() < deadline && !found) {
-        const res = await fetch(`${opts.mailpit}/api/v1/search?query=${encodeURIComponent('to:' + opts.email)}`).catch(() => null);
-        if (!res || !res.ok) throw new Error(`Mailpit not reachable at ${opts.mailpit}`);
-        const j = await res.json();
-        found = (j.messages || [])[0];
+        found = await findMail(opts.mailpit, opts.email);
         if (!found) await new Promise((ok) => setTimeout(ok, 1500));
       }
       if (!found) throw new Error(`no email to ${opts.email} within 20 s`);
-      return `"${found.Subject}" arrived`;
+      return `"${found}" arrived`;
     });
 
     // 9 cleanup
@@ -496,6 +565,20 @@ async function run(opts) {
 
   await browser.close();
   return { results, consoleErrors };
+}
+
+// Subject of the first mail to <email> in Mailpit or MailHog, or null. Mailpit
+// answers /api/v1/search; MailHog answers /api/v2/search.
+async function findMail(root, email) {
+  const get = async (url) => { try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; } };
+  const mp = await get(`${root}/api/v1/search?query=${encodeURIComponent('to:' + email)}`);
+  if (mp) return (mp.messages || [])[0] ? mp.messages[0].Subject : null;
+  const mh = await get(`${root}/api/v2/search?kind=to&query=${encodeURIComponent(email)}`);
+  if (mh) {
+    const m = (mh.items || [])[0];
+    return m ? ((m.Content.Headers.Subject || [''])[0] || '(no subject)') : null;
+  }
+  throw new Error(`no Mailpit or MailHog API at ${root}`);
 }
 
 function wpRun(opts, cmd) {

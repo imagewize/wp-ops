@@ -20,14 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fail or skip with its timing (cart and checkout bypass the page cache, so those are an
   uncached speed number); `--screenshots=<dir>` saves a screenshot of each failed step and
   `--json` prints the result as JSON. Exit 0 when nothing failed, 1 when it could not run,
-  2 when a step failed, so it can gate an update round. Variable products are skipped
-  unless `--product` points at a simple one.
+  2 when a step failed, so it can gate an update round. Variable products work: it picks an
+  option for every attribute (classic variation form, or WooCommerce's block selector with
+  chips or dropdowns) and tries other combinations until add to cart is available.
 - **`checkout-check --place-order`: a real test purchase on local or staging.** Fills the
   checkout with marked test data (billing email `wp-ops-checkout-check+<timestamp>@example.test`,
   an address that validates for the store's country), pays with an offline method (`cod`,
   `bacs` or `cheque`, or `--payment=<id>`; never a card), and checks the order-received page.
-  - `--mailpit=<url>` waits up to 20 s for the confirmation email in Mailpit (the Trellis VM
-    runs it at `http://<site>.test:8025`); without it that step is skipped, not failed.
+  - `--mailpit=<url>` (or `--mailhog=<url>`; the API is auto-detected) waits up to 20 s for the
+    confirmation email (the Trellis VM runs Mailpit at `http://<site>.test:8025`, a Valet
+    setup often MailHog at `http://localhost:8025`); without it that step is skipped, not failed.
   - `--cleanup --wp="<wp-cli prefix>" [--wp-dir] [--wp-user]` deletes the order afterwards via
     `wp wc shop_order delete`, but only after reading it back and finding the
     `wp-ops-checkout-check` marker in its billing email.
@@ -39,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     A production store needs `--allow-production`, which a site's update manifest should only
     pass after the client has agreed in writing: cleanup does not undo webhooks, ERP sync or
     emails that already fired.
+  - Tested on a Valet copy of workcycles.test (Oxygen, many plugins, shortcode checkout,
+    variable product, MailHog): test order placed with bank transfer, email found, order
+    deleted. Radio buttons and checkboxes are clicked through their visible label, which the
+    block checkout needs; themes that hide the inputs get a click in the page instead.
   - Tested on the Winespring demo subsite of the local Trellis multisite: orders placed with
     cash on delivery and bank transfer, the Mailpit email found, the order deleted, and a
     switched-off bank transfer gateway enabled for the run and restored.

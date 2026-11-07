@@ -220,14 +220,14 @@ wp-ops checkout-check http://shop.test --place-order --mailpit=http://shop.test:
 
 `--place-order` pays with `cod`, `bacs` or `cheque` (never a card), uses a billing email
 that starts with `wp-ops-checkout-check`, and refuses to run on a host that does not look
-like local or staging. `--cleanup` only deletes an order whose billing email carries that
+like local or staging. `--mailpit` and `--mailhog` take the same flag value and detect the API. `--cleanup` only deletes an order whose billing email carries that
 marker. `--enable-payment=bacs` switches an offline gateway on for the run and restores it
 afterwards. On production a test order also fires webhooks, ERP sync and emails that
 cleanup cannot undo: use `--allow-production` only with the client's written OK.
 
 A local copy of a client site is still wired to the client's mail: check the WooCommerce
 recipients (`wp option get woocommerce_new_order_settings`) and where local mail goes
-(Mailpit on Trellis; a plain `sendmail` can deliver for real) before the first
+(Mailpit on Trellis, often MailHog on Valet through an mu-plugin; a plain `sendmail` can deliver for real) before the first
 `--place-order`. `--place-order` cannot tell. Run order-form shops with `--product` set;
 a shop page without a product grid is then a skip, not a failure.
 
