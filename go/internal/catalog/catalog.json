@@ -891,8 +891,16 @@
         "required_raw": "optional",
         "required": false,
         "default": "http://imagewize.test:8025",
-        "description": "Mailpit URL: check that the order confirmation email arrives",
-        "raw": "--mailpit      optional  {http://imagewize.test:8025}  Mailpit URL: check that the order confirmation email arrives"
+        "description": "Mailpit or MailHog URL: check that the order confirmation email arrives (API auto-detected)",
+        "raw": "--mailpit      optional  {http://imagewize.test:8025}  Mailpit or MailHog URL: check that the order confirmation email arrives (API auto-detected)"
+      },
+      {
+        "name": "--mailhog",
+        "required_raw": "optional",
+        "required": false,
+        "default": "http://localhost:8025",
+        "description": "Same as --mailpit",
+        "raw": "--mailhog      optional  {http://localhost:8025}  Same as --mailpit"
       },
       {
         "name": "--cleanup",
