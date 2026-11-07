@@ -46,7 +46,7 @@ scripts/
 │   ├── server-monitor.sh       # Live CPU/memory/disk/PHP-FPM/MySQL/nginx resource snapshot over SSH
 │   ├── ssl-check.sh            # TLS certificate expiry/issuer/subject check via openssl; --warn-days alerts (GitHub Actions workflow via .github/workflows/ssl-expiry.yml)
 │   ├── store-audit.sh          # Audit a store's public URL with Min (AI-shopping readiness, price/stock truth check); --fail-under / --fail-on exit 2 as a deploy gate (curl + jq)
-│   ├── checkout-check.js       # Walk shop > product > cart > checkout on a WooCommerce store without placing an order; per-step timings; exit 2 if a step fails (node + Playwright)
+│   ├── checkout-check.js       # Walk shop > product > cart > checkout on a WooCommerce store; read-only by default, --place-order for a marked test order on local/staging; per-step timings; exit 2 if a step fails (node + Playwright)
 │   ├── traffic-monitor.sh      # Nginx traffic analysis and reporting
 │   ├── traffic-by-country.sh   # Filter Nginx logs by visitor country (geoip2fast) and show real visits
 │   ├── updown-webhook-handler.sh     # Webhook event handler
@@ -195,6 +195,38 @@ Site-specific QA checks (e.g. verifying a custom carousel block's JS state) are 
 coupled to a particular block/theme to generalize usefully — write those as one-off
 Playwright scripts in the project itself, using `screenshot-url.js` as a starting
 point.
+
+---
+
+## Checkout Check
+
+### checkout-check.js
+
+Does buying still work on a WooCommerce store? `checkout-check.js` walks the shop, a
+category, a product, add to cart (product page and shop-grid AJAX), the cart page and
+the checkout in a real browser, and reports pass, fail or skip per step with timings.
+Cart totals are checked against the Store API; block and shortcode checkouts are
+detected. Exits 0 when nothing failed, 1 when it could not run, 2 when a step failed.
+
+```bash
+# Read-only: places no order, fine on production
+wp-ops checkout-check https://shop.example.com --screenshots=shots
+
+# Local or staging: place a marked test order, check the email, delete the order
+wp-ops checkout-check http://shop.test --place-order --mailpit=http://shop.test:8025 \
+  --cleanup --wp-dir=~/code/shop/trellis \
+  --wp="trellis vm shell --workdir /srv/www/shop.test/current -- wp"
+```
+
+`--place-order` pays with `cod`, `bacs` or `cheque` (never a card), uses a billing email
+that starts with `wp-ops-checkout-check`, and refuses to run on a host that does not look
+like local or staging. `--cleanup` only deletes an order whose billing email carries that
+marker. `--enable-payment=bacs` switches an offline gateway on for the run and restores it
+afterwards. On production a test order also fires webhooks, ERP sync and emails that
+cleanup cannot undo: use `--allow-production` only with the client's written OK.
+
+Needs Playwright: it looks next to the script, in the current directory, then in
+`scripts/updates/` (`npm install && npx playwright install chromium` there).
 
 ---
 

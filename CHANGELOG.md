@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.43.0] - 2026-11-07
+
 ### Added
 
 - **`checkout-check`: does buying still work?** (`scripts/monitoring/checkout-check.js`).
@@ -14,12 +16,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a category, a product page, add to cart (product page and shop-grid AJAX, plus the
   mini-cart count), the cart page and the checkout page. The cart totals are cross-checked
   against the WooCommerce Store API, and block and shortcode checkouts are both detected.
-  It places no order, so it is safe on production. Every step reports pass, fail or skip
-  with its timing (cart and checkout bypass the page cache, so those are an uncached speed
-  number); `--screenshots=<dir>` saves a screenshot of each failed step and `--json` prints
-  the result as JSON. Exit 0 when nothing failed, 1 when it could not run, 2 when a step
-  failed, so it can gate an update round. Variable products are skipped unless `--product`
-  points at a simple one. Tested against the Winespring demo subsite (block checkout).
+  By default it places no order, so it is safe on production. Every step reports pass,
+  fail or skip with its timing (cart and checkout bypass the page cache, so those are an
+  uncached speed number); `--screenshots=<dir>` saves a screenshot of each failed step and
+  `--json` prints the result as JSON. Exit 0 when nothing failed, 1 when it could not run,
+  2 when a step failed, so it can gate an update round. Variable products are skipped
+  unless `--product` points at a simple one.
+- **`checkout-check --place-order`: a real test purchase on local or staging.** Fills the
+  checkout with marked test data (billing email `wp-ops-checkout-check+<timestamp>@example.test`,
+  an address that validates for the store's country), pays with an offline method (`cod`,
+  `bacs` or `cheque`, or `--payment=<id>`; never a card), and checks the order-received page.
+  - `--mailpit=<url>` waits up to 20 s for the confirmation email in Mailpit (the Trellis VM
+    runs it at `http://<site>.test:8025`); without it that step is skipped, not failed.
+  - `--cleanup --wp="<wp-cli prefix>" [--wp-dir] [--wp-user]` deletes the order afterwards via
+    `wp wc shop_order delete`, but only after reading it back and finding the
+    `wp-ops-checkout-check` marker in its billing email.
+  - `--enable-payment=<gateway>` (with `--wp`) turns an offline gateway on for the run, for a
+    store that has none, and restores its previous state when the run ends, fails or is
+    interrupted. Shoppers can see the method while it is on, so prefer local.
+  - **Guard:** it refuses to place an order on a host that does not look like local or
+    staging (`.test`, `.local`, `.localhost`, private IPs, or a `staging`/`dev`/`uat` label).
+    A production store needs `--allow-production`, which a site's update manifest should only
+    pass after the client has agreed in writing: cleanup does not undo webhooks, ERP sync or
+    emails that already fired.
+  - Tested on the Winespring demo subsite of the local Trellis multisite: orders placed with
+    cash on delivery and bank transfer, the Mailpit email found, the order deleted, and a
+    switched-off bank transfer gateway enabled for the run and restored.
+  - `checkout-check` is catalogued `@mutates true` because of `--place-order`, so the MCP
+    `command_run` tool needs `confirm: true` for it; a read-only MCP wrapper is planned.
 
 ## [5.42.1] - 2026-11-05
 

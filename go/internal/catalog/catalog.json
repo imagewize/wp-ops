@@ -806,7 +806,7 @@
   {
     "category": "scripts",
     "key": "scripts/monitoring/checkout-check",
-    "description": "Walk shop \u003e product \u003e cart \u003e checkout on a WooCommerce store without placing an order; per-step timings",
+    "description": "Walk shop \u003e product \u003e cart \u003e checkout on a WooCommerce store; read-only by default, --place-order for a test purchase on local/staging",
     "script_path": "scripts/monitoring/checkout-check.js",
     "runs_on": "local",
     "runs": "local",
@@ -849,6 +849,83 @@
         "raw": "--screenshots  optional  {shots}  Directory for a screenshot of each failed step"
       },
       {
+        "name": "--place-order",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Also place a test order with an offline payment method (local/staging hosts only)",
+        "raw": "--place-order  optional  {}  Also place a test order with an offline payment method (local/staging hosts only)"
+      },
+      {
+        "name": "--allow-production",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Allow --place-order on a host that does not look like local/staging (needs the client's written OK)",
+        "raw": "--allow-production optional  {}  Allow --place-order on a host that does not look like local/staging (needs the client's written OK)"
+      },
+      {
+        "name": "--payment",
+        "required_raw": "optional",
+        "required": false,
+        "default": "cod",
+        "description": "Payment method id for --place-order (default: cod, bacs or cheque, whichever the checkout offers)",
+        "raw": "--payment      optional  {cod}  Payment method id for --place-order (default: cod, bacs or cheque, whichever the checkout offers)"
+      },
+      {
+        "name": "--enable-payment",
+        "required_raw": "optional",
+        "required": false,
+        "default": "bacs",
+        "description": "Turn this offline gateway on for the run and restore it afterwards (needs --wp; shoppers can see it meanwhile)",
+        "raw": "--enable-payment optional  {bacs}  Turn this offline gateway on for the run and restore it afterwards (needs --wp; shoppers can see it meanwhile)"
+      },
+      {
+        "name": "--email",
+        "required_raw": "optional",
+        "required": false,
+        "default": "wp-ops-checkout-check+1@example.test",
+        "description": "Billing email for the test order (must start with wp-ops-checkout-check)",
+        "raw": "--email        optional  {wp-ops-checkout-check+1@example.test}  Billing email for the test order (must start with wp-ops-checkout-check)"
+      },
+      {
+        "name": "--mailpit",
+        "required_raw": "optional",
+        "required": false,
+        "default": "http://imagewize.test:8025",
+        "description": "Mailpit URL: check that the order confirmation email arrives",
+        "raw": "--mailpit      optional  {http://imagewize.test:8025}  Mailpit URL: check that the order confirmation email arrives"
+      },
+      {
+        "name": "--cleanup",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Delete the marked test order afterwards (needs --place-order and --wp)",
+        "raw": "--cleanup      optional  {}  Delete the marked test order afterwards (needs --place-order and --wp)"
+      },
+      {
+        "name": "--wp",
+        "required_raw": "optional",
+        "required": false,
+        "default": "trellis vm shell --workdir /srv/www/site/current -- wp",
+        "description": "WP-CLI command prefix for --cleanup",
+        "raw": "--wp           optional  {trellis vm shell --workdir /srv/www/site/current -- wp}  WP-CLI command prefix for --cleanup"
+      },
+      {
+        "name": "--wp-dir",
+        "required_raw": "optional",
+        "required": false,
+        "default": "~/code/site/trellis",
+        "description": "Directory to run the --wp command from",
+        "raw": "--wp-dir       optional  {~/code/site/trellis}  Directory to run the --wp command from"
+      },
+      {
+        "name": "--wp-user",
+        "required_raw": "optional",
+        "required": false,
+        "default": "1",
+        "description": "WordPress admin user id for wp wc commands (default: 1)",
+        "raw": "--wp-user      optional  {1}  WordPress admin user id for wp wc commands (default: 1)"
+      },
+      {
         "name": "--json",
         "required_raw": "optional",
         "required": false,
@@ -866,11 +943,12 @@
     ],
     "examples": [
       "wp-ops checkout-check https://shop.example.com",
-      "wp-ops checkout-check http://demo.imagewize.test/winespring --screenshots=shots --json"
+      "wp-ops checkout-check http://demo.imagewize.test/winespring --screenshots=shots --json",
+      "wp-ops checkout-check http://demo.imagewize.test/winespring --place-order --mailpit=http://imagewize.test:8025 --cleanup --wp-dir=~/code/imagewize.com/trellis --wp=\"trellis vm shell --workdir /srv/www/demo.imagewize.com/current -- wp\""
     ],
     "manifest_category": "monitoring",
     "platform": "any",
-    "mutates": false,
+    "mutates": true,
     "display_category": "monitoring",
     "annotated": true
   },

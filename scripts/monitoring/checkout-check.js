@@ -1,13 +1,27 @@
 #!/usr/bin/env node
 
 /**
- * Walk a WooCommerce store's buying path without placing an order
+ * Walk a WooCommerce store's buying path, by default without placing an order
  *
  * Opens a fresh browser session, loads the shop, a category and a product,
  * adds the product to the cart, checks the cart page and its totals against
- * the WooCommerce Store API, and loads the checkout page. It stops there:
- * no order is placed, so it is safe on production. The cart session it
+ * the WooCommerce Store API, and loads the checkout page. By default it stops
+ * there: no order is placed, so it is safe on production. The cart session it
  * creates is abandoned.
+ *
+ * With --place-order it goes on: fills the checkout with marked test data,
+ * pays with an offline method (cash on delivery, bank transfer or cheque; no
+ * card, ever), checks the order-received page, optionally the confirmation
+ * email in Mailpit, and with --cleanup deletes the marked order again via
+ * WP-CLI. It refuses to run on a host that does not look like local or
+ * staging unless you pass --allow-production, which a site's update manifest
+ * should only allow after the client has agreed in writing (cleanup does not
+ * undo webhooks, ERP sync or emails that already fired).
+ *
+ * A store with no offline payment method can have one switched on just for
+ * the run: --enable-payment=bacs (with --wp) enables the gateway, and puts it
+ * back to its previous state when the run ends, fails or is interrupted. Real
+ * shoppers can see the method while it is on, so prefer local for this.
  *
  * Each step reports pass, fail or skip with its timing. Cart and checkout
  * bypass the page cache, so those timings are an uncached speed number. A
@@ -31,24 +45,37 @@
  * Requires Playwright: `npm install && npx playwright install chromium` in
  * scripts/updates/, or run from a project that has Playwright installed.
  *
- * @desc     Walk shop > product > cart > checkout on a WooCommerce store without placing an order; per-step timings
+ * @desc     Walk shop > product > cart > checkout on a WooCommerce store; read-only by default, --place-order for a test purchase on local/staging
  * @category monitoring
  * @platform any
  * @runs     local
- * @mutates  false
+ * @mutates  true
  * @requires node
  * @arg      url  required  {https://shop.example.com}  Store base URL (a subsite path like http://demo.test/shop-site is fine)
  * @flag     --product      optional  {/product/test-item/}  Simple product to add to the cart (default: first on the shop page)
  * @flag     --category     optional  {/product-category/test/}  Category page to load (default: discovered from the shop page)
  * @flag     --screenshots  optional  {shots}  Directory for a screenshot of each failed step
+ * @flag     --place-order  optional  {}  Also place a test order with an offline payment method (local/staging hosts only)
+ * @flag     --allow-production optional  {}  Allow --place-order on a host that does not look like local/staging (needs the client's written OK)
+ * @flag     --payment      optional  {cod}  Payment method id for --place-order (default: cod, bacs or cheque, whichever the checkout offers)
+ * @flag     --enable-payment optional  {bacs}  Turn this offline gateway on for the run and restore it afterwards (needs --wp; shoppers can see it meanwhile)
+ * @flag     --email        optional  {wp-ops-checkout-check+1@example.test}  Billing email for the test order (must start with wp-ops-checkout-check)
+ * @flag     --mailpit      optional  {http://imagewize.test:8025}  Mailpit URL: check that the order confirmation email arrives
+ * @flag     --cleanup      optional  {}  Delete the marked test order afterwards (needs --place-order and --wp)
+ * @flag     --wp           optional  {trellis vm shell --workdir /srv/www/site/current -- wp}  WP-CLI command prefix for --cleanup
+ * @flag     --wp-dir       optional  {~/code/site/trellis}  Directory to run the --wp command from
+ * @flag     --wp-user      optional  {1}  WordPress admin user id for wp wc commands (default: 1)
  * @flag     --json         optional  {}  Print the result as JSON only
  * @flag     --timeout      optional  {30}  Seconds per page load before the step fails
  * @example  wp-ops checkout-check https://shop.example.com
  * @example  wp-ops checkout-check http://demo.imagewize.test/winespring --screenshots=shots --json
+ * @example  wp-ops checkout-check http://demo.imagewize.test/winespring --place-order --mailpit=http://imagewize.test:8025 --cleanup --wp-dir=~/code/imagewize.com/trellis --wp="trellis vm shell --workdir /srv/www/demo.imagewize.com/current -- wp"
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // Same lookup as update-snapshot: next to this script, the current project,
 // then scripts/updates/ (where a wp-ops checkout installs Playwright).
@@ -64,10 +91,13 @@ try {
   process.exit(1);
 }
 
-const USAGE = 'Usage: checkout-check.js <store-url> [--product=/path/] [--category=/path/] [--screenshots=dir] [--json] [--timeout=30]';
+const MARKER = 'wp-ops-checkout-check';
+const USAGE = 'Usage: checkout-check.js <store-url> [--product=/path/] [--category=/path/] [--screenshots=dir] [--json] [--timeout=30]\n' +
+  '       [--place-order [--allow-production] [--payment=cod] [--enable-payment=bacs] [--email=wp-ops-checkout-check+1@example.test] [--mailpit=URL]\n' +
+  '        [--cleanup --wp="<wp-cli prefix>" [--wp-dir=dir] [--wp-user=1]]]';
 
 function parseArgs(argv) {
-  const opts = { json: false, timeout: 30 };
+  const opts = { json: false, timeout: 30, wpUser: '1' };
   for (const a of argv) {
     if (a === '--json') opts.json = true;
     else if (a === '-h' || a === '--help') { console.log(USAGE); process.exit(0); }
@@ -75,6 +105,16 @@ function parseArgs(argv) {
     else if (a.startsWith('--category=')) opts.category = a.slice(11);
     else if (a.startsWith('--screenshots=')) opts.screenshots = a.slice(14);
     else if (a.startsWith('--timeout=')) opts.timeout = Number(a.slice(10));
+    else if (a === '--place-order') opts.placeOrder = true;
+    else if (a === '--allow-production') opts.allowProduction = true;
+    else if (a === '--cleanup') opts.cleanup = true;
+    else if (a.startsWith('--payment=')) opts.payment = a.slice(10);
+    else if (a.startsWith('--enable-payment=')) opts.enablePayment = a.slice(17);
+    else if (a.startsWith('--email=')) opts.email = a.slice(8);
+    else if (a.startsWith('--mailpit=')) opts.mailpit = a.slice(10).replace(/\/+$/, '');
+    else if (a.startsWith('--wp=')) opts.wp = a.slice(5);
+    else if (a.startsWith('--wp-dir=')) opts.wpDir = a.slice(9).replace(/^~(?=\/|$)/, os.homedir());
+    else if (a.startsWith('--wp-user=')) opts.wpUser = a.slice(10);
     else if (a.startsWith('--')) { console.error(`checkout-check: unknown option ${a}\n${USAGE}`); process.exit(1); }
     else if (!opts.base) opts.base = a;
     else { console.error(USAGE); process.exit(1); }
@@ -82,10 +122,47 @@ function parseArgs(argv) {
   if (!opts.base || !Number.isFinite(opts.timeout) || opts.timeout <= 0) { console.error(USAGE); process.exit(1); }
   try { new URL(opts.base); } catch { console.error(`checkout-check: not a URL: ${opts.base}`); process.exit(1); }
   opts.base = opts.base.replace(/\/+$/, '');
+  if ((opts.cleanup || opts.mailpit || opts.payment || opts.enablePayment || opts.email || opts.allowProduction) && !opts.placeOrder) {
+    console.error('checkout-check: --cleanup, --mailpit, --payment, --enable-payment, --email and --allow-production only make sense with --place-order');
+    process.exit(1);
+  }
+  if (opts.enablePayment && !opts.wp) { console.error('checkout-check: --enable-payment needs --wp="<wp-cli command prefix>"'); process.exit(1); }
+  if (opts.enablePayment && !/^[a-z0-9_]+$/.test(opts.enablePayment)) { console.error('checkout-check: --enable-payment takes a gateway id such as bacs or cod'); process.exit(1); }
+  if (opts.cleanup && !opts.wp) { console.error('checkout-check: --cleanup needs --wp="<wp-cli command prefix>"'); process.exit(1); }
+  if (opts.placeOrder) {
+    opts.email = opts.email || `${MARKER}+${Date.now()}@example.test`;
+    if (!opts.email.startsWith(MARKER)) { console.error(`checkout-check: --email must start with "${MARKER}" so --cleanup can tell test orders from real ones`); process.exit(1); }
+    if (!looksNonProduction(new URL(opts.base).hostname)) {
+      if (!opts.allowProduction) {
+        console.error(`checkout-check: refusing --place-order on ${new URL(opts.base).hostname}: it does not look like a local or staging host.`);
+        console.error('Run it on staging. Production needs the client\'s written OK for every order hook and email, then --allow-production.');
+        process.exit(1);
+      }
+      console.error('checkout-check: WARNING placing a test order on a production-looking host (--allow-production).');
+    }
+  }
   return opts;
 }
 
+// Local and staging hosts: .test/.local/.localhost, loopback and private IPs,
+// or a staging-style label (staging, stage, dev, test, uat, acc).
+function looksNonProduction(host) {
+  if (/(^|\.)(test|local|localhost|internal)$/.test(host)) return true;
+  if (/^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return true;
+  return host.split('.').some((l) => /^(staging|stage|dev|test|uat|acc|preview)(-.*)?$|(-|^)(staging|stage|uat)(-|$)/.test(l));
+}
+
 class Skip extends Error {}
+
+// Plausible addresses per store country (the country field is left as the store sets it).
+const ADDRESSES = {
+  NL: { address: 'Damrak 1', city: 'Amsterdam', postcode: '1012 LG' },
+  DE: { address: 'Unter den Linden 1', city: 'Berlin', postcode: '10117' },
+  US: { address: '1600 Pennsylvania Ave NW', city: 'Washington', postcode: '20500', state: 'DC' },
+  GB: { address: '10 Downing Street', city: 'London', postcode: 'SW1A 2AA' },
+  AU: { address: '1 Macquarie St', city: 'Sydney', postcode: '2000', state: 'NSW' },
+  default: { address: 'Main Street 1', city: 'Springfield', postcode: '1000' },
+};
 
 const SEL = {
   products: 'li.product, .wc-block-product, .wp-block-post.product, .wc-block-grid__product',
@@ -133,6 +210,11 @@ async function run(opts) {
       if (!r.ok) throw new Error('Store API cart returned HTTP ' + r.status);
       return r.json();
     }, opts.base);
+  }
+
+  async function fillIf(selector, value) {
+    const el = page.locator(selector).first();
+    if ((await el.count()) && (await el.isVisible().catch(() => false))) await el.fill(value);
   }
 
   async function step(id, name, fn) {
@@ -290,8 +372,145 @@ async function run(opts) {
     return `${r.checkoutType} checkout, billing fields present, ${payments} payment method(s) (${nav.ms} ms uncached)`;
   });
 
+  if (opts.placeOrder) {
+    // 7 place the order
+    await step(7, 'place order', async (r) => {
+      if (!state.checkoutUrl || !state.cartTotals) throw new Skip('checkout step did not pass; nothing to place');
+      if (!page.url().includes('checkout')) await go(state.checkoutUrl);
+      await page.locator(SEL.billing).first().waitFor({ state: 'attached', timeout: toMs });
+
+      // Address data that passes validation for the store's own country.
+      const countryEl = page.locator('#billing-country, #billing_country, #shipping-country, #shipping_country').first();
+      const cc = (await countryEl.count()) ? await countryEl.inputValue().catch(() => '') : '';
+      const addr = ADDRESSES[cc] || ADDRESSES.default;
+      const vals = { first_name: 'WP Ops', last_name: 'Checkout Check', address_1: addr.address, city: addr.city, postcode: addr.postcode, phone: '+31612345678' };
+      await fillIf('#email, #billing_email', opts.email);
+      for (const [k, v] of Object.entries(vals)) {
+        for (const prefix of ['shipping-', 'billing-', 'shipping_', 'billing_']) {
+          await fillIf(`#${prefix}${k}`, v);
+        }
+      }
+      for (const sel of ['#shipping-state', '#billing-state', '#shipping_state', '#billing_state']) {
+        const el = page.locator(sel).first();
+        if (!(await el.isVisible().catch(() => false))) continue;
+        const tag = await el.evaluate((n) => n.tagName);
+        if (tag === 'SELECT') {
+          const opt = addr.state && (await el.locator(`option[value="${addr.state}"]`).count())
+            ? addr.state
+            : await el.locator('option:not([value=""])').first().getAttribute('value');
+          if (opt) await el.selectOption(opt);
+        } else if (addr.state) await el.fill(addr.state);
+      }
+      // Shipping rates and totals refresh after the address is in.
+      await page.waitForTimeout(2000);
+
+      // Payment method: an offline one only, never a card.
+      const ids = await page.locator('input[name="radio-control-wc-payment-method-options"], input[name="payment_method"]')
+        .evaluateAll((els) => els.map((e) => e.value));
+      const wanted = opts.payment ? [opts.payment] : ['cod', 'bacs', 'cheque'];
+      const method = wanted.find((m) => ids.includes(m));
+      if (!method) throw new Error(`no offline payment method to use (offered: ${ids.join(', ') || 'none'}; wanted: ${wanted.join(', ')})`);
+      r.payment = method;
+      await page.locator(`input[value="${method}"][name="radio-control-wc-payment-method-options"], #payment_method_${method}`).first().check({ force: true });
+
+      for (const sel of ['#terms', '.wc-block-checkout__terms input[type="checkbox"]']) {
+        const box = page.locator(sel).first();
+        if ((await box.count()) && !(await box.isChecked())) await box.check({ force: true });
+      }
+
+      // The block checkout re-prices after the method changes; click only once
+      // the button is enabled and idle, and click again if no checkout request left.
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await page.waitForFunction(() => {
+        const b = document.querySelector('.wc-block-components-checkout-place-order-button, #place_order');
+        return b && !b.disabled && b.getAttribute('aria-disabled') !== 'true' && !b.classList.contains('wc-block-components-button--loading');
+      }, null, { timeout: toMs });
+      let tSubmit = 0;
+      const onReq = (rq) => { if (!tSubmit && rq.method() === 'POST' && /\/checkout(\?|$)|wc-ajax=checkout/.test(rq.url())) tSubmit = Date.now(); };
+      page.on('request', onReq);
+      const button = page.locator('.wc-block-components-checkout-place-order-button, #place_order').first();
+      await button.click();
+      for (let i = 0; i < 16 && !tSubmit; i++) await page.waitForTimeout(250);
+      if (!tSubmit && !/order-received/.test(page.url())) {
+        await button.click();
+        for (let i = 0; i < 16 && !tSubmit; i++) await page.waitForTimeout(250);
+      }
+      page.off('request', onReq);
+      try {
+        await page.waitForURL(/order-received/, { timeout: toMs });
+      } catch {
+        const errs = await page.locator('.wc-block-components-validation-error, .woocommerce-error li, .wc-block-components-notice-banner.is-error').allInnerTexts().catch(() => []);
+        throw new Error(`order not placed${errs.length ? ': ' + errs.map((e) => e.trim().replace(/\s+/g, ' ')).join(' | ') : ' (still on checkout after ' + opts.timeout + ' s)'}`);
+      }
+      r.navMs = tSubmit ? Date.now() - tSubmit : null;
+      const m = page.url().match(/order-received\/(\d+)/);
+      state.orderId = m ? m[1] : null;
+      const num = await page.locator('.woocommerce-order-overview__order strong, .wc-block-order-confirmation-summary-list-item__value').first().innerText().catch(() => '');
+      state.orderNumber = num.trim() || state.orderId;
+      if (!state.orderNumber) throw new Error('order-received page shows no order number');
+      r.orderId = state.orderId;
+      return `order #${state.orderNumber} placed with ${method}${r.navMs ? ` (${r.navMs} ms from submit to confirmation)` : ''}`;
+    });
+
+    // 8 confirmation email
+    await step(8, 'confirmation email', async () => {
+      if (!state.orderId) throw new Skip('no order was placed');
+      if (!opts.mailpit) throw new Skip('no --mailpit given; the order-received page was checked, the email was not');
+      const deadline = Date.now() + 20000;
+      let found;
+      while (Date.now() < deadline && !found) {
+        const res = await fetch(`${opts.mailpit}/api/v1/search?query=${encodeURIComponent('to:' + opts.email)}`).catch(() => null);
+        if (!res || !res.ok) throw new Error(`Mailpit not reachable at ${opts.mailpit}`);
+        const j = await res.json();
+        found = (j.messages || [])[0];
+        if (!found) await new Promise((ok) => setTimeout(ok, 1500));
+      }
+      if (!found) throw new Error(`no email to ${opts.email} within 20 s`);
+      return `"${found.Subject}" arrived`;
+    });
+
+    // 9 cleanup
+    await step(9, 'cleanup', async () => {
+      if (!opts.cleanup) throw new Skip(state.orderId ? `not requested; order #${state.orderNumber} (id ${state.orderId}) left in place` : 'not requested');
+      if (!state.orderId) throw new Skip('no order to delete');
+      const wp = (cmd) => wpRun(opts, cmd);
+      const raw = wp(`wc shop_order get ${state.orderId} --user=${opts.wpUser} --format=json`);
+      const order = JSON.parse(raw.slice(raw.indexOf('{')));
+      const email = (order.billing && order.billing.email) || '';
+      if (!email.startsWith(MARKER)) throw new Error(`order ${state.orderId} billing email "${email}" does not carry the ${MARKER} marker; not deleting`);
+      wp(`wc shop_order delete ${state.orderId} --force=true --user=${opts.wpUser}`);
+      return `deleted order id ${state.orderId} (marker ${MARKER})`;
+    });
+  }
+
   await browser.close();
   return { results, consoleErrors };
+}
+
+function wpRun(opts, cmd) {
+  const u = new URL(opts.base);
+  return execSync(`${opts.wp} ${cmd} --url=${u.host}${u.pathname.replace(/\/?$/, '/')}`,
+    { cwd: opts.wpDir || process.cwd(), encoding: 'utf8', timeout: 90000, stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+// Turn an offline gateway on for the run; returns a function that restores it.
+function enableGateway(opts) {
+  const id = opts.enablePayment;
+  const was = /^(true|1|yes)$/i.test(wpRun(opts, `wc payment_gateway get ${id} --user=${opts.wpUser} --field=enabled`).trim().split('\n').pop());
+  if (was) return () => {};
+  wpRun(opts, `wc payment_gateway update ${id} --enabled=true --user=${opts.wpUser}`);
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    try { wpRun(opts, `wc payment_gateway update ${id} --enabled=false --user=${opts.wpUser}`); }
+    catch (e) { console.error(`checkout-check: COULD NOT turn ${id} off again, do it by hand: ${e.message.split('\n')[0]}`); }
+  };
+}
+
+function orderNote(out) {
+  const placed = out.results.find((r) => r.id === 7 && r.status === 'pass');
+  return placed ? `A test order was placed (${placed.note}).` : 'No order was placed.';
 }
 
 function report(opts, out, started) {
@@ -313,7 +532,7 @@ function report(opts, out, started) {
       if (r.screenshot) console.log(`        screenshot: ${r.screenshot}`);
     }
     if (out.consoleErrors.length) console.log(`\nJS errors seen: ${out.consoleErrors.length} (first: ${out.consoleErrors[0]})`);
-    console.log(`\n${failed ? `${failed} step(s) failed` : 'No step failed'}. No order was placed.`);
+    console.log(`\n${failed ? `${failed} step(s) failed` : 'No step failed'}. ${orderNote(out)}`);
   }
   return failed ? 2 : 0;
 }
@@ -322,11 +541,18 @@ function report(opts, out, started) {
   const opts = parseArgs(process.argv.slice(2));
   const started = new Date();
   let out;
+  let restore = () => {};
   try {
+    if (opts.enablePayment) {
+      restore = enableGateway(opts);
+      process.on('SIGINT', () => { restore(); process.exit(1); });
+    }
     out = await run(opts);
   } catch (e) {
+    restore();
     console.error(`checkout-check: could not run: ${e.message}`);
     process.exit(1);
   }
+  restore();
   process.exit(report(opts, out, started));
 })();
