@@ -178,7 +178,9 @@ const SEL = {
   checkoutBlock: '.wp-block-woocommerce-checkout, .wc-block-checkout',
   checkoutForm: 'form.woocommerce-checkout',
   billing: '#billing_first_name, #billing_email, #email, #billing-first_name, #billing_address_1, #billing-address_1',
-  payment: 'ul.wc_payment_methods li, .wc-block-components-radio-control--highlight-checked, .wc-block-checkout__payment-method .wc-block-components-radio-control__option, #payment .payment_methods input',
+  // Count real options only: .wc-block-components-radio-control--highlight-checked also matches the empty
+  // container, so a checkout that said "There are no payment methods available" still counted as 1.
+  payment: 'ul.wc_payment_methods li, .wc-block-checkout__payment-method .wc-block-components-radio-control__option, #payment .payment_methods input',
 };
 
 async function run(opts) {
@@ -446,6 +448,9 @@ async function run(opts) {
     // Block checkout renders client-side: wait for fields.
     await page.locator(SEL.billing).first().waitFor({ state: 'attached', timeout: toMs }).catch(() => {});
     if ((await page.locator(SEL.billing).count()) === 0) throw new Error(`${r.checkoutType} checkout renders no billing fields`);
+    // Payment options render after the billing fields: wait for an option or the "no payment methods" message.
+    await page.locator(SEL.payment).first().or(page.getByText(/no payment methods available/i).first())
+      .waitFor({ state: 'attached', timeout: toMs }).catch(() => {});
     const payments = await page.locator(SEL.payment).count();
     const zero = Number(state.cartTotals.total_price) === 0;
     if (payments === 0 && !zero) throw new Error(`${r.checkoutType} checkout shows no payment methods`);
