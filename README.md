@@ -27,6 +27,12 @@ after a launch, pushing a post live — is left to you, usually as a string of `
 `wp db export`, `rsync` and `wp search-replace` commands. wp-ops turns each of those
 into one command.
 
+**Not on Trellis?** Sections 4 and 5 work on any site. Database backups
+(`wp-db-backup`), malware scans (`malware-scan`) and admin recovery
+(`admin-user-create`) work on any WordPress host with SSH and WP-CLI, shared hosting
+included (`--host user@host --path ...`). Run `wp-ops list --platform wordpress` to
+see them all.
+
 ### 1. Get production into development in one step
 
 ```bash
