@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.43.1] - 2026-11-07
+
 ### Fixed
 
 - **`checkout-check.js` is executable.** It shipped in 5.43.0 without the exec bit, unlike
