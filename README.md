@@ -82,7 +82,24 @@ unchanged page diffs at 0%, not "1–3%, probably fine". Setup and the full roun
 (local before/after, then production against local):
 [scripts/updates/README.md](scripts/updates/README.md).
 
-### 5. Hand all of it to Claude
+### 5. Check that buying still works
+
+```bash
+wp-ops checkout-check https://shop.example.com                 # read-only, safe on production
+wp-ops checkout-check http://shop.test --place-order --payment=cod --mailpit=http://shop.test:8025
+```
+
+Walks shop, category, product, add to cart, cart and checkout in a real browser and
+reports pass, fail or skip per step with timings (cart and checkout skip the page cache,
+so they double as an uncached speed number). The cart totals are checked against the
+WooCommerce Store API, and block and classic checkouts both work. Exits 2 when a step
+fails, so it can run before and after an update round. With `--place-order` it also
+places a marked test order with an offline payment method, checks the confirmation page
+and email, and with `--cleanup` deletes the order again. That mode only runs on local and
+staging hosts unless you pass `--allow-production`. Details:
+[scripts/README.md](scripts/README.md#checkout-check).
+
+### 6. Hand all of it to Claude
 
 The same operations are exposed as [MCP](https://modelcontextprotocol.io) tools —
 `db_pull`, `files_pull`, `monitor`, `publish_post`, `verify_post`, `security_scan` and
