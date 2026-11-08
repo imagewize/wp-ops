@@ -1,49 +1,101 @@
 #!/bin/bash
 #
-# Safely update a Roots Trellis installation to the latest upstream version
-# while preserving vault files, site configs, and other local customizations.
+# Update a Roots Trellis installation to a newer upstream release without
+# losing local customizations.
 #
-# Backs up the current trellis/ directory, clones the latest Trellis from
-# GitHub, diffs it against your copy, then rsyncs the update in with excludes
-# for secrets and custom config. Also flags upstream changes to excluded
-# files so you don't miss fixes worth cherry-picking.
+# Instead of copying upstream over trellis/ (which silently reverts every local
+# change not on an exclude list), this applies only what upstream changed
+# between two releases, as a three-way merge per file:
+#
+#   base   = the file at the release you are on   (e.g. v1.28.0)
+#   theirs = the file at the target release        (e.g. v1.33.0)
+#   ours   = your file in trellis/
+#
+# Local edits, local-only files and playbooks are kept. Upstream fixes you
+# already cherry-picked merge cleanly as identical changes. Real overlaps get
+# standard conflict markers to resolve in your editor; nothing is overwritten
+# without being reported.
+#
+# The release you are on is read from trellis/VERSION (Trellis >= 1.29). Older
+# trees have no VERSION file, so the closest upstream tag is detected by
+# comparing files; override with --from when you know better.
 #
 # The trellis/ directory is taken from $TRELLIS_DIR, the same variable the
 # playbook commands use. If it isn't set, this walks up from the current
-# directory the way `detect.TrellisDir` does -- so running from inside a trellis
-# repo, or from the project root above it, just works.
-#
-# Editing this file to set a project is no longer required, and would not have
-# survived anyway when run through `wp-ops`, which executes it from a
-# version-stamped cache directory that is replaced on every upgrade.
+# directory the way `detect.TrellisDir` does.
 #
 # Options:
-#   --yes, -y      Skip the confirmation prompt before overwriting trellis/
+#   --from=<tag>   Release the tree is currently on (default: VERSION file or auto-detect)
+#   --to=<tag>     Release to update to (default: latest upstream release tag)
+#   --dry-run      Report what would merge, conflict or be skipped; change nothing
+#   --yes, -y      Skip the confirmation prompt
 #
-# @desc     Safely update a Trellis installation to the latest upstream while preserving vault/config customizations
+# @desc     Update Trellis to a newer upstream release via three-way merge, keeping local customizations
 # @category misc
 # @platform trellis
 # @runs     local
 # @requires git
-# @flag     --yes  optional  {}  Skip the confirmation prompt before overwriting trellis/
-# @example  TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater
-# @example  wp-ops trellis-updater --yes
+# @flag     --from     optional  {tag}  Release the tree is currently on (default: VERSION file or auto-detect)
+# @flag     --to       optional  {tag}  Release to update to (default: latest upstream tag)
+# @flag     --dry-run  optional  {}     Report what would change without writing anything
+# @flag     --yes      optional  {}     Skip the confirmation prompt
+# @example  TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater --dry-run
+# @example  wp-ops trellis-updater --to=v1.33.0
+# @example  wp-ops trellis-updater --from=v1.28.0 --yes
 
-set -e  # Exit on error
+set -euo pipefail
+
+UPSTREAM_URL="https://github.com/roots/trellis.git"
 
 SKIP_CONFIRM=0
+DRY_RUN=0
+FROM=""
+TO=""
 for arg in "$@"; do
   case "$arg" in
-    --yes|-y)
-      SKIP_CONFIRM=1
+    --yes|-y) SKIP_CONFIRM=1 ;;
+    --dry-run) DRY_RUN=1 ;;
+    --from=*) FROM="${arg#--from=}" ;;
+    --to=*) TO="${arg#--to=}" ;;
+    -h|--help)
+      sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $arg (see --help)" >&2
+      exit 1
       ;;
   esac
 done
 
-# Resolve the trellis/ directory. $TRELLIS_DIR wins, matching the playbook
-# commands; otherwise walk up from the current directory. Two shapes count as a
-# hit, the same two detect.TrellisDir recognizes: the directory *is* trellis/
-# (ansible.cfg + group_vars/ sit directly in it), or it contains one.
+# Upstream paths never merged into a project: CI, tests and upstream docs are
+# irrelevant, and the example vault/site/host files don't share history with a
+# real project's (vault files are encrypted locally, so a merge is meaningless).
+# Upstream changes to the project-config ones are saved for review instead.
+SKIP_PATTERNS=(
+  ".github/*"
+  "tests/*"
+  "README.md"
+  "CHANGELOG.md"
+  "pytest.ini"
+  "requirements-dev.txt"
+)
+REVIEW_ONLY_PATTERNS=(
+  "hosts/*"
+  "group_vars/*/vault.yml"
+  "group_vars/*/wordpress_sites.yml"
+)
+
+matches_any() {
+  local path="$1"; shift
+  local pattern
+  for pattern in "$@"; do
+    # shellcheck disable=SC2053
+    [[ "$path" == $pattern ]] && return 0
+  done
+  return 1
+}
+
 # Walks up from the current directory looking for a Trellis project. Two shapes
 # count: the directory *is* trellis/ (ansible.cfg + group_vars/ inside it), or a
 # parent holds trellis/ansible.cfg — the latter trusted only when we started in
@@ -77,9 +129,8 @@ detect_trellis_dir() {
     return 1
 }
 
-# Confirms an auto-detected TRELLIS_DIR before using it — this backs a
-# destructive operation (it rsyncs over trellis/), so a non-interactive session
-# refuses to guess rather than silently proceeding.
+# Confirms an auto-detected TRELLIS_DIR before using it — this rewrites files
+# in trellis/, so a non-interactive session refuses to guess.
 # Mirrors go/internal/detect.Confirm.
 confirm_trellis_dir() {
     local detected="$1"
@@ -124,241 +175,248 @@ if [ -z "${TRELLIS_DIR:-}" ]; then
     fi
 fi
 
-PROJECT_DIR="$(cd "$TRELLIS_DIR/.." && pwd)"
-PROJECT="$(basename "$PROJECT_DIR")"
-BACKUP_DIR=~/trellis-backup-$(date +%Y%m%d_%H%M%S)
-TEMP_DIR=~/trellis-temp
-DIFF_DIR=~/trellis-diff
-
-# Verify project exists
-if [ ! -d "$TRELLIS_DIR" ]; then
-  echo "ERROR: Trellis directory not found: $TRELLIS_DIR"
-  echo "Set TRELLIS_DIR to your trellis/ directory"
+if [ ! -f "$TRELLIS_DIR/ansible.cfg" ]; then
+  echo "ERROR: $TRELLIS_DIR does not look like a Trellis directory (no ansible.cfg)." >&2
   exit 1
 fi
+TRELLIS_DIR="$(cd "$TRELLIS_DIR" && pwd)"
 
-echo "=== Trellis Updater for $PROJECT ==="
-echo "Project: $PROJECT_DIR"
-echo "Backup: $BACKUP_DIR"
-echo ""
-
-# Confirm before rewriting any files — a backup exists afterward, but nothing
-# previews the change first, so make the destructive step explicit.
-if [ "$SKIP_CONFIRM" -eq 1 ]; then
-  echo "Skipping confirmation (--yes)."
-else
-  read -p "This will overwrite files in $TRELLIS_DIR. Continue? (y/N) " -n 1 -r
-  echo ""
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted. No changes made."
+# Git is the rollback: refuse to merge into a tree with uncommitted changes, so
+# `git diff` afterwards shows exactly what the update did and `git checkout`
+# undoes it. Outside git, fall back to a full copy.
+IN_GIT=0
+if git -C "$TRELLIS_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  IN_GIT=1
+  if [ "$DRY_RUN" -eq 0 ] && [ -n "$(git -C "$TRELLIS_DIR" status --porcelain -- .)" ]; then
+    echo "ERROR: $TRELLIS_DIR has uncommitted changes." >&2
+    echo "  Commit or stash them first, so the update can be reviewed and undone with git." >&2
+    echo "  (Tip: run the update on its own branch.)" >&2
     exit 1
   fi
 fi
 
-# Step 1: Create backup directory
-mkdir -p $BACKUP_DIR
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/trellis-updater.XXXXXX")"
+UPSTREAM="$WORK_DIR/upstream"
+REVIEW_DIR=~/trellis-update-$(date +%Y%m%d_%H%M%S)
 
-# Step 2: Back up the entire current Trellis directory including hidden files
-echo "=== Backing up current Trellis directory ==="
-cp -r $TRELLIS_DIR/ $BACKUP_DIR/
-echo "✓ Backup created at: $BACKUP_DIR"
+echo "=== Trellis updater ==="
+echo "Trellis dir: $TRELLIS_DIR"
 echo ""
 
-# Step 3: Clone fresh Trellis to temporary directory
-echo "=== Cloning latest Trellis from GitHub ==="
-mkdir -p $TEMP_DIR
-cd $TEMP_DIR
-if [ -d "trellis" ]; then
-  echo "Removing existing temp directory..."
-  rm -rf trellis
+echo "=== Fetching upstream Trellis ==="
+git clone --quiet "$UPSTREAM_URL" "$UPSTREAM"
+up() { git -C "$UPSTREAM" "$@"; }
+
+if [ -z "$TO" ]; then
+  TO="$(up tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)"
 fi
-git clone --depth 1 git@github.com:roots/trellis.git
-echo "✓ Latest Trellis cloned"
+up rev-parse --verify --quiet "$TO^{commit}" >/dev/null || { echo "ERROR: unknown upstream tag: $TO" >&2; exit 1; }
+
+# Work out which release the tree is on.
+if [ -z "$FROM" ] && [ -f "$TRELLIS_DIR/VERSION" ]; then
+  FROM="$(tr -d '[:space:]' < "$TRELLIS_DIR/VERSION")"
+  echo "Current release (from VERSION): $FROM"
+fi
+if [ -z "$FROM" ]; then
+  echo "No VERSION file; detecting the closest upstream release (this takes a moment)..."
+  best_tag=""; best_count=999999
+  results=""
+  while read -r tag; do
+    count=0
+    while read -r path; do
+      matches_any "$path" "${SKIP_PATTERNS[@]}" "${REVIEW_ONLY_PATTERNS[@]}" && continue
+      if [ ! -f "$TRELLIS_DIR/$path" ] || ! up show "$tag:$path" | cmp -s - "$TRELLIS_DIR/$path"; then
+        count=$((count + 1))
+      fi
+    done < <(up ls-tree -r --name-only "$tag")
+    results+="  $tag: $count file(s) differ"$'\n'
+    if [ "$count" -lt "$best_count" ]; then best_count=$count; best_tag=$tag; fi
+  done < <(up tag --sort=-v:refname | grep -E '^v1\.[0-9]+\.[0-9]+$' | head -12)
+  printf "%s" "$results"
+  FROM="$best_tag"
+  echo "Closest release: $FROM ($best_count differing files). Override with --from=<tag> if this is wrong."
+fi
+up rev-parse --verify --quiet "$FROM^{commit}" >/dev/null || { echo "ERROR: unknown upstream tag: $FROM" >&2; exit 1; }
+echo "Updating: $FROM -> $TO"
 echo ""
 
-# Step 4: Generate diff to see what would change
-echo "=== Generating diff of changes ==="
-mkdir -p $DIFF_DIR
-diff -rq $TEMP_DIR/trellis/ $TRELLIS_DIR/ > $DIFF_DIR/changes.txt || true
-echo "✓ Diff saved to: $DIFF_DIR/changes.txt"
-echo ""
+if [ "$(up rev-parse "$FROM^{commit}")" = "$(up rev-parse "$TO^{commit}")" ]; then
+  echo "Already on $TO. Nothing to do."
+  rm -rf "$WORK_DIR"
+  exit 0
+fi
 
-# Step 5: Remove .git directory from the cloned Trellis to prevent conflicts
-echo "=== Preparing fresh Trellis for sync ==="
-rm -rf $TEMP_DIR/trellis/.git
-echo "✓ Removed .git directory from cloned Trellis"
-echo ""
-
-# Step 6: Update Trellis files using rsync with explicit excludes
-echo "=== Syncing Trellis updates while preserving custom configurations ==="
-# Note: Excludes are organized by category:
-#   - Secrets & credentials (vault files, .vault_pass)
-#   - Git & CI/CD (.git, .github)
-#   - Site-specific configs (wordpress_sites.yml, hosts/)
-#   - Custom PHP/server settings (main.yml files with php_memory_limit, PHP-FPM settings)
-#   - Custom SMTP settings (mail.yml with Brevo/Sendgrid credentials)
-#   - Custom deploy hooks (build-before.yml, build-after.yml with memory limits)
-#   - CLI config (trellis.cli.yml)
-#   - Custom Ansible playbooks (database-*.yml, files-*.yml, uploads.yml)
-#   - Custom Nginx configs (nginx-includes/)
-#   - Custom documentation (docs/, CHANGELOG.md)
-#   - Custom role templates (php-fpm-pool with request_terminate_timeout)
-#   - Custom Nginx config (nginx.conf.j2 with rate limiting zone)
-rsync -av --delete \
-  --exclude=".vault_pass" \
-  --exclude="ansible.cfg" \
-  --exclude=".trellis/" \
-  --exclude=".git/" \
-  --exclude=".github/" \
-  --exclude="group_vars/all/vault.yml" \
-  --exclude="group_vars/development/vault.yml" \
-  --exclude="group_vars/development/wordpress_sites.yml" \
-  --exclude="group_vars/production/vault.yml" \
-  --exclude="group_vars/production/wordpress_sites.yml" \
-  --exclude="group_vars/staging/vault.yml" \
-  --exclude="group_vars/staging/wordpress_sites.yml" \
-  --exclude="group_vars/all/users.yml" \
-  --exclude="group_vars/all/main.yml" \
-  --exclude="group_vars/all/mail.yml" \
-  --exclude="group_vars/all/security.yml" \
-  --exclude="group_vars/production/main.yml" \
-  --exclude="group_vars/staging/main.yml" \
-  --exclude="group_vars/development/main.yml" \
-  --exclude="deploy-hooks/" \
-  --exclude="trellis.cli.yml" \
-  --exclude="hosts/" \
-  --exclude="database-backup.yml" \
-  --exclude="database-pull.yml" \
-  --exclude="database-push.yml" \
-  --exclude="files-backup.yml" \
-  --exclude="files-pull.yml" \
-  --exclude="files-push.yml" \
-  --exclude="uploads.yml" \
-  --exclude="nginx-includes/" \
-  --exclude="docs/" \
-  --exclude="CHANGELOG.md" \
-  --exclude="CHANGELOG-TRELLIS-DATABASE-UPLOADS-MIGRATION.md" \
-  --exclude="roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2" \
-  --exclude="roles/nginx/templates/nginx.conf.j2" \
-  --exclude="roles/wordpress-setup/tasks/nginx.yml" \
-  --exclude="alantin-*.yml" \
-  $TEMP_DIR/trellis/ $TRELLIS_DIR/
-
-echo "✓ Trellis files updated"
-
-# Step 6b: Diff excluded files against upstream to catch missed updates
-echo ""
-echo "=== Checking excluded files for upstream changes ==="
-EXCLUDED_FILES=(
-  "ansible.cfg"
-  "group_vars/all/main.yml"
-  "group_vars/all/mail.yml"
-  "group_vars/all/security.yml"
-  "group_vars/all/users.yml"
-  "group_vars/production/main.yml"
-  "group_vars/staging/main.yml"
-  "group_vars/development/main.yml"
-  "group_vars/development/wordpress_sites.yml"
-  "group_vars/production/wordpress_sites.yml"
-  "group_vars/staging/wordpress_sites.yml"
-  "roles/wordpress-setup/templates/php-fpm-pool-wordpress.conf.j2"
-  "roles/nginx/templates/nginx.conf.j2"
-  "roles/wordpress-setup/tasks/nginx.yml"
-)
-
-UPSTREAM_CHANGES_DIR=$DIFF_DIR/excluded-file-diffs
-mkdir -p $UPSTREAM_CHANGES_DIR
-UPSTREAM_CHANGE_COUNT=0
-
-for file in "${EXCLUDED_FILES[@]}"; do
-  UPSTREAM="$TEMP_DIR/trellis/$file"
-  LOCAL="$TRELLIS_DIR/$file"
-
-  # Skip files that don't exist upstream (our custom additions)
-  if [ ! -f "$UPSTREAM" ]; then
-    continue
-  fi
-
-  # Skip files that don't exist locally yet
-  if [ ! -f "$LOCAL" ]; then
-    echo "  NEW upstream: $file (not present locally)"
-    cp "$UPSTREAM" "$UPSTREAM_CHANGES_DIR/$(echo $file | tr '/' '_').new"
-    UPSTREAM_CHANGE_COUNT=$((UPSTREAM_CHANGE_COUNT + 1))
-    continue
-  fi
-
-  # Generate diff if files differ
-  if ! diff -q "$UPSTREAM" "$LOCAL" > /dev/null 2>&1; then
-    diff -u "$LOCAL" "$UPSTREAM" > "$UPSTREAM_CHANGES_DIR/$(echo $file | tr '/' '_').diff" || true
-    echo "  CHANGED upstream: $file"
-    UPSTREAM_CHANGE_COUNT=$((UPSTREAM_CHANGE_COUNT + 1))
-  fi
-done
-
-if [ "$UPSTREAM_CHANGE_COUNT" -eq 0 ]; then
-  echo "✓ No upstream changes in excluded files"
-else
+if [ "$IN_GIT" -eq 0 ] && [ "$DRY_RUN" -eq 0 ]; then
+  mkdir -p "$REVIEW_DIR"
+  cp -R "$TRELLIS_DIR" "$REVIEW_DIR/trellis-backup"
+  echo "Not a git checkout: backed up to $REVIEW_DIR/trellis-backup"
   echo ""
-  echo "⚠ $UPSTREAM_CHANGE_COUNT excluded file(s) have upstream changes."
-  echo "  Diffs saved to: $UPSTREAM_CHANGES_DIR/"
-  echo "  Review these diffs to cherry-pick upstream fixes without losing customizations."
-  echo "  Tip: ask Claude Code to review the diffs in $UPSTREAM_CHANGES_DIR/"
 fi
-echo ""
 
-# Step 6c: Verify critical files were preserved
-echo ""
-echo "=== Verifying critical files ==="
-if [ ! -f "$TRELLIS_DIR/.vault_pass" ]; then
-  echo "WARNING: .vault_pass is missing! Restore from backup:"
-  echo "  cp $BACKUP_DIR/.vault_pass $TRELLIS_DIR/"
-fi
-if ! grep -q "vault_password_file" "$TRELLIS_DIR/ansible.cfg" 2>/dev/null; then
-  echo "WARNING: ansible.cfg missing vault_password_file! Restore from backup:"
-  echo "  cp $BACKUP_DIR/ansible.cfg $TRELLIS_DIR/"
-fi
-if ! grep -q 'wordpress_wp_login' "$TRELLIS_DIR/group_vars/all/security.yml" 2>/dev/null || \
-   grep -A3 'wordpress_wp_login' "$TRELLIS_DIR/group_vars/all/security.yml" | grep -q 'enabled: "false"'; then
-  echo "WARNING: security.yml fail2ban wordpress_wp_login jail may be disabled! Verify:"
-  echo "  grep -A5 'wordpress_wp_login' $TRELLIS_DIR/group_vars/all/security.yml"
-  echo "  It should be: enabled: \"true\""
-fi
-if ! grep -q "smtp-relay.brevo.com\|smtp.sendgrid.net" "$TRELLIS_DIR/group_vars/all/mail.yml" 2>/dev/null; then
-  echo "WARNING: mail.yml may have been overwritten with example values! Restore from backup:"
-  echo "  cp $BACKUP_DIR/group_vars/all/mail.yml $TRELLIS_DIR/group_vars/all/"
-  echo "  Or manually update mail_smtp_server, mail_user, mail_admin, mail_hostname"
-fi
-for env in all development production staging; do
-  if [ ! -f "$TRELLIS_DIR/group_vars/$env/vault.yml" ]; then
-    echo "WARNING: group_vars/$env/vault.yml is missing! Restore from backup:"
-    echo "  cp $BACKUP_DIR/group_vars/$env/vault.yml $TRELLIS_DIR/group_vars/$env/"
+# Classify every upstream change between the two releases.
+MERGED=(); CONFLICTS=(); ADDED=(); DELETED=(); CURRENT=(); KEPT=(); REVIEW=()
+BASE_F="$WORK_DIR/base"; THEIRS_F="$WORK_DIR/theirs"; OUT_F="$WORK_DIR/out"
+mkdir -p "$WORK_DIR/results"
+
+while IFS=$'\t' read -r status path; do
+  matches_any "$path" "${SKIP_PATTERNS[@]}" && continue
+  if matches_any "$path" "${REVIEW_ONLY_PATTERNS[@]}"; then
+    REVIEW+=("$path"); continue
   fi
+  local_f="$TRELLIS_DIR/$path"
+
+  case "$status" in
+    M)
+      if [ ! -f "$local_f" ]; then KEPT+=("$path (changed upstream, absent locally)"); continue; fi
+      up show "$FROM:$path" > "$BASE_F"
+      up show "$TO:$path" > "$THEIRS_F"
+      rc=0
+      git merge-file -p -L local -L "$FROM" -L "$TO" "$local_f" "$BASE_F" "$THEIRS_F" > "$OUT_F" || rc=$?
+      if [ "$rc" -lt 0 ] || [ "$rc" -gt 127 ]; then echo "ERROR: merge failed for $path" >&2; exit 1; fi
+      if [ "$rc" -gt 0 ]; then
+        CONFLICTS+=("$path ($rc conflict(s))")
+      elif cmp -s "$OUT_F" "$local_f"; then
+        CURRENT+=("$path"); continue
+      else
+        MERGED+=("$path")
+      fi
+      if [ "$DRY_RUN" -eq 0 ]; then cat "$OUT_F" > "$local_f"; fi
+      ;;
+    A)
+      up show "$TO:$path" > "$THEIRS_F"
+      if [ ! -e "$local_f" ]; then
+        ADDED+=("$path")
+        if [ "$DRY_RUN" -eq 0 ]; then
+          mkdir -p "$(dirname "$local_f")"
+          cp "$THEIRS_F" "$local_f"
+          if [ "$(up ls-tree "$TO" -- "$path" | cut -c1-6)" = "100755" ]; then chmod +x "$local_f"; fi
+        fi
+      elif cmp -s "$THEIRS_F" "$local_f"; then
+        CURRENT+=("$path")
+      else
+        : > "$BASE_F"
+        rc=0
+        git merge-file -p -L local -L "(none)" -L "$TO" "$local_f" "$BASE_F" "$THEIRS_F" > "$OUT_F" || rc=$?
+        CONFLICTS+=("$path (added upstream, differs from local copy)")
+        if [ "$DRY_RUN" -eq 0 ]; then cat "$OUT_F" > "$local_f"; fi
+      fi
+      ;;
+    D)
+      [ -e "$local_f" ] || continue
+      if up show "$FROM:$path" | cmp -s - "$local_f"; then
+        DELETED+=("$path")
+        if [ "$DRY_RUN" -eq 0 ]; then
+          rm -f "$local_f"
+          # Drop directories the delete emptied (e.g. a removed role).
+          d="$(dirname "$local_f")"
+          while [ "$d" != "$TRELLIS_DIR" ] && rmdir "$d" 2>/dev/null; do d="$(dirname "$d")"; done
+        fi
+      else
+        KEPT+=("$path (removed upstream, modified locally: delete or keep by hand)")
+      fi
+      ;;
+  esac
+done < <(up diff --name-status --no-renames "$FROM" "$TO")
+
+# Upstream changes to project-config files are saved, never applied.
+if [ "${#REVIEW[@]}" -gt 0 ]; then
+  mkdir -p "$REVIEW_DIR"
+  for path in "${REVIEW[@]}"; do
+    up diff "$FROM" "$TO" -- "$path" > "$REVIEW_DIR/$(echo "$path" | tr '/' '_').diff"
+  done
+fi
+
+print_list() {
+  local title="$1"; shift
+  [ "$#" -eq 0 ] && return 0
+  echo "$title ($#):"
+  local item
+  for item in "$@"; do echo "  $item"; done
+  echo ""
+}
+
+echo "=== $( [ "$DRY_RUN" -eq 1 ] && echo "Dry run: would apply" || echo "Applied" ) $FROM -> $TO ==="
+print_list "Merged cleanly" ${MERGED[@]+"${MERGED[@]}"}
+print_list "Added" ${ADDED[@]+"${ADDED[@]}"}
+print_list "Deleted (unchanged locally)" ${DELETED[@]+"${DELETED[@]}"}
+print_list "Already up to date (e.g. cherry-picked before)" ${CURRENT[@]+"${CURRENT[@]}"}
+print_list "CONFLICTS — resolve the <<<<<<< markers" ${CONFLICTS[@]+"${CONFLICTS[@]}"}
+print_list "Left alone — decide by hand" ${KEPT[@]+"${KEPT[@]}"}
+if [ "${#REVIEW[@]}" -gt 0 ]; then
+  print_list "Project config changed upstream (not applied; diffs in $REVIEW_DIR)" "${REVIEW[@]}"
+fi
+
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "Dry run: nothing was changed."
+  rm -rf "$WORK_DIR"
+  exit 0
+fi
+
+# Confirm *after* showing the plan would mean merging twice; the tree is clean
+# in git, so asking here and undoing with git is equivalent and simpler.
+if [ "$SKIP_CONFIRM" -eq 0 ]; then
+  read -p "Keep these changes? (y/N = undo) " -n 1 -r
+  echo ""
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    if [ "$IN_GIT" -eq 1 ]; then
+      git -C "$TRELLIS_DIR" checkout -q -- .
+      git -C "$TRELLIS_DIR" clean -fdq -- .
+      echo "Undone. trellis/ is back to its committed state."
+    else
+      rm -rf "$TRELLIS_DIR" && cp -R "$REVIEW_DIR/trellis-backup" "$TRELLIS_DIR"
+      echo "Undone from the backup in $REVIEW_DIR/trellis-backup."
+    fi
+    rm -rf "$WORK_DIR"
+    exit 1
+  fi
+fi
+
+# Post-merge checks.
+echo "=== Checks ==="
+HAS_CONFLICTS=0
+if grep -rqE --include='*.yml' --include='*.j2' --include='*.cfg' --include='*.py' '^(<<<<<<<|>>>>>>>) ' "$TRELLIS_DIR" 2>/dev/null; then
+  HAS_CONFLICTS=1
+  echo "⚠ Conflict markers present. Resolve them before provisioning:"
+  grep -rlE --include='*.yml' --include='*.j2' --include='*.cfg' --include='*.py' '^(<<<<<<<|>>>>>>>) ' "$TRELLIS_DIR" | sed "s#^$TRELLIS_DIR/#  #"
+fi
+for f in .vault_pass ansible.cfg; do
+  if [ ! -f "$TRELLIS_DIR/$f" ]; then echo "⚠ $f is missing"; fi
 done
-echo "✓ All critical files verified"
-echo "=== Verification complete ==="
+
+if up diff --quiet "$FROM" "$TO" -- galaxy.yml; then
+  :
+else
+  echo "galaxy.yml changed: installing Galaxy roles..."
+  if command -v trellis >/dev/null 2>&1; then
+    if (cd "$TRELLIS_DIR" && trellis galaxy install >/dev/null 2>&1); then
+      echo "✓ Galaxy roles installed"
+    else
+      echo "⚠ trellis galaxy install failed: run it by hand"
+    fi
+  else
+    echo "  Run: cd $TRELLIS_DIR && ansible-galaxy install -r galaxy.yml --force"
+  fi
+fi
+
+ANSIBLE_PLAYBOOK="$TRELLIS_DIR/.trellis/virtualenv/bin/ansible-playbook"
+command -v "$ANSIBLE_PLAYBOOK" >/dev/null 2>&1 || ANSIBLE_PLAYBOOK="$(command -v ansible-playbook || true)"
+if [ "$HAS_CONFLICTS" -eq 1 ]; then
+  echo "Skipping playbook --syntax-check until the conflicts are resolved."
+elif [ -n "$ANSIBLE_PLAYBOOK" ]; then
+  for pb in server.yml deploy.yml dev.yml; do
+    [ -f "$TRELLIS_DIR/$pb" ] || continue
+    if (cd "$TRELLIS_DIR" && "$ANSIBLE_PLAYBOOK" "$pb" --syntax-check -e env=development -e site=example.com >/dev/null 2>&1); then
+      echo "✓ $pb syntax OK"
+    else
+      echo "⚠ $pb failed --syntax-check: run it by hand to see why"
+    fi
+  done
+fi
 echo ""
 
-# Step 7: Show summary
-echo "=== Update Summary ==="
-echo "Next steps:"
-echo "1. Review changes: cd $PROJECT_DIR && git diff trellis/"
-echo "2. Check diff summary: cat $DIFF_DIR/changes.txt"
-echo "3. Review excluded file diffs: ls $DIFF_DIR/excluded-file-diffs/"
-echo "   (or ask Claude Code to review them for upstream fixes you should merge)"
-echo "4. Update Galaxy roles: cd $TRELLIS_DIR && ansible-galaxy install -r galaxy.yml --force"
-echo "5. Test in development (if applicable)"
-echo "6. Commit changes: git add trellis/ && git commit -m 'Update Trellis to latest version'"
-echo ""
-echo "Backup location: $BACKUP_DIR"
-echo "Temp directory: $TEMP_DIR (manually remove when done)"
-echo ""
-
-# Step 8: Return to project directory
-cd $PROJECT_DIR
-
-# Commented out: Manual steps for user to review and execute
-# git status
-# git diff trellis/
-# git add trellis/
-# git commit -m "Update Trellis to latest version while preserving custom configurations"
-# cd trellis && ansible-galaxy install -r galaxy.yml --force
+echo "=== Next steps ==="
+echo "1. Read the upstream release notes for $FROM..$TO (breaking variable renames, defaults"
+echo "   that change on existing servers): https://github.com/roots/trellis/releases"
+echo "2. Review the result:   git -C $TRELLIS_DIR diff"
+echo "3. Provision development and test, then commit on a branch and provision production."
+rm -rf "$WORK_DIR"
