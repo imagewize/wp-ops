@@ -178,7 +178,7 @@ sites are run with:
 
 | Area | What's there | Docs |
 |------|--------------|------|
-| **Trellis** | Safe Trellis updates (`trellis-updater`) | [guide](https://wpvilla.in/update-trellis-without-losing-customisations-rsync-excludes/) |
+| **Trellis** | Trellis updates by three-way merge, keeping local customizations (`trellis-updater`; `--dry-run` first) | [guide](https://wpvilla.in/update-trellis-without-losing-customisations-rsync-excludes/) (describes the older rsync method) |
 | **Backups** | Timestamped database and uploads backups from any environment | [→](trellis/backup/README.md) |
 | **Monitoring** | AI-crawler traffic, error surfacing, traffic by country, cron-scheduled reports | [→](trellis/monitoring/README.md) |
 | **Security** | Malware scanners with checksum verification and AbuseIPDB lookups; the posts cover fail2ban and the Nginx deny list | [routine](https://wpvilla.in/trellis-wordpress-security-routine-abuseipdb-fail2ban/) · [scanners](https://wpvilla.in/wordpress-malware-scanners-targeted-general-checksum-verification/) |

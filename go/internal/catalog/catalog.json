@@ -2571,7 +2571,7 @@
   {
     "category": "trellis",
     "key": "trellis/updater/trellis-updater",
-    "description": "Safely update a Trellis installation to the latest upstream while preserving vault/config customizations",
+    "description": "Update Trellis to a newer upstream release via three-way merge, keeping local customizations",
     "script_path": "trellis/updater/trellis-updater.sh",
     "runs_on": "local",
     "runs": "local",
@@ -2580,16 +2580,40 @@
     ],
     "flags": [
       {
+        "name": "--from",
+        "required_raw": "optional",
+        "required": false,
+        "default": "tag",
+        "description": "Release the tree is currently on (default: VERSION file or auto-detect)",
+        "raw": "--from     optional  {tag}  Release the tree is currently on (default: VERSION file or auto-detect)"
+      },
+      {
+        "name": "--to",
+        "required_raw": "optional",
+        "required": false,
+        "default": "tag",
+        "description": "Release to update to (default: latest upstream tag)",
+        "raw": "--to       optional  {tag}  Release to update to (default: latest upstream tag)"
+      },
+      {
+        "name": "--dry-run",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Report what would change without writing anything",
+        "raw": "--dry-run  optional  {}     Report what would change without writing anything"
+      },
+      {
         "name": "--yes",
         "required_raw": "optional",
         "required": false,
-        "description": "Skip the confirmation prompt before overwriting trellis/",
-        "raw": "--yes  optional  {}  Skip the confirmation prompt before overwriting trellis/"
+        "description": "Skip the confirmation prompt",
+        "raw": "--yes      optional  {}     Skip the confirmation prompt"
       }
     ],
     "examples": [
-      "TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater",
-      "wp-ops trellis-updater --yes"
+      "TRELLIS_DIR=~/code/example.com/trellis wp-ops trellis-updater --dry-run",
+      "wp-ops trellis-updater --to=v1.33.0",
+      "wp-ops trellis-updater --from=v1.28.0 --yes"
     ],
     "manifest_category": "misc",
     "platform": "trellis",

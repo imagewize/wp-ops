@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.44.0] - 2026-11-08
+
+### Changed
+
+- **`trellis-updater` merges upstream changes instead of copying upstream over `trellis/`.**
+  The old script rsynced the latest Trellis over the project with a hand-kept exclude list, so
+  any local change in a file not on that list was silently reverted. In practice that list was
+  never complete: on imagewize.com it would have dropped the fail2ban filter anchoring, the demo
+  PHP-FPM pool tasks and the MariaDB tuning. The script now applies only what upstream changed
+  between two releases, as a three-way merge per file (`git merge-file`; base = the release you
+  are on, theirs = the target, ours = your file). Local edits and local-only files are kept,
+  fixes you already cherry-picked merge as identical changes, a file mixing old and new hunks
+  still gets the new ones, and real overlaps get standard conflict markers. Files upstream
+  deletes are removed only when unchanged locally; upstream changes to `hosts/`, `vault.yml` and
+  `wordpress_sites.yml` are saved as diffs for review, never applied.
+- The release you are on comes from `trellis/VERSION` (Trellis 1.29+). Older trees have no
+  VERSION file, so the closest upstream tag is detected by comparing files; `--from=<tag>`
+  overrides it, `--to=<tag>` picks the target (default: latest release).
+- New `--dry-run` reports what would merge, conflict, be added, deleted or skipped, and changes
+  nothing. A real run refuses to start on a `trellis/` with uncommitted changes, so `git diff`
+  shows exactly what the update did; declining at the prompt undoes it with git (outside git, a
+  backup copy is taken and restored instead).
+- After merging it flags leftover conflict markers, installs Galaxy roles when `galaxy.yml`
+  changed, and runs `--syntax-check` on `server.yml`, `deploy.yml` and `dev.yml` (skipped while
+  conflicts remain). The upstream clone is a temp directory removed on exit; `~/trellis-temp`,
+  `~/trellis-diff` and the full `~/trellis-backup-*` copy are gone.
+- Verified by replaying the imagewize.com upgrade from v1.28.0 (auto-detected) to v1.33.0: 23
+  files merged, 4 added, 4 deleted, 3 already current, 1 two-line conflict
+  (`php_session_upload_progress_enabled`). After resolving it, the tree matches the hand-made
+  upgrade that was provisioned to production, apart from a deliberate local `mariadb_version` pin.
+
 ## [5.43.1] - 2026-11-07
 
 ### Fixed
