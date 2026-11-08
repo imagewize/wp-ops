@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Docs
+
+- **README:** the `trellis-updater` guide link now points to the wpvilla.in post on the three-way merge method ([Update Trellis with a three-way merge, not rsync excludes](https://wpvilla.in/update-trellis-three-way-merge-git-merge-file-keep-customisations/)) instead of the older rsync-excludes post.
+
 ## [5.44.0] - 2026-11-08
 
 ### Changed
