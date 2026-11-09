@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`db-pull` downloads the dump compressed.** The remote export was streamed over SSH as plain SQL and gzipped only on arrival in the VM; it is now gzipped on the server, so only the compressed dump crosses the network. On `imagewize.com` (12 MB gzipped) the download step dropped from 29 s to 18 s and the whole pull from 49 s to 37 s.
+
 ## [5.45.0] - 2026-11-09
 
 ### Changed

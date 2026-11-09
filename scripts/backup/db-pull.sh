@@ -295,7 +295,8 @@ PROD_URL=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${W
 PROD_HOME=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get home --path=${WP_PATH}')
 echo \"  siteurl: \$PROD_URL\"
 echo \"  home:    \$PROD_HOME\"
-${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp db export - --path=${WP_PATH}' | gzip > ${REMOTE_DUMP}
+# Compress on the remote so only the gzipped dump crosses the network.
+${REMOTE_SSH} 'set -o pipefail; cd ${REMOTE_PATH} && wp db export - --path=${WP_PATH} | gzip' > ${REMOTE_DUMP}
 gzip -t ${REMOTE_DUMP} || { echo '✗ Downloaded dump is not valid gzip — local database untouched'; exit 1; }
 gzip -dc ${REMOTE_DUMP} | tail -n 3 | grep -q -- '-- Dump completed' || { echo '✗ Downloaded dump is incomplete (no Dump completed footer) — local database untouched'; exit 1; }
 echo \"✓ ${REMOTE_DUMP} (\$(du -h ${REMOTE_DUMP} | cut -f1), verified)\"
