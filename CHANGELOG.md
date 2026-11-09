@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.45.2] - 2026-11-09
+
+### Fixed
+
+- **`db-pull` failed on macOS with `syntax error near unexpected token ';;'` (5.45.1 regression).** wp-ops runs scripts with `/bin/bash`, which is bash 3.2 on macOS. Bash 3.2 can't parse a `case … ;;` inside a heredoc inside `$( … )`, which is how 5.45.1 built the search-replace step. That version was only tested with Homebrew's bash 5. The step is now read with `read -r -d ''`, and a pull on `imagewize.com` under `/bin/bash` runs cleanly (33 s).
+- **New test: every shipped `.sh` must parse under `/bin/bash -n`.** `go test ./...` now catches bash-3.2-only syntax errors when run on a Mac. CI runs on Linux with bash 5, so it won't catch them there.
+
 ## [5.45.1] - 2026-11-09
 
 ### Changed
