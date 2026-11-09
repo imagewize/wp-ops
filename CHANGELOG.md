@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
+
 ## [5.45.2] - 2026-11-09
 
 ### Fixed
