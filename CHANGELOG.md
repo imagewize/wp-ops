@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.45.0] - 2026-11-09
+
 ### Changed
 
 - **`db-backup` keeps production dumps for 180 days, configurably, and never prunes the last few.** Retention was a hardcoded 30 days, so one run on a site that hadn't been backed up in a month deleted every older dump in one go (20 files on `imagewize.com`, including the only June 2026 copy). New flags: `--keep-days N` (default **180**, matching six months of log retention), `--keep-min N` (the newest N are kept whatever their age, default 10) and `--no-prune`. Pruning is now scoped to `<site>_<environment>_*`, so a staging backup can no longer delete production dumps.
