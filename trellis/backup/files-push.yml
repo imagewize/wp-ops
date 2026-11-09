@@ -1,7 +1,7 @@
 ---
 # Push development's uploads directory to a remote environment.
 #
-# @desc     Push development's uploads directory to a remote environment via rsync
+# @desc     Push development's uploads directory to a remote environment via rsync (Ansible playbook)
 # @category backup
 # @platform trellis
 # @runs     local

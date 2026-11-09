@@ -1,7 +1,7 @@
 ---
 # Pull a site's uploads directory from a remote environment into development.
 #
-# @desc     Pull a site's uploads directory from a remote environment into development via rsync
+# @desc     Pull a site's uploads directory from a remote environment into development via rsync (Ansible playbook)
 # @category backup
 # @platform trellis
 # @runs     local

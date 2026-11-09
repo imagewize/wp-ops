@@ -1,7 +1,7 @@
 ---
 # Push development's database to a remote environment, with URL search-replace.
 #
-# @desc     Push development's database to a remote environment, with URL search-replace
+# @desc     Push development's database to a remote environment, with URL search-replace (Ansible playbook)
 # @category backup
 # @platform trellis
 # @runs     local

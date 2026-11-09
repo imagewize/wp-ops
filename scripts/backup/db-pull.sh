@@ -25,7 +25,7 @@
 # For a from-scratch look at each underlying step, or the Ansible-playbook
 # alternative, see trellis/backup/README.md.
 #
-# @desc     Pull a remote site's database into development via SSH, with URL search-replace
+# @desc     Pull a remote site's database into development via SSH, with URL search-replace (shell, no Ansible)
 # @category backup
 # @platform trellis
 # @runs     local
