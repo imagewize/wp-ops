@@ -6,8 +6,12 @@
 #
 # Runs on your machine, inside a Trellis project. Uses `trellis vm shell` to
 # reach the local development VM, and SSHes from inside it straight to the
-# remote host — the dump streams over that pipe with no intermediate file on
-# either end.
+# remote host. Both dumps are kept in the site's database_backup/ directory:
+# the local database as it was before the pull
+# (<site>_development_<date>.sql.gz) and the remote one that was imported
+# (<site>_<environment>_<date>.sql.gz, the same naming `db-backup` uses, so
+# its retention pruning covers these too). The remote dump is checked for a
+# complete gzip stream and mysqldump footer before anything is imported.
 #
 # Usage:
 #   TRELLIS_DIR=/path/to/trellis ./db-pull.sh [site-name] [environment] [options]
@@ -40,8 +44,9 @@ usage() {
     echo "Usage: $(basename "$0") [site-name] [environment] [options]"
     echo ""
     echo "Pull a remote site's database into local development via SSH, with"
-    echo "URL search-replace. Streams the dump straight from the remote host"
-    echo "into the local VM's database — no intermediate file either side."
+    echo "URL search-replace. Keeps both the pre-pull local dump and the pulled"
+    echo "remote dump in database_backup/, and verifies the remote dump before"
+    echo "importing it."
     echo ""
     echo "Trellis projects only: it drives the local dev site through"
     echo "'trellis vm shell', so this has no equivalent for a non-Trellis"
@@ -233,9 +238,11 @@ else
     fi
 fi
 
-SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_URL\" \"\$DEV_URL\" --all-tables --precise --path=${WP_PATH}"
-HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME\" \"\$DEV_HOME\" --all-tables --precise --path=${WP_PATH}"
-HTTP_HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME_HTTP\" \"\$DEV_HOME\" --all-tables --precise --path=${WP_PATH}"
+# --report-changed-only: the full per-table report is ~160 rows of zeros.
+SR_FLAGS="--all-tables --precise --report-changed-only --path=${WP_PATH}"
+SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_URL\" \"\$DEV_URL\" ${SR_FLAGS}"
+HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME\" \"\$DEV_HOME\" ${SR_FLAGS}"
+HTTP_HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME_HTTP\" \"\$DEV_HOME\" ${SR_FLAGS}"
 MULTISITE_STEPS=""
 FLUSH_STEP_NUM=7
 if [[ "$MULTISITE" == true ]]; then
@@ -250,42 +257,60 @@ PROD_HOST=\$(echo \"\$PROD_URL\" | sed -E 's#^https?://##; s#/.*##')
 DEV_HOST=\$(echo \"\$DEV_URL\" | sed -E 's#^https?://##; s#/.*##')
 wp db query \"UPDATE wp_blogs SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
 wp db query \"UPDATE wp_site SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
+echo '✓ Domains updated'
 "
 fi
 
-PULL_COMMAND="
-set -e
+DATE=$(date +%Y_%m_%d_%H_%M_%S)
+SITE_SLUG="${SITE_NAME//./_}"
+DEV_DUMP="database_backup/${SITE_SLUG}_development_${DATE}.sql.gz"
+REMOTE_DUMP="database_backup/${SITE_SLUG}_${ENVIRONMENT}_${DATE}.sql.gz"
+# -n: never read stdin (this script itself arrives on stdin, see below).
+# LogLevel=ERROR: drop the "Permanently added ... to known hosts" chatter.
+REMOTE_SSH="ssh -n -o StrictHostKeyChecking=no -o LogLevel=ERROR web@${REMOTE_HOST}"
+
+# The whole script sits in one { } block: bash parses it completely before
+# running any of it, so nothing inside can consume the rest of the script
+# from stdin.
+PULL_COMMAND="{
+set -eo pipefail
+exec </dev/null
 mkdir -p database_backup
 
 echo '=== Step 1: Reading current development URL ==='
 DEV_URL=\$(wp option get siteurl --path=${WP_PATH})
 DEV_HOME=\$(wp option get home --path=${WP_PATH})
-echo \"  Development: \$DEV_URL\"
-echo \"  Development home: \$DEV_HOME\"
+echo \"  siteurl: \$DEV_URL\"
+echo \"  home:    \$DEV_HOME\"
 
 echo ''
 echo '=== Step 2: Backing up current development database ==='
-wp db export database_backup/dev_backup_\$(date +%Y%m%d_%H%M%S).sql.gz --path=${WP_PATH} && echo '✓ Backup created'
+# wp db export never compresses, whatever the file is called — pipe it.
+wp db export - --path=${WP_PATH} | gzip > ${DEV_DUMP}
+echo \"✓ ${DEV_DUMP} (\$(du -h ${DEV_DUMP} | cut -f1))\"
 
 echo ''
-echo '=== Step 3: Pulling ${ENVIRONMENT} database from ${REMOTE_HOST} ==='
-PROD_URL=\$(ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${WP_PATH}')
-PROD_HOME=\$(ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp option get home --path=${WP_PATH}')
-echo \"  ${ENVIRONMENT}: \$PROD_URL\"
-echo \"  ${ENVIRONMENT} home: \$PROD_HOME\"
-ssh -o StrictHostKeyChecking=no web@${REMOTE_HOST} 'cd ${REMOTE_PATH} && wp db export - --path=${WP_PATH}' | gzip > /tmp/${SITE_NAME//./_}_import.sql.gz && echo '✓ Downloaded'
+echo '=== Step 3: Downloading ${ENVIRONMENT} database from ${REMOTE_HOST} ==='
+PROD_URL=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${WP_PATH}')
+PROD_HOME=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get home --path=${WP_PATH}')
+echo \"  siteurl: \$PROD_URL\"
+echo \"  home:    \$PROD_HOME\"
+${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp db export - --path=${WP_PATH}' | gzip > ${REMOTE_DUMP}
+gzip -t ${REMOTE_DUMP} || { echo '✗ Downloaded dump is not valid gzip — local database untouched'; exit 1; }
+gzip -dc ${REMOTE_DUMP} | tail -n 3 | grep -q -- '-- Dump completed' || { echo '✗ Downloaded dump is incomplete (no Dump completed footer) — local database untouched'; exit 1; }
+echo \"✓ ${REMOTE_DUMP} (\$(du -h ${REMOTE_DUMP} | cut -f1), verified)\"
 
 echo ''
 echo '=== Step 4: Importing into development ==='
-gunzip < /tmp/${SITE_NAME//./_}_import.sql.gz | wp db import - --path=${WP_PATH} && echo '✓ Imported'
-rm -f /tmp/${SITE_NAME//./_}_import.sql.gz
+gzip -dc ${REMOTE_DUMP} | wp db import - --path=${WP_PATH} >/dev/null
+echo \"✓ Imported \$(wp db tables --all-tables-with-prefix --path=${WP_PATH} | wc -l | tr -d ' ') tables\"
 
 echo ''
-echo '=== Step 5: Running search-replace for URLs ==='
+echo '=== Step 5: Search-replace siteurl ==='
 ${SEARCH_REPLACE_CMD}
 
 echo ''
-echo '=== Step 6: Running search-replace for home URL (front-end links) ==='
+echo '=== Step 6: Search-replace home URL (front-end links) ==='
 if [ \"\$PROD_HOME\" != \"\$PROD_URL\" ] || [ \"\$DEV_HOME\" != \"\$DEV_URL\" ]; then
   ${HOME_SEARCH_REPLACE_CMD}
 else
@@ -299,21 +324,22 @@ fi
 ${MULTISITE_STEPS}
 echo ''
 echo '=== Step ${FLUSH_STEP_NUM}: Flushing cache ==='
-wp cache flush --path=${WP_PATH} && echo '✓ Cache flushed'
+wp cache flush --path=${WP_PATH} >/dev/null && echo '✓ Cache flushed'
 
 echo ''
-echo '=== Database pull complete! ==='
-echo \"Your local site (\$DEV_URL) now has the ${ENVIRONMENT} database.\"
-"
+echo \"=== Done: \$DEV_URL now has the ${ENVIRONMENT} database ===\"
+}"
 
-(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$WORKDIR" -- bash -c "$PULL_COMMAND")
+# Feed the script on stdin rather than as an argument: `trellis vm shell`
+# echoes its full command line, which would print all of the above.
+(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$WORKDIR" -- bash -s <<< "$PULL_COMMAND")
 
 echo ""
 echo -e "${GREEN}Database pull complete.${NC}"
 echo ""
-echo -e "Next steps:"
-echo -e "  1. Visit your local site in the browser"
-echo -e "  2. Check that URLs are correct"
-echo -e "  3. Test site functionality"
+echo -e "Dumps kept in ${WORKDIR}/database_backup/ (the site's database_backup/ on your machine):"
+echo -e "  before pull: ${DEV_DUMP##*/}"
+echo -e "  pulled:      ${REMOTE_DUMP##*/}"
+echo -e "Next: check the site in the browser."
 
 exit 0

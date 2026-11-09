@@ -19,6 +19,9 @@
 # Options:
 #   --host HOST   SSH host to back up from (default: site-name)
 #   --dest DIR    Local destination directory (default: database_backup)
+#   --keep-days N Prune this site+environment's backups older than N days (default: 180)
+#   --keep-min N  Never prune the newest N backups, whatever their age (default: 10)
+#   --no-prune    Keep every backup
 #
 # @desc     Back up a remote site's database over SSH straight to your machine
 # @category backup
@@ -29,6 +32,9 @@
 # @arg      environment  optional  {production|staging}  Remote environment to back up
 # @flag     --host       optional  {example.com}  SSH host to back up from (default: site-name)
 # @flag     --dest       optional  {database_backup}  Local destination directory
+# @flag     --keep-days  optional  {180}  Prune this site+environment's backups older than N days
+# @flag     --keep-min   optional  {10}  Never prune the newest N backups, whatever their age
+# @flag     --no-prune   optional  {}  Keep every backup
 # @example  wp-ops db-backup example.com production
 
 set -euo pipefail
@@ -47,6 +53,9 @@ usage() {
     echo "Options:"
     echo "  --host HOST  SSH host to back up from (default: site-name)"
     echo "  --dest DIR   Local destination directory (default: database_backup)"
+    echo "  --keep-days N  Prune this site+environment's backups older than N days (default: 180)"
+    echo "  --keep-min N   Never prune the newest N backups, whatever their age (default: 10)"
+    echo "  --no-prune     Keep every backup"
     echo ""
     echo "Backing up development? It's already local — just run:"
     echo "  wp db export --path=web/wp"
@@ -70,6 +79,9 @@ warning() { echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')] WARNING:${NC} $1"; 
 POSITIONAL=()
 REMOTE_HOST=""
 DEST_DIR="database_backup"
+KEEP_DAYS=180
+KEEP_MIN=10
+PRUNE=true
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -85,6 +97,18 @@ while [[ $# -gt 0 ]]; do
             DEST_DIR="${2:-}"
             shift 2
             ;;
+        --keep-days)
+            KEEP_DAYS="${2:-}"
+            shift 2
+            ;;
+        --keep-min)
+            KEEP_MIN="${2:-}"
+            shift 2
+            ;;
+        --no-prune)
+            PRUNE=false
+            shift
+            ;;
         *)
             POSITIONAL+=("$1")
             shift
@@ -95,6 +119,13 @@ done
 SITE_NAME="${POSITIONAL[0]:-example.com}"
 ENVIRONMENT="${POSITIONAL[1]:-production}"
 REMOTE_HOST="${REMOTE_HOST:-$SITE_NAME}"
+
+for n in "$KEEP_DAYS" "$KEEP_MIN"; do
+    if ! [[ "$n" =~ ^[0-9]+$ ]]; then
+        error "--keep-days and --keep-min take a whole number of days/backups (got '${n}')."
+        exit 1
+    fi
+done
 
 if [[ "$ENVIRONMENT" == "development" ]]; then
     error "development is already local — no SSH hop needed. Run this instead:"
@@ -125,15 +156,38 @@ if ! ssh -o StrictHostKeyChecking=no "web@${REMOTE_HOST}" \
     exit 1
 fi
 
-BACKUP_SIZE=$(ls -lh "${DEST_DIR}/${BACKUP_FILE}" | awk '{print $5}')
-log "Backup complete: ${DEST_DIR}/${BACKUP_FILE} (${BACKUP_SIZE})"
+# A dropped SSH connection can leave a gzip stream that is valid but cut
+# short, so check both the archive and mysqldump's closing footer before
+# calling it a backup (and, below, before pruning anything on its strength).
+if ! gzip -t "${DEST_DIR}/${BACKUP_FILE}" 2>/dev/null; then
+    error "Backup is not a valid gzip archive: ${DEST_DIR}/${BACKUP_FILE}"
+    exit 1
+fi
+if ! gzip -dc "${DEST_DIR}/${BACKUP_FILE}" | tail -n 3 | grep -q -- '-- Dump completed'; then
+    error "Backup has no '-- Dump completed' footer — the export was cut short: ${DEST_DIR}/${BACKUP_FILE}"
+    exit 1
+fi
 
-# Prune this site's old local backups (default 30 days), same as the old
-# server-side script did for /srv/backups.
-RETENTION_DAYS=30
-DELETED_COUNT=$(find "$DEST_DIR" -name "${SITE_NAME//./_}_*.sql.gz" -mtime "+${RETENTION_DAYS}" -delete -print | wc -l | tr -d ' ')
-if [[ "$DELETED_COUNT" -gt 0 ]]; then
-    log "Cleaned up ${DELETED_COUNT} old backup(s) older than ${RETENTION_DAYS} days."
+BACKUP_SIZE=$(ls -lh "${DEST_DIR}/${BACKUP_FILE}" | awk '{print $5}')
+log "Backup complete and verified: ${DEST_DIR}/${BACKUP_FILE} (${BACKUP_SIZE})"
+
+# Prune this site+environment's old local backups. Scoped to the environment
+# so a staging run never deletes production dumps, and the newest KEEP_MIN are
+# always kept — a site you back up rarely shouldn't end up with none at all.
+if [[ "$PRUNE" == true ]]; then
+    PREFIX="${SITE_NAME//./_}_${ENVIRONMENT}_"
+    DELETED_COUNT=0
+    # Timestamped names sort chronologically, so reverse-sorted = newest first.
+    while IFS= read -r old; do
+        [[ -n "$old" ]] || continue
+        if [[ -n "$(find "$old" -mtime "+${KEEP_DAYS}" -print)" ]]; then
+            rm -f "$old"
+            DELETED_COUNT=$((DELETED_COUNT + 1))
+        fi
+    done < <(find "$DEST_DIR" -maxdepth 1 -name "${PREFIX}*.sql.gz" | sort -r | tail -n "+$((KEEP_MIN + 1))")
+    if [[ "$DELETED_COUNT" -gt 0 ]]; then
+        log "Pruned ${DELETED_COUNT} ${ENVIRONMENT} backup(s) older than ${KEEP_DAYS} days (newest ${KEEP_MIN} always kept)."
+    fi
 fi
 
 exit 0

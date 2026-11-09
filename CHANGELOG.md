@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.45.0] - 2026-11-09
+
+### Changed
+
+- **`db-backup` keeps production dumps for 180 days, configurably, and never prunes the last few.** Retention was a hardcoded 30 days, so one run on a site that hadn't been backed up in a month deleted every older dump in one go (20 files on `imagewize.com`, including the only June 2026 copy). New flags: `--keep-days N` (default **180**, matching six months of log retention), `--keep-min N` (the newest N are kept whatever their age, default 10) and `--no-prune`. Pruning is now scoped to `<site>_<environment>_*`, so a staging backup can no longer delete production dumps.
+- **`db-pull` keeps the dump it imports.** It used to stream the remote dump through `/tmp` in the VM and delete it after import, leaving only the *local* pre-pull backup behind — easy to mistake for a production backup. Both are now kept in the site's `database_backup/`, named like `db-backup`'s output: `<site>_development_<date>.sql.gz` (before the pull) and `<site>_<environment>_<date>.sql.gz` (what was imported), so `db-backup`'s pruning covers them too.
+- **`db-pull` output is a screenful, not several.** `trellis vm shell` echoes its whole argv, so the entire ~80-line pull script was printed before anything ran; the script now goes in on stdin (`bash -s`). Search-replace passes use `--report-changed-only` instead of listing every table with 0 replacements, SSH known-hosts chatter is silenced, and import/cache-flush print one line each.
+
+### Fixed
+
+- **`db-pull`'s pre-pull local backup was never compressed.** `wp db export file.sql.gz` writes plain SQL whatever the extension, so `dev_backup_*.sql.gz` files were ~7× their real gzip size and rejected by `gunzip`/`gzip -t`. The export is now piped through `gzip`.
+- **`db-backup` and `db-pull` verify a dump before trusting it.** Both check `gzip -t` and mysqldump's `-- Dump completed` footer, so a dropped SSH connection can't produce a truncated "backup" — and `db-pull` aborts before touching the local database, `db-backup` before pruning anything on the strength of it.
+
 ### Docs
 
 - **README:** the `trellis-updater` guide link now points to the wpvilla.in post on the three-way merge method ([Update Trellis with a three-way merge, not rsync excludes](https://wpvilla.in/update-trellis-three-way-merge-git-merge-file-keep-customisations/)) instead of the older rsync-excludes post.

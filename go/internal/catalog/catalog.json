@@ -46,6 +46,29 @@
         "default": "database_backup",
         "description": "Local destination directory",
         "raw": "--dest       optional  {database_backup}  Local destination directory"
+      },
+      {
+        "name": "--keep-days",
+        "required_raw": "optional",
+        "required": false,
+        "default": "180",
+        "description": "Prune this site+environment's backups older than N days",
+        "raw": "--keep-days  optional  {180}  Prune this site+environment's backups older than N days"
+      },
+      {
+        "name": "--keep-min",
+        "required_raw": "optional",
+        "required": false,
+        "default": "10",
+        "description": "Never prune the newest N backups, whatever their age",
+        "raw": "--keep-min   optional  {10}  Never prune the newest N backups, whatever their age"
+      },
+      {
+        "name": "--no-prune",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Keep every backup",
+        "raw": "--no-prune   optional  {}  Keep every backup"
       }
     ],
     "examples": [
