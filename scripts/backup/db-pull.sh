@@ -238,21 +238,13 @@ else
     fi
 fi
 
-# --report-changed-only: the full per-table report is ~160 rows of zeros.
-SR_FLAGS="--all-tables --precise --report-changed-only --path=${WP_PATH}"
-SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_URL\" \"\$DEV_URL\" ${SR_FLAGS}"
-HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME\" \"\$DEV_HOME\" ${SR_FLAGS}"
-HTTP_HOME_SEARCH_REPLACE_CMD="wp search-replace \"\$PROD_HOME_HTTP\" \"\$DEV_HOME\" ${SR_FLAGS}"
 MULTISITE_STEPS=""
-FLUSH_STEP_NUM=7
+FLUSH_STEP_NUM=6
 if [[ "$MULTISITE" == true ]]; then
-    SEARCH_REPLACE_CMD="${SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
-    HOME_SEARCH_REPLACE_CMD="${HOME_SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
-    HTTP_HOME_SEARCH_REPLACE_CMD="${HTTP_HOME_SEARCH_REPLACE_CMD} --url=\"\$PROD_URL\""
-    FLUSH_STEP_NUM=8
+    FLUSH_STEP_NUM=7
     MULTISITE_STEPS="
 echo ''
-echo '=== Step 7: Fixing multisite network and blog domains ==='
+echo '=== Step 6: Fixing multisite network and blog domains ==='
 PROD_HOST=\$(echo \"\$PROD_URL\" | sed -E 's#^https?://##; s#/.*##')
 DEV_HOST=\$(echo \"\$DEV_URL\" | sed -E 's#^https?://##; s#/.*##')
 wp db query \"UPDATE wp_blogs SET domain = REPLACE(domain, '\${PROD_HOST}', '\${DEV_HOST}');\" --path=${WP_PATH}
@@ -260,6 +252,45 @@ wp db query \"UPDATE wp_site SET domain = REPLACE(domain, '\${PROD_HOST}', '\${D
 echo '✓ Domains updated'
 "
 fi
+
+# Search-replace step, run inside the VM. Quoted heredoc: nothing in it is
+# expanded here; it reads PROD_URL/PROD_HOME/DEV_URL/DEV_HOME, WP_PATH and
+# MULTISITE from the pull script it is spliced into.
+#
+# Every --all-tables --precise pass walks the whole database in PHP, so
+# siteurl gets no pass of its own when it is home plus the same suffix on both
+# ends (Bedrock's /wp, or no suffix at all): replacing home already fixes it.
+# Home and its pre-HTTPS http:// form stay two plain passes: a single
+# --regex pass covering both was ~10x slower (77s vs 7s on imagewize.com),
+# since regex mode unserializes every value.
+SEARCH_REPLACE_STEP=$(cat <<'EOS'
+echo ''
+echo '=== Step 5: Search-replace URLs ==='
+sr() {
+  local extra=()
+  [ "$MULTISITE" = true ] && extra+=(--url="$PROD_URL")
+  # --report-changed-only: the full per-table report is ~160 rows of zeros.
+  wp search-replace "$@" --all-tables --precise --report-changed-only --path="$WP_PATH" "${extra[@]}"
+}
+SITEURL_COVERED=no
+case "$PROD_URL" in "$PROD_HOME"*)
+  case "$DEV_URL" in "$DEV_HOME"*)
+    [ "${PROD_URL#"$PROD_HOME"}" = "${DEV_URL#"$DEV_HOME"}" ] && SITEURL_COVERED=yes ;;
+  esac ;;
+esac
+if [ "$SITEURL_COVERED" = no ]; then
+  echo "  siteurl: $PROD_URL -> $DEV_URL"
+  sr "$PROD_URL" "$DEV_URL"
+fi
+echo "  home:    $PROD_HOME -> $DEV_HOME"
+sr "$PROD_HOME" "$DEV_HOME"
+PROD_HOME_HTTP=$(echo "$PROD_HOME" | sed -E 's#^https://#http://#')
+if [ "$PROD_HOME_HTTP" != "$PROD_HOME" ]; then
+  echo "  pre-HTTPS links: $PROD_HOME_HTTP -> $DEV_HOME"
+  sr "$PROD_HOME_HTTP" "$DEV_HOME"
+fi
+EOS
+)
 
 DATE=$(date +%Y_%m_%d_%H_%M_%S)
 SITE_SLUG="${SITE_NAME//./_}"
@@ -275,6 +306,8 @@ REMOTE_SSH="ssh -n -o StrictHostKeyChecking=no -o LogLevel=ERROR web@${REMOTE_HO
 PULL_COMMAND="{
 set -eo pipefail
 exec </dev/null
+WP_PATH=${WP_PATH}
+MULTISITE=${MULTISITE}
 mkdir -p database_backup
 
 echo '=== Step 1: Reading current development URL ==='
@@ -291,8 +324,11 @@ echo \"✓ ${DEV_DUMP} (\$(du -h ${DEV_DUMP} | cut -f1))\"
 
 echo ''
 echo '=== Step 3: Downloading ${ENVIRONMENT} database from ${REMOTE_HOST} ==='
-PROD_URL=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${WP_PATH}')
-PROD_HOME=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get home --path=${WP_PATH}')
+# Both URLs in one SSH round trip, one per line.
+PROD_URLS=\$(${REMOTE_SSH} 'cd ${REMOTE_PATH} && wp option get siteurl --path=${WP_PATH} && wp option get home --path=${WP_PATH}')
+PROD_URL=\$(printf '%s\\n' \"\$PROD_URLS\" | sed -n 1p)
+PROD_HOME=\$(printf '%s\\n' \"\$PROD_URLS\" | sed -n 2p)
+[ -n \"\$PROD_URL\" ] && [ -n \"\$PROD_HOME\" ] || { echo '✗ Could not read siteurl/home from ${REMOTE_HOST} — local database untouched'; exit 1; }
 echo \"  siteurl: \$PROD_URL\"
 echo \"  home:    \$PROD_HOME\"
 # Compress on the remote so only the gzipped dump crosses the network.
@@ -306,22 +342,7 @@ echo '=== Step 4: Importing into development ==='
 gzip -dc ${REMOTE_DUMP} | wp db import - --path=${WP_PATH} >/dev/null
 echo \"✓ Imported \$(wp db tables --all-tables-with-prefix --path=${WP_PATH} | wc -l | tr -d ' ') tables\"
 
-echo ''
-echo '=== Step 5: Search-replace siteurl ==='
-${SEARCH_REPLACE_CMD}
-
-echo ''
-echo '=== Step 6: Search-replace home URL (front-end links) ==='
-if [ \"\$PROD_HOME\" != \"\$PROD_URL\" ] || [ \"\$DEV_HOME\" != \"\$DEV_URL\" ]; then
-  ${HOME_SEARCH_REPLACE_CMD}
-else
-  echo '  home matches siteurl, already covered by Step 5'
-fi
-PROD_HOME_HTTP=\$(echo \"\$PROD_HOME\" | sed -E 's#^https://#http://#')
-if [ \"\$PROD_HOME_HTTP\" != \"\$PROD_HOME\" ]; then
-  echo \"  Also replacing pre-HTTPS links: \$PROD_HOME_HTTP\"
-  ${HTTP_HOME_SEARCH_REPLACE_CMD}
-fi
+${SEARCH_REPLACE_STEP}
 ${MULTISITE_STEPS}
 echo ''
 echo '=== Step ${FLUSH_STEP_NUM}: Flushing cache ==='

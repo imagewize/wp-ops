@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.45.1] - 2026-11-09
+
 ### Changed
 
-- **`db-pull` downloads the dump compressed.** The remote export was streamed over SSH as plain SQL and gzipped only on arrival in the VM; it is now gzipped on the server, so only the compressed dump crosses the network. On `imagewize.com` (12 MB gzipped) the download step dropped from 29 s to 18 s and the whole pull from 49 s to 37 s.
+- **`db-pull` is about a third faster: 49 s → 32 s on `imagewize.com` (12 MB gzipped dump), now on par with the Ansible `database-pull` (31.7 s).** Three changes:
+  - The remote dump is gzipped on the server, so only the compressed dump crosses the network, instead of plain SQL gzipped on arrival in the VM. The download dropped from 29 s to 18 s. `pipefail` on the remote keeps a failed export from passing as a valid gzip stream.
+  - Production `siteurl` and `home` are read in one SSH call instead of two.
+  - There is no separate `siteurl` search-replace pass when `siteurl` is `home` plus the same suffix on both ends (Bedrock's `/wp`, or none): the `home` pass already rewrites it. Every `--all-tables --precise` pass walks the whole database, so this leaves two passes (`home`, plus its pre-HTTPS `http://` form) instead of three. Merging those two into one `--regex` pass was tried and dropped: it took 77 s instead of 7 s, because regex mode unserializes every value.
 
 ## [5.45.0] - 2026-11-09
 
