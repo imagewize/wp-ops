@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
 
+### Documentation
+
+- **Contributor docs say to write and test scripts for bash 3.2.** `AGENTS.md` explains why macOS's `/bin/bash` is 3.2 and Homebrew bash is opt-in, lists the 3.2-incompatible constructs to avoid, and replaces `bash -n` with `/bin/bash -n` (plain `bash` resolves to Homebrew's 5.x on a dev Mac). `CLAUDE.md` has the same rule. The README requirements and `scripts/README.md` note that the built-in bash 3.2 is enough.
+
 ## [5.45.2] - 2026-11-09
 
 ### Fixed

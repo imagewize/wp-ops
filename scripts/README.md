@@ -71,7 +71,7 @@ scripts/
 
 ### Prerequisites
 
-- Bash shell (included on all Linux/macOS systems)
+- Bash shell (included on all Linux/macOS systems). macOS's built-in bash 3.2 is enough; you don't need Homebrew bash.
 - Git (for GitHub integration scripts)
 - WP-CLI (for WordPress backup scripts)
 - Claude CLI, Codex, or Mistral Vibe (optional, for AI features)
