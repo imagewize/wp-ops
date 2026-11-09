@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { gunzipSync } from "node:zlib";
 import type { EnvEntry } from "../registry.js";
 import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
 import { runWpCliRaw } from "./wpCli.js";
@@ -30,6 +31,31 @@ function exec(command: string, args: string[], cwd: string | undefined, input: B
   });
 }
 
+// Both URLs from one `wp eval`: one SSH round trip (or one `trellis vm shell`)
+// and one WordPress boot per side instead of two.
+const READ_URLS_PHP = "echo get_option('siteurl'), PHP_EOL, get_option('home'), PHP_EOL;";
+
+async function readUrls(entry: EnvEntry, env: string): Promise<{ siteurl: string; home: string }> {
+  const result = await runWpCliRaw(entry, ["eval", READ_URLS_PHP]);
+  if (result.code !== 0) {
+    throw new Error(`Reading siteurl/home on "${env}" failed (exit ${result.code}): ${result.stderr}`);
+  }
+  const [siteurl = "", home = ""] = result.stdout.trim().split(/\r?\n/).map((l) => l.trim());
+  return { siteurl: assertSiteUrl(siteurl, env), home: assertSiteUrl(home, env) };
+}
+
+// siteurl needs no search-replace pass of its own when it is home plus the same
+// suffix on both ends (Bedrock's /wp, or none): the home pass already rewrites
+// it. Every --all-tables --precise pass walks the whole database, so this is
+// one fewer full scan on a typical Bedrock site.
+export function siteurlCoveredByHome(prodUrl: string, prodHome: string, devUrl: string, devHome: string): boolean {
+  return (
+    prodUrl.startsWith(prodHome) &&
+    devUrl.startsWith(devHome) &&
+    prodUrl.slice(prodHome.length) === devUrl.slice(devHome.length)
+  );
+}
+
 function hostOf(url: string): string {
   return url.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 }
@@ -48,18 +74,19 @@ export interface DbPullResult {
 
 // Ports scripts/backup/db-pull.sh's PULL_COMMAND to composable calls against the
 // already-resolved registry entries, instead of building one big remote bash -c
-// string: read both URLs, back up dev first, stream the remote export straight
-// into `trellis vm shell -- wp db import -` (buffer-only, no intermediate file
-// either side), search-replace, optional multisite domain fixup, flush cache.
+// string: read both URLs, back up dev first, fetch the remote export gzipped,
+// verify and unzip it in memory, feed it to `trellis vm shell -- wp db import -`
+// (buffer-only, no intermediate file either side), search-replace, optional
+// multisite domain fixup, flush cache.
 //
 // Two URL pairs get read and replaced, not one. `siteurl` and `home` diverge on
 // Bedrock (siteurl carries the `/wp` core subdirectory, home doesn't), and content
 // — nav menus, post guids, the `home` option itself — is written against `home`,
 // never `siteurl`. A search-replace keyed only on `siteurl` silently skips every
 // one of those: it matches nothing, exits 0, and the pulled site looks fine until
-// someone clicks a menu link and lands back on production. Both pairs are searched
-// unless they're identical (non-Bedrock installs, where siteurl === home already
-// covers it).
+// someone clicks a menu link and lands back on production. home is always
+// replaced; siteurl gets its own pass only when the home pass can't cover it
+// (see siteurlCoveredByHome).
 //
 // Both pairs are also interpolated into UPDATEs on wp_blogs.domain and
 // wp_site.domain for multisite. If a wrapper ever prefixes that stdout again, a
@@ -104,52 +131,63 @@ export async function runDbPull(
   const fromPhpBin = resolvePhpBin(fromEntry);
   const fromWpCommand = fromPhpBin ? [fromPhpBin, fromWpBin] : [fromWpBin];
 
-  const prodUrl = assertSiteUrl((await runWpCliRaw(fromEntry, ["option", "get", "siteurl"])).stdout.trim(), fromEnv);
-  const devUrl = assertSiteUrl((await runWpCliRaw(devEntry, ["option", "get", "siteurl"])).stdout.trim(), "development");
-  const prodHome = assertSiteUrl((await runWpCliRaw(fromEntry, ["option", "get", "home"])).stdout.trim(), fromEnv);
-  const devHome = assertSiteUrl((await runWpCliRaw(devEntry, ["option", "get", "home"])).stdout.trim(), "development");
+  const { siteurl: prodUrl, home: prodHome } = await readUrls(fromEntry, fromEnv);
+  const { siteurl: devUrl, home: devHome } = await readUrls(devEntry, "development");
 
   // Back up dev's current DB before overwriting it — same safety step db-pull.sh
   // takes, reusing the db_backup tool's own implementation rather than
   // duplicating export logic.
   const backup = await runDbBackup(devEntry, site, "development");
 
-  const exportCmd = [...fromWpCommand, "db", "export", "-", `--path=${fromEntry.remotePath}`].map(shellQuote).join(" ");
-  const dump = await exec("ssh", [fromEntry.sshHost, exportCmd], undefined, Buffer.alloc(0));
-  if (dump.code !== 0) {
-    throw new Error(`Remote db export from "${fromEnv}" failed (exit ${dump.code}): ${dump.stderr}`);
+  // Gzip on the remote so only the compressed dump crosses the network (plain
+  // SQL is several times larger); pipefail keeps a failed export from passing
+  // as a valid gzip stream.
+  const exportCmd =
+    "set -o pipefail; " +
+    [...fromWpCommand, "db", "export", "-", `--path=${fromEntry.remotePath}`].map(shellQuote).join(" ") +
+    " | gzip";
+  const compressed = await exec("ssh", [fromEntry.sshHost, exportCmd], undefined, Buffer.alloc(0));
+  if (compressed.code !== 0) {
+    throw new Error(`Remote db export from "${fromEnv}" failed (exit ${compressed.code}): ${compressed.stderr}`);
+  }
+  let sql: Buffer;
+  try {
+    sql = gunzipSync(compressed.stdout);
+  } catch (err) {
+    throw new Error(`Downloaded dump from "${fromEnv}" is not valid gzip — development untouched: ${String(err)}`);
+  }
+  if (!sql.subarray(-512).toString("latin1").includes("-- Dump completed")) {
+    throw new Error(`Downloaded dump from "${fromEnv}" is incomplete (no "Dump completed" footer) — development untouched.`);
   }
 
   const importResult = await exec(
     "trellis",
     ["vm", "shell", "--workdir", devEntry.vmWorkdir, "--", ...devWpCommand, "db", "import", "-", `--path=${devPath}`],
     devEntry.trellisDir,
-    dump.stdout
+    sql
   );
   if (importResult.code !== 0) {
     throw new Error(`Import into development failed (exit ${importResult.code}): ${importResult.stderr}`);
   }
 
-  const searchReplaceArgs = ["search-replace", prodUrl, devUrl, "--all-tables", "--precise"];
-  if (multisite) searchReplaceArgs.push(`--url=${prodUrl}`);
-  const searchReplace = await runWpCliRaw(devEntry, searchReplaceArgs);
-  if (searchReplace.code !== 0) {
-    throw new Error(`search-replace failed (exit ${searchReplace.code}): ${searchReplace.stderr}`);
+  let searchReplaceOutput = "";
+  if (!siteurlCoveredByHome(prodUrl, prodHome, devUrl, devHome)) {
+    const searchReplaceArgs = ["search-replace", prodUrl, devUrl, "--all-tables", "--precise", "--report-changed-only"];
+    if (multisite) searchReplaceArgs.push(`--url=${prodUrl}`);
+    const searchReplace = await runWpCliRaw(devEntry, searchReplaceArgs);
+    if (searchReplace.code !== 0) {
+      throw new Error(`search-replace failed (exit ${searchReplace.code}): ${searchReplace.stderr}`);
+    }
+    searchReplaceOutput = (searchReplace.stdout + searchReplace.stderr).trim();
   }
 
-  // siteurl and home only differ on Bedrock (siteurl has /wp); running this pass
-  // unconditionally on a non-Bedrock install would just be a harmless no-op, but
-  // skipping it when they're equal saves a redundant full-table scan.
-  let homeSearchReplaceOutput = "";
-  if (prodHome !== prodUrl || devHome !== devUrl) {
-    const homeSearchReplaceArgs = ["search-replace", prodHome, devHome, "--all-tables", "--precise"];
-    if (multisite) homeSearchReplaceArgs.push(`--url=${prodUrl}`);
-    const homeSearchReplace = await runWpCliRaw(devEntry, homeSearchReplaceArgs);
-    if (homeSearchReplace.code !== 0) {
-      throw new Error(`search-replace (home URL) failed (exit ${homeSearchReplace.code}): ${homeSearchReplace.stderr}`);
-    }
-    homeSearchReplaceOutput = (homeSearchReplace.stdout + homeSearchReplace.stderr).trim();
+  const homeSearchReplaceArgs = ["search-replace", prodHome, devHome, "--all-tables", "--precise", "--report-changed-only"];
+  if (multisite) homeSearchReplaceArgs.push(`--url=${prodUrl}`);
+  const homeSearchReplace = await runWpCliRaw(devEntry, homeSearchReplaceArgs);
+  if (homeSearchReplace.code !== 0) {
+    throw new Error(`search-replace (home URL) failed (exit ${homeSearchReplace.code}): ${homeSearchReplace.stderr}`);
   }
+  const homeSearchReplaceOutput = (homeSearchReplace.stdout + homeSearchReplace.stderr).trim();
 
   // Content written before a site moved to HTTPS still carries http:// links to
   // the production host. Neither pass above matches those, so replace the http://
@@ -157,7 +195,14 @@ export async function runDbPull(
   let httpHomeSearchReplaceOutput = "";
   const prodHomeHttp = prodHome.replace(/^https:\/\//, "http://");
   if (prodHomeHttp !== prodHome) {
-    const httpHomeSearchReplaceArgs = ["search-replace", prodHomeHttp, devHome, "--all-tables", "--precise"];
+    const httpHomeSearchReplaceArgs = [
+      "search-replace",
+      prodHomeHttp,
+      devHome,
+      "--all-tables",
+      "--precise",
+      "--report-changed-only",
+    ];
     if (multisite) httpHomeSearchReplaceArgs.push(`--url=${prodUrl}`);
     const httpHomeSearchReplace = await runWpCliRaw(devEntry, httpHomeSearchReplaceArgs);
     if (httpHomeSearchReplace.code !== 0) {
@@ -193,7 +238,7 @@ export async function runDbPull(
     prodHome,
     devHome,
     multisiteFixedUp,
-    searchReplaceOutput: (searchReplace.stdout + searchReplace.stderr).trim(),
+    searchReplaceOutput,
     homeSearchReplaceOutput,
     httpHomeSearchReplaceOutput,
   };
