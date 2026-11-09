@@ -85,3 +85,27 @@ jobs:
           go build ./...
           go test .
           go vet ./...
+
+  bash32-syntax:
+    # wp-ops runs shipped scripts with /bin/bash, which on macOS is bash 3.2.
+    # The build job's TestShellScriptsParseWithSystemBash runs on Ubuntu, where
+    # /bin/bash is bash 5 and accepts syntax 3.2 rejects. 5.45.1 shipped a
+    # db-pull.sh with `case ... ;;` inside a heredoc inside $( ) that parsed
+    # on bash 5 and failed for every macOS user. This job checks every tracked
+    # .sh with the real 3.2 parser. Syntax only: a bash-4 feature that parses
+    # on 3.2 but fails at runtime (${var,,}, mapfile) still gets through.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Shell scripts parse under macOS /bin/bash (3.2)
+        run: |
+          /bin/bash --version | head -1
+          fail=0
+          count=0
+          while IFS= read -r f; do
+            count=$((count + 1))
+            /bin/bash -n "$f" || { echo "::error file=$f::does not parse under /bin/bash 3.2"; fail=1; }
+          done < <(git ls-files '*.sh')
+          echo "Checked $count scripts"
+          exit $fail

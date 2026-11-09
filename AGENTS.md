@@ -15,12 +15,14 @@
 
 ## Coding Style & Naming Conventions
 - Scripts: Bash with `#!/bin/bash`; prefer `set -euo pipefail`, double-quoting, and long-form flags. Indent with two spaces for readability.
+- **Bash 3.2 compatible.** On macOS, `/bin/bash` is Apple's bash 3.2.57, the last GPLv2 release, and Homebrew only adds bash 5 if someone runs `brew install bash`. wp-ops runs each script with the bash its shebang names, so every script must work on 3.2. Avoid associative arrays (`declare -A`), `${var,,}`/`${var^^}`, `mapfile`/`readarray`, `&>>`, negative array indexes, and heredocs inside `$( … )` (3.2 can't parse a `case … ;;` there; that broke `db-pull` in 5.45.1). Use `IFS= read -r -d '' VAR <<'EOF' || true` to load a heredoc into a variable.
 - Variables: UPPER_SNAKE for constants/paths, lower_snake for locals; keep function names verb-based (`run_backup`, `sync_theme`).
 - Documentation: Markdown headings, lists, and fenced examples with accurate paths. Keep sections short and actionable.
 
 ## Testing Guidelines
 - No automated test suite; validate changes by running the exact commands you document with safe flags first (`--check`, `--diff`, `--dry-run` where available).
-- For shell changes, sanity-check with `bash -n script.sh`; use `shellcheck` locally if available before submitting.
+- For shell changes, sanity-check with `/bin/bash -n script.sh` and run the script with `/bin/bash`, not plain `bash`. On a Mac with Homebrew bash, `bash` is 5.x and accepts syntax that 3.2 rejects. Use `shellcheck` locally if available before submitting.
+- Automated guards: `go test ./...` includes `TestShellScriptsParseWithSystemBash` (catches 3.2 problems when run on a Mac), and CI's `bash32-syntax` job runs `/bin/bash -n` over every `.sh` on a macOS runner. Both check syntax only, so a bash-4 feature that parses on 3.2 but fails at runtime still needs the manual `/bin/bash` run.
 - Describe manual verification steps in the relevant `README.md` (inputs, expected outputs, cleanup).
 
 ## Git Workflow
@@ -50,7 +52,7 @@
 - **Never start a word with `@` in a commit message.** GitHub autolinks `@word` in commit subjects and bodies to whoever owns that account name, in the commits list where backticks do not suppress it. Write "a mutates directive", not the sigil form; keep `` `@mutates` `` for Markdown.
 - `CLAUDE.md` is the authority on both rules above — check there first if this file and it ever disagree.
 - Always update CHANGELOG.md alongside code changes
-- Validate scripts with `bash -n script.sh` before committing
+- Validate scripts with `/bin/bash -n script.sh` before committing (not plain `bash`: see Testing Guidelines)
 
 ## Context for Tasks
 Before starting, identify:

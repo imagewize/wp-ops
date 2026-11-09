@@ -189,7 +189,7 @@ sites are run with:
 
 ## Requirements
 
-- **Core**: Git, Bash, rsync, SSH access to your Trellis servers
+- **Core**: Git, Bash (macOS's built-in 3.2 is enough), rsync, SSH access to your Trellis servers
 - **Most Trellis commands**: Ansible (already present if you use Trellis)
 - **Tool-specific**: WP-CLI, ImageMagick, `cwebp`, Node — `wp-ops doctor` tells you what's missing
 

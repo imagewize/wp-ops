@@ -290,6 +290,7 @@ Before running backup operations on production:
 - When suggesting Ansible playbook modifications, maintain the existing error handling and backup patterns
 - Database operations should always use WP-CLI through `wp` commands, not direct MySQL
 - Shell scripts should follow the existing pattern of configuration variables at the top
+- Shell scripts must run on macOS's `/bin/bash` 3.2: test with `/bin/bash script.sh` and `/bin/bash -n`, never plain `bash`, which resolves to Homebrew's bash 5 on a dev Mac and hides 3.2 syntax errors. AGENTS.md (Coding Style) lists the constructs to avoid.
 - Nginx configuration files use Jinja2 templating (`.conf.j2` extension)
 - All backup/pull/push operations require both `site` and `env` parameters
 - The repository contains documentation-only tools; they're copied into Trellis projects for actual use
