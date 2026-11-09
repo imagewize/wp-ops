@@ -15,7 +15,7 @@
 
 ## Coding Style & Naming Conventions
 - Scripts: Bash with `#!/bin/bash`; prefer `set -euo pipefail`, double-quoting, and long-form flags. Indent with two spaces for readability.
-- **Bash 3.2 compatible.** On macOS, `/bin/bash` is Apple's bash 3.2 (frozen in 2007, the last GPLv2 release), and Homebrew only adds bash 5 if someone runs `brew install bash`. wp-ops runs each script with the bash its shebang names, so every script must work on 3.2. Avoid associative arrays (`declare -A`), `${var,,}`/`${var^^}`, `mapfile`/`readarray`, `&>>`, negative array indexes, and heredocs inside `$( … )` (3.2 can't parse a `case … ;;` there; that broke `db-pull` in 5.45.1). Use `IFS= read -r -d '' VAR <<'EOF' || true` to load a heredoc into a variable.
+- **Bash 3.2 compatible.** On macOS, `/bin/bash` is Apple's bash 3.2.57, the last GPLv2 release, and Homebrew only adds bash 5 if someone runs `brew install bash`. wp-ops runs each script with the bash its shebang names, so every script must work on 3.2. Avoid associative arrays (`declare -A`), `${var,,}`/`${var^^}`, `mapfile`/`readarray`, `&>>`, negative array indexes, and heredocs inside `$( … )` (3.2 can't parse a `case … ;;` there; that broke `db-pull` in 5.45.1). Use `IFS= read -r -d '' VAR <<'EOF' || true` to load a heredoc into a variable.
 - Variables: UPPER_SNAKE for constants/paths, lower_snake for locals; keep function names verb-based (`run_backup`, `sync_theme`).
 - Documentation: Markdown headings, lists, and fenced examples with accurate paths. Keep sections short and actionable.
 
