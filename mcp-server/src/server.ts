@@ -784,7 +784,9 @@ export function createServer(): McpServer {
           `  Development backed up to: ${result.devBackupPath}`,
         ];
         if (result.multisiteFixedUp) lines.push("  Multisite domain fixup applied.");
-        lines.push("", "search-replace output:", result.searchReplaceOutput);
+        if (result.searchReplaceOutput) {
+          lines.push("", "search-replace output (siteurl):", result.searchReplaceOutput);
+        }
         if (result.homeSearchReplaceOutput) {
           lines.push("", "search-replace output (home URL):", result.homeSearchReplaceOutput);
         }

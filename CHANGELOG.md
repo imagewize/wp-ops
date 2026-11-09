@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.45.1] - 2026-11-09
+
+### Changed
+
+- **`db-pull` is about a third faster: 49 s → 32 s on `imagewize.com` (12 MB gzipped dump), now on par with the Ansible `database-pull` (31.7 s).** Three changes:
+  - The remote dump is gzipped on the server, so only the compressed dump crosses the network, instead of plain SQL gzipped on arrival in the VM. The download dropped from 29 s to 18 s. `pipefail` on the remote keeps a failed export from passing as a valid gzip stream.
+  - Production `siteurl` and `home` are read in one SSH call instead of two.
+  - There is no separate `siteurl` search-replace pass when `siteurl` is `home` plus the same suffix on both ends (Bedrock's `/wp`, or none): the `home` pass already rewrites it. Every `--all-tables --precise` pass walks the whole database, so this leaves two passes (`home`, plus its pre-HTTPS `http://` form) instead of three. Merging those two into one `--regex` pass was tried and dropped: it took 77 s instead of 7 s, because regex mode unserializes every value.
+- **The MCP `db_pull` tool gets the same speedups.** It fetches the dump gzipped and checks it in memory (valid gzip, `Dump completed` footer) before importing, reads `siteurl` and `home` with one `wp eval` per side instead of four `wp option get` calls, skips the redundant `siteurl` pass, and reports only changed tables. It took 27 s on `imagewize.com`, with the same replacement counts as `db-pull`.
+- **Backup commands say whether they are an Ansible playbook or a shell script.** `db-pull`/`database-pull` and `db-backup`/`database-backup` sat side by side in `wp-ops backup` with near-identical descriptions. The six `trellis/backup/` playbooks now end in "(Ansible playbook)" and `db-pull`/`db-backup` in "(shell, no Ansible)", so the picker and `wp-ops search` tell them apart.
+
 ## [5.45.0] - 2026-11-09
 
 ### Changed

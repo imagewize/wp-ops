@@ -1,7 +1,7 @@
 ---
 # Back up a site's uploads directory from any environment (development/staging/production).
 #
-# @desc     Back up a site's uploads directory from any environment (development/staging/production)
+# @desc     Back up a site's uploads directory from any environment (development/staging/production) (Ansible playbook)
 # @category backup
 # @platform trellis
 # @runs     local

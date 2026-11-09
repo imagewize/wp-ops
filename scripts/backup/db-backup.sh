@@ -23,7 +23,7 @@
 #   --keep-min N  Never prune the newest N backups, whatever their age (default: 10)
 #   --no-prune    Keep every backup
 #
-# @desc     Back up a remote site's database over SSH straight to your machine
+# @desc     Back up a remote site's database over SSH straight to your machine (shell, no Ansible)
 # @category backup
 # @platform trellis
 # @runs     local

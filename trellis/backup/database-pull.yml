@@ -1,7 +1,7 @@
 ---
 # Pull a site's database from a remote environment into development, with URL search-replace.
 #
-# @desc     Pull a site's database from a remote environment into development, with URL search-replace
+# @desc     Pull a site's database from a remote environment into development, with URL search-replace (Ansible playbook)
 # @category backup
 # @platform trellis
 # @runs     local

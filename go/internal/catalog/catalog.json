@@ -2,7 +2,7 @@
   {
     "category": "scripts",
     "key": "scripts/backup/db-backup",
-    "description": "Back up a remote site's database over SSH straight to your machine",
+    "description": "Back up a remote site's database over SSH straight to your machine (shell, no Ansible)",
     "script_path": "scripts/backup/db-backup.sh",
     "runs_on": "local",
     "runs": "local",
@@ -83,7 +83,7 @@
   {
     "category": "scripts",
     "key": "scripts/backup/db-pull",
-    "description": "Pull a remote site's database into development via SSH, with URL search-replace",
+    "description": "Pull a remote site's database into development via SSH, with URL search-replace (shell, no Ansible)",
     "script_path": "scripts/backup/db-pull.sh",
     "runs_on": "local",
     "runs": "local",
@@ -2041,7 +2041,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/database-backup",
-    "description": "Back up a site's database from any environment (development/staging/production)",
+    "description": "Back up a site's database from any environment (development/staging/production) (Ansible playbook)",
     "script_path": "trellis/backup/database-backup.yml",
     "runs_on": "local",
     "runs": "local",
@@ -2082,7 +2082,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/database-pull",
-    "description": "Pull a site's database from a remote environment into development, with URL search-replace",
+    "description": "Pull a site's database from a remote environment into development, with URL search-replace (Ansible playbook)",
     "script_path": "trellis/backup/database-pull.yml",
     "runs_on": "local",
     "runs": "local",
@@ -2122,7 +2122,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/database-push",
-    "description": "Push development's database to a remote environment, with URL search-replace",
+    "description": "Push development's database to a remote environment, with URL search-replace (Ansible playbook)",
     "script_path": "trellis/backup/database-push.yml",
     "runs_on": "local",
     "runs": "local",
@@ -2162,7 +2162,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/files-backup",
-    "description": "Back up a site's uploads directory from any environment (development/staging/production)",
+    "description": "Back up a site's uploads directory from any environment (development/staging/production) (Ansible playbook)",
     "script_path": "trellis/backup/files-backup.yml",
     "runs_on": "local",
     "runs": "local",
@@ -2203,7 +2203,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/files-pull",
-    "description": "Pull a site's uploads directory from a remote environment into development via rsync",
+    "description": "Pull a site's uploads directory from a remote environment into development via rsync (Ansible playbook)",
     "script_path": "trellis/backup/files-pull.yml",
     "runs_on": "local",
     "runs": "local",
@@ -2254,7 +2254,7 @@
   {
     "category": "trellis",
     "key": "trellis/backup/files-push",
-    "description": "Push development's uploads directory to a remote environment via rsync",
+    "description": "Push development's uploads directory to a remote environment via rsync (Ansible playbook)",
     "script_path": "trellis/backup/files-push.yml",
     "runs_on": "local",
     "runs": "local",
