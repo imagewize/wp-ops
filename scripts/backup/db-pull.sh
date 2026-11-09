@@ -263,7 +263,9 @@ fi
 # Home and its pre-HTTPS http:// form stay two plain passes: a single
 # --regex pass covering both was ~10x slower (77s vs 7s on imagewize.com),
 # since regex mode unserializes every value.
-SEARCH_REPLACE_STEP=$(cat <<'EOS'
+# read -d '' rather than $(cat <<EOS): macOS /bin/bash 3.2 can't parse the
+# case ... ;; below inside a heredoc inside $( ).
+IFS= read -r -d '' SEARCH_REPLACE_STEP <<'EOS' || true
 echo ''
 echo '=== Step 5: Search-replace URLs ==='
 sr() {
@@ -290,7 +292,6 @@ if [ "$PROD_HOME_HTTP" != "$PROD_HOME" ]; then
   sr "$PROD_HOME_HTTP" "$DEV_HOME"
 fi
 EOS
-)
 
 DATE=$(date +%Y_%m_%d_%H_%M_%S)
 SITE_SLUG="${SITE_NAME//./_}"
