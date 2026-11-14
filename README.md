@@ -14,10 +14,15 @@
 </div>
 
 <div align="center">
-<strong>The day-to-day ops layer for <a href="https://roots.io/trellis/">Trellis</a> sites.</strong><br>
-Sync production into development, see who is hitting your server, and publish content —
-from the terminal, as <code>trellis ops</code>, or through Claude and other MCP clients.
+<strong><code>trellis ops</code>: the commands you reach for between <a href="https://roots.io/trellis/">Trellis</a> deploys.</strong><br>
+Pull production into development, check traffic after a launch, publish and verify a post.<br>
+An add-on for <a href="https://github.com/roots/trellis-cli">trellis-cli</a>, also usable as <code>wp-ops</code> and through Claude and other MCP clients.
 </div>
+
+```bash
+brew install imagewize/tap/wp-ops    # adds `trellis ops` to trellis-cli
+trellis ops database-pull example.com production
+```
 
 ## What it solves
 
@@ -25,7 +30,10 @@ from the terminal, as <code>trellis ops</code>, or through Claude and other MCP 
 that happens *between* deploys — getting a fresh copy of production, checking traffic
 after a launch, pushing a post live — is left to you, usually as a string of `ssh`,
 `wp db export`, `rsync` and `wp search-replace` commands. wp-ops turns each of those
-into one command.
+into one command, and `trellis ops` puts them next to `trellis deploy` and `trellis vm`.
+
+Sections 1 to 3 are written as `trellis ops <command>`. The `wp-ops <command>` form is
+identical and also runs outside a Trellis project, for the commands that don't need one.
 
 **Not on Trellis?** Sections 4 and 5 work on any site. Database backups
 (`wp-db-backup`), malware scans (`malware-scan`) and admin recovery
@@ -36,8 +44,8 @@ see them all.
 ### 1. Get production into development in one step
 
 ```bash
-wp-ops database-pull example.com production   # export, download, import, search-replace
-wp-ops files-pull example.com production      # rsync the uploads directory
+trellis ops database-pull example.com production   # export, download, import, search-replace
+trellis ops files-pull example.com production      # rsync the uploads directory
 ```
 
 The database is exported on the server, imported into development, and every
@@ -52,9 +60,9 @@ is backed up to `database_backup/` first, so a pull is never a one-way trip.
 ### 2. See who is hitting your server
 
 ```bash
-wp-ops quick-status example.com production     # status codes, errors, services at a glance
-wp-ops traffic-report example.com production   # real visitors vs. bots, landing pages, referrals
-wp-ops security-scan example.com production    # wp-login/xmlrpc abuse, high-volume IPs
+trellis ops quick-status example.com production     # status codes, errors, services at a glance
+trellis ops traffic-report example.com production   # real visitors vs. bots, landing pages, referrals
+trellis ops security-scan example.com production    # wp-login/xmlrpc abuse, high-volume IPs
 ```
 
 Reads the site's Nginx logs on the server — no analytics plugin, no third-party
@@ -64,8 +72,8 @@ the scan finds.
 ### 3. Publish and verify content without opening wp-admin
 
 ```bash
-wp-ops publish-post draft.html example.com production --image featured.jpg
-wp-ops verify-post my-post-slug example.com production
+trellis ops publish-post draft.html example.com production --image featured.jpg
+trellis ops verify-post my-post-slug example.com production
 ```
 
 Publishes an HTML draft with block markup (create or `--update`), uploads the featured
@@ -107,7 +115,7 @@ staging hosts unless you pass `--allow-production`. Details:
 
 ### 6. Hand all of it to Claude
 
-The same operations are exposed as [MCP](https://modelcontextprotocol.io) tools —
+Every command above is also an MCP tool, so Claude can run it for you. The same operations are exposed as [MCP](https://modelcontextprotocol.io) tools —
 `db_pull`, `files_pull`, `monitor`, `publish_post`, `verify_post`, `security_scan` and
 more — so you can ask *"pull production into dev and tell me if anything looks off in
 yesterday's traffic"* and let the assistant run it. Setup and the full tool list:
@@ -122,12 +130,10 @@ wp-ops doctor    # check Ansible, WP-CLI, ssh and friends
 ```
 
 Point it at your Trellis project with `TRELLIS_DIR` (or run it from inside one).
-Homebrew also installs `trellis-ops`, so every command is available as
-`trellis ops <...>` from trellis-cli:
-
-```bash
-trellis ops database-pull example.com production
-```
+Homebrew also installs `trellis-ops`, a second name for the same binary. trellis-cli
+finds any `trellis-*` program on your `PATH` and turns it into a subcommand, which is how
+every command becomes `trellis ops <...>`. This needs trellis-cli v1.19.0 or later. See
+[wp-ops as a trellis-cli plugin](docs/cli/trellis-cli-plugin.md).
 
 <details>
 <summary>Build from source instead (Go 1.26+)</summary>
