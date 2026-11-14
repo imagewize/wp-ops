@@ -8,6 +8,7 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging}  Remote environment to push to
+# @deprecated Use db-push, the shell version: it backs up and verifies the remote first, never serves development URLs, and restores the backup if the import fails.
 # @example  wp-ops database-push example.com staging
 - import_playbook: variable-check.yml
   vars:

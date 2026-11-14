@@ -40,36 +40,43 @@
       shell: |
         tail -100 {{ log_file }} | awk '{print $9}' | sort | uniq -c | sort -rn
       register: status_codes
+      changed_when: false
 
     - name: Get recent 5xx errors
       shell: |
         grep 'HTTP/1.[01]" 5[0-9][0-9]' {{ log_file }} | tail -10 || echo "No 5xx errors found"
       register: server_errors
+      changed_when: false
 
     - name: Get recent 4xx errors
       shell: |
         grep 'HTTP/1.[01]" 4[0-9][0-9]' {{ log_file }} | tail -10 || echo "No 4xx errors found"
       register: client_errors
+      changed_when: false
 
     - name: Get active connections
       shell: |
         ss -tn | grep :80 | wc -l
       register: active_connections
+      changed_when: false
 
     - name: Get Nginx status
       shell: |
         systemctl status nginx --no-pager | head -10
       register: nginx_status
+      changed_when: false
 
     - name: Get PHP-FPM status
       shell: |
         systemctl status 'php*-fpm.service' --no-pager | head -10
       register: php_status
+      changed_when: false
 
     - name: Get recent suspicious activity
       shell: |
         grep -iE 'wp-login\.php|xmlrpc\.php' {{ log_file }} | tail -20 || echo "No suspicious login attempts"
       register: suspicious_activity
+      changed_when: false
 
     # One multi-line string, not a list: Ansible prints each list item as its own
     # quoted `- '...'` entry, which buries the report in YAML noise.

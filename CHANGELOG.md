@@ -7,12 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.46.0] - 2026-11-15
+
 ### Added
 
+- **`db-push`: push the development database to a remote environment, in shell.** The counterpart of `db-pull`, and the replacement for the `database-push` playbook. It backs up the remote database and verifies the dump before writing anything, then exports development with its URLs already rewritten (`wp search-replace --export`), so the remote never serves development URLs between import and search-replace, as it did with the playbook. Multisite is detected from development rather than passed as a flag, and the network domains are fixed in the same SSH session as the import. It switches off foreign-key checks for the import, as a mysqldump file does, and if the import, a follow-up step or the final `home` URL check fails, it imports the backup straight back. Tables of subsites that have no `wp_blogs` row (left behind when a pull or a deleted subsite removes the row but not the tables) are skipped and listed rather than pushed. Tested with a round trip on `demo.imagewize.com`, a multisite network, which also added the `koffie` subsite to production. Both arguments are required, a detected project is always confirmed, production asks you to type the site name, and without a terminal it needs `--yes`.
+- **The MCP README groups its tools.** Trellis and site operations first, then URL-only audits, then `wp_cli`, `ssh_command` and `scp_file` under "Generic remote access", with a note on what the safety layer adds over other WP-CLI MCP servers.
 - **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
+
+### Deprecated
+
+- **`svg-to-jpg` and `git-log-oneline`.** Neither is a WordPress or Trellis tool. `svg-to-jpg` and its pitfalls (transparent areas turning black, missing fonts failing silently) are now a wpvilla.in post with the full script: [Export SVG designs to JPG featured images with rsvg-convert](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/). `git-log-oneline` only wraps `git log --oneline -n N`; run that instead. Both still run and print a notice until they are removed. `create-pr` and `find-and-replace-files` stay: the repo uses `create-pr` for its own PRs.
+- **The `database-pull` and `database-push` playbooks.** Use `db-pull` and `db-push`, the shell versions, which now cover both directions. `db-pull` is as fast as the playbook, keeps both dumps, verifies the download and handles multisite; `db-push` backs up and verifies the remote first, never serves development URLs and restores the backup if the import fails. Both playbooks still run and print a deprecation notice; they will be removed in a later release. The one thing the playbooks do that the scripts don't is run without a Trellis VM (`-e dev_target=host`), which a CI job pulling a database might rely on; open an issue if that is you. `database-backup`, `files-pull`, `files-push` and `files-backup` are not deprecated: they have no shell replacement.
+- The README, `CLAUDE.md`, `trellis/README.md`, the backup guides and the `trellis ops` plugin guide now show `db-pull` and `db-push`. `site-backup` and the server-side help for the backup scripts point to `db-backup` for a copy on your machine, which is what they meant; `database-pull` imports into development.
+
+### Fixed
+
+- **`quick-status`, `traffic-report` and `security-scan` no longer report `changed` for read-only work.** Every shell task that only reads logs and service status was marked changed, so the recap said `changed=7` for a check that changes nothing. Those tasks now set `changed_when: false`; the task that copies the monitor script still reports a change when it actually updates the file.
+- **A local rebuild no longer runs the previous build's scripts.** A binary without a checkout next to it extracts its embedded scripts to a cache directory named after the version, which comes from the top CHANGELOG heading. Two builds of one working tree share a version, so after editing a playbook and rebuilding, the new binary kept running the first build's extracted copy. The directory name now also carries a short hash of the embedded files, so any edit extracts fresh. Release installs are unaffected: each release already had its own version.
 
 ### Documentation
 
+- **New README GIF: `trellis ops db-pull` on a multisite network.** It replaces the recording of the deprecated `database-pull` playbook (26 s and 0.6 MB, was 48 s and 1.4 MB). The VHS tape is now committed as `assets/screenshots/db-pull.tape`, so the GIF can be recorded again.
 - **Contributor docs say to write and test scripts for bash 3.2.** `AGENTS.md` explains why macOS's `/bin/bash` is 3.2 and Homebrew bash is opt-in, lists the 3.2-incompatible constructs to avoid, and replaces `bash -n` with `/bin/bash -n` (plain `bash` resolves to Homebrew's 5.x on a dev Mac). `CLAUDE.md` has the same rule. The README requirements and `scripts/README.md` note that the built-in bash 3.2 is enough.
 
 ## [5.45.5] - 2026-11-15

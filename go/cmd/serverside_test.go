@@ -190,7 +190,7 @@ func TestPrintServerSideGuidanceVariants(t *testing.T) {
 				// Short names and positional arguments, matching what the
 				// playbooks actually accept — the old assertion pinned both
 				// the internal key and the retired `-e site=` syntax.
-				"wp-ops database-pull example.com production",
+				"wp-ops db-backup  example.com production",
 				"wp-ops files-pull    example.com production",
 				"example.com",
 			},

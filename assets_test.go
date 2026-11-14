@@ -18,6 +18,10 @@ func TestEmbedExcludesBuildArtifacts(t *testing.T) {
 	excluded := []string{
 		"mcp-server/node_modules/",
 		"mcp-server/dist/",
+		// Repo assets: the logo, README screenshots and GIFs, and the tools
+		// that record them (db-pull.tape, mp4-to-gif.sh). Development files
+		// for this repo, not something a user of the binary runs.
+		"assets/",
 	}
 
 	err := fs.WalkDir(FS, ".", func(path string, d fs.DirEntry, err error) error {

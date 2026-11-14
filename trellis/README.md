@@ -40,7 +40,7 @@ All Ansible playbooks require `-e site=example.com -e env=<environment>` paramet
 ```bash
 # Database operations
 ansible-playbook trellis/backup/database-backup.yml -e site=example.com -e env=production
-ansible-playbook trellis/backup/database-pull.yml -e site=example.com -e env=production
+wp-ops db-pull example.com production   # shell; the database-pull playbook is deprecated
 
 # File operations
 ansible-playbook trellis/backup/files-backup.yml -e site=example.com -e env=production
@@ -98,8 +98,8 @@ Ansible playbooks for automated database and file operations between Trellis env
 | Playbook | Purpose |
 |----------|---------|
 | `database-backup.yml` | Create database backup on remote server |
-| `database-pull.yml` | Pull database from remote → development |
-| `database-push.yml` | Push database from development → remote |
+| `database-pull.yml` | Pull database from remote → development (deprecated: use `wp-ops db-pull`) |
+| `database-push.yml` | Push database from development → remote (deprecated: use `wp-ops db-push`) |
 | `files-backup.yml` | Create uploads backup on remote server |
 | `files-pull.yml` | Pull uploads from remote → development |
 | `files-push.yml` | Push uploads from development → remote |
@@ -111,7 +111,7 @@ Ansible playbooks for automated database and file operations between Trellis env
 ansible-playbook backup/database-backup.yml -e site=example.com -e env=production
 
 # Pull production database to development (with URL replacement)
-ansible-playbook backup/database-pull.yml -e site=example.com -e env=production
+wp-ops db-pull example.com production   # was: ansible-playbook backup/database-pull.yml
 
 # Push uploads to staging
 ansible-playbook backup/files-push.yml -e site=example.com -e env=staging

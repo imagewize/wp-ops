@@ -39,9 +39,8 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo "  ssh web@example.com 'bash -s' < $(basename "$0") example.com"
     echo ""
     echo "Writes to /srv/backups/<site-name>/{database,files,config}/ on the"
-    echo "server. To pull copies down to your machine instead, use the Ansible"
-    echo "playbooks:"
-    echo "  wp-ops database-pull example.com production"
+    echo "server. To get a copy on your machine instead:"
+    echo "  wp-ops db-backup  example.com production"
     echo "  wp-ops files-pull    example.com production"
     exit 0
 fi

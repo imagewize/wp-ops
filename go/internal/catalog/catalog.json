@@ -147,6 +147,64 @@
   },
   {
     "category": "scripts",
+    "key": "scripts/backup/db-push",
+    "description": "Push the development database to a remote environment via SSH, with URL search-replace (shell, no Ansible)",
+    "script_path": "scripts/backup/db-push.sh",
+    "runs_on": "local",
+    "runs": "local",
+    "requires": [
+      "trellis"
+    ],
+    "args": [
+      {
+        "name": "site-name",
+        "required_raw": "required",
+        "required": true,
+        "default": "example.com",
+        "description": "Site name as in wordpress_sites.yml",
+        "raw": "site-name    required  {example.com}  Site name as in wordpress_sites.yml"
+      },
+      {
+        "name": "environment",
+        "required_raw": "required",
+        "required": true,
+        "choices": [
+          "staging",
+          "production"
+        ],
+        "description": "Remote environment to overwrite",
+        "raw": "environment  required  {staging|production}  Remote environment to overwrite"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--host",
+        "required_raw": "optional",
+        "required": false,
+        "default": "example.com",
+        "description": "SSH host to push to (default: site-name)",
+        "raw": "--host       optional  {example.com}  SSH host to push to (default: site-name)"
+      },
+      {
+        "name": "--yes",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Skip the confirmation prompt",
+        "raw": "--yes        optional  {}  Skip the confirmation prompt"
+      }
+    ],
+    "examples": [
+      "wp-ops db-push example.com staging",
+      "wp-ops db-push example.com production --host 203.0.113.10"
+    ],
+    "manifest_category": "backup",
+    "platform": "trellis",
+    "mutates": true,
+    "display_category": "backup",
+    "annotated": true
+  },
+  {
+    "category": "scripts",
     "key": "scripts/backup/site-backup",
     "description": "Full backup of a Trellis site: database, uploads, config, and plugins/themes",
     "script_path": "scripts/backup/site-backup.sh",
@@ -359,6 +417,7 @@
     "manifest_category": "git",
     "platform": "any",
     "mutates": false,
+    "deprecated": "It only wraps git: run git log --oneline -n 20 instead.",
     "display_category": "git",
     "annotated": true
   },
@@ -424,6 +483,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Not a WordPress or Trellis tool. The script and how to use it are now a post: https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/",
     "display_category": "images",
     "annotated": true
   },
@@ -2116,6 +2176,7 @@
     "manifest_category": "backup",
     "platform": "trellis",
     "mutates": true,
+    "deprecated": "Use db-pull, the shell version: the same pull, as fast, and it keeps both dumps, verifies the download and handles multisite.",
     "display_category": "backup",
     "annotated": true
   },
@@ -2156,6 +2217,7 @@
     "manifest_category": "backup",
     "platform": "trellis",
     "mutates": true,
+    "deprecated": "Use db-push, the shell version: it backs up and verifies the remote first, never serves development URLs, and restores the backup if the import fails.",
     "display_category": "backup",
     "annotated": true
   },
