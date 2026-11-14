@@ -56,7 +56,7 @@ rewrites URLs while it exports, so the remote never serves your `.test` URLs, an
 the backup straight back if the import fails.
 
 <p align="center">
-  <img src="assets/screenshots/database-pull.gif" alt="wp-ops database-pull running the Ansible playbook from production to development, ending with the development home URL on the .test domain" width="800">
+  <img src="assets/screenshots/db-pull.gif" alt="trellis ops db-pull run from a Trellis project: the multisite production database of demo.imagewize.com is backed up, downloaded, verified and imported into development, with URL search-replace and network domains fixed" width="800">
 </p>
 
 ### 2. See who is hitting your server

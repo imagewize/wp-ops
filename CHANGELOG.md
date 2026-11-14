@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- **New README GIF: `trellis ops db-pull` on a multisite network.** It replaces the recording of the deprecated `database-pull` playbook (26 s and 0.6 MB, was 48 s and 1.4 MB). The VHS tape is now committed as `assets/screenshots/db-pull.tape`, so the GIF can be recorded again.
 - **Contributor docs say to write and test scripts for bash 3.2.** `AGENTS.md` explains why macOS's `/bin/bash` is 3.2 and Homebrew bash is opt-in, lists the 3.2-incompatible constructs to avoid, and replaces `bash -n` with `/bin/bash -n` (plain `bash` resolves to Homebrew's 5.x on a dev Mac). `CLAUDE.md` has the same rule. The README requirements and `scripts/README.md` note that the built-in bash 3.2 is enough.
 
 ## [5.45.5] - 2026-11-15
