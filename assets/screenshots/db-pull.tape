@@ -2,11 +2,20 @@
 # `trellis ops db-pull`, from inside a Trellis project. Run from this directory:
 #
 #   vhs db-pull.tape
-#   mp4-to-gif.sh --detect db-pull.mp4          # find the idle stretches
-#   mp4-to-gif.sh db-pull.mp4 db-pull.gif "..."  # speed them up
+#   ./mp4-to-gif.sh --detect db-pull.mp4   # list the idle stretches
+#   ./mp4-to-gif.sh db-pull.mp4 db-pull.gif "0:13:1 13:42.2:6 42.2:83.4:20 83.4:92:4 92::1"
 #
-# mp4-to-gif.sh lives in ~/code/seo-strategy/scripts. It pulls a real
-# database: the development copy is replaced (db-pull keeps a dump of it).
+# The segments are start:end:speed in seconds, read off --detect: here the
+# download (13-42s) runs at 6x, the import (42-83s) at 20x and search-replace
+# (83-92s) at 4x. A new recording has different timings, so re-run --detect.
+# Delete db-pull.mp4 afterwards; only the GIF is committed.
+#
+# It pulls a real database: the development copy is replaced (db-pull keeps a
+# dump of it). Check the local site has no work that isn't on production first.
+#
+# trellis-cli runs the trellis-ops on PATH from the Homebrew cask even if
+# another build comes first, so recording an unreleased build needs a shell
+# function that sends `trellis ops` to it.
 
 Output "db-pull.mp4"
 
