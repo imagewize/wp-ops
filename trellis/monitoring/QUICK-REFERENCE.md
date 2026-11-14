@@ -134,25 +134,19 @@ sudo systemctl reload nginx
 
 ### Permanent Block (via Trellis)
 
-1. Create `roles/wordpress-setup/templates/deny-ips.conf.j2`:
+1. Create `trellis/nginx-includes/all/deny-ips.conf.j2` (the `all/` folder applies to every site):
    ```nginx
    # Blocked IPs
    deny 192.168.1.100;
    deny 203.0.113.0/24;
    ```
 
-2. Update `group_vars/<environment>/wordpress_sites.yml`:
-   ```yaml
-   wordpress_sites:
-     example.com:
-       nginx_includes:
-         - "{{ nginx_path }}/includes.d/deny-ips.conf"
+2. Apply it:
+   ```bash
+   trellis provision --tags nginx-includes production
    ```
 
-3. Provision:
-   ```bash
-   trellis provision production
-   ```
+Trellis reads every file in `nginx-includes/all/` (or a folder named after the site key in `wordpress_sites.yml`); there is no `nginx_includes` setting. Guide: [Nginx deny list in Trellis](https://wpvilla.in/nginx-deny-list-trellis-cidr-whitelist-self-lockout/).
 
 ## Monitoring Cron Jobs Status
 

@@ -317,16 +317,8 @@ awk -F'"' '{print $4}' /var/log/nginx/access.log \
 
 **Blocking IP in Trellis:**
 
-Edit `group_vars/<environment>/wordpress_sites.yml`:
-
-```yaml
-wordpress_sites:
-  example.com:
-    nginx_includes:
-      - "{{ nginx_path }}/includes.d/deny-ips.conf"
-```
-
-Create `roles/wordpress-setup/templates/deny-ips.conf.j2`:
+Create `trellis/nginx-includes/all/deny-ips.conf.j2` (the `all/` folder applies to every
+site; a folder named after the site key in `wordpress_sites.yml` applies to one):
 
 ```nginx
 # Blocked IPs
@@ -334,7 +326,9 @@ deny 192.168.1.100;
 deny 203.0.113.0/24;
 ```
 
-Then provision: `trellis provision production`
+Then apply it: `trellis provision --tags nginx-includes production`. There is no
+`nginx_includes` setting; Trellis reads those folders. Guide:
+[Nginx deny list in Trellis](https://wpvilla.in/nginx-deny-list-trellis-cidr-whitelist-self-lockout/).
 
 ## Automated Monitoring with Ansible
 
