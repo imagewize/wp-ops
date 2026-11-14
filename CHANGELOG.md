@@ -15,12 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Contributor docs say to write and test scripts for bash 3.2.** `AGENTS.md` explains why macOS's `/bin/bash` is 3.2 and Homebrew bash is opt-in, lists the 3.2-incompatible constructs to avoid, and replaces `bash -n` with `/bin/bash -n` (plain `bash` resolves to Homebrew's 5.x on a dev Mac). `CLAUDE.md` has the same rule. The README requirements and `scripts/README.md` note that the built-in bash 3.2 is enough.
 
+## [5.45.5] - 2026-11-15
+
+### Fixed
+
+- **`quick-status` and `traffic-report` print a plain report, not a list of quoted YAML items.** Both playbooks handed Ansible a list of lines, and Ansible prints every list item as its own `- '...'` entry, so the report was buried in quotes and `- ''` for each blank line. They now print one multi-line string, which Ansible shows as a readable block. `quick-status` also shows the latest five client-error and login-attempt lines instead of the oldest five of the last ten, since the most recent requests are the ones you want after a launch.
+
 ## [5.45.4] - 2026-11-15
 
 ### Fixed
 
 - **`security-scan` and `traffic-report` ran a stale copy of their monitor script on the server.** The playbooks copied `security-monitor.sh` and `traffic-monitor.sh` to the server only when the file was missing, so a server kept whatever version it got first and never saw a later fix. `security-scan` on a server set up in August still printed the `nginx_includes: deny-ips.conf` advice that 5.41.0 had corrected, a setting Trellis doesn't have. The playbooks now always copy; Ansible's `copy` only changes the file when its checksum differs, so unchanged servers see no change. The next run refreshes the old copies.
 - **The monitoring docs no longer describe an `nginx_includes` setting.** `trellis/monitoring/README.md` and `QUICK-REFERENCE.md` told you to add `nginx_includes` to `wordpress_sites.yml` and to create `roles/wordpress-setup/templates/deny-ips.conf.j2`. They now say to create `trellis/nginx-includes/all/deny-ips.conf.j2` and run `trellis provision --tags nginx-includes`.
+
 
 ## [5.45.3] - 2026-11-15
 

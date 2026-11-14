@@ -21,6 +21,8 @@
   remote_user: "{{ web_user }}"
 
   vars:
+    # A real newline for join(); inside a block scalar, '\n' would stay two characters.
+    nl: "\n"
     project: "{{ wordpress_sites[site] }}"
     project_root: "{{ www_root }}/{{ site }}"
     # Log file path - defaults to per-site logs, can be overridden with -e log_file=/path/to/log
@@ -69,31 +71,33 @@
         grep -iE 'wp-login\.php|xmlrpc\.php' {{ log_file }} | tail -20 || echo "No suspicious login attempts"
       register: suspicious_activity
 
+    # One multi-line string, not a list: Ansible prints each list item as its own
+    # quoted `- '...'` entry, which buries the report in YAML noise.
     - name: Display quick status
       debug:
-        msg:
-          - "================================================================================"
-          - "Quick Status: {{ site }} ({{ env }})"
-          - "================================================================================"
-          - ""
-          - "Last 100 Requests - Status Code Distribution:"
-          - "{{ status_codes.stdout_lines | join('\n') }}"
-          - ""
-          - "Active HTTP Connections: {{ active_connections.stdout }}"
-          - ""
-          - "Recent Server Errors (5xx):"
-          - "{{ server_errors.stdout_lines | join('\n') }}"
-          - ""
-          - "Recent Client Errors (4xx):"
-          - "{{ client_errors.stdout_lines[:5] | join('\n') }}"
-          - ""
-          - "Nginx Status:"
-          - "{{ nginx_status.stdout_lines[:3] | join('\n') }}"
-          - ""
-          - "PHP-FPM Status:"
-          - "{{ php_status.stdout_lines[:3] | join('\n') }}"
-          - ""
-          - "Recent Login/Attack Attempts:"
-          - "{{ suspicious_activity.stdout_lines[:5] | join('\n') }}"
-          - ""
-          - "================================================================================"
+        msg: |
+          ================================================================================
+          Quick Status: {{ site }} ({{ env }})
+          ================================================================================
+
+          Last 100 Requests - Status Code Distribution:
+          {{ status_codes.stdout_lines | join(nl) }}
+
+          Active HTTP Connections: {{ active_connections.stdout }}
+
+          Recent Server Errors (5xx):
+          {{ server_errors.stdout_lines | join(nl) }}
+
+          Recent Client Errors (4xx):
+          {{ client_errors.stdout_lines[-5:] | join(nl) }}
+
+          Nginx Status:
+          {{ nginx_status.stdout_lines[:3] | join(nl) }}
+
+          PHP-FPM Status:
+          {{ php_status.stdout_lines[:3] | join(nl) }}
+
+          Recent Login/Attack Attempts:
+          {{ suspicious_activity.stdout_lines[-5:] | join(nl) }}
+
+          ================================================================================

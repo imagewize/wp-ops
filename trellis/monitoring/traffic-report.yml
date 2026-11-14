@@ -57,7 +57,7 @@
 
     - name: Display traffic report
       debug:
-        msg: "{{ traffic_report.stdout_lines }}"
+        msg: "{{ traffic_report.stdout }}"
 
     - name: Save report to local file
       delegate_to: localhost
