@@ -1,6 +1,8 @@
 # ADR: Narrow wp-ops to a Trellis front door, and stop shipping generic remote access as a headline
 
-**Status:** Proposed, 2026-11-15. Nothing here is implemented.
+**Status:** Accepted, 2026-11-15, in progress. Work lands on the `adr/narrow-to-trellis`
+branch in batches, one PR and one version per batch, not one PR per fix. See
+[Progress](#progress) for what has shipped.
 **Related:** [command-audit-2026-10.md](command-audit-2026-10.md) (what was cut),
 [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md) (the `trellis ops` plugin, shipped),
 [wp-cli-package-evaluation.md](wp-cli-package-evaluation.md) (why the scanners and audits stay standalone),
@@ -151,6 +153,21 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | Shell `db-push`, then deprecate playbook pull | medium | PR, patch or minor bump |
 | Deprecate non-WordPress personal scripts (step 4) | small | PR, one per script group |
 | Re-count usage and decide on step 6 | small | update this ADR |
+
+## Progress
+
+| Step | State |
+| --- | --- |
+| 1. Lead with `trellis ops` | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` not started |
+| 2. MCP as an adapter | Not started |
+| 3. Audits and scanners stay standalone | No change needed |
+| 4. Move personal scripts out | Not started |
+| 5. `rsync-package-to-site` stays | Open question below |
+| 6. Re-count usage | Due about 2026-12-15 |
+
+Monitoring polish done along the way, because the README pitch depends on it: monitor
+scripts now refresh on the server (5.45.4), `quick-status` and `traffic-report` print a
+plain report (5.45.5), and read-only tasks report `changed=0`.
 
 ## Sources
 
