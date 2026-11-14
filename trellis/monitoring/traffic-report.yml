@@ -54,6 +54,7 @@
     - name: Run traffic analysis
       shell: "/home/{{ web_user }}/traffic-monitor.sh {{ log_file }} {{ report_hours }}"
       register: traffic_report
+      changed_when: false
 
     - name: Display traffic report
       debug:

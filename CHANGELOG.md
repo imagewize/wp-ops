@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`quick-status`, `traffic-report` and `security-scan` no longer report `changed` for read-only work.** Every shell task that only reads logs and service status was marked changed, so the recap said `changed=7` for a check that changes nothing. Those tasks now set `changed_when: false`; the task that copies the monitor script still reports a change when it actually updates the file.
 - **A local rebuild no longer runs the previous build's scripts.** A binary without a checkout next to it extracts its embedded scripts to a cache directory named after the version, which comes from the top CHANGELOG heading. Two builds of one working tree share a version, so after editing a playbook and rebuilding, the new binary kept running the first build's extracted copy. The directory name now also carries a short hash of the embedded files, so any edit extracts fresh. Release installs are unaffected: each release already had its own version.
 
 ### Added

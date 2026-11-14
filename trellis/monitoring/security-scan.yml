@@ -56,6 +56,7 @@
     - name: Run security scan
       shell: "/home/{{ web_user }}/security-monitor.sh {{ log_file }} {{ scan_hours }} {{ alert_threshold }}"
       register: security_report
+      changed_when: false
 
     - name: Display security report
       debug:
