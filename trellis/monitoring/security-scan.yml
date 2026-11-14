@@ -44,17 +44,14 @@
       when: wordpress_sites[site | default('')] is not defined
 
   tasks:
-    - name: Check if security-monitor.sh exists on remote
-      stat:
-        path: "/home/{{ web_user }}/security-monitor.sh"
-      register: script_stat
-
+    # Always copy: `copy` compares checksums and only changes the file when it
+    # differs, so a script fixed in a new wp-ops release reaches the server. Copying
+    # only when the file was missing left servers running whatever they got first.
     - name: Copy security-monitor.sh to remote server
       copy:
         src: "{{ monitor_scripts_dir }}/security-monitor.sh"
         dest: "/home/{{ web_user }}/security-monitor.sh"
         mode: '0755'
-      when: not script_stat.stat.exists
 
     - name: Run security scan
       shell: "/home/{{ web_user }}/security-monitor.sh {{ log_file }} {{ scan_hours }} {{ alert_threshold }}"

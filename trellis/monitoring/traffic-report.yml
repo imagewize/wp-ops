@@ -42,17 +42,14 @@
       when: wordpress_sites[site | default('')] is not defined
 
   tasks:
-    - name: Check if traffic-monitor.sh exists on remote
-      stat:
-        path: "/home/{{ web_user }}/traffic-monitor.sh"
-      register: script_stat
-
+    # Always copy: `copy` compares checksums and only changes the file when it
+    # differs, so a script fixed in a new wp-ops release reaches the server. Copying
+    # only when the file was missing left servers running whatever they got first.
     - name: Copy traffic-monitor.sh to remote server
       copy:
         src: "{{ monitor_scripts_dir }}/traffic-monitor.sh"
         dest: "/home/{{ web_user }}/traffic-monitor.sh"
         mode: '0755'
-      when: not script_stat.stat.exists
 
     - name: Run traffic analysis
       shell: "/home/{{ web_user }}/traffic-monitor.sh {{ log_file }} {{ report_hours }}"
