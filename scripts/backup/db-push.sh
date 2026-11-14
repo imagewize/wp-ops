@@ -16,7 +16,8 @@
 #      not even between import and search-replace. Check every table is there.
 #   4. Import on the remote, fix multisite domains in the same SSH session,
 #      flush the cache.
-#   5. Check the remote home URL, and print the restore command if it is wrong.
+#   5. Check the remote home URL.
+# If step 4 or 5 fails, the backup from step 2 is imported straight back.
 #
 # Multisite is detected from the development site, not passed as a flag:
 # forgetting it would leave the remote network pointing at .test domains.
@@ -280,12 +281,36 @@ echo ''
 echo '=== Step 3: Exporting development with URLs rewritten ==='
 SR_URL=()
 [ "$MULTISITE" = yes ] && SR_URL=(--url="$DEV_HOME")
+# Every table with the prefix, minus orphaned subsite tables: <prefix><id>_*
+# where <id> has no row in <prefix>blogs. An import only drops the tables in
+# its dump, so a subsite that exists only in development, or one removed
+# from the network, leaves its tables behind. Pushing them would create
+# unreachable tables on the remote.
+TABLES=()
+SKIPPED=""
+BLOG_IDS=" "
+if [ "$MULTISITE" = yes ]; then
+    BLOG_IDS=" $(wp db query "SELECT blog_id FROM ${PREFIX}blogs" --skip-column-names --path="$WP_PATH" | tr '\n' ' ')"
+fi
+for t in $(wp db tables --all-tables-with-prefix --path="$WP_PATH"); do
+    rest=${t#"$PREFIX"}
+    id=${rest%%_*}
+    if [ "$MULTISITE" = yes ] && [ "$rest" != "$t" ] && [ -n "$id" ] && [ -z "${id//[0-9]/}" ] \
+        && [ "${BLOG_IDS#* "$id" }" = "$BLOG_IDS" ]; then
+        case " $SKIPPED " in *" $id "*) ;; *) SKIPPED="$SKIPPED $id" ;; esac
+        continue
+    fi
+    TABLES+=("$t")
+done
+[ -z "$SKIPPED" ] || echo "  skipping orphaned subsite tables (no ${PREFIX}blogs row) for blog IDs:$SKIPPED"
 echo "  home: $DEV_HOME -> $PROD_HOME"
 # --export leaves the development database as it is and writes the rewritten
-# tables as SQL. Warnings (skipped serialized classes) go to the log.
-wp search-replace "$DEV_HOME" "$PROD_HOME" --all-tables --precise --path="$WP_PATH" "${SR_URL[@]}" \
+# tables as SQL. Warnings (skipped serialized classes) go to the log. Named
+# tables are intersected with the scope flags, and on multisite the default
+# scope is the main site only, so --all-tables is needed for the list to stand.
+wp search-replace "$DEV_HOME" "$PROD_HOME" "${TABLES[@]}" --all-tables --precise --path="$WP_PATH" "${SR_URL[@]}" \
     --export 2>"$PUSH_DUMP.log" | gzip > "$PUSH_DUMP"
-EXPECTED=$(wp db tables --all-tables-with-prefix --path="$WP_PATH" | wc -l | tr -d ' ')
+EXPECTED=${#TABLES[@]}
 EXPORTED=$(gzip -dc "$PUSH_DUMP" | grep -c '^CREATE TABLE' || true)
 [ "$EXPORTED" = "$EXPECTED" ] || untouched "Export has $EXPORTED of $EXPECTED tables (see $PUSH_DUMP.log)"
 echo "✓ $PUSH_DUMP ($(du -h "$PUSH_DUMP" | cut -f1), $EXPORTED tables)"
@@ -321,13 +346,27 @@ fi
 
 echo ''
 echo "=== Step 4: Importing on $ENVIRONMENT ==="
+# Put the backup from step 2 back. A mysqldump file disables foreign-key
+# checks itself, so it imports cleanly over a half-pushed database.
+restore() {
+    echo "✗ $1"
+    echo "  Restoring the $ENVIRONMENT backup taken in step 2..."
+    if rssh "set -o pipefail; cd $REMOTE_PATH && gzip -dc | wp db import - --path=$WP_PATH >/dev/null && (wp cache flush --path=$WP_PATH >/dev/null || true)" < "$REMOTE_BACKUP"; then
+        echo "✓ $ENVIRONMENT is back to its state before the push."
+    else
+        echo "✗ The restore failed too. Restore by hand from the site directory on your machine:"
+        echo "    gzip -dc $REMOTE_BACKUP | ssh web@$REMOTE_HOST 'cd $REMOTE_PATH && wp db import - --path=$WP_PATH'"
+    fi
+    exit 1
+}
+
 # One SSH session: the import, the follow-up fixes and the cache flush run back
 # to back, so the remote is in a half-pushed state for as short a time as possible.
-if ! rssh "set -o pipefail; cd $REMOTE_PATH && gzip -dc | wp db import - --path=$WP_PATH >/dev/null $AFTER && (wp cache flush --path=$WP_PATH >/dev/null || true)" < "$PUSH_DUMP"; then
-    echo "✗ The import or a follow-up step failed on $ENVIRONMENT."
-    echo "  Restore the backup from the site directory on your machine with:"
-    echo "    gzip -dc $REMOTE_BACKUP | ssh web@$REMOTE_HOST 'cd $REMOTE_PATH && wp db import - --path=$WP_PATH'"
-    exit 1
+# The export, unlike a mysqldump file, does not switch off foreign-key checks,
+# so a DROP TABLE on a table another one references fails halfway through
+# (wp_slim_stats on demo.imagewize.com). Switch them off for the import session.
+if ! rssh "set -o pipefail; cd $REMOTE_PATH && { echo 'SET FOREIGN_KEY_CHECKS=0;'; gzip -dc; } | wp db import - --path=$WP_PATH >/dev/null $AFTER && (wp cache flush --path=$WP_PATH >/dev/null || true)" < "$PUSH_DUMP"; then
+    restore "The import or a follow-up step failed on $ENVIRONMENT."
 fi
 echo '✓ Imported'
 
@@ -335,10 +374,7 @@ echo ''
 echo '=== Step 5: Checking the result ==='
 NOW_HOME=$(rssh "cd $REMOTE_PATH && wp option get home --path=$WP_PATH" </dev/null || true)
 if [ "$NOW_HOME" != "$PROD_HOME" ]; then
-    echo "✗ $ENVIRONMENT home is now '$NOW_HOME', expected $PROD_HOME."
-    echo "  Restore the backup from the site directory on your machine with:"
-    echo "    gzip -dc $REMOTE_BACKUP | ssh web@$REMOTE_HOST 'cd $REMOTE_PATH && wp db import - --path=$WP_PATH'"
-    exit 1
+    restore "$ENVIRONMENT home is now '$NOW_HOME', expected $PROD_HOME."
 fi
 echo "✓ $ENVIRONMENT home is $NOW_HOME"
 echo ''

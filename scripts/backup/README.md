@@ -104,12 +104,17 @@ The counterpart of `db-pull`, and the shell replacement for the
    and checks it is complete. If that fails, nothing is pushed.
 3. Exports development with its URLs already rewritten to the remote's
    (`wp search-replace --export`), so the remote never serves `.test` URLs,
-   and checks every table is in the export. The export is kept as
+   and checks every table is in the export. Tables of subsites with no
+   `wp_blogs` row are skipped and listed. The export is kept as
    `database_backup/<site>_push_to_<env>_<date>.sql.gz`.
 4. Imports it on the remote and, in the same SSH session, fixes multisite
    domains and runs any extra URL pass (a `siteurl` that isn't `home` plus the
    same suffix, or links in the other scheme), then flushes the cache.
-5. Checks the remote `home` URL and prints the restore command if it is wrong.
+   Foreign-key checks are off for the import, as in a mysqldump file.
+5. Checks the remote `home` URL.
+
+If step 4 or 5 fails, the backup from step 2 is imported straight back, so the
+remote is never left half-pushed.
 
 Both arguments are required; there is no default environment. A project found
 from the current directory is always confirmed, and without a terminal it
