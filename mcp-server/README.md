@@ -4,64 +4,32 @@ Exposes wp-ops operations as [MCP](https://modelcontextprotocol.io) tools, so Cl
 (and other MCP-compatible clients) can call them directly instead of you running the
 underlying scripts by hand.
 
-## Status
+## Tools
 
-Scaffold — eighteen tools implemented so far:
+Grouped by what they are for. The catalog bridge below adds two more tools that reach
+every wp-ops command.
 
-- **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
-  against a registered site/environment. For remote environments it streams the scanner
-  source over SSH stdin (`php - <path>`), so nothing is ever written to disk on the
-  remote host — no `scp` + forget-to-delete step.
+### Trellis and site operations
+
+The reason to use this server. These tools know your sites: they read the site registry, back up before they overwrite, rewrite URLs, and check their own work.
+
+- **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
+  search-replace, backing up the current development database first. Requires the site's `development`
+  entry to have `trellisDir`+`vmWorkdir` (drives the dev site through `trellis vm shell`) and the source
+  env to have `sshHost`+`remotePath`. Requires `confirm: true` — overwrites the local development
+  database. (`db_push` is deliberately not implemented — pulling into production carries a much higher
+  blast radius than overwriting a disposable local dev DB.)
+- **`files_pull`** — syncs a site's uploads directory from a remote environment into local development
+  via rsync. Additive by default (local-only files kept); `delete: true` mirrors the remote exactly and
+  needs `confirm: true`. Requires the site's `development` entry to have `localPath`, and the source env
+  to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
+  as `db_push`.)
 - **`db_backup`** — runs `wp db export` against a registered site/environment, gzips the
   result, and saves it locally to `~/wp-ops-backups/<site>/<env>/` (override with
   `WP_OPS_BACKUP_DIR`). For remote environments the export streams over SSH stdout, so
   again nothing is written to disk on the remote host. Requires `wp` (WP-CLI) on the
   machine running the export — locally that's your host; remotely it's already on any
   Trellis server.
-- **`wp_cli`** — runs an arbitrary WP-CLI command (`args` as separate tokens, e.g.
-  `["post", "list", "--format=json"]`) against a registered site/environment. `--path`
-  is added automatically and rejected if passed explicitly. Read-only verbs
-  (`list`/`get`/`exists`/`status`/`info`/`version`/`search`/`check-update`/`doctor`/
-  `export`) run immediately; anything else — updates, deletes, `search-replace`,
-  `eval`, installs, etc. — requires `confirm: true`, meant to be set only after the
-  user has explicitly approved that specific command in conversation. `wp config`
-  always requires `confirm: true` regardless of verb — `get`/`list`/`export` being
-  otherwise-safe read verbs would let `wp config get DB_PASSWORD` through unconfirmed,
-  a plainer path to the same credentials `wp-config.php` holds. For remote sites,
-  each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
-  joins trailing args into one string for the remote shell to (re-)interpret.
-- **`redirect_audit`** — runs a comprehensive redirect chain audit for one or more URLs. Tests
-  HTTPS pages for 200 status with 0 redirects (optimal for SEO), verifies HTTP→HTTPS 301
-  redirects, checks www→non-www canonicalization, and validates security headers (HSTS,
-  CSP, X-Frame-Options, X-Content-Type-Options). Uses `curl` for HTTP requests.
-- **`schema_audit`** — audits JSON-LD schema markup across key pages of a site. Checks for
-  Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article,
-  FAQPage, HowTo, and Person schema types. Returns count of pages with/without schema
-  and which schema types are present. Uses `curl` to fetch pages and extract schema.
-  Pages come from `pages` if passed. Otherwise they come from the site's sitemap
-  (`wp-sitemap.xml`, `sitemap_index.xml`, then `sitemap.xml`), using only the page sitemaps
-  when there's an index, capped at `maxPages` (default 25). Only a site with no sitemap
-  falls back to a list of common paths. URLs that don't return 200 are listed separately,
-  with their status code and redirect target, and never counted as missing schema.
-- **`url_audit`** — audits `wp_posts.post_content` for hardcoded dev URLs (default
-  patterns `.test`/`.localhost`) that `get_template_directory_uri()` bakes in during local
-  content creation and that survive a database migration unless search-replaced — the
-  CRITICAL check documented in the parent repo's `CLAUDE.md`. Reports a hit count per
-  pattern. Pass `replace: {from, to}` to also preview a
-  `wp search-replace --all-tables --precise --dry-run`; add `confirm: true` (only after
-  explicit user approval) to apply it for real.
-- **`monitor`** — runs `scripts/monitoring/monitor.sh` (combined traffic, security,
-  AI-crawler, and error-log analysis) against a registered site's Nginx logs and returns
-  the generated markdown summary. Requires an `sshHost` entry — logs only exist on a
-  deployed server, not local dev or a Trellis VM. Bundles all five monitoring scripts
-  (base64, over the same SSH-stdin approach as `security_scan`) into a throwaway remote
-  temp dir for the run, so it works even on sites `setup-monitoring.yml` hasn't
-  provisioned yet.
-- **`server_status`** — runs `scripts/monitoring/server-monitor.sh` for a live CPU, memory, disk,
-  top-processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent-OOM-killer snapshot of a server over SSH.
-- **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
-  ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
-  `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
 - **`publish_post`** — publishes or updates a WordPress blog post from a local HTML draft carrying the
   `<!-- SUGGESTED ... -->` header (slug, title, meta title, meta description, tags, category). Parses
   that header, strips it and every other leading HTML comment (`NOTE`, `PAGE`, `FEATURED IMAGE`, …,
@@ -90,27 +58,44 @@ Scaffold — eighteen tools implemented so far:
   by kses, self-closing custom blocks that saved empty, broken internal links, a missing featured
   image, and non-block HTML comments (leaked draft notes) in the stored content, as a warning. `checkLinks: true` (default) also requests every internal link in the post and reports non-200
   responses.
-- **`db_pull`** — pulls a site's database from a remote environment into local development, with URL
-  search-replace, backing up the current development database first. Requires the site's `development`
-  entry to have `trellisDir`+`vmWorkdir` (drives the dev site through `trellis vm shell`) and the source
-  env to have `sshHost`+`remotePath`. Requires `confirm: true` — overwrites the local development
-  database. (`db_push` is deliberately not implemented — pulling into production carries a much higher
-  blast radius than overwriting a disposable local dev DB.)
-- **`files_pull`** — syncs a site's uploads directory from a remote environment into local development
-  via rsync. Additive by default (local-only files kept); `delete: true` mirrors the remote exactly and
-  needs `confirm: true`. Requires the site's `development` entry to have `localPath`, and the source env
-  to have `sshHost`. (`files_push` is deliberately not implemented, for the same production-risk reason
-  as `db_push`.)
-- **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
-  tokenized and shell-quoted, so shell metacharacters (`;`, `&&`, `>`, `$(...)`) become literal arguments.
-  The exception is an unquoted standalone `|`, which runs as a real pipeline; it is auto-approved only when
-  every segment is read-only. Commands outside the read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
-  still requires `confirm: true` if any argument targets a credential-bearing path — `wp-config.php`,
-  `.env`, `.ssh/`, private key files, `.netrc`, `.pgpass`, `.git-credentials` — since "cat is read-only"
-  doesn't make `cat wp-config.php` safe to run unconfirmed.
-- **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
-  remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
-  it is absolute. Uploads require `confirm: true`.
+- **`url_audit`** — audits `wp_posts.post_content` for hardcoded dev URLs (default
+  patterns `.test`/`.localhost`) that `get_template_directory_uri()` bakes in during local
+  content creation and that survive a database migration unless search-replaced — the
+  CRITICAL check documented in the parent repo's `CLAUDE.md`. Reports a hit count per
+  pattern. Pass `replace: {from, to}` to also preview a
+  `wp search-replace --all-tables --precise --dry-run`; add `confirm: true` (only after
+  explicit user approval) to apply it for real.
+- **`security_scan`** — runs `wp-cli/security/scanner-targeted.php` / `scanner-general.php`
+  against a registered site/environment. For remote environments it streams the scanner
+  source over SSH stdin (`php - <path>`), so nothing is ever written to disk on the
+  remote host — no `scp` + forget-to-delete step.
+- **`monitor`** — runs `scripts/monitoring/monitor.sh` (combined traffic, security,
+  AI-crawler, and error-log analysis) against a registered site's Nginx logs and returns
+  the generated markdown summary. Requires an `sshHost` entry — logs only exist on a
+  deployed server, not local dev or a Trellis VM. Bundles all five monitoring scripts
+  (base64, over the same SSH-stdin approach as `security_scan`) into a throwaway remote
+  temp dir for the run, so it works even on sites `setup-monitoring.yml` hasn't
+  provisioned yet.
+- **`server_status`** — runs `scripts/monitoring/server-monitor.sh` for a live CPU, memory, disk,
+  top-processes, PHP-FPM, MySQL/MariaDB, Nginx, and recent-OOM-killer snapshot of a server over SSH.
+
+### Audits
+
+Need only a public URL or an API key; no SSH and, apart from `ip_reputation_check` with `trellisDir`, no Trellis project.
+
+- **`schema_audit`** — audits JSON-LD schema markup across key pages of a site. Checks for
+  Organization, LocalBusiness, Service, Product, WebSite, BreadcrumbList, Article,
+  FAQPage, HowTo, and Person schema types. Returns count of pages with/without schema
+  and which schema types are present. Uses `curl` to fetch pages and extract schema.
+  Pages come from `pages` if passed. Otherwise they come from the site's sitemap
+  (`wp-sitemap.xml`, `sitemap_index.xml`, then `sitemap.xml`), using only the page sitemaps
+  when there's an index, capped at `maxPages` (default 25). Only a site with no sitemap
+  falls back to a list of common paths. URLs that don't return 200 are listed separately,
+  with their status code and redirect target, and never counted as missing schema.
+- **`redirect_audit`** — runs a comprehensive redirect chain audit for one or more URLs. Tests
+  HTTPS pages for 200 status with 0 redirects (optimal for SEO), verifies HTTP→HTTPS 301
+  redirects, checks www→non-www canonicalization, and validates security headers (HSTS,
+  CSP, X-Frame-Options, X-Content-Type-Options). Uses `curl` for HTTP requests.
 - **`store_audit`** — audits a store's *public* URL with [Min](https://github.com/imagewize/min)'s hosted
   MCP server (no SSH, no site registry entry needed): AI-shopping readiness grade A–F, failing checks with
   evidence, recommended fixes, and — by default — the product-page checks including the **truth check**
@@ -122,6 +107,36 @@ Scaffold — eighteen tools implemented so far:
   user allowed to run audits) in the server's environment; `WP_OPS_MIN_MCP_URL` overrides the default
   `https://imagewize.com/wp-json/min/mcp`. Each call counts against that user's daily scan limit on the
   Min site and stores a lead record there.
+- **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
+  ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
+  `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
+
+### Generic remote access
+
+Plain WP-CLI, shell and file copy over SSH. Other MCP servers offer the same (for example wp-cli-mcp). What this server adds is the safety layer: read-only commands run straight away, anything that writes or touches credentials needs `confirm: true`, and arguments are shell-quoted. Use these when no dedicated tool above fits, and prefer a dedicated tool when one does.
+
+- **`wp_cli`** — runs an arbitrary WP-CLI command (`args` as separate tokens, e.g.
+  `["post", "list", "--format=json"]`) against a registered site/environment. `--path`
+  is added automatically and rejected if passed explicitly. Read-only verbs
+  (`list`/`get`/`exists`/`status`/`info`/`version`/`search`/`check-update`/`doctor`/
+  `export`) run immediately; anything else — updates, deletes, `search-replace`,
+  `eval`, installs, etc. — requires `confirm: true`, meant to be set only after the
+  user has explicitly approved that specific command in conversation. `wp config`
+  always requires `confirm: true` regardless of verb — `get`/`list`/`export` being
+  otherwise-safe read verbs would let `wp config get DB_PASSWORD` through unconfirmed,
+  a plainer path to the same credentials `wp-config.php` holds. For remote sites,
+  each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
+  joins trailing args into one string for the remote shell to (re-)interpret.
+- **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
+  tokenized and shell-quoted, so shell metacharacters (`;`, `&&`, `>`, `$(...)`) become literal arguments.
+  The exception is an unquoted standalone `|`, which runs as a real pipeline; it is auto-approved only when
+  every segment is read-only. Commands outside the read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
+  still requires `confirm: true` if any argument targets a credential-bearing path — `wp-config.php`,
+  `.env`, `.ssh/`, private key files, `.netrc`, `.pgpass`, `.git-credentials` — since "cat is read-only"
+  doesn't make `cat wp-config.php` safe to run unconfirmed.
+- **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
+  remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
+  it is absolute. Uploads require `confirm: true`.
 
 ### The catalog bridge
 
