@@ -22,11 +22,11 @@ This is a collection of tools, scripts, and documentation for WordPress operatio
   - `scripts/monitoring/` - Monitoring helper scripts
   - `scripts/git/` - Git/GitHub utilities
     - `scripts/git/create-pr.sh` - AI-powered GitHub PR creation
-    - `scripts/git/git-log-oneline.sh` - Compact git log output utility
+    - `scripts/git/git-log-oneline.sh` - Deprecated in 5.46.0; use `git log --oneline -n N`
   - `scripts/sync/` - File synchronization
     - `scripts/sync/rsync-theme.sh` - Theme synchronization
   - `scripts/images/` - SVG to JPG/PNG rendering
-    - `scripts/images/svg-to-jpg.sh` - Render design SVGs to JPG
+    - `scripts/images/svg-to-jpg.sh` - Deprecated in 5.46.0; the script now lives in a wpvilla.in post
   - `scripts/patterns/` - WordPress block pattern screenshot toolkit (Playwright + sharp)
     - `scripts/patterns/screenshot-patterns.sh` - Create temp WP page, screenshot pattern, delete page, convert to WebP
   - `scripts/misc/` - Miscellaneous utilities
