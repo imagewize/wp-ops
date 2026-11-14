@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.46.0] - 2026-11-15
+
 ### Added
 
 - **`db-push`: push the development database to a remote environment, in shell.** The counterpart of `db-pull`, and the replacement for the `database-push` playbook. It backs up the remote database and verifies the dump before writing anything, then exports development with its URLs already rewritten (`wp search-replace --export`), so the remote never serves development URLs between import and search-replace, as it did with the playbook. Multisite is detected from development rather than passed as a flag, and the network domains are fixed in the same SSH session as the import. It switches off foreign-key checks for the import, as a mysqldump file does, and if the import, a follow-up step or the final `home` URL check fails, it imports the backup straight back. Tables of subsites that have no `wp_blogs` row (left behind when a pull or a deleted subsite removes the row but not the tables) are skipped and listed rather than pushed. Tested with a round trip on `demo.imagewize.com`, a multisite network, which also added the `koffie` subsite to production. Both arguments are required, a detected project is always confirmed, production asks you to type the site name, and without a terminal it needs `--yes`.
