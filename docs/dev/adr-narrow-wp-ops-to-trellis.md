@@ -108,11 +108,12 @@ Keep one repository and one binary. Change what it leads with and what it carrie
    `db_backup`) are the reason to use it. Do not add more generic tools.
 3. **Keep audits and scanners standalone.** No WP-CLI rewrite. Per the package
    evaluation they stay curl and PHP scripts.
-4. **Move non-WordPress personal scripts out of the repo.** `svg-to-jpg`,
-   `find-and-replace-files`, `git-log-oneline` and `create-pr` have no WordPress or
-   Trellis audience. `svg-to-png`, `convert-screenshot-for-claude` and
-   `updraft-to-valet` were already deprecated on this basis. Candidates for a personal
-   scripts repo; each needs the October audit's deprecation window first.
+4. **Move non-WordPress personal scripts out of the repo, into wpvilla.in posts.**
+   A script with no WordPress or Trellis audience becomes a blog post that carries the
+   script, the same way the guides moved. `svg-to-png`, `convert-screenshot-for-claude`
+   and `updraft-to-valet` were already deprecated on this basis. Each keeps the October
+   audit's deprecation window before removal. Tooling the repo itself relies on
+   (`create-pr`, and `find-and-replace-files`, which syncs its copies) stays.
 5. **Keep `rsync-package-to-site` in the repo for now.** It is the most used script
    and ten repos depend on it, but it is not Trellis-specific. See open questions.
 6. **Measure before splitting anything further.** Revisit this ADR after one month
@@ -161,7 +162,7 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | 1. Lead with `trellis ops` (done) | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` written on this branch and tested by a round trip on `demo.imagewize.com` production (multisite): pull, restore the local-only `koffie` subsite, push. The first push hit a foreign key and was restored from its own backup; fixed with foreign-key checks off and automatic restore. The `database-pull`/`database-push` playbooks are deprecated and README section 1 shows `db-pull`/`db-push`. The README GIF shows `trellis ops db-pull` (tape in `assets/screenshots/db-pull.tape`). Step 1 is done; removing the deprecated playbooks waits a release or two |
 | 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (on this branch) |
 | 3. Audits and scanners stay standalone | No change needed |
-| 4. Move personal scripts out | Not started |
+| 4. Move personal scripts out | `svg-to-jpg` deprecated, now a [wpvilla.in post](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/) with the script; `git-log-oneline` deprecated (it only wraps `git log --oneline`). `create-pr` and `find-and-replace-files` kept, decided 2026-11-15: the repo uses `create-pr` for its own PRs, as do `min` and `ikwedopsport`, and it is too long for a post. Revisit at the re-count |
 | 5. `rsync-package-to-site` stays | Open question below |
 | 6. Re-count usage | Due about 2026-12-15 |
 

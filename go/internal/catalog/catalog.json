@@ -417,6 +417,7 @@
     "manifest_category": "git",
     "platform": "any",
     "mutates": false,
+    "deprecated": "It only wraps git: run git log --oneline -n 20 instead.",
     "display_category": "git",
     "annotated": true
   },
@@ -482,6 +483,7 @@
     "manifest_category": "images",
     "platform": "any",
     "mutates": true,
+    "deprecated": "Not a WordPress or Trellis tool. The script and how to use it are now a post: https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/",
     "display_category": "images",
     "annotated": true
   },

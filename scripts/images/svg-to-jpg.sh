@@ -44,6 +44,7 @@
 # @flag     -h      optional  {1080}  Output height in px
 # @flag     -s      optional  {2}  Scale multiplier; ignored if -w/-h given
 # @flag     -q      optional  {90}  JPEG quality 1-100
+# @deprecated Not a WordPress or Trellis tool. The script and how to use it are now a post: https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/
 # @example  wp-ops svg-to-jpg designs/linkedin
 # @example  wp-ops svg-to-jpg -w 1920 -h 1080 designs/mastodon
 

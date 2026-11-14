@@ -30,6 +30,7 @@
 # @mutates  false
 # @requires git
 # @arg      n  optional  {10}  Number of commits to show
+# @deprecated It only wraps git: run git log --oneline -n 20 instead.
 # @example  wp-ops git-log-oneline 20
 
 set -euo pipefail
