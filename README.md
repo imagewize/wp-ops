@@ -129,7 +129,7 @@ wp-ops init      # shell completions (one-time)
 wp-ops doctor    # check Ansible, WP-CLI, ssh and friends
 ```
 
-Point it at your Trellis project with `TRELLIS_DIR` (or run it from inside one).
+Run it from your Trellis project (the project root or its `trellis/` folder) or point it at one with `TRELLIS_DIR`. `database-push` and `files-push` always ask before using a project found from the current directory.
 Homebrew also installs `trellis-ops`, a second name for the same binary. trellis-cli
 finds any `trellis-*` program on your `PATH` and turns it into a subcommand, which is how
 every command becomes `trellis ops <...>`. This needs trellis-cli v1.19.0 or later. See

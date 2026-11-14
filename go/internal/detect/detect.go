@@ -49,6 +49,17 @@ func TrellisDir(startDir, stopAt string) (string, bool) {
 	return "", false
 }
 
+// DirectHit reports whether a detected Trellis directory is unambiguous: the
+// working directory is the trellis/ folder itself, or the project root that
+// holds it. Standing there is the same signal trellis-cli relies on, so it
+// needs no confirmation. A directory found by walking up from deeper inside a
+// Bedrock site is still a guess and is confirmed.
+func DirectHit(startDir, detected string) bool {
+	start := filepath.Clean(startDir)
+	return filepath.Clean(detected) == start ||
+		filepath.Clean(detected) == filepath.Join(start, "trellis")
+}
+
 // WPSiteDir walks up from startDir looking for a Bedrock site root (a
 // directory with both web/wp/ and composer.json), stopping below stopAt.
 // Port of detect_wp_site_dir() (wp-ops:976).

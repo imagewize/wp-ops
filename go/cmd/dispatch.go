@@ -284,7 +284,7 @@ func executeAnsible(e catalog.Entry, args []string, isHelp bool) int {
 		return 1
 	}
 
-	trellisDir, ok := resolveTrellisDir()
+	trellisDir, ok := resolveTrellisDir(strings.HasSuffix(e.ScriptPath, "-push.yml"))
 	if !ok {
 		return 1
 	}
