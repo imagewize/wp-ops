@@ -587,7 +587,7 @@ export TRELLIS_DIR=/path/to/trellis
 
 Via wp-ops: `wp-ops db-pull example.com production`.
 
-For automated/repeatable pulls instead, use `trellis/backup/database-pull.yml` (`wp-ops trellis database-pull -e site=example.com -e env=production`) — it has no `trellis vm shell` dependency and is the better fit for CI/scheduled jobs. See [trellis/backup/README.md](../trellis/backup/README.md) for the tradeoffs.
+The Ansible playbook `trellis/backup/database-pull.yml` is deprecated in favour of this script. The other way is [`db-push.sh`](backup/README.md#pushing-development-to-a-remote-db-push).
 
 ---
 

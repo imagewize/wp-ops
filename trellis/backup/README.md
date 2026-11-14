@@ -42,8 +42,8 @@ This directory contains Ansible playbooks that integrate with your existing Trel
 
 ### Database Operations
 - **database-backup.yml** - Create database backups from any environment
-- **database-pull.yml** - Pull database from remote environment to development
-- **database-push.yml** - Push database from development to remote environment
+- **database-pull.yml** - Pull database from remote environment to development. Deprecated: use [`wp-ops db-pull`](../../scripts/backup/README.md)
+- **database-push.yml** - Push database from development to remote environment. Deprecated: use [`wp-ops db-push`](../../scripts/backup/README.md#pushing-development-to-a-remote-db-push)
 
 ### Files Operations
 - **files-backup.yml** - Create WordPress uploads backups from any environment
@@ -145,6 +145,8 @@ wp-ops db-backup example.com staging --host staging.example.com
 Backing up `development` is already local — just run `wp db export --path=web/wp` directly. For automated/repeatable backups instead, use the Ansible playbook above.
 
 ### Database Pull
+
+> **Deprecated.** Use `wp-ops db-pull example.com production` ([scripts/backup](../../scripts/backup/README.md)): the same pull, as fast, and it keeps both dumps, verifies the download and handles multisite. This playbook will be removed in a later release.
 
 Pulls database from a remote environment to development with automatic URL replacement.
 
@@ -308,6 +310,8 @@ This command will:
 > **Critical:** Even when specifying `--url=`, WP-CLI may find matches across multiple subsites if the search string exists in their content. Always use `--dry-run` first!
 
 ### Database Push
+
+> **Deprecated.** Use `wp-ops db-push example.com staging` ([scripts/backup](../../scripts/backup/README.md#pushing-development-to-a-remote-db-push)): it backs up and verifies the remote first, rewrites URLs during the export so the remote never serves development URLs, and restores the backup if the import fails. This playbook will be removed in a later release.
 
 Pushes database from development to a remote environment with URL replacement.
 
@@ -583,6 +587,8 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # database-pull.yml is deprecated. db-pull needs a Trellis VM, so a CI job
+      # that pulls without one has no replacement yet: say so in an issue.
       - name: Pull database
         run: |
           cd trellis

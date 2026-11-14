@@ -2174,6 +2174,7 @@
     "manifest_category": "backup",
     "platform": "trellis",
     "mutates": true,
+    "deprecated": "Use db-pull, the shell version: the same pull, as fast, and it keeps both dumps, verifies the download and handles multisite.",
     "display_category": "backup",
     "annotated": true
   },
@@ -2214,6 +2215,7 @@
     "manifest_category": "backup",
     "platform": "trellis",
     "mutates": true,
+    "deprecated": "Use db-push, the shell version: it backs up and verifies the remote first, never serves development URLs, and restores the backup if the import fails.",
     "display_category": "backup",
     "annotated": true
   },

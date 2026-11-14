@@ -75,11 +75,11 @@ Ansible playbooks require `-e site=example.com -e env=<environment>` parameters:
 # Database backup
 ansible-playbook trellis/backup/database-backup.yml -e site=example.com -e env=production
 
-# Database pull (from remote to development)
-ansible-playbook trellis/backup/database-pull.yml -e site=example.com -e env=production
+# Database pull (from remote to development), shell; the database-pull playbook is deprecated
+wp-ops db-pull example.com production
 
-# Database push (from development to remote)
-ansible-playbook trellis/backup/database-push.yml -e site=example.com -e env=staging
+# Database push (from development to remote), shell; the database-push playbook is deprecated
+wp-ops db-push example.com staging
 
 # Files (uploads) operations
 ansible-playbook trellis/backup/files-backup.yml -e site=example.com -e env=production

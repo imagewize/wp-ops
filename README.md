@@ -21,7 +21,7 @@ An add-on for <a href="https://github.com/roots/trellis-cli">trellis-cli</a>, al
 
 ```bash
 brew install imagewize/tap/wp-ops    # adds `trellis ops` to trellis-cli
-trellis ops database-pull example.com production
+trellis ops db-pull example.com production
 ```
 
 ## What it solves
@@ -44,14 +44,16 @@ see them all.
 ### 1. Get production into development in one step
 
 ```bash
-trellis ops database-pull example.com production   # export, download, import, search-replace
+trellis ops db-pull example.com production      # export, download, import, search-replace
 trellis ops files-pull example.com production      # rsync the uploads directory
 ```
 
 The database is exported on the server, imported into development, and every
 production URL is rewritten to your `.test` domain. Your current development database
 is backed up to `database_backup/` first, so a pull is never a one-way trip.
-`database-push` and `files-push` go the other way — and back up the remote first.
+`db-push` and `files-push` go the other way, and back up the remote first. `db-push`
+rewrites URLs while it exports, so the remote never serves your `.test` URLs, and puts
+the backup straight back if the import fails.
 
 <p align="center">
   <img src="assets/screenshots/database-pull.gif" alt="wp-ops database-pull running the Ansible playbook from production to development, ending with the development home URL on the .test domain" width="800">
@@ -129,7 +131,7 @@ wp-ops init      # shell completions (one-time)
 wp-ops doctor    # check Ansible, WP-CLI, ssh and friends
 ```
 
-Run it from your Trellis project (the project root or its `trellis/` folder) or point it at one with `TRELLIS_DIR`. `database-push` and `files-push` always ask before using a project found from the current directory.
+Run it from your Trellis project (the project root or its `trellis/` folder) or point it at one with `TRELLIS_DIR`. `db-push`, `database-push` and `files-push` always ask before using a project found from the current directory.
 Homebrew also installs `trellis-ops`, a second name for the same binary. trellis-cli
 finds any `trellis-*` program on your `PATH` and turns it into a subcommand, which is how
 every command becomes `trellis ops <...>`. This needs trellis-cli v1.19.0 or later. See

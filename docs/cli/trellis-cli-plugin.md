@@ -8,7 +8,7 @@ have open:
 
 ```bash
 trellis ops                              # Trellis-relevant categories
-trellis ops backup database-pull         # same as: wp-ops backup database-pull
+trellis ops backup db-pull               # same as: wp-ops backup db-pull
 trellis ops search backup
 ```
 

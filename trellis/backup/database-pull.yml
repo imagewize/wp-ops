@@ -8,6 +8,7 @@
 # @requires ansible-playbook
 # @arg      site  required  {example.com}  Site name as in wordpress_sites.yml
 # @arg      env   required  {production|staging}  Remote environment to pull from
+# @deprecated Use db-pull, the shell version: the same pull, as fast, and it keeps both dumps, verifies the download and handles multisite.
 # @example  wp-ops database-pull example.com production
 - import_playbook: variable-check.yml
   vars:

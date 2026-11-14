@@ -144,9 +144,9 @@ func printServerSideGuidance(w io.Writer, e catalog.Entry) {
 
 	if backupCommands[e.Key] {
 		fmt.Fprintln(w, "That leaves the archive on the server. To back up *and* retrieve a copy")
-		fmt.Fprintln(w, "to this machine in one step, use the Ansible playbooks instead:")
+		fmt.Fprintln(w, "to this machine in one step, use these instead:")
 		fmt.Fprintln(w)
-		fmt.Fprintf(w, "  %s database-pull example.com production\n", cmdName())
+		fmt.Fprintf(w, "  %s db-backup  example.com production\n", cmdName())
 		fmt.Fprintf(w, "  %s files-pull    example.com production\n", cmdName())
 		return
 	}

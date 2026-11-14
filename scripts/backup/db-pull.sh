@@ -66,9 +66,6 @@ usage() {
     echo "confirmed interactively) — set it explicitly to skip that or run"
     echo "from outside the project:"
     echo "  TRELLIS_DIR=/path/to/trellis $(basename "$0") example.com production"
-    echo ""
-    echo "For automated/repeatable pulls instead, use the Ansible playbook:"
-    echo "  wp-ops trellis database-pull -e site=example.com -e env=production"
 }
 
 # Colors for output
