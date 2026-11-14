@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`db-push`: push the development database to a remote environment, in shell.** The counterpart of `db-pull`, and the replacement for the `database-push` playbook. It backs up the remote database and verifies the dump before writing anything, then exports development with its URLs already rewritten (`wp search-replace --export`), so the remote never serves development URLs between import and search-replace, as it did with the playbook. Multisite is detected from development rather than passed as a flag, and the network domains are fixed in the same SSH session as the import. It checks the remote `home` URL afterwards and prints the restore command if it is wrong. Both arguments are required, a detected project is always confirmed, production asks you to type the site name, and without a terminal it needs `--yes`.
+- **The MCP README groups its tools.** Trellis and site operations first, then URL-only audits, then `wp_cli`, `ssh_command` and `scp_file` under "Generic remote access", with a note on what the safety layer adds over other WP-CLI MCP servers.
+- **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
+
 ### Fixed
 
 - **`quick-status`, `traffic-report` and `security-scan` no longer report `changed` for read-only work.** Every shell task that only reads logs and service status was marked changed, so the recap said `changed=7` for a check that changes nothing. Those tasks now set `changed_when: false`; the task that copies the monitor script still reports a change when it actually updates the file.
 - **A local rebuild no longer runs the previous build's scripts.** A binary without a checkout next to it extracts its embedded scripts to a cache directory named after the version, which comes from the top CHANGELOG heading. Two builds of one working tree share a version, so after editing a playbook and rebuilding, the new binary kept running the first build's extracted copy. The directory name now also carries a short hash of the embedded files, so any edit extracts fresh. Release installs are unaffected: each release already had its own version.
-
-### Added
-
-- **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
 
 ### Documentation
 

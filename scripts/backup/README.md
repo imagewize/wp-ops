@@ -9,6 +9,7 @@ and are Trellis-only by construction.
 | [`wp-db-backup.sh`](wp-db-backup.sh) | `wordpress` | WP-CLI and a reachable database. Nothing else. |
 | [`db-backup.sh`](db-backup.sh) | `trellis` | SSH as `web@`, site under `/srv/www/<site>/current` |
 | [`db-pull.sh`](db-pull.sh) | `trellis` | A Trellis project — runs `trellis vm shell` |
+| [`db-push.sh`](db-push.sh) | `trellis` | A Trellis project — runs `trellis vm shell`; writes to the remote |
 | [`site-backup.sh`](site-backup.sh) | `trellis` | Runs *on* the server; reads `/srv/www`, writes `/srv/backups` |
 
 `wp-ops list --platform wordpress` and the `[trellis]` badge on
@@ -16,7 +17,7 @@ and are Trellis-only by construction.
 
 ## Which one do I want?
 
-If the site is a Trellis site, the three Trellis-shaped scripts know its
+If the site is a Trellis site, the four Trellis-shaped scripts know its
 conventions and are less to type. For anything else — Valet, Herd, cPanel,
 plain `public_html`, a Bedrock checkout that isn't Trellis-managed — use
 `wp-db-backup.sh`, which discovers what the others assume.
@@ -87,3 +88,30 @@ config) and `wp-db-pull.sh` (remote to local with `search-replace`, plain
 `wp` rather than `trellis vm shell`). Keep any additions on distinct
 basenames: `wp-ops db-backup` becomes ambiguous the moment two scripts share
 one.
+
+## Pushing development to a remote: `db-push`
+
+```bash
+wp-ops db-push example.com staging
+trellis ops db-push example.com production   # asks you to type the site name
+```
+
+The counterpart of `db-pull`, and the shell replacement for the
+`database-push` playbook. In order:
+
+1. Reads both sites' URLs, and whether development is a multisite network.
+2. Backs up the remote database to `database_backup/<site>_<env>_<date>.sql.gz`
+   and checks it is complete. If that fails, nothing is pushed.
+3. Exports development with its URLs already rewritten to the remote's
+   (`wp search-replace --export`), so the remote never serves `.test` URLs,
+   and checks every table is in the export. The export is kept as
+   `database_backup/<site>_push_to_<env>_<date>.sql.gz`.
+4. Imports it on the remote and, in the same SSH session, fixes multisite
+   domains and runs any extra URL pass (a `siteurl` that isn't `home` plus the
+   same suffix, or links in the other scheme), then flushes the cache.
+5. Checks the remote `home` URL and prints the restore command if it is wrong.
+
+Both arguments are required; there is no default environment. A project found
+from the current directory is always confirmed, and without a terminal it
+refuses unless you pass `--yes`. Email addresses on the development domain
+(form senders, comment authors) are not rewritten.
