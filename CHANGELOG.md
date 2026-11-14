@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The MCP README groups its tools.** Trellis and site operations first, then URL-only audits, then `wp_cli`, `ssh_command` and `scp_file` under "Generic remote access", with a note on what the safety layer adds over other WP-CLI MCP servers.
 - **CI checks every shell script against macOS bash 3.2.** A new `bash32-syntax` job in `go-build.yml` runs `/bin/bash -n` over every tracked `.sh` on a macOS runner. The existing `TestShellScriptsParseWithSystemBash` runs on Ubuntu, where `/bin/bash` is bash 5, so it can't catch syntax that only 3.2 rejects, like the 5.45.1 `db-pull` regression. The check covers syntax only: bash-4 features that parse on 3.2 but fail when they run still get through.
 
+### Deprecated
+
+- **The `database-pull` and `database-push` playbooks.** Use `db-pull` and `db-push`, the shell versions, which now cover both directions. `db-pull` is as fast as the playbook, keeps both dumps, verifies the download and handles multisite; `db-push` backs up and verifies the remote first, never serves development URLs and restores the backup if the import fails. Both playbooks still run and print a deprecation notice; they will be removed in a later release. The one thing the playbooks do that the scripts don't is run without a Trellis VM (`-e dev_target=host`), which a CI job pulling a database might rely on; open an issue if that is you. `database-backup`, `files-pull`, `files-push` and `files-backup` are not deprecated: they have no shell replacement.
+- The README, `CLAUDE.md`, `trellis/README.md`, the backup guides and the `trellis ops` plugin guide now show `db-pull` and `db-push`. `site-backup` and the server-side help for the backup scripts point to `db-backup` for a copy on your machine, which is what they meant; `database-pull` imports into development.
+
 ### Fixed
 
 - **`quick-status`, `traffic-report` and `security-scan` no longer report `changed` for read-only work.** Every shell task that only reads logs and service status was marked changed, so the recap said `changed=7` for a check that changes nothing. Those tasks now set `changed_when: false`; the task that copies the monitor script still reports a change when it actually updates the file.
