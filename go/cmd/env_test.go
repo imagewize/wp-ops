@@ -3,7 +3,9 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 )
 
@@ -168,4 +170,50 @@ func TestSweepOldAssetExtractionsKeepsEverythingBelowThreshold(t *testing.T) {
 // contract: an unreadable cache parent is a no-op, not a panic.
 func TestSweepOldAssetExtractionsMissingParent(t *testing.T) {
 	sweepOldAssetExtractions(filepath.Join(t.TempDir(), "does-not-exist"), "assets-5.15.0", time.Now())
+}
+
+// TestHashFSTracksContent is the guard behind the extraction directory name:
+// a rebuild that edits a script without bumping the CHANGELOG version must
+// land in a different directory, or it runs the previous build's copy.
+func TestHashFSTracksContent(t *testing.T) {
+	base := fstest.MapFS{
+		"trellis/a.yml": {Data: []byte("one")},
+		"scripts/b.sh":  {Data: []byte("two")},
+	}
+	same := fstest.MapFS{
+		"scripts/b.sh":  {Data: []byte("two")},
+		"trellis/a.yml": {Data: []byte("one")},
+	}
+	edited := fstest.MapFS{
+		"trellis/a.yml": {Data: []byte("one edited")},
+		"scripts/b.sh":  {Data: []byte("two")},
+	}
+	renamed := fstest.MapFS{
+		"trellis/c.yml": {Data: []byte("one")},
+		"scripts/b.sh":  {Data: []byte("two")},
+	}
+
+	if hashFS(base) != hashFS(same) {
+		t.Error("the same files must hash the same, whatever order they were declared in")
+	}
+	if hashFS(base) == hashFS(edited) {
+		t.Error("editing a file must change the hash")
+	}
+	if hashFS(base) == hashFS(renamed) {
+		t.Error("renaming a file must change the hash")
+	}
+}
+
+func TestExtractedAssetsRootIsStampedWithVersionAndContent(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", "")
+
+	dir, err := extractedAssetsRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := assetExtractionPrefix + embeddedVersion() + "-"
+	if !strings.HasPrefix(filepath.Base(dir), want) {
+		t.Errorf("extraction dir %q, want a name starting %q", filepath.Base(dir), want)
+	}
 }

@@ -3,6 +3,8 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"os"
@@ -71,17 +73,18 @@ func repoRoot() (string, error) {
 }
 
 // extractedAssetsRoot returns a directory on disk holding the embedded
-// asset tree, extracting it there first if this is the first run of this
-// binary's version. Version-stamping the target directory means an
-// upgraded binary extracts fresh instead of running against a stale
-// extraction left by a previous install.
+// asset tree, extracting it there first if this binary's assets have not
+// been extracted yet. The target directory is stamped with the version and a
+// hash of the embedded files, so an upgraded binary extracts fresh instead of
+// running against a stale extraction left by a previous install, and so does
+// a local rebuild that edited a script without bumping the CHANGELOG.
 func extractedAssetsRoot() (string, error) {
 	base, err := os.UserCacheDir()
 	if err != nil {
 		return "", fmt.Errorf("no cache directory available to extract embedded scripts into: %w", err)
 	}
 	parent := filepath.Join(base, "wp-ops")
-	dir := filepath.Join(parent, "assets-"+embeddedVersion())
+	dir := filepath.Join(parent, assetExtractionPrefix+embeddedAssetsKey())
 
 	if info, err := os.Stat(dir); err == nil && info.IsDir() {
 		return dir, nil
@@ -221,6 +224,37 @@ func extractAssetsTo(dir string) error {
 		}
 		return os.WriteFile(target, data, perm)
 	})
+}
+
+// embeddedAssetsKey names this binary's extraction: the version plus a short
+// hash of every embedded file. The version alone is not enough. It comes from
+// the top CHANGELOG heading, so two builds of one working tree share it, and a
+// developer rebuilding after editing a playbook would silently keep running the
+// previous build's extracted copy.
+func embeddedAssetsKey() string {
+	return embeddedVersion() + "-" + hashFS(assets.FS)
+}
+
+// hashFS returns the first 8 hex characters of a SHA-256 over every file's
+// path and contents, walked in lexical order, so identical trees always give
+// the same value and any edited, added or removed file changes it.
+func hashFS(fsys fs.FS) string {
+	h := sha256.New()
+	_ = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, readErr := fs.ReadFile(fsys, path)
+		if readErr != nil {
+			return readErr
+		}
+		h.Write([]byte(path))
+		h.Write([]byte{0})
+		h.Write(data)
+		h.Write([]byte{0})
+		return nil
+	})
+	return hex.EncodeToString(h.Sum(nil))[:8]
 }
 
 // embeddedVersion reads the current version straight out of the embedded
