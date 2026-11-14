@@ -156,3 +156,22 @@ func TestConfirm_InteractiveBlankDefaultsToNo(t *testing.T) {
 		t.Fatal("Confirm returned true for a blank reply, want default-to-no")
 	}
 }
+
+func TestDirectHit(t *testing.T) {
+	cases := []struct {
+		name            string
+		start, detected string
+		want            bool
+	}{
+		{"in the trellis dir itself", "/p/site/trellis", "/p/site/trellis", true},
+		{"at the project root", "/p/site", "/p/site/trellis", true},
+		{"trailing slash is cleaned", "/p/site/", "/p/site/trellis", true},
+		{"walked up from a Bedrock subfolder", "/p/site/site/web/app", "/p/site/trellis", false},
+		{"unrelated sibling", "/p/other", "/p/site/trellis", false},
+	}
+	for _, c := range cases {
+		if got := DirectHit(c.start, c.detected); got != c.want {
+			t.Errorf("%s: DirectHit(%q, %q) = %v, want %v", c.name, c.start, c.detected, got, c.want)
+		}
+	}
+}

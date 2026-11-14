@@ -14,7 +14,13 @@ import (
 // using it — these commands back up, overwrite, and push databases, so an
 // auto-detected directory is a convenience, not something to act on
 // unprompted.
-func resolveTrellisDir() (string, bool) {
+//
+// A project found from the directory you are standing in (the project root or
+// its trellis/ folder) is used without asking, as trellis-cli does. Only a
+// directory found by walking up from deeper is confirmed, and always when
+// confirmAlways is set, which the push playbooks do because they write to a
+// remote site.
+func resolveTrellisDir(confirmAlways bool) (string, bool) {
 	if dir := os.Getenv("TRELLIS_DIR"); dir != "" {
 		if _, err := os.Stat(filepath.Join(dir, "ansible.cfg")); err != nil {
 			fmt.Fprintf(os.Stderr, "TRELLIS_DIR (%s) doesn't look like a Trellis project (no ansible.cfg found).\n", dir)
@@ -40,6 +46,10 @@ func resolveTrellisDir() (string, bool) {
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "  export TRELLIS_DIR=/path/to/your/trellis")
 		return "", false
+	}
+
+	if !confirmAlways && detect.DirectHit(cwd, detected) {
+		return detected, true
 	}
 
 	interactive := detect.IsTerminal(os.Stdin) && detect.IsTerminal(os.Stdout)

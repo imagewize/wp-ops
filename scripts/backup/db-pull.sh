@@ -114,6 +114,13 @@ detect_trellis_dir() {
     return 1
 }
 
+# True when the detected project is the directory you are standing in, or its
+# trellis/ child. That is unambiguous (trellis-cli relies on the same signal),
+# so it needs no confirmation. Mirrors go/internal/detect.DirectHit.
+is_direct_trellis_dir() {
+    [[ "$1" == "$PWD" || "$1" == "$PWD/trellis" ]]
+}
+
 # Confirms an auto-detected TRELLIS_DIR before using it — this backs a
 # destructive operation (it overwrites the local dev database), so a
 # non-interactive session refuses to guess rather than silently proceeding.
@@ -192,7 +199,7 @@ fi
 TRELLIS_DIR="${TRELLIS_DIR:-}"
 if [[ -z "$TRELLIS_DIR" ]]; then
     if detected="$(detect_trellis_dir)"; then
-        if ! confirm_trellis_dir "$detected"; then
+        if ! is_direct_trellis_dir "$detected" && ! confirm_trellis_dir "$detected"; then
             exit 1
         fi
         TRELLIS_DIR="$detected"

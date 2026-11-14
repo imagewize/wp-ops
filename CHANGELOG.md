@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Contributor docs say to write and test scripts for bash 3.2.** `AGENTS.md` explains why macOS's `/bin/bash` is 3.2 and Homebrew bash is opt-in, lists the 3.2-incompatible constructs to avoid, and replaces `bash -n` with `/bin/bash -n` (plain `bash` resolves to Homebrew's 5.x on a dev Mac). `CLAUDE.md` has the same rule. The README requirements and `scripts/README.md` note that the built-in bash 3.2 is enough.
 
+## [5.45.3] - 2026-11-15
+
+### Fixed
+
+- **Commands no longer ask [y/N], or refuse without a terminal, when you run them from your Trellis project.** From the project root or its `trellis/` folder, `wp-ops` and `trellis ops` now use that project straight away, as trellis-cli does. Before, every Ansible playbook command (`quick-status`, `traffic-report`, `security-scan` and the rest) printed `TRELLIS_DIR is not set` and stopped when run from a script or an agent, even though it had found the right project, and asked for confirmation in a terminal. The same applies to `db-pull`, `publish-post` and `trellis-updater`. Two cases still confirm: a project found by walking up from deeper inside a Bedrock site, and the `database-push` and `files-push` playbooks, which write to a remote site. `TRELLIS_DIR` still wins when set.
+
 ## [5.45.2] - 2026-11-09
 
 ### Fixed
