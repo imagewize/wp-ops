@@ -158,8 +158,8 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 
 | Step | State |
 | --- | --- |
-| 1. Lead with `trellis ops` | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` not started |
-| 2. MCP as an adapter | Not started |
+| 1. Lead with `trellis ops` | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` written on this branch, not yet run against a real remote. Next: deprecate the `database-pull`/`database-push` playbooks and move README section 1 to `db-pull`/`db-push` |
+| 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (on this branch) |
 | 3. Audits and scanners stay standalone | No change needed |
 | 4. Move personal scripts out | Not started |
 | 5. `rsync-package-to-site` stays | Open question below |
