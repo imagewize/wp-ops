@@ -1,13 +1,14 @@
 # ADR: Narrow wp-ops to a Trellis front door, and stop shipping generic remote access as a headline
 
-**Status:** Accepted, 2026-11-15, in progress. Work lands on the `adr/narrow-to-trellis`
-branch in batches, one PR and one version per batch, not one PR per fix. See
+**Status:** Accepted, 2026-11-15, in progress. Work lands in batches, one branch, one PR
+and one version per batch, not one PR per fix. The first batch shipped as 5.46.0
+(PR #290, branch `adr/narrow-to-trellis`); the next batch gets a new branch. See
 [Progress](#progress) for what has shipped.
 **Related:** [command-audit-2026-10.md](command-audit-2026-10.md) (what was cut),
 [trellis-extensions-evaluation.md](trellis-extensions-evaluation.md) (the `trellis ops` plugin, shipped),
 [wp-cli-package-evaluation.md](wp-cli-package-evaluation.md) (why the scanners and audits stay standalone),
 [mcp-server-recommendations.md](mcp-server-recommendations.md),
-[db-pull vs database-pull](#open-questions)
+[CHANGELOG 5.46.0](../../CHANGELOG.md) (the playbook deprecation)
 
 ## Context
 
@@ -98,9 +99,10 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 
 1. **Lead with `trellis ops` for pull, push and checks.** Make
    `trellis ops database-pull`, `files-pull`, `database-push`, `files-push` and the
-   backup commands the front-page story. `db-pull` and `database-pull` stay as
-   documented in [db-pull-vs-database-pull](#open-questions); add a shell `db-push` so
-   the playbooks can be deprecated rather than the shell scripts.
+   backup commands the front-page story. Add a shell `db-push` so the
+   `database-pull` and `database-push` playbooks can be deprecated rather than the
+   shell scripts (done in 5.46.0: `db-pull` and `db-push` are the documented
+   commands, the playbooks print a deprecation notice).
 2. **Treat the MCP server as an adapter, not a product.** Keep it, with its safety
    layer (the read-only `ssh_command` allowlist). Say plainly in its README that
    `wp_cli`, `ssh_command` and `scp_file` are generic and have alternatives, and that
@@ -150,17 +152,18 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 
 | Step | Size | Ships as |
 | --- | --- | --- |
-| README and MCP README reposition (steps 1 and 2) | small | docs-only, direct to `main` |
-| Shell `db-push`, then deprecate playbook pull | medium | PR, patch or minor bump |
-| Deprecate non-WordPress personal scripts (step 4) | small | PR, one per script group |
-| Re-count usage and decide on step 6 | small | update this ADR |
+| README and MCP README reposition (steps 1 and 2) | small | done, 5.46.0 |
+| Shell `db-push`, then deprecate playbook pull | medium | done, 5.46.0 |
+| Deprecate non-WordPress personal scripts (step 4) | small | first group done, 5.46.0 |
+| Re-count usage and decide on step 6 | small | update this ADR, about 2026-12-15 |
+| Remove the deprecated playbooks and scripts | small | PR after the re-count |
 
 ## Progress
 
 | Step | State |
 | --- | --- |
-| 1. Lead with `trellis ops` (done) | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` written on this branch and tested by a round trip on `demo.imagewize.com` production (multisite): pull, restore the local-only `koffie` subsite, push. The first push hit a foreign key and was restored from its own backup; fixed with foreign-key checks off and automatic restore. The `database-pull`/`database-push` playbooks are deprecated and README section 1 shows `db-pull`/`db-push`. The README GIF shows `trellis ops db-pull` (tape in `assets/screenshots/db-pull.tape`). Step 1 is done; removing the deprecated playbooks waits a release or two |
-| 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (on this branch) |
+| 1. Lead with `trellis ops` (done) | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` added in 5.46.0, tested by a round trip on `demo.imagewize.com` production (multisite): pull, restore the local-only `koffie` subsite, push. The first push hit a foreign key and was restored from its own backup; fixed with foreign-key checks off and automatic restore. The `database-pull`/`database-push` playbooks are deprecated and README section 1 shows `db-pull`/`db-push`. The README GIF shows `trellis ops db-pull` (tape in `assets/screenshots/db-pull.tape`). Step 1 is done; removing the deprecated playbooks waits a release or two |
+| 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (5.46.0) |
 | 3. Audits and scanners stay standalone | No change needed |
 | 4. Move personal scripts out | `svg-to-jpg` deprecated, now a [wpvilla.in post](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/) with the script; `git-log-oneline` deprecated (it only wraps `git log --oneline`). `create-pr` and `find-and-replace-files` kept, decided 2026-11-15: the repo uses `create-pr` for its own PRs, as do `min` and `ikwedopsport`, and it is too long for a post. Revisit at the re-count |
 | 5. `rsync-package-to-site` stays | Open question below |
