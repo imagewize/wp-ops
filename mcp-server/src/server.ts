@@ -3,7 +3,6 @@ import { z, type ZodTypeAny } from "zod";
 import { loadRegistry, resolveSiteEnv } from "./registry.js";
 import { runDbBackup } from "./tools/dbBackup.js";
 import { runSecurityScan } from "./tools/securityScan.js";
-import { isReadOnlyWpCommand, runWpCli, truncateWpCliOutput } from "./tools/wpCli.js";
 import { runRedirectAudit } from "./tools/redirectAudit.js";
 import { runSchemaAudit } from "./tools/schemaAudit.js";
 import { runUrlAudit, DEFAULT_URL_AUDIT_PATTERNS } from "./tools/urlAudit.js";
@@ -17,7 +16,7 @@ import { runServerStatus } from "./tools/serverStatus.js";
 import { checkIpReputation, checkDenyList, type IpCheckResult } from "./tools/ipReputation.js";
 import { runDbPull } from "./tools/dbPull.js";
 import { runFilesPull } from "./tools/filesPull.js";
-import { isReadOnlySshCommand, runScpFile, runSshCommand } from "./tools/sshPassthrough.js";
+import { isReadOnlySshCommand, runScpFile, runSshCommand, truncateOutput } from "./tools/sshPassthrough.js";
 import { runPublishPost, formatPublishPost } from "./tools/publishPost.js";
 import { runVerifyPost, formatVerifyPost } from "./tools/verifyPost.js";
 import {
@@ -108,45 +107,6 @@ export function createServer(): McpServer {
         return {
           content: [{ type: "text" as const, text: `Database backup saved to ${result.filePath} (${sizeKb} KB)` }],
         };
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
-      }
-    }
-  );
-
-  server.tool(
-    "wp_cli",
-    "Run a WP-CLI command against a configured site/environment. Pass args as separate tokens " +
-      "(e.g. [\"post\", \"list\", \"--format=json\"]), omitting the leading \"wp\" and any --path. " +
-      "Mutating commands need confirm: true, only after explicit user approval.",
-    {
-      site: siteSchema.describe('Site key from the wp-ops site registry (config/sites.json)'),
-      env: envSchema.describe('Environment key for that site, e.g. "development", "staging", "production"'),
-      args: z
-        .array(z.string())
-        .min(1)
-        .describe('WP-CLI command as separate argv tokens, e.g. ["post", "list", "--format=json"]. No "wp" prefix, no --path.'),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe("Required (true) for any command outside the read-only allowlist. Only set after explicit user approval."),
-    },
-    async ({ site, env, args, confirm }) => {
-      try {
-        if (args.some((a) => a === "--path" || a.startsWith("--path="))) {
-          throw new Error("Don't pass --path — it's set automatically from the site registry entry.");
-        }
-        if (!isReadOnlyWpCommand(args) && !confirm) {
-          throw new Error(
-            `"wp ${args.join(" ")}" isn't on the read-only allowlist and may change data. ` +
-              "Re-run with confirm: true after the user has explicitly approved this command."
-          );
-        }
-        const registry = loadRegistry();
-        const entry = resolveSiteEnv(registry, site, env);
-        const output = await runWpCli(entry, args);
-        return { content: [{ type: "text" as const, text: truncateWpCliOutput(output) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };
@@ -458,7 +418,7 @@ export function createServer(): McpServer {
     "Audit a store's public URL with Min (the Imagewize WooCommerce auditor): AI-shopping readiness grade A–F, " +
       "failing checks with evidence, recommended fixes, and optionally the product-page truth check (do the " +
       "price/stock the page advertises match the WooCommerce Store API?) and PageSpeed. Needs no SSH — it scans " +
-      "the public site — so use it first to find problems, fix them with wp_cli / ssh_command, then call it " +
+      "the public site — so use it first to find problems, fix them with plain wp / ssh_command, then call it " +
       "again to confirm the grade moved. Requires WP_OPS_MIN_MCP_USER and WP_OPS_MIN_MCP_PASSWORD. " +
       "Each call counts against the account's daily scan limit and stores a lead record.",
     {
@@ -886,7 +846,7 @@ export function createServer(): McpServer {
         if (result.stderr.trim()) {
           parts.push(`STDERR:\n${result.stderr.trim()}`);
         }
-        return { content: [{ type: "text" as const, text: truncateWpCliOutput(parts.filter(Boolean).join("\n")) }] };
+        return { content: [{ type: "text" as const, text: truncateOutput(parts.filter(Boolean).join("\n")) }] };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         return { content: [{ type: "text" as const, text: `Error: ${message}` }], isError: true };

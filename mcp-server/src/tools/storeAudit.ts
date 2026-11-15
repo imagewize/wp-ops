@@ -3,7 +3,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 
 // Min's hosted MCP server (the imagewize/min WordPress plugin + wordpress/mcp-adapter).
 // Min scans the *public* URL, so this needs no SSH: it is the outside half of the
-// audit -> fix -> re-audit loop, next to wp_cli / ssh_command for the inside half.
+// audit -> fix -> re-audit loop, next to plain wp / ssh_command for the inside half.
 export const DEFAULT_MIN_MCP_URL = "https://imagewize.com/wp-json/min/mcp";
 
 export interface MinConnection {
