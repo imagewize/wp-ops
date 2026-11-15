@@ -22,33 +22,68 @@ and a trellis-cli extension?
 
 ### Evidence: what is actually used
 
-Counted from real `tool_use` blocks in the 296 Claude Code session transcripts kept on
-this machine (117 of them touched wp-ops). Transcripts reach back only to about
-October 2026, so this is a recent snapshot, not history. Same method and caveats as the
+Counted from real `tool_use` blocks in the Claude Code session transcripts kept on
+this machine. Transcripts reach back only to about October 2026, so this is a recent
+snapshot, not history. Same method and caveats as the
 [October audit](command-audit-2026-10.md#evidence-and-its-limits).
 
-| MCP tool | Calls | Share of ~1,000 |
+**Recount, 2026-11-15.** The first count (`wp_cli` 570 to 655 of about 1,000) counted
+lines, and resumed and forked sessions repeat earlier calls in their transcripts. The
+recount below counts each `tool_use` ID once, across every `.jsonl` under
+`~/.claude/projects`, including subagent transcripts. Use the same method at step 6.
+
+| MCP tool | Calls | Share of 557 |
 | --- | --- | --- |
-| `wp_cli` | 570 to 655 | about 65% |
-| `publish_post` + `verify_post` | about 140 | about 15% |
-| `db_backup` | 55 | |
-| `ssh_command` | 50 | |
-| `scp_file` | 41 | |
-| `url_audit`, `files_pull`, `store_audit`, `security_scan`, `db_pull` | 10 to 14 each | |
-| `monitor`, `server_status`, `schema_audit` | 12 combined | |
+| `wp_cli` | 398 | 71% |
+| `publish_post` + `verify_post` | 70 | 13% |
+| `ssh_command` | 29 | |
+| `db_backup` | 23 | |
+| `scp_file` | 16 | |
+| `store_audit`, `security_scan`, `url_audit`, `db_pull`, `files_pull`, `monitor` | 3 to 4 each | |
+| `command_search`, `schema_audit` | 1 each | |
 
-- By project, `seo-strategy` is about 80% of MCP calls. `imagewize.com` is next,
-  with `elayne` and `elayne-legal` at about 80 calls combined. `elayne` uses wp-ops only
-  for `wp_cli` and the `rsync-package-to-site` script.
-- `rsync-package-to-site` is the most used script (about 274 mentions in the three
-  projects above alone, and about 170 calls across ten repos in the October audit).
-  `db-pull`, `svg-to-jpg`, `import-page-draft` and `publish-post` follow.
+What the 398 `wp_cli` calls ran: `post list` 61, `post meta` 52 (37 updates, mostly
+The SEO Framework titles and descriptions), `eval` 52 (applying Elayne style
+variations to global styles), `option` 34, `plugin list/get` 28, `db query` 26,
+`post get` 26, `search-replace` 25 (13 dry runs, 12 live), `theme` 21, `cache flush`
+15. 358 went to production, 39 to development; about 81 production calls wrote
+something. By site: imagewize.com 263, demo.imagewize.com 123, aseonomics.com 12.
+
+**WP-CLI outside wp-ops.** In the same transcripts, 312 to 446 Bash calls ran `wp`
+directly (the low figure drops calls whose `wp` sits in a heredoc, a commit message
+or a Python edit). 163 went through `trellis vm shell` to development, 113 over `ssh`
+to a remote, 36 ran locally (`wp i18n`, Valet). Top commands: `post get` 43,
+`db query` 34, `eval` 33, `eval-file` 24, `post list` 23, `option get` 20. So for
+production the MCP tool is used about three times as often as raw `ssh … wp`, and for
+development raw `trellis vm shell -- wp` is used about four times as often as the
+tool. Raw `wp` wins when a call chains several commands, pipes into `grep` or `curl`,
+or feeds SQL or PHP from a file, none of which the one-command `wp_cli` tool does.
+
+**By repository** (Claude Code sessions only):
+
+| Repo | Sessions | wp-ops MCP | wp-ops scripts via Bash | Raw `wp` via Bash |
+| --- | --- | --- | --- | --- |
+| `seo-strategy` | 141 | 436, `wp_cli` 300 | `svg-to-jpg` 114, `import-page-draft` 57, `publish-post` 33, `svg-to-png` 24, `checkout-check` 23, `update-snapshot` 14, `rsync-package-to-site` 14, `traffic-monitor` 13 | 186 to 284 |
+| `winespring` | 12 | 1 | `rsync-package-to-site` 50 | 35 to 48 |
+| `aludra` | 10 | 1 | `rsync-package-to-site` 37 | 37 to 58 |
+| `elayne` | 6 | 35, all `wp_cli` | `rsync-package-to-site` 36 | 6 to 11 |
+| `nynaeve` | 1 | none | none | none |
+| `aviendha`, `ixian` | 0 | none | none | none |
+
+- `seo-strategy` is the only repo that uses wp-ops as a product. Every theme and
+  plugin repo uses it for one thing, `rsync-package-to-site`, and their `CLAUDE.md`
+  or `AGENTS.md` documents that. `aviendha` and `ixian` have no Claude Code sessions
+  here, so any use there is by hand or through Vibe.
+- `svg-to-jpg`, deprecated in 5.46.0, is the most used script in `seo-strategy`, and
+  63 files there reference it, including `AGENTS.md`, the `publish-hygiene` skill and
+  two publish scripts.
 - Traffic and security reads, the thing the README sells in section 2, total about
-  22 MCP calls. They are not what the heaviest user reaches for.
-- I found no wp-ops calls in `aviendha` or `nynaeve`, and 3 in `winespring`.
+  10 MCP calls plus a dozen `traffic-monitor` runs. They are not what the heaviest
+  user reaches for.
 
-In practice wp-ops is used as: (1) a remote shell for WP-CLI, (2) post publish and
-verify, (3) a backup before risky edits, (4) rsync of themes and packages to sites.
+In practice wp-ops is used as: (1) a remote shell for WP-CLI on production, (2) post
+publish and verify, (3) a backup before risky edits, (4) rsync of themes and packages
+to sites. Development WP-CLI does not go through it at all.
 
 ### Evidence: what already exists
 
@@ -130,6 +165,8 @@ Keep one repository and one binary. Change what it leads with and what it carrie
   context tokens in every session. Step 2 only relabels them, it does not remove them.
 - **Risk:** removing the personal scripts breaks muscle memory and cross-repo
   references. The October audit's mapping tables and deprecation window apply.
+  Concretely: `svg-to-jpg` cannot be removed until `seo-strategy` carries its own copy
+  and its 63 references point to it.
 - **Not decided here:** whether to publish a second WP-CLI package. The evaluation's
   next candidate, a thin WP-CLI front end over the scanners that wraps and does not
   replace them, stays optional and gated on step 6.
@@ -140,13 +177,24 @@ Keep one repository and one binary. Change what it leads with and what it carrie
    demo or main site, which is the most common use here, but it is not
    Trellis-specific. Options: keep under a `wordpress` platform tag, or document it as
    a Trellis theme-deploy step. Needs a decision before step 4 shrinks the surface.
+   *Leaning, after the 2026-11-15 recount:* it is the only reason the theme and plugin
+   repos depend on wp-ops (about 140 runs from `winespring`, `aludra` and `elayne`),
+   so it serves theme development, not Trellis ops. Keep it, tagged `wordpress`, and
+   do not count it toward the Trellis pitch. Note that `aviendha` and `ixian` document
+   it in `AGENTS.md` with a hard-coded `/Users/j/code/...` path that does not exist
+   here, while their `CLAUDE.md` uses `wp-ops rsync-package-to-site`.
 2. **Is one star enough signal?** It is one data point. Step 6 exists to avoid acting
    on it alone.
-3. **Does a generic MCP tool earn its context cost?** `wp_cli` is 65% of my usage but
-   alternatives exist. If another server covers it with equal safety, retiring it from
-   wp-ops would cut tokens per session. Needs a safety comparison, not a guess.
+3. **Does a generic MCP tool earn its context cost?** `wp_cli` is 71% of MCP calls,
+   but alternatives exist, and raw `wp` through `ssh` or `trellis vm shell` runs about
+   as often in total (312 to 446 calls). About three quarters of the `wp_cli` calls are
+   plain reads or single meta writes that any WP-CLI MCP server or plain `ssh` does.
+   What it adds is the site-name lookup and the safety layer on production writes. If
+   another server covers that with equal safety, retiring it from wp-ops would cut
+   tokens per session. Needs a safety comparison, not a guess.
 4. **Counting method.** Transcripts show only recent months and only calls made through
-   Claude Code. Hand-run terminal use and Mistral Vibe sessions are not counted.
+   Claude Code. Hand-run terminal use and Mistral Vibe sessions are not counted. Count
+   each `tool_use` ID once; the first count did not and was about 50% too high.
 
 ## Next steps
 
@@ -155,6 +203,7 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | README and MCP README reposition (steps 1 and 2) | small | done, 5.46.0 |
 | Shell `db-push`, then deprecate playbook pull | medium | done, 5.46.0 |
 | Deprecate non-WordPress personal scripts (step 4) | small | first group done, 5.46.0 |
+| Move `svg-to-jpg` into `seo-strategy` and repoint its references | small | change in `seo-strategy`, before removal here |
 | Re-count usage and decide on step 6 | small | update this ADR, about 2026-12-15 |
 | Remove the deprecated playbooks and scripts | small | PR after the re-count |
 
@@ -166,8 +215,8 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (5.46.0) |
 | 3. Audits and scanners stay standalone | No change needed |
 | 4. Move personal scripts out | `svg-to-jpg` deprecated, now a [wpvilla.in post](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/) with the script; `git-log-oneline` deprecated (it only wraps `git log --oneline`). `create-pr` and `find-and-replace-files` kept, decided 2026-11-15: the repo uses `create-pr` for its own PRs, as do `min` and `ikwedopsport`, and it is too long for a post. Revisit at the re-count |
-| 5. `rsync-package-to-site` stays | Open question below |
-| 6. Re-count usage | Due about 2026-12-15 |
+| 5. `rsync-package-to-site` stays | Open question 1; leaning toward keeping it under a `wordpress` tag (recount 2026-11-15) |
+| 6. Re-count usage | Method corrected and a first recount done 2026-11-15 (see Evidence). Full re-count with downloads and installs due about 2026-12-15 |
 
 Monitoring polish done along the way, because the README pitch depends on it: monitor
 scripts now refresh on the server (5.45.4), `quick-status` and `traffic-report` print a
