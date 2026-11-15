@@ -100,6 +100,8 @@ wp post update 100 --post_content="$CONTENT" --path=web/wp
 trellis vm shell --workdir /srv/www/example.com/current -- wp post list --path=web/wp
 ```
 
+**Write approval applies to plain `wp` too.** Ask Jasper before any `wp` command that writes (`post update`, `post meta update`, `option update`, `search-replace` without `--dry-run`, `db import`, a `db query` that is not a SELECT, a changing `eval`/`eval-file`, installs, deletes) or reads credentials (`config get`, `db export`), whether it runs through `ssh` or `trellis vm shell`. Reads and `--dry-run` previews need no approval. The `wp_cli` MCP tool was removed in 5.47.0 (see `docs/dev/adr-narrow-wp-ops-to-trellis.md`); its `confirm: true` rule carries over to plain `wp`.
+
 ### Security Scanning
 
 WordPress malware detection and security auditing:

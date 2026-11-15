@@ -222,7 +222,7 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | Shell `db-push`, then deprecate playbook pull | medium | done, 5.46.0 |
 | Deprecate non-WordPress personal scripts (step 4) | small | first group done, 5.46.0 |
 | Move `svg-to-jpg` into `seo-strategy` and repoint its references | small | done, `seo-strategy` PR #37 |
-| Fix the `wp_cli` read-only check, or retire the tool at step 6 | small | [#291](https://github.com/imagewize/wp-ops/issues/291) |
+| Retire the `wp_cli` tool (decided 2026-11-15, see Progress); #291 closes with it | small | 5.47.0, [#291](https://github.com/imagewize/wp-ops/issues/291) |
 | Re-count usage and decide on step 6 | small | update this ADR, about 2026-12-15 |
 | Remove the deprecated playbooks and scripts | small | PR after the re-count |
 
@@ -235,6 +235,7 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | 3. Audits and scanners stay standalone | No change needed |
 | 4. Move personal scripts out | `svg-to-jpg` deprecated, now a [wpvilla.in post](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/) with the script; `git-log-oneline` deprecated (it only wraps `git log --oneline`). `create-pr` and `find-and-replace-files` kept, decided 2026-11-15: the repo uses `create-pr` for its own PRs, as do `min` and `ikwedopsport`, and it is too long for a post. Revisit at the re-count |
 | 5. `rsync-package-to-site` stays | Decided 2026-11-15: keeps a `wordpress` tag; it is the theme and plugin sync for nine repos (open question 1) |
+| 6a. Retire `wp_cli` | Decided 2026-11-15, after the count post ([wpvilla.in branch `post/claude-code-wp-cli-usage`](https://wpvilla.in)): plain `wp` through `ssh` or `trellis vm shell` does everything the tool did and more (pipes, chains, files), and the tool was used mainly because project docs said to. Write approval is not lost: the rule the tool enforced with `confirm: true` now applies to plain `wp` too. Ask the user before any `wp` command that writes (`post update`, `post meta update`, `option update`, `search-replace` without `--dry-run`, `db query` that is not a SELECT, `db import`, `eval` or `eval-file` that changes data, installs and deletes) or reads credentials (`config get`, `db export`), on every route and every environment. Reads and `--dry-run` previews need no approval. Removed in 5.47.0 (branch `remove/wp-cli-mcp-tool`); the `wp-ops` Go CLI never had a `wp_cli` command, only the MCP tool |
 | 6. Re-count usage | Method corrected and a first recount done 2026-11-15 (see Evidence). Full re-count with downloads and installs due about 2026-12-15 |
 
 Monitoring polish done along the way, because the README pitch depends on it: monitor
