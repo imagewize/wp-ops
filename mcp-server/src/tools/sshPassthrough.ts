@@ -288,3 +288,16 @@ export function runScpFile(
     );
   });
 }
+
+// A big command output can dump tens of KB into the model's context. Capped well above
+// what any well-formed command needs; the notice tells the model how to narrow it.
+const MAX_OUTPUT_CHARS = 15_000;
+
+export function truncateOutput(text: string, maxChars: number = MAX_OUTPUT_CHARS): string {
+  if (text.length <= maxChars) return text;
+  return (
+    text.slice(0, maxChars) +
+    `\n\n[... truncated at ${maxChars.toLocaleString()} of ${text.length.toLocaleString()} characters. ` +
+    "Narrow the command instead of reading past this point, e.g. with head, grep, wc -l or a more specific filter.]"
+  );
+}

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.47.0] - 2026-11-15
+
+### Removed
+
+- **The `wp_cli` MCP tool.** Counted over two months of Claude Code sessions, it was 398 of 557 MCP calls, but mostly a shortcut for reads and single meta writes on production, used because project docs told agents to; plain `wp` through `ssh` or `trellis vm shell` ran about as often and does more (pipes, chains, SQL or PHP from a file). Its read-only check also refused reads (#291). Run plain `wp` instead; the MCP README shows the two forms. The approval rule carries over: ask before any `wp` command that writes or reads credentials (`config get`, `db export`); reads and `--dry-run` previews need no approval. The helpers in `tools/wpCli.ts` stay, because `publish_post`, `verify_post`, `db_pull` and `url_audit` run their commands through them. `ssh_command` keeps its 15,000-character output cap. Remove `mcp__wp-ops__wp_cli` from your `~/.claude/settings.json` permissions. See `docs/dev/adr-narrow-wp-ops-to-trellis.md`.
+
 ## [5.46.0] - 2026-11-15
 
 ### Added

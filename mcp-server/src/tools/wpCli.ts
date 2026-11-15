@@ -1,3 +1,6 @@
+// Shared helpers for running plain WP-CLI against a registered site/environment. The
+// wp_cli MCP tool that used them was retired (see docs/dev/adr-narrow-wp-ops-to-trellis.md);
+// publish_post, verify_post, db_pull and url_audit still run their commands through here.
 import { spawn } from "node:child_process";
 import type { EnvEntry } from "../registry.js";
 import { hasTrellisVm, resolveWpBin, resolvePhpBin } from "../registry.js";
@@ -6,67 +9,6 @@ export interface ExecResult {
   stdout: string;
   stderr: string;
   code: number;
-}
-
-// Verbs that only read state. Anything else needs explicit confirm: true — this is a
-// deliberately conservative allowlist (unknown verbs fall on the "needs confirm" side).
-const SAFE_READ_VERBS = new Set([
-  "list",
-  "get",
-  "exists",
-  "status",
-  "info",
-  "version",
-  "search",
-  "check-update",
-  "doctor",
-  "export",
-  "size",
-  "tables",
-  "verify-checksums",
-  "pluck",
-]);
-
-// Commands where the read/write verb is the third token rather than the second, because
-// the second token names a sub-resource rather than a verb (e.g. "wp cron event list").
-// Kept as an explicit per-command allowlist rather than blindly checking args[2] for every
-// command, since args[2] is often an arbitrary caller-supplied value (an option name, a
-// post ID, ...) that could coincidentally collide with a SAFE_READ_VERBS entry.
-// Without the meta/term entries, a plain read like "wp post meta list 123" needed confirm,
-// which is the first lookup on every live-post edit. Writes stay gated: update/add/delete/
-// patch/set are not in SAFE_READ_VERBS.
-const NESTED_RESOURCE_VERBS: Record<string, Set<string>> = {
-  cron: new Set(["event", "schedule"]),
-  post: new Set(["meta", "term"]),
-  term: new Set(["meta"]),
-  user: new Set(["meta", "term"]),
-  comment: new Set(["meta"]),
-  network: new Set(["meta"]),
-  menu: new Set(["item", "location"]),
-  theme: new Set(["mod"]),
-  language: new Set(["core", "plugin", "theme"]),
-};
-
-// "wp config" is WP-CLI's dedicated interface onto wp-config.php constants —
-// DB_PASSWORD, DB_USER, AUTH_KEY salts, and whatever else a site defines there.
-// "get"/"list"/"export" all being in SAFE_READ_VERBS would otherwise let
-// "wp config get DB_PASSWORD" through with no confirmation, which is a plainer
-// path to the same credentials `cat wp-config.php` would print. Always confirm.
-const ALWAYS_CONFIRM_COMMANDS = new Set(["config"]);
-
-export function isReadOnlyWpCommand(args: string[]): boolean {
-  const [command, verbOrResource, thirdToken] = args;
-  if (command !== undefined && ALWAYS_CONFIRM_COMMANDS.has(command)) {
-    return false;
-  }
-  if (verbOrResource !== undefined && SAFE_READ_VERBS.has(verbOrResource)) {
-    return true;
-  }
-  const nestedResources = command !== undefined ? NESTED_RESOURCE_VERBS[command] : undefined;
-  if (nestedResources && verbOrResource !== undefined && nestedResources.has(verbOrResource)) {
-    return thirdToken !== undefined && SAFE_READ_VERBS.has(thirdToken);
-  }
-  return false;
 }
 
 function runLocal(args: string[], localPath: string, wpBin: string, phpBin?: string): Promise<ExecResult> {
@@ -180,19 +122,4 @@ export async function runWpCli(entry: EnvEntry, args: string[]): Promise<string>
   const parts = [`(exit ${result.code})`, result.stdout.trim()];
   if (result.stderr.trim()) parts.push(`STDERR:\n${result.stderr.trim()}`);
   return parts.filter(Boolean).join("\n");
-}
-
-// A big `wp post list` on a large site can dump tens of KB into the model's context.
-// Capped well above what any well-formed command needs, and low enough to bound the
-// worst case; the truncation notice tells the model how to narrow the command instead.
-const MAX_OUTPUT_CHARS = 15_000;
-
-export function truncateWpCliOutput(text: string, maxChars: number = MAX_OUTPUT_CHARS): string {
-  if (text.length <= maxChars) return text;
-  return (
-    text.slice(0, maxChars) +
-    `\n\n[... truncated at ${maxChars.toLocaleString()} of ${text.length.toLocaleString()} characters. ` +
-    "Narrow the command instead of reading past this point — e.g. --format=count, --fields=, " +
-    "--posts_per_page=, or a more specific filter.]"
-  );
 }

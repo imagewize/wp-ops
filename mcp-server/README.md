@@ -102,7 +102,7 @@ Need only a public URL or an API key; no SSH and, apart from `ip_reputation_chec
   (do the price and stock the page advertises match the shop's own WooCommerce Store API?). `speed: true`
   adds PageSpeed (slow); `full: true` includes the raw reports. Chains Min's `audit-store` →
   `audit-product` → `audit-speed` tools, which is why it is one call here. Use it first to find problems,
-  fix them with `wp_cli` / `ssh_command`, then call it again to confirm the grade moved. Configure with
+  fix them with plain `wp` / `ssh_command`, then call it again to confirm the grade moved. Configure with
   `WP_OPS_MIN_MCP_USER` (WordPress login) and `WP_OPS_MIN_MCP_PASSWORD` (an application password for a
   user allowed to run audits) in the server's environment; `WP_OPS_MIN_MCP_URL` overrides the default
   `https://imagewize.com/wp-json/min/mcp`. Each call counts against that user's daily scan limit on the
@@ -113,20 +113,10 @@ Need only a public URL or an API key; no SSH and, apart from `ip_reputation_chec
 
 ### Generic remote access
 
-Plain WP-CLI, shell and file copy over SSH. Other MCP servers offer the same (for example wp-cli-mcp). What this server adds is the safety layer: read-only commands run straight away, anything that writes or touches credentials needs `confirm: true`, and arguments are shell-quoted. Use these when no dedicated tool above fits, and prefer a dedicated tool when one does.
+Shell and file copy over SSH. Other MCP servers offer the same. What this server adds is the safety layer: read-only commands run straight away, anything that writes or touches credentials needs `confirm: true`, and arguments are shell-quoted. Use these when no dedicated tool above fits, and prefer a dedicated tool when one does.
 
-- **`wp_cli`** — runs an arbitrary WP-CLI command (`args` as separate tokens, e.g.
-  `["post", "list", "--format=json"]`) against a registered site/environment. `--path`
-  is added automatically and rejected if passed explicitly. Read-only verbs
-  (`list`/`get`/`exists`/`status`/`info`/`version`/`search`/`check-update`/`doctor`/
-  `export`) run immediately; anything else — updates, deletes, `search-replace`,
-  `eval`, installs, etc. — requires `confirm: true`, meant to be set only after the
-  user has explicitly approved that specific command in conversation. `wp config`
-  always requires `confirm: true` regardless of verb — `get`/`list`/`export` being
-  otherwise-safe read verbs would let `wp config get DB_PASSWORD` through unconfirmed,
-  a plainer path to the same credentials `wp-config.php` holds. For remote sites,
-  each argument is shell-quoted before being handed to `ssh`, since `ssh` otherwise
-  joins trailing args into one string for the remote shell to (re-)interpret.
+There is no `wp_cli` tool (retired in 5.47.0). Run plain WP-CLI instead: `ssh web@<site> 'cd /srv/www/<site>/current && wp … --path=web/wp'` for a remote, `trellis vm shell --workdir /srv/www/<site>/current -- wp … --path=web/wp` for a Trellis development VM. The approval rule is the one the tool enforced: ask before any `wp` command that writes or reads credentials (`config get`, `db export`); reads and `--dry-run` previews need no approval.
+
 - **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
   tokenized and shell-quoted, so shell metacharacters (`;`, `&&`, `>`, `$(...)`) become literal arguments.
   The exception is an unquoted standalone `|`, which runs as a real pipeline; it is auto-approved only when
@@ -295,8 +285,8 @@ command = "/absolute/path/to/wp-ops/mcp-server/run.sh"
 args = []
 ```
 
-Tools show up prefixed with the `name` you chose, e.g. `wp_ops_wp_cli`,
-`wp_ops_security_scan`, `wp_ops_schema_audit`. No `WP_OPS_MCP_TOKEN` or port needed —
+Tools show up prefixed with the `name` you chose, e.g. `wp_ops_security_scan`,
+`wp_ops_schema_audit`. No `WP_OPS_MCP_TOKEN` or port needed —
 stdio mode has no network listener, so there's nothing to secure at that layer.
 
 **Requires Vibe ≥ 2.24.0.** Below that version, a trusted project-level `config.toml`
@@ -316,8 +306,8 @@ instead; the global entry alone is then sufficient everywhere.
 
 Verified against Mistral's own docs (2026-08-06) for schema/transport-name accuracy;
 not yet verified end-to-end against a live Vibe install connecting to this server —
-confirm the tool list appears and a read-only call (e.g. `wp option get siteurl`
-through `wp_ops_wp_cli`) succeeds before relying on it.
+confirm the tool list appears and a read-only call (e.g. `server_status`
+through `wp_ops_server_status`) succeeds before relying on it.
 
 ## Register with OpenAI Codex CLI
 
@@ -339,7 +329,7 @@ command = "/absolute/path/to/wp-ops/mcp-server/run.sh"
 args = []
 ```
 
-Tools show up prefixed with the server name, e.g. `wp_ops_wp_cli`. As with Mistral,
+Tools show up prefixed with the server name, e.g. `wp_ops_security_scan`. As with Mistral,
 stdio mode needs no `WP_OPS_MCP_TOKEN` or port.
 
 Verified against Codex's own docs (2026-08-06) for config schema; **this is the Codex
@@ -352,7 +342,7 @@ connecting to this server.
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
 `server_status`, `ip_reputation_check`, read-only
-`ssh_command`, `scp_file` downloads, and read-only `wp_cli` commands) are safe to run without
+`ssh_command` and `scp_file` downloads) are safe to run without
 confirmation — `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace
 preview unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
 to avoid repeated permission prompts:
@@ -370,15 +360,13 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__store_audit": { "allowed": true },
       "mcp__wp-ops__ip_reputation_check": { "allowed": true },
       "mcp__wp-ops__ssh_command": { "allowed": true },
-      "mcp__wp-ops__scp_file": { "allowed": true },
-      "mcp__wp-ops__wp_cli": { "allowed": true }
+      "mcp__wp-ops__scp_file": { "allowed": true }
     }
   }
 }
 ```
 
-Write operations (e.g., `wp_cli` with `search-replace`, `post delete`, `plugin install`,
-or `url_audit` with `replace` + `confirm: true`) still require `confirm: true` and will
+Write operations (e.g., `ssh_command` with `rm`, or `url_audit` with `replace` + `confirm: true`) still require `confirm: true` and will
 prompt for approval.
 
 ## Usage Tips
@@ -388,7 +376,7 @@ prompt for approval.
   work across all of them. URL-only entries enable `redirect_audit` and
   `schema_audit` for static/Jekyll sites.
 - **CLAUDE.md integration:** In each project that uses these tools, add a note
-  in `CLAUDE.md` like: "Prefer the wp-ops MCP tools (`wp_cli`, `security_scan`,
+  in `CLAUDE.md` like: "Prefer the wp-ops MCP tools (`security_scan`,
   `redirect_audit`, `schema_audit`, `db_backup`, `url_audit`) with the site key from
   `mcp-server/config/sites.json`."
 
