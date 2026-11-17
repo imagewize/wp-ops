@@ -33,8 +33,10 @@
  * @runs     local
  * @mutates  false
  * @requires wp
- * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
- * @example  wp-ops scanner-targeted
+ * @arg      path  optional  {/path/to/scan}  Directory or single file to scan (defaults to WordPress root)
+ * @flag     --max-file-size  optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)
+ * @example  wp-ops scanner-targeted /var/www/web/wp --max-file-size=20MB
+ * @example  wp-ops scanner-targeted /path/to/suspicious-large-file.js
  */
 
 // ============================================================================
@@ -65,18 +67,32 @@ if (php_sapi_name() !== 'cli') {
 
 // Scan configuration
 // Allow custom path from command line or WP-CLI
-// Usage: php security-scanner.php /path/to/scan
+// Usage: php security-scanner.php /path/to/scan [--max-file-size=20MB]
 //        wp eval-file security-scanner.php --path=/path/to/scan
+// The path may be a single file: it is then pattern-scanned in isolation,
+// with no size cap and no checksum filtering (#230).
 $custom_path = null;
+$custom_max_file_size = null;
 
-// Detect path from various sources
+// Parse a size argument: plain bytes ("5242880") or a friendly form
+// ("5MB", "512KB", "2GB"). Returns the size in bytes, or null if invalid.
+function parse_size_arg($value) {
+    if (!preg_match('/^(\d+)\s*(b|kb|mb|gb)?$/i', trim($value), $m)) {
+        return null;
+    }
+    $multipliers = ['' => 1, 'b' => 1, 'kb' => 1024, 'mb' => 1024 * 1024, 'gb' => 1024 * 1024 * 1024];
+    return (int)$m[1] * $multipliers[strtolower($m[2] ?? '')];
+}
+
+// Detect path and options from command line or WP-CLI
 if (php_sapi_name() === 'cli') {
-    // Check for --path= flag (works with WP-CLI)
+    // Check for --path= and --max-file-size= flags (works with WP-CLI)
     if (isset($_SERVER['argv'])) {
         foreach ($_SERVER['argv'] as $arg) {
             if (strpos($arg, '--path=') === 0) {
                 $custom_path = substr($arg, 7); // Remove '--path='
-                break;
+            } elseif (strpos($arg, '--max-file-size=') === 0) {
+                $custom_max_file_size = substr($arg, 16); // Remove '--max-file-size='
             }
         }
     }
@@ -91,10 +107,20 @@ if (php_sapi_name() === 'cli') {
         $custom_path = $_SERVER['HOME'] . substr($custom_path, 1);
     }
 
-    // Validate directory exists
-    if ($custom_path && !is_dir($custom_path)) {
-        echo "Error: Directory not found: {$custom_path}\n";
+    // Validate target exists — a directory, or a single file to scan
+    if ($custom_path && !is_dir($custom_path) && !is_file($custom_path)) {
+        echo "Error: Path not found: {$custom_path}\n";
         exit(1);
+    }
+
+    // Validate the size cap when given
+    if ($custom_max_file_size !== null) {
+        $parsed_size = parse_size_arg($custom_max_file_size);
+        if ($parsed_size === null || $parsed_size <= 0) {
+            echo "Error: Invalid --max-file-size: {$custom_max_file_size} (use bytes, or a size like 20MB)\n";
+            exit(1);
+        }
+        $custom_max_file_size = $parsed_size;
     }
 }
 
@@ -114,7 +140,7 @@ $config = [
     ],
     'file_extensions' => ['php', 'js', 'txt', 'htm', 'html'],
     'max_execution_time' => 300,
-    'max_file_size' => 5 * 1024 * 1024, // 5MB - skip files larger than this
+    'max_file_size' => $custom_max_file_size ?: 5 * 1024 * 1024, // Skip files larger than this
 ];
 
 // Set execution limits
@@ -362,6 +388,13 @@ function scanner_file_is_on_disk() {
  */
 function build_file_list($dir, $config, &$stats) {
     $files = [];
+
+    // A single explicit file is the whole target: pattern-scan exactly that
+    // file, whatever its size. This is the workaround for a large file that
+    // is excluded by the directory scan's size cap (#230).
+    if (is_file($dir)) {
+        return [$dir];
+    }
 
     try {
         $iterator = new RecursiveIteratorIterator(
@@ -674,28 +707,38 @@ output('  Version 2.0.0 - September 10, 2026', 'cyan');
 output('============================================', 'cyan');
 output('', 'white');
 
+$single_file = is_file($config['start_path']);
+
 output('Scan Configuration:', 'blue');
 output('  Start Path: ' . $config['start_path'], 'white');
 output('  File Extensions: ' . implode(', ', $config['file_extensions']), 'white');
 output('  Excluded Directories: ' . implode(', ', $config['exclude_dirs']), 'white');
-output('  Max File Size: ' . format_bytes($config['max_file_size']), 'white');
+output('  Max File Size: ' . ($single_file ? 'not applied (single file)' : format_bytes($config['max_file_size'])), 'white');
 output('', 'white');
-
-// Initialize checksum verification
-output('Initializing checksum verification...', 'yellow');
-init_checksum_verification($config['start_path']);
-output_checksum_results();
 
 output('Building file list...', 'yellow');
 $files = build_file_list($config['start_path'], $config, $stats);
 output('Found ' . number_format(count($files)) . ' files to scan', 'green');
 
-// Filter files based on checksum verification
-output('Filtering files based on checksum verification...', 'yellow');
-$files_to_scan = filter_files_by_checksum($files, $config['start_path']);
+if ($single_file) {
+    // The operator asked for exactly this file: pattern-scan it even though
+    // checksum verification might cover it, even though it may be large.
+    output('Single file scan: skipping checksum verification, pattern-scanning as asked', 'yellow');
+    $files_to_scan = $files;
+    $stats['checksum_verified_skipped'] = 0;
+} else {
+    // Initialize checksum verification
+    output('Initializing checksum verification...', 'yellow');
+    init_checksum_verification($config['start_path']);
+    output_checksum_results();
 
-// Track how many were skipped
-$stats['checksum_verified_skipped'] = count($files) - count($files_to_scan);
+    // Filter files based on checksum verification
+    output('Filtering files based on checksum verification...', 'yellow');
+    $files_to_scan = filter_files_by_checksum($files, $config['start_path']);
+
+    // Track how many were skipped
+    $stats['checksum_verified_skipped'] = count($files) - count($files_to_scan);
+}
 
 // Track checksum failures as high-priority matches
 $checksum_summary = get_checksum_summary();

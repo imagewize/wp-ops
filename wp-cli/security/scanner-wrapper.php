@@ -9,7 +9,7 @@
  * @see docs/SECURITY-SCANNER-GUIDE.md
  *
  * USAGE:
- *   php wp-cli/security/scanner-wrapper.php [/path/to/scan]
+ *   php wp-cli/security/scanner-wrapper.php [/path/to/scan] [--max-file-size=20MB]
  *   wp eval-file wp-cli/security/scanner-wrapper.php
  *
  * @desc     Run both targeted and general malware scanners in sequence
@@ -18,7 +18,8 @@
  * @runs     local
  * @mutates  false
  * @requires wp
- * @arg      path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)
+ * @arg      path  optional  {/path/to/scan}  Directory or single file to scan (defaults to WordPress root)
+ * @flag     --max-file-size  optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)
  * @example  wp-ops scanner-wrapper
  */
 
@@ -28,10 +29,17 @@
 
 $theme_dir = dirname(__FILE__);
 $scan_path = null;
+$size_flag = '';
 
-// Get custom path from command line
-if (php_sapi_name() === 'cli' && isset($argv[1])) {
-    $scan_path = $argv[1];
+// Get custom path and size cap from command line
+if (php_sapi_name() === 'cli' && isset($argv)) {
+    for ($i = 1; $i < count($argv); $i++) {
+        if (strpos($argv[$i], '--max-file-size=') === 0) {
+            $size_flag = $argv[$i];
+        } elseif ($scan_path === null && strpos($argv[$i], '--') !== 0) {
+            $scan_path = $argv[$i];
+        }
+    }
 }
 
 // ============================================================================
@@ -59,6 +67,9 @@ $cmd1 = "php " . escapeshellarg($theme_dir . "/scanner-targeted.php");
 if ($scan_path) {
     $cmd1 .= " " . escapeshellarg($scan_path);
 }
+if ($size_flag) {
+    $cmd1 .= " " . escapeshellarg($size_flag);
+}
 
 passthru($cmd1, $return1);
 
@@ -72,6 +83,9 @@ echo "\033[0;36m============================================\033[0m\n\n";
 $cmd2 = "php " . escapeshellarg($theme_dir . "/scanner-general.php");
 if ($scan_path) {
     $cmd2 .= " " . escapeshellarg($scan_path);
+}
+if ($size_flag) {
+    $cmd2 .= " " . escapeshellarg($size_flag);
 }
 
 passthru($cmd2, $return2);

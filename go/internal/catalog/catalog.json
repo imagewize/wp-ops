@@ -3190,7 +3190,7 @@
           "both"
         ],
         "description": "Which scanner(s) to run",
-        "raw": "--mode         optional  {targeted|general|both}  Which scanner(s) to run"
+        "raw": "--mode            optional  {targeted|general|both}  Which scanner(s) to run"
       },
       {
         "name": "--host",
@@ -3198,15 +3198,23 @@
         "required": false,
         "default": "web@example.com",
         "description": "SSH host to scan",
-        "raw": "--host         optional  {web@example.com}  SSH host to scan"
+        "raw": "--host            optional  {web@example.com}  SSH host to scan"
       },
       {
         "name": "--path",
         "required_raw": "optional",
         "required": false,
         "default": "/srv/www/example.com/current/web/wp",
-        "description": "WordPress core dir on the target",
-        "raw": "--path         optional  {/srv/www/example.com/current/web/wp}  WordPress core dir on the target"
+        "description": "WordPress core dir, or a single file, on the target",
+        "raw": "--path            optional  {/srv/www/example.com/current/web/wp}  WordPress core dir, or a single file, on the target"
+      },
+      {
+        "name": "--max-file-size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "20MB",
+        "description": "Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB)",
+        "raw": "--max-file-size   optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB)"
       },
       {
         "name": "--trellis-dir",
@@ -3214,7 +3222,7 @@
         "required": false,
         "default": "~/code/example.com/trellis",
         "description": "Trellis project dir (development only)",
-        "raw": "--trellis-dir  optional  {~/code/example.com/trellis}  Trellis project dir (development only)"
+        "raw": "--trellis-dir     optional  {~/code/example.com/trellis}  Trellis project dir (development only)"
       },
       {
         "name": "--workdir",
@@ -3222,7 +3230,7 @@
         "required": false,
         "default": "/srv/www/example.com/current",
         "description": "VM working dir (development only)",
-        "raw": "--workdir      optional  {/srv/www/example.com/current}  VM working dir (development only)"
+        "raw": "--workdir         optional  {/srv/www/example.com/current}  VM working dir (development only)"
       },
       {
         "name": "--php",
@@ -3230,12 +3238,13 @@
         "required": false,
         "default": "php",
         "description": "PHP binary on the target",
-        "raw": "--php          optional  {php}  PHP binary on the target"
+        "raw": "--php             optional  {php}  PHP binary on the target"
       }
     ],
     "examples": [
       "wp-ops malware-scan example.com production",
       "wp-ops malware-scan example.com production --mode both",
+      "wp-ops malware-scan example.com production --max-file-size 20MB",
       "wp-ops malware-scan example.com production --host deploy@example.com --path /home/deploy/public_html"
     ],
     "manifest_category": "security",
@@ -3260,12 +3269,23 @@
         "required_raw": "optional",
         "required": false,
         "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+        "description": "Directory or single file to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory or single file to scan (defaults to WordPress root)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--max-file-size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "20MB",
+        "description": "Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)",
+        "raw": "--max-file-size  optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)"
       }
     ],
     "examples": [
-      "wp-ops scanner-general"
+      "wp-ops scanner-general /var/www/web/wp --max-file-size=20MB",
+      "wp-ops scanner-general /path/to/suspicious-large-file.js"
     ],
     "manifest_category": "security",
     "platform": "wordpress",
@@ -3289,12 +3309,23 @@
         "required_raw": "optional",
         "required": false,
         "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+        "description": "Directory or single file to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory or single file to scan (defaults to WordPress root)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--max-file-size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "20MB",
+        "description": "Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)",
+        "raw": "--max-file-size  optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)"
       }
     ],
     "examples": [
-      "wp-ops scanner-targeted"
+      "wp-ops scanner-targeted /var/www/web/wp --max-file-size=20MB",
+      "wp-ops scanner-targeted /path/to/suspicious-large-file.js"
     ],
     "manifest_category": "security",
     "platform": "wordpress",
@@ -3318,8 +3349,18 @@
         "required_raw": "optional",
         "required": false,
         "default": "/path/to/scan",
-        "description": "Directory to scan (defaults to WordPress root)",
-        "raw": "path  optional  {/path/to/scan}  Directory to scan (defaults to WordPress root)"
+        "description": "Directory or single file to scan (defaults to WordPress root)",
+        "raw": "path  optional  {/path/to/scan}  Directory or single file to scan (defaults to WordPress root)"
+      }
+    ],
+    "flags": [
+      {
+        "name": "--max-file-size",
+        "required_raw": "optional",
+        "required": false,
+        "default": "20MB",
+        "description": "Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)",
+        "raw": "--max-file-size  optional  {20MB}  Size cap for pattern-scanning (bytes, or KB/MB/GB; default 5MB; not applied to a single-file target)"
       }
     ],
     "examples": [
