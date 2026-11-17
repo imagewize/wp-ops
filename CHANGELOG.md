@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.48.0] - 2026-11-17
+
 ### Added
 
 - **`--stability`: `update-snapshot` proves which pages rotate before a round flags them.** A page that changes on every load — rotating testimonials, "latest posts", WooCommerce's `ORDER BY RAND()` related products — false-flags every before/after diff, and proving it was the rotation (not the update) meant diffing two captures of the unchanged page by hand. `--stability` does that inside the run: every page is captured twice immediately after another, the two shots are diffed with the same metric `update-compare` uses (ImageMagick AE, fuzz 15, `--stability-threshold`, default 0.5% — so it needs `magick` like update-compare), and shots over the threshold print `UNSTABLE on its own (x% self-diff)` and get `unstable: true` plus `selfDiffPct` in `manifest.json`. `update-compare` reads those marks — from either side's manifest — and reports such shots as `? not comparable (unstable on its own)` instead of failing the compare, with their own row style on the page. The updates README gained the stability walk-through and a starter mask list (`section.related.products` first) (#294).
