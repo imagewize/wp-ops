@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`--max-file-size` and single-file targets for the malware scanners.** Both `scanner-targeted.php` and `scanner-general.php` skipped pattern-scanning on any file over a hardcoded 5MB cap, and checksum verification doesn't cover every large file — a custom theme asset or a plugin outside the verified list got neither check, with no way to work around it: the cap wasn't a flag, and the scanners only accepted a directory as a target. Both now take a `--max-file-size=20MB`-style flag (plain bytes or a KB/MB/GB size), and `wp-ops malware-scan` passes it through as `--max-file-size` for remote scans (the streamed-source invocation stays unchanged; the scanners read the flag from their own argv). The path can now also be a single file: it is pattern-scanned as asked with no size cap and no checksum filtering, so a known-large, non-core file can be checked in isolation without raising the cap for a whole tree (#230).
+
 ### Fixed
 
 - **`import-page-draft` fails fast when the site name looks like an environment, and no longer leaks temp files on failure.** Passing `local` as the site name (the position drift old docs encouraged) silently built `/srv/www/local/current` and only failed later inside `trellis vm shell`; the script now exits with the usage line before touching anything. A failed run also left the stripped draft in `/tmp`, its copy in the Bedrock site root and, after a production import failed post-upload, the scp'd copy on the server — `set -e` with no trap meant cleanup only ran on success. An EXIT trap now removes all three on any exit, with the remote remove best-effort and only after the scp actually happened (#232). The header-comment stripping the issue also asked for had already landed in #246.
