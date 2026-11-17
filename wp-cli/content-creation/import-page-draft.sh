@@ -13,6 +13,10 @@
 # further down (a stray `<!-- CTA: … -->`) is refused unless
 # --allow-html-comments is passed.
 #
+# An EXIT trap removes every temp copy on any exit: the stripped draft in /tmp,
+# the site-dir copy, and (best-effort over SSH) the remote copy after an
+# upload, so a failed run leaves nothing behind (#232).
+#
 # Uses `wp eval` + `file_get_contents()` rather than `wp post update
 # --post_content="$(cat file)"` — safer for large HTML with quotes/JSON-LD
 # than passing the whole page as a shell argument.
@@ -77,6 +81,11 @@ if [ ! -f "$DRAFT_FILE" ]; then
     exit 1
 fi
 
+if [ "$SITE_NAME" == "local" ] || [ "$SITE_NAME" == "production" ] || [ "$SITE_NAME" == "both" ]; then
+    print_error "site-name \"$SITE_NAME\" looks like an environment — usage: $0 <draft-file> <page-id> [site-name] [environment] [template]"
+    exit 1
+fi
+
 if [ "$ENVIRONMENT" != "local" ] && [ "$ENVIRONMENT" != "production" ] && [ "$ENVIRONMENT" != "both" ]; then
     print_error "Invalid environment: $ENVIRONMENT (must be local, production, or both)"
     exit 1
@@ -89,6 +98,21 @@ WP_PATH="web/wp"
 
 TMP_NAME="tmp-import-$PAGE_ID-$(date +%s).html"
 STRIPPED_FILE="/tmp/$TMP_NAME"
+PROD_UPLOADED="no"
+
+# A failed run must not leave temp files behind (#232): the stripped draft in
+# /tmp, the copy in the site dir, and — best-effort, only if the scp already
+# happened — the remote copy. Success paths rely on the same trap.
+cleanup() {
+    rm -f "$STRIPPED_FILE"
+    if [ -n "$SITE_DIR" ]; then
+        rm -f "$SITE_DIR/$TMP_NAME"
+    fi
+    if [ "$PROD_UPLOADED" == "yes" ]; then
+        ssh "$SERVER_USER@$SERVER_HOST" "rm -f $SERVER_PATH/$TMP_NAME" 2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
 
 print_step "Stripping draft header comments"
 # Same rule as strip_draft_comments in publish-post.sh and stripDraftHeader()
@@ -124,7 +148,7 @@ if [ -n "$STRAY_COMMENTS" ]; then
         print_error "Draft body contains $STRAY_COUNT non-block HTML comment(s), e.g. $STRAY_FIRST"
         echo "        These are stored and shipped in the public page source. Remove them, or" >&2
         echo "        pass --allow-html-comments if they are intended." >&2
-        rm -f "$STRIPPED_FILE"; exit 1
+        exit 1
     fi
 fi
 
@@ -151,7 +175,6 @@ update_local() {
     fi
 
     (cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH" -- wp cache flush --path="$WP_PATH")
-    rm -f "$SITE_DIR/$TMP_NAME"
 
     URL=$(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH" -- wp eval "echo get_permalink($PAGE_ID);" --path="$WP_PATH" | tail -1)
     print_info "Local: $URL"
@@ -160,6 +183,7 @@ update_local() {
 update_production() {
     print_step "Updating production page $PAGE_ID"
     scp "$STRIPPED_FILE" "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/$TMP_NAME"
+    PROD_UPLOADED="yes"
 
     # See the note in update_local(): wp_update_post() unslashes, so slash the body first.
     ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp eval 'wp_update_post(array(\"ID\" => $PAGE_ID, \"post_content\" => wp_slash(file_get_contents(\"$SERVER_PATH/$TMP_NAME\"))));' --path=$WP_PATH"
@@ -168,7 +192,7 @@ update_production() {
         ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp post meta update $PAGE_ID _wp_page_template '$TEMPLATE' --path=$WP_PATH"
     fi
 
-    ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp cache flush --path=$WP_PATH && rm -f $SERVER_PATH/$TMP_NAME"
+    ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp cache flush --path=$WP_PATH"
 
     URL=$(ssh "$SERVER_USER@$SERVER_HOST" "cd $SERVER_PATH && wp eval 'echo get_permalink($PAGE_ID);' --path=$WP_PATH")
     print_info "Production: $URL"
@@ -188,5 +212,4 @@ if [ "$ENVIRONMENT" == "production" ] || [ "$ENVIRONMENT" == "both" ]; then
     fi
 fi
 
-rm -f "$STRIPPED_FILE"
 print_info "Done."
