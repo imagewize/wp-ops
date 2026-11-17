@@ -9,7 +9,7 @@ Two commands:
 | Command | What it does |
 |---|---|
 | `wp-ops update-snapshot` | Screenshot a page list at desktop and 390px mobile, into one directory per run |
-| `wp-ops update-compare` | Diff two runs, write a self-contained compare folder (`index.html` + images), exit 1 if anything changed more than the threshold |
+| `wp-ops update-compare` | Diff two runs, write a self-contained compare folder (`index.html` + images), exit 1 if anything changed more than the threshold (shots marked unstable on their own are reported not comparable, no fail) |
 
 Both run on your machine, against any URL: a local `.test` copy, staging or
 production. Neither one changes the site.
@@ -71,9 +71,34 @@ expected result is 0.000% on every shot.
 | `--mask=<selectors>` | | Extra CSS selectors to hide (`visibility:hidden`, layout unchanged) |
 | `--no-default-mask` | | Don't hide the Contact Form 7 CAPTCHA |
 | `--timeout=60` | `60` | Seconds per capture before it is skipped and marked failed |
+| `--stability` | off | Capture every page twice and diff it against itself; shots over the threshold get `unstable: true` + `selfDiffPct` in `manifest.json` |
+| `--stability-threshold=0.5` | `0.5` | % of self-changed pixels that marks a shot unstable |
 
 Writes `<name>-<viewport>.png` per shot and `manifest.json` (URL, HTTP status,
 page size, error per shot). Exits 1 if a capture failed or a page returned 400+.
+`--stability` additionally needs ImageMagick 7 (`magick`), like `update-compare`.
+
+### Stability pre-check (`--stability`)
+
+A page that changes on every load — rotating testimonials, a "latest posts"
+block, WooCommerce's related products — shows up as a false "change" in every
+before/after diff, and you only find out by diffing two captures of the
+unchanged page by hand. `--stability` does that as part of the run: every page
+is captured twice immediately after another, the two captures are diffed with
+the same metric `update-compare` uses, and anything over the threshold is
+printed as `UNSTABLE on its own (x% self-diff)` and marked in the manifest.
+`update-compare` then reports those shots as **not comparable** instead of
+failing the round. Use it on the before-run (and the after-run, if you want the
+mark on both sides of the compare).
+
+Starter mask list for the usual suspects — mask them with `--mask` (or confirm
+with `--stability` first) instead of chasing them through a round:
+
+- `section.related.products`, `.related.products` — WooCommerce related products,
+  `ORDER BY RAND()`: every product-page shot on a stock Woo install rotates.
+- `.wpcf7-captchac, img.wpcf7-captcha` — CF7 CAPTCHA (masked by default).
+- Rotating testimonials, "latest posts" widgets, countdown timers, carousels —
+  anything that animates or re-orders per load.
 
 `update-compare <before-dir> <after-dir>`
 

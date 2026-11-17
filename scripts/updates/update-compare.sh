@@ -10,8 +10,14 @@
 # to a client as-is. Shots of different heights are padded to the same size
 # before diffing, so a page that grew still gets a diff instead of a skip.
 #
-# Exit code: 0 when every shot is under --threshold, 1 when any shot is over
-# it or missing from <after-dir>.
+# Shots that update-snapshot --stability marked "unstable" in manifest.json
+# (they differ from themselves between two captures: rotating testimonials,
+# WooCommerce's ORDER BY RAND related products) are reported as not
+# comparable instead of flagged — a rotating page over the threshold proves
+# nothing about the update, so it no longer fails the compare.
+#
+# Exit code: 0 when every comparable shot is under --threshold, 1 when any
+# comparable shot is over it or missing from <after-dir>.
 #
 # Usage:
 #   ./update-compare.sh <before-dir> <after-dir> [options]
@@ -65,9 +71,31 @@ mkdir -p "$OUT/before" "$OUT/after" "$OUT/diff"
 
 html_escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' <<<"$1"; }
 
+# The self-diff update-snapshot --stability recorded for a shot, when that
+# run marked it unstable. Prints it when found, nothing otherwise; python3 is
+# checked first so a machine without it simply reports as before.
+manifest_self_diff() {
+    local name="$1" manifest="$2"
+    [[ -f "$manifest" ]] || return 0
+    command -v python3 >/dev/null 2>&1 || return 0
+    python3 - "$manifest" "$name" <<'PY' 2>/dev/null || true
+import json, sys
+try:
+    with open(sys.argv[1]) as fh:
+        data = json.load(fh)
+except Exception:
+    sys.exit(0)
+for shot in data.get('shots', []):
+    if shot.get('file') == sys.argv[2] and shot.get('unstable'):
+        print(shot.get('selfDiffPct', ''))
+        break
+PY
+}
+
 rows_flag=""
 rows_ok=""
 flagged=0
+unstable=0
 total=0
 shopt -s nullglob
 for before_file in "$BEFORE"/*.png; do
@@ -103,12 +131,22 @@ for before_file in "$BEFORE"/*.png; do
   pct="$(awk -v f="$fraction" 'BEGIN { printf "%.3f", f * 100 }')"
   over="$(awk -v a="$pct" -v t="$THRESHOLD" 'BEGIN { print (a > t) ? 1 : 0 }')"
 
+  # A shot whose own run proved it rotates is not comparable, not flagged.
+  self_diff="$(manifest_self_diff "$name" "$BEFORE/manifest.json")"
+  [[ -z "$self_diff" ]] && self_diff="$(manifest_self_diff "$name" "$AFTER/manifest.json")"
+
   note=""
   [[ "$size_b" != "$size_a" ]] && note=" (size $size_b → $size_a)"
   if [[ "$over" == 1 ]]; then
-    flagged=$((flagged + 1)); mark="✗"; cls="flag"
+    if [[ -n "$self_diff" ]]; then
+      unstable=$((unstable + 1)); mark="?"; cls="unstable"
+      note="$note — not comparable: unstable on its own (${self_diff}% self-diff, rotating content)"
+    else
+      flagged=$((flagged + 1)); mark="✗"; cls="flag"
+    fi
   else
     mark="✓"; cls="ok"
+    [[ -n "$self_diff" ]] && note="$note (unstable on its own: ${self_diff}% self-diff)"
   fi
   printf "%s %-32s %7s%%%s\n" "$mark" "${name%.png}" "$pct" "$note"
   n="$(html_escape "$name")"
@@ -123,6 +161,11 @@ if [[ "$total" == 0 ]]; then
   echo "Error: no PNG files in $BEFORE"; exit 1
 fi
 
+meta_extra=""
+if [[ "$unstable" -gt 0 ]]; then
+    meta_extra=", $unstable not comparable (unstable on their own — rotating content)"
+fi
+
 cat > "$OUT/index.html" <<HTML
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -133,15 +176,16 @@ h1{font-size:22px;margin:0 0 4px}p.meta{color:#52606d;margin:0 0 20px}
 table{border-collapse:collapse;width:100%}th,td{border-top:1px solid #e4e7eb;padding:10px;vertical-align:top;text-align:left}
 td:first-child{width:180px;font-weight:600}td small{font-weight:400;color:#52606d}
 tr.flag td:first-child{color:#c81e1e}tr.flag{background:#fff5f5}
+tr.unstable td:first-child{color:#b46b00}tr.unstable{background:#fff8ec}
 img{width:100%;max-height:600px;object-fit:cover;object-position:top;border:1px solid #e4e7eb}
 </style></head><body>
 <h1>$(html_escape "$TITLE")</h1>
-<p class="meta">$total shots, $flagged over ${THRESHOLD}% changed (fuzz ${FUZZ}%). Before: $(html_escape "$BEFORE") · After: $(html_escape "$AFTER") · $(date '+%Y-%m-%d %H:%M')</p>
+<p class="meta">$total shots, $flagged over ${THRESHOLD}% changed (fuzz ${FUZZ}%)${meta_extra}. Before: $(html_escape "$BEFORE") · After: $(html_escape "$AFTER") · $(date '+%Y-%m-%d %H:%M')</p>
 <table><thead><tr><th>Page</th><th>Before</th><th>After</th><th>Changed pixels</th></tr></thead><tbody>
 $rows_flag$rows_ok
 </tbody></table></body></html>
 HTML
 
 echo ""
-echo "$flagged of $total shots over ${THRESHOLD}% → $OUT/index.html"
+echo "$flagged of $total shots over ${THRESHOLD}%${meta_extra} → $OUT/index.html"
 [[ "$flagged" == 0 ]]

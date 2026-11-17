@@ -2087,10 +2087,25 @@
         "default": "60",
         "description": "Seconds per capture before giving up",
         "raw": "--timeout     optional  {60}  Seconds per capture before giving up"
+      },
+      {
+        "name": "--stability",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Capture each page twice, flag pages that differ from themselves",
+        "raw": "--stability   optional  {}  Capture each page twice, flag pages that differ from themselves"
+      },
+      {
+        "name": "--stability-threshold",
+        "required_raw": "optional",
+        "required": false,
+        "default": "0.5",
+        "description": "Percent of self-changed pixels that marks a page unstable",
+        "raw": "--stability-threshold  optional  {0.5}  Percent of self-changed pixels that marks a page unstable"
       }
     ],
     "examples": [
-      "wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt"
+      "wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt --stability"
     ],
     "manifest_category": "monitoring",
     "platform": "any",
