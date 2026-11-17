@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`import-page-draft` fails fast when the site name looks like an environment, and no longer leaks temp files on failure.** Passing `local` as the site name (the position drift old docs encouraged) silently built `/srv/www/local/current` and only failed later inside `trellis vm shell`; the script now exits with the usage line before touching anything. A failed run also left the stripped draft in `/tmp`, its copy in the Bedrock site root and, after a production import failed post-upload, the scp'd copy on the server — `set -e` with no trap meant cleanup only ran on success. An EXIT trap now removes all three on any exit, with the remote remove best-effort and only after the scp actually happened (#232). The header-comment stripping the issue also asked for had already landed in #246.
+
 ## [5.47.0] - 2026-11-15
 
 ### Removed
