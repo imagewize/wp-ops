@@ -228,8 +228,10 @@ cleanup cannot undo: use `--allow-production` only with the client's written OK.
 A local copy of a client site is still wired to the client's mail: check the WooCommerce
 recipients (`wp option get woocommerce_new_order_settings`) and where local mail goes
 (Mailpit on Trellis, often MailHog on Valet through an mu-plugin; a plain `sendmail` can deliver for real) before the first
-`--place-order`. `--place-order` cannot tell. Run order-form shops with `--product` set;
-a shop page without a product grid is then a skip, not a failure.
+`--place-order`. `--place-order` cannot tell. A shop page without a product grid — an
+order form or a curated landing — is walked via the first product-category archive it
+links to (which then acts as the shop) or any product link on it; run order-form shops
+with `--product` set only when it has neither.
 
 Needs Playwright: it looks next to the script, in the current directory, then in
 `scripts/updates/` (`npm install && npx playwright install chromium` there).

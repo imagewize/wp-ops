@@ -27,6 +27,11 @@
  * bypass the page cache, so those timings are an uncached speed number. A
  * skipped step never fails the run.
  *
+ * A shop page without a product grid (an order form, a curated landing) is
+ * not a failure either: step 1 falls back to the first product-category
+ * archive the page links to — which then acts as the shop — or to any product
+ * link on it. --product and --category are only needed when it has neither.
+ *
  * Steps:
  *   1 shop page lists products          4 add to cart (product page, shop AJAX)
  *   2 category page loads               5 cart page shows the line, totals add up
@@ -325,6 +330,7 @@ async function run(opts) {
   // 1 shop
   await step(1, 'shop page', async () => {
     let last;
+    let fallbackLinks = null;
     for (const p of ['/shop/', '/']) {
       try { await go(abs(p)); } catch (e) { last = e; continue; }
       const n = await page.locator(SEL.products).count();
@@ -335,7 +341,37 @@ async function run(opts) {
         state.firstProduct = await page.locator(SEL.productLink).first().getAttribute('href').catch(() => null);
         return `${n} products listed`;
       }
+      // No grid — remember what this grid-less page still links to, for the
+      // fallbacks below (#293): an order form or curated landing page is a
+      // fine product source via its product and category links.
+      fallbackLinks = {
+        categoryUrl: await page.locator('a[href*="/product-category/"]').first().getAttribute('href').catch(() => null),
+        firstProduct: await page.locator('a[href*="/product/"]').first().getAttribute('href').catch(() => null),
+      };
       last = new Error(`no products listed at ${page.url()}`);
+    }
+    // Fall back to the grid-less page's links before failing: first the
+    // product-category archive it points at — when that lists products it
+    // acts as the shop for the remaining steps — then any product link.
+    if (fallbackLinks) {
+      state.categoryUrl = fallbackLinks.categoryUrl;
+      state.firstProduct = fallbackLinks.firstProduct;
+      if (state.categoryUrl) {
+        try {
+          await go(abs(state.categoryUrl));
+          const c = await page.locator(SEL.products).count();
+          if (c > 0) {
+            state.shopUrl = page.url();
+            if (!state.firstProduct) {
+              state.firstProduct = await page.locator(SEL.productLink).first().getAttribute('href').catch(() => null);
+            }
+            return `no product grid on the shop page; ${c} products on a category archive`;
+          }
+        } catch { /* the archive is unusable; try the plain product link */ }
+      }
+      if (state.firstProduct) {
+        return 'no product grid on the shop page; using a product link from it';
+      }
     }
     // An order form or landing page instead of a shop: fine when the product is given.
     if (opts.product && !(last && /^HTTP /.test(last.message))) {
@@ -346,7 +382,7 @@ async function run(opts) {
 
   // 2 category
   await step(2, 'category page', async () => {
-    const target = opts.category ? abs(opts.category) : state.categoryUrl;
+    const target = opts.category ? abs(opts.category) : state.categoryUrl ? abs(state.categoryUrl) : null;
     if (!target) throw new Skip('no category link found on the shop page (pass --category)');
     await go(target);
     const n = await page.locator(SEL.products).count();
@@ -356,7 +392,7 @@ async function run(opts) {
 
   // 3 product
   await step(3, 'product page', async () => {
-    const target = opts.product ? abs(opts.product) : state.firstProduct;
+    const target = opts.product ? abs(opts.product) : state.firstProduct ? abs(state.firstProduct) : null;
     if (!target) throw new Skip('no product found (shop step failed; pass --product)');
     await go(target);
     state.productUrl = page.url();
