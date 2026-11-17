@@ -32,6 +32,11 @@
  *   --mask=<a,b>         Extra CSS selectors to hide before capture
  *   --no-default-mask    Don't hide the CF7 CAPTCHA
  *   --timeout=60         Seconds per capture before giving up (default: 60)
+ *   --stability          Capture every page twice and diff it against itself, so self-rotating
+ *                        content (Woo's ORDER BY RAND related products, rotating testimonials) is
+ *                        flagged "unstable" in manifest.json before it can false-flag an update
+ *                        round. Needs ImageMagick 7 (magick), like update-compare.
+ *   --stability-threshold=0.5  Percent of self-changed pixels that marks a page unstable
  *
  * Requires Playwright: `npm install && npx playwright install chromium` in
  * this directory (scripts/updates/).
@@ -49,11 +54,14 @@
  * @flag     --mask        optional  {.cookie-button}  Extra CSS selectors to hide before capture
  * @flag     --no-default-mask optional  {}  Don't hide the Contact Form 7 CAPTCHA
  * @flag     --timeout     optional  {60}  Seconds per capture before giving up
- * @example  wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt
+ * @flag     --stability   optional  {}  Capture each page twice, flag pages that differ from themselves
+ * @flag     --stability-threshold  optional  {0.5}  Percent of self-changed pixels that marks a page unstable
+ * @example  wp-ops update-snapshot http://example.test --out=snapshots/before --pages-file=pages.txt --stability
  */
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 // Look for Playwright next to this script first (a wp-ops checkout after
 // `npm install` here), then in the current project (a site that already has
@@ -75,6 +83,7 @@ const VIEWPORTS = {
   mobile: { width: 390, height: 844 },
 };
 const DEFAULT_MASK = ['img.wpcf7-captcha', '.wpcf7-captchac'];
+const STABILITY_FUZZ = 15; // Same per-pixel tolerance update-compare uses.
 
 function parseArgs(argv) {
   const base = argv[0];
@@ -104,7 +113,15 @@ function parseArgs(argv) {
     ...(has('no-default-mask') ? [] : DEFAULT_MASK),
     ...(flag('mask') ? flag('mask').split(',').map((s) => s.trim()).filter(Boolean) : []),
   ];
-  return { base: base.replace(/\/+$/, ''), out, pages, viewports, mask, timeout: (+flag('timeout') || 60) * 1000 };
+  const stability = has('stability');
+  if (stability && spawnSync('magick', ['-version']).error) {
+    console.error('Error: --stability needs ImageMagick 7 (magick), like update-compare. brew install imagemagick');
+    process.exit(1);
+  }
+  return {
+    base: base.replace(/\/+$/, ''), out, pages, viewports, mask, timeout: (+flag('timeout') || 60) * 1000,
+    stability, stabilityThreshold: +flag('stability-threshold') || 0.5,
+  };
 }
 
 function usage(msg) {
@@ -124,6 +141,29 @@ function withTimeout(promise, ms, label) {
     promise,
     new Promise((_, rej) => { t = setTimeout(() => rej(new Error(`timed out after ${ms / 1000}s (${label})`)), ms); }),
   ]).finally(() => clearTimeout(t));
+}
+
+// How many percent of pixels differ between two captures of the same
+// unchanged page. Same metric as update-compare: pad both to the same canvas
+// (full-page shots of a rotating section can differ in height), then IM7's
+// AE as a fraction of all pixels at fuzz 15%.
+function selfDiffPct(a, b) {
+  const size = (f) => {
+    const r = spawnSync('magick', ['identify', '-format', '%wx%h', f]);
+    if (r.status !== 0) throw new Error(`magick identify failed for ${f}`);
+    return r.stdout.toString();
+  };
+  const [bw, bh] = size(a).split('x').map(Number);
+  const [aw, ah] = size(b).split('x').map(Number);
+  const w = Math.max(bw, aw), h = Math.max(bh, ah);
+  const diff = spawnSync('magick', [
+    '(', a, '-background', 'white', '-extent', `${w}x${h}`, ')',
+    '(', b, '-background', 'white', '-extent', `${w}x${h}`, ')',
+    '-fuzz', `${STABILITY_FUZZ}%`, '-metric', 'AE', '-compare',
+    '-format', '%[distortion]', 'info:',
+  ]);
+  if (diff.status !== 0) throw new Error(`magick compare failed (${(diff.stderr || '').toString().split('\n')[0]})`);
+  return +(diff.stdout.toString()) * 100;
 }
 
 async function capture(browser, url, vp, file, mask) {
@@ -188,11 +228,33 @@ async function capture(browser, url, vp, file, mask) {
         failed++;
         console.log(`✗ ERR ${vp.padEnd(7)} ${p.path}  ${row.error}`);
       }
+      // Stability pre-check (#294): capture the same page again immediately
+      // and diff it against itself. Anything over the threshold changes on
+      // every load — rotating content — and cannot be trusted in a
+      // before/after comparison, no matter what the update did.
+      if (opts.stability && !row.error && row.status < 400) {
+        const second = path.join(opts.out, `.stability-${p.name}-${vp}.png`);
+        try {
+          await withTimeout(capture(browser, url, vp, second, opts.mask), opts.timeout, url);
+          const selfPct = selfDiffPct(file, second);
+          row.selfDiffPct = +selfPct.toFixed(3);
+          row.unstable = selfPct > opts.stabilityThreshold;
+          if (row.unstable) {
+            console.log(`  ⚠ ${p.name} (${vp}): UNSTABLE on its own (${row.selfDiffPct}% self-diff) — likely rotating content, mask it or expect false flags`);
+          }
+        } catch (e) {
+          row.stabilityError = e.message.split('\n')[0];
+          console.log(`  ⚠ ${p.name} (${vp}): stability check failed: ${row.stabilityError}`);
+        } finally {
+          fs.rmSync(second, { force: true });
+        }
+      }
       results.push(row);
     }
   }
   await browser.close();
 
+  const unstable = results.filter((r) => r.unstable).length;
   fs.writeFileSync(path.join(opts.out, 'manifest.json'), JSON.stringify({
     base: opts.base,
     captured_at: new Date().toISOString(),
@@ -201,5 +263,10 @@ async function capture(browser, url, vp, file, mask) {
     shots: results,
   }, null, 2));
   console.log(`\n${results.length - failed}/${results.length} captured in ${Math.round((Date.now() - started) / 1000)}s → ${opts.out}`);
+  if (opts.stability) {
+    console.log(unstable
+      ? `${unstable} shot(s) unstable on its own (rotating content) — see the unstable/selfDiffPct marks in manifest.json, mask the rotating sections or expect false flags`
+      : 'All shots stable against themselves (captured twice, 0 over threshold).');
+  }
   process.exit(failed ? 1 : 0);
 })().catch((e) => { console.error(`Error: ${e.message}`); process.exit(1); });
