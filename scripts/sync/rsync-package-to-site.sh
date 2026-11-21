@@ -101,10 +101,13 @@ excludes=(
 	--exclude '.vscode/'
 	--exclude '.idea/'
 	--exclude 'node_modules/'
-	--exclude 'vendor/'
-	--exclude 'docs/'
-	--exclude 'tests/'
-	--exclude 'bin/'
+	# Anchored to the package root: an unanchored 'vendor/' also matches
+	# bundled assets such as resources/vendor/slick/, and --delete-excluded
+	# then deletes them from the site copy (broke the Nynaeve carousel).
+	--exclude '/vendor/'
+	--exclude '/docs/'
+	--exclude '/tests/'
+	--exclude '/bin/'
 	--exclude '*.sh'
 	--exclude '.gitignore'
 	--exclude '.gitattributes'
@@ -120,6 +123,11 @@ fi
 # excluded lingers at the destination and you test something that no longer
 # exists in the release.
 rsync_args=(-a --delete --delete-excluded)
+# ...but never delete the site copy's own Composer vendor/. It is not shipped
+# (excluded above) and is built in place on the site (`composer install` in the
+# VM); deleting it takes a Sage theme down with "Error locating autoloader".
+# Protect rules apply on the receiving side and must come before the excludes.
+rsync_args+=(--filter 'P /vendor/')
 if [ "$dry_run" = true ]; then
 	# -v as well: a silent dry run would print nothing at all.
 	rsync_args+=(--dry-run -v)
