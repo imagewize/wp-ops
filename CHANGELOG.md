@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`publish-post` stages featured images in chunks, so images over ~96KB no longer fail with `Argument list too long`.** `imagePath` shipped the whole file as one base64 string inside a single `wp eval` argument, and Linux caps one argument at 128KB (`MAX_ARG_STRLEN`) — over ssh the command line is one `sh -c` argument, so it applies there too. A 99KB JPEG encodes to ~132KB and aborted at staging (before any post write). The image is now written in 48KB chunks (first truncates, the rest append), and the staged file's size is checked against the source before `wp media import`, so a dropped chunk fails loudly instead of importing a truncated image. Same code path across SSH, local and the Trellis VM. The post body is still sent in one argument, so it has the same ceiling at roughly 96KB of body.
+
 ## [5.48.0] - 2026-11-17
 
 ### Added

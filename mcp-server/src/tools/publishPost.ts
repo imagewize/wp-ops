@@ -169,10 +169,37 @@ export async function fetchPostContent(entry: EnvEntry, postId: number): Promise
   return Buffer.from(out, "base64").toString("utf8");
 }
 
+// Raw bytes per staging call. The base64 of one chunk travels as a single argv
+// token, and Linux caps one token at 128KB (MAX_ARG_STRLEN) -- over ssh the whole
+// command string is one `sh -c` argument, so that cap applies there too. 48KB raw
+// is 64KB encoded: half the cap, with room for the PHP wrapper around it.
+export const IMAGE_CHUNK_BYTES = 48 * 1024;
+
+// One `wp eval` snippet per chunk. The first truncates, the rest append, and the
+// last one echoes the staged path and its size so the caller can check nothing
+// was dropped. Returned as an array so each call stays under the argv cap.
+export function imageStagingSnippets(bytes: Buffer, remoteName: string): string[] {
+  const total = Math.max(1, Math.ceil(bytes.length / IMAGE_CHUNK_BYTES));
+  const snippets: string[] = [];
+  for (let i = 0; i < total; i++) {
+    const chunk = bytes.subarray(i * IMAGE_CHUNK_BYTES, (i + 1) * IMAGE_CHUNK_BYTES);
+    const flags = i === 0 ? "0" : "FILE_APPEND";
+    const last = i === total - 1;
+    snippets.push(
+      `$p = sys_get_temp_dir() . '/' . basename( base64_decode( '${phpQuote(remoteName)}' ) );` +
+        `file_put_contents( $p, base64_decode( '${chunk.toString("base64")}' ), ${flags} );` +
+        (last ? ` clearstatcache(); echo $p . '|' . filesize( $p );` : "")
+    );
+  }
+  return snippets;
+}
+
 // Upload a local image and return its attachment ID and verified URL.
 // The file is shipped as base64 inside `wp eval` for the same reason the post
 // body is: it keeps one code path across SSH, a local path and a Trellis VM,
-// where an scp would only cover the first.
+// where an scp would only cover the first. It goes in chunks because a single
+// call fails with "Argument list too long" once the encoded image passes
+// ~128KB, i.e. any image over ~96KB.
 export async function uploadFeaturedImage(
   entry: EnvEntry,
   imagePath: string,
@@ -182,15 +209,20 @@ export async function uploadFeaturedImage(
   const bytes = readFileSync(imagePath);
   const remoteName = imagePath.split("/").pop() ?? "featured.jpg";
 
-  const write = await runWpCliRaw(entry, [
-    "eval",
-    `$p = sys_get_temp_dir() . '/' . basename( base64_decode( '${phpQuote(remoteName)}' ) );` +
-      `file_put_contents( $p, base64_decode( '${bytes.toString("base64")}' ) ); echo $p;`,
-  ]);
+  let write = { code: 0, stdout: "", stderr: "" };
+  for (const snippet of imageStagingSnippets(bytes, remoteName)) {
+    write = await runWpCliRaw(entry, ["eval", snippet]);
+    if (write.code !== 0) break;
+  }
   if (write.code !== 0) {
     throw new Error(`Could not stage the image on the target (exit ${write.code}): ${write.stderr || write.stdout}`);
   }
-  const remotePath = write.stdout.trim().split("\n").pop()?.trim() ?? "";
+  const [stagedPath, stagedSize] = (write.stdout.trim().split("\n").pop()?.trim() ?? "").split("|");
+  if (Number(stagedSize) !== bytes.length) {
+    await runWpCliRaw(entry, ["eval", `@unlink( base64_decode( '${phpQuote(stagedPath ?? "")}' ) );`]);
+    throw new Error(`Staged image is ${stagedSize} bytes on the target, expected ${bytes.length}.`);
+  }
+  const remotePath = stagedPath ?? "";
   if (!remotePath) throw new Error("Could not determine the staged image path on the target.");
 
   const imported = await runWpCliRaw(entry, [
