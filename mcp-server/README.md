@@ -102,7 +102,7 @@ Need only a public URL or an API key; no SSH and, apart from `ip_reputation_chec
   (do the price and stock the page advertises match the shop's own WooCommerce Store API?). `speed: true`
   adds PageSpeed (slow); `full: true` includes the raw reports. Chains Min's `audit-store` →
   `audit-product` → `audit-speed` tools, which is why it is one call here. Use it first to find problems,
-  fix them with plain `wp` / `ssh_command`, then call it again to confirm the grade moved. Configure with
+  fix them with plain `wp` over ssh, then call it again to confirm the grade moved. Configure with
   `WP_OPS_MIN_MCP_USER` (WordPress login) and `WP_OPS_MIN_MCP_PASSWORD` (an application password for a
   user allowed to run audits) in the server's environment; `WP_OPS_MIN_MCP_URL` overrides the default
   `https://imagewize.com/wp-json/min/mcp`. Each call counts against that user's daily scan limit on the
@@ -110,23 +110,6 @@ Need only a public URL or an API key; no SSH and, apart from `ip_reputation_chec
 - **`ip_reputation_check`** — checks IPs against AbuseIPDB threat intelligence (score, report count,
   ISP, Tor). Pass `ips` directly, or `trellisDir` to audit every IP already blocked in that project's
   `deny-ips.conf.j2` for staleness. Requires `WP_OPS_ABUSEIPDB_KEY` or `trellis/security/.env`.
-
-### Generic remote access
-
-Shell and file copy over SSH. Other MCP servers offer the same. What this server adds is the safety layer: read-only commands run straight away, anything that writes or touches credentials needs `confirm: true`, and arguments are shell-quoted. Use these when no dedicated tool above fits, and prefer a dedicated tool when one does.
-
-There is no `wp_cli` tool (retired in 5.47.0). Run plain WP-CLI instead: `ssh web@<site> 'cd /srv/www/<site>/current && wp … --path=web/wp'` for a remote, `trellis vm shell --workdir /srv/www/<site>/current -- wp … --path=web/wp` for a Trellis development VM. The approval rule is the one the tool enforced: ask before any `wp` command that writes or reads credentials (`config get`, `db export`); reads and `--dry-run` previews need no approval.
-
-- **`ssh_command`** — run one ad-hoc shell command on the registered remote host over SSH. Commands are
-  tokenized and shell-quoted, so shell metacharacters (`;`, `&&`, `>`, `$(...)`) become literal arguments.
-  The exception is an unquoted standalone `|`, which runs as a real pipeline; it is auto-approved only when
-  every segment is read-only. Commands outside the read-only allowlist require `confirm: true`. An allowlisted command (`cat`, `grep`, `head`, `tail`, ...)
-  still requires `confirm: true` if any argument targets a credential-bearing path — `wp-config.php`,
-  `.env`, `.ssh/`, private key files, `.netrc`, `.pgpass`, `.git-credentials` — since "cat is read-only"
-  doesn't make `cat wp-config.php` safe to run unconfirmed.
-- **`scp_file`** — copy a single file to (`direction: "up"`) or from (`direction: "down"`) the registered
-  remote host via SCP. The remote path is resolved relative to the registry entry's `remotePath` unless
-  it is absolute. Uploads require `confirm: true`.
 
 ### The catalog bridge
 
@@ -341,8 +324,7 @@ connecting to this server.
 ## Permissions (pre-approve read-only tools)
 
 The read-only tools (`redirect_audit`, `schema_audit`, `security_scan`, `url_audit`, `monitor`,
-`server_status`, `ip_reputation_check`, read-only
-`ssh_command` and `scp_file` downloads) are safe to run without
+`server_status`, `ip_reputation_check`) are safe to run without
 confirmation — `url_audit` only ever queries counts and, at most, a `--dry-run` search-replace
 preview unless `confirm: true` is explicitly set. Pre-approve them in `~/.claude/settings.json`
 to avoid repeated permission prompts:
@@ -358,15 +340,13 @@ to avoid repeated permission prompts:
       "mcp__wp-ops__monitor": { "allowed": true },
       "mcp__wp-ops__server_status": { "allowed": true },
       "mcp__wp-ops__store_audit": { "allowed": true },
-      "mcp__wp-ops__ip_reputation_check": { "allowed": true },
-      "mcp__wp-ops__ssh_command": { "allowed": true },
-      "mcp__wp-ops__scp_file": { "allowed": true }
+      "mcp__wp-ops__ip_reputation_check": { "allowed": true }
     }
   }
 }
 ```
 
-Write operations (e.g., `ssh_command` with `rm`, or `url_audit` with `replace` + `confirm: true`) still require `confirm: true` and will
+Write operations (e.g., `url_audit` with `replace` + `confirm: true`) still require `confirm: true` and will
 prompt for approval.
 
 ## Usage Tips

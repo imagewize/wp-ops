@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The `ssh_command` and `scp_file` MCP tools.** They were generic SSH/SCP passthroughs that added a tokenizer, shell-quoting layer, and read-only allowlist over direct `ssh`/`scp`. In practice direct `ssh web@<host> '...'` and `scp local web@<host>:/tmp/` are faster, keep native pipes/redirects/shell quoting, and are already allowed by the host allowlist in your SSH config and the wp-ops site registry. The registry remains the source for hostnames and paths; the dedicated Trellis-aware tools (`db_pull`, `files_pull`, `db_backup`, `publish_post`, `verify_post`, etc.) still handle remote work. The MCP README now documents plain `wp` over ssh as the replacement. Remove `mcp__wp-ops__ssh_command` and `mcp__wp-ops__scp_file` from your `~/.claude/settings.json` permissions. Closes #305.
+
 ## [5.48.1] - 2026-11-22
 
 ### Fixed
