@@ -207,9 +207,9 @@ Keep one repository and one binary. Change what it leads with and what it carrie
    positional check, `wc product list`), and 17 calls failed input validation
    ([#291](https://github.com/imagewize/wp-ops/issues/291)).
    *Done:* the "prefer `wp_cli`" lines in `seo-strategy`, `imagewize.com` and `elayne`
-   now say plain `wp` is fine and the tool is optional; the MCP tools stay the advice
-   for audits and scans. Re-count at step 6 to see whether `wp_cli` use drops, and
-   decide on retiring it then.
+   now say plain `wp` is fine and the tool is optional. `wp_cli` was retired in 5.47.0
+   and `ssh_command`/`scp_file` were removed in #305; the remaining MCP tools are the
+   Trellis-aware ones plus URL-only audits and the catalog bridge.
 4. **Counting method.** Transcripts show only recent months and only calls made through
    Claude Code. Hand-run terminal use and Mistral Vibe sessions are not counted. Count
    each `tool_use` ID once; the first count did not and was about 50% too high.
@@ -231,7 +231,7 @@ Keep one repository and one binary. Change what it leads with and what it carrie
 | Step | State |
 | --- | --- |
 | 1. Lead with `trellis ops` (done) | README reworded (b24c731). Trellis project detection no longer prompts from the project root (5.45.3). Shell `db-push` added in 5.46.0, tested by a round trip on `demo.imagewize.com` production (multisite): pull, restore the local-only `koffie` subsite, push. The first push hit a foreign key and was restored from its own backup; fixed with foreign-key checks off and automatic restore. The `database-pull`/`database-push` playbooks are deprecated and README section 1 shows `db-pull`/`db-push`. The README GIF shows `trellis ops db-pull` (tape in `assets/screenshots/db-pull.tape`). Step 1 is done; removing the deprecated playbooks waits a release or two |
-| 2. MCP as an adapter | MCP README groups the tools and labels `wp_cli`, `ssh_command` and `scp_file` as generic remote access (5.46.0) |
+| 2. MCP as an adapter | MCP README grouped the tools and labelled `wp_cli`, `ssh_command` and `scp_file` as generic remote access (5.46.0). `ssh_command` and `scp_file` were later removed because direct `ssh`/`scp` is faster and the wrapper's allowlist was too restrictive for real WP-CLI work (#305) |
 | 3. Audits and scanners stay standalone | No change needed |
 | 4. Move personal scripts out | `svg-to-jpg` deprecated, now a [wpvilla.in post](https://wpvilla.in/export-svg-designs-jpg-featured-images-rsvg-convert/) with the script; `git-log-oneline` deprecated (it only wraps `git log --oneline`). `create-pr` and `find-and-replace-files` kept, decided 2026-11-15: the repo uses `create-pr` for its own PRs, as do `min` and `ikwedopsport`, and it is too long for a post. Revisit at the re-count |
 | 5. `rsync-package-to-site` stays | Decided 2026-11-15: keeps a `wordpress` tag; it is the theme and plugin sync for nine repos (open question 1) |
