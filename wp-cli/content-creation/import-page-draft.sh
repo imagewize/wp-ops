@@ -13,6 +13,15 @@
 # further down (a stray `<!-- CTA: … -->`) is refused unless
 # --allow-html-comments is passed.
 #
+# Local preflight: a Bedrock root or Sage theme whose Composer `vendor/` is
+# missing makes every `wp` call die with "Error locating autoloader", which
+# used to surface as a failed import with no hint about the cause. Before
+# writing, the local path runs a trivial `wp eval`; on that exact error it
+# finds the project (Bedrock root or theme) with a composer.json but no
+# vendor/autoload.php and offers `composer install` inside the VM. Pass
+# --fix-vendor to run it without asking (also the only way in non-interactive
+# runs such as the MCP). Production is never touched by this.
+#
 # An EXIT trap removes every temp copy on any exit: the stripped draft in /tmp,
 # the site-dir copy, and (best-effort over SSH) the remote copy after an
 # upload, so a failed run leaves nothing behind (#232).
@@ -41,6 +50,7 @@
 # @arg      environment  optional  {local|production|both}  Where to apply the update (default: local)
 # @arg      template     optional  {template-no-header.blade.php}  Optional _wp_page_template value to set
 # @flag     --allow-html-comments  optional  Import even though the body has non-block HTML comments (stray notes)
+# @flag     --fix-vendor  optional  Local only: run `composer install` in the VM if WP-CLI fails with "Error locating autoloader"
 # @example  wp-ops import-page-draft draft.html 7673
 # @example  wp-ops import-page-draft draft.html 7673 example.com both template-no-header.blade.php
 
@@ -59,9 +69,14 @@ print_step()  { echo -e "${BLUE}[STEP]${NC} $1"; }
 
 # The one flag may appear anywhere; everything else is positional.
 ALLOW_HTML_COMMENTS="no"
+FIX_VENDOR="no"
 ARGS=()
 for arg in "$@"; do
-    if [ "$arg" == "--allow-html-comments" ]; then ALLOW_HTML_COMMENTS="yes"; else ARGS+=("$arg"); fi
+    case "$arg" in
+        --allow-html-comments) ALLOW_HTML_COMMENTS="yes" ;;
+        --fix-vendor) FIX_VENDOR="yes" ;;
+        *) ARGS+=("$arg") ;;
+    esac
 done
 set -- "${ARGS[@]}"
 
@@ -72,7 +87,7 @@ ENVIRONMENT="${4:-local}"
 TEMPLATE="$5"
 
 if [ -z "$DRAFT_FILE" ] || [ -z "$PAGE_ID" ]; then
-    print_error "Usage: $0 <draft-file> <page-id> [site-name] [environment] [template] [--allow-html-comments]"
+    print_error "Usage: $0 <draft-file> <page-id> [site-name] [environment] [template] [--allow-html-comments] [--fix-vendor]"
     exit 1
 fi
 
@@ -152,12 +167,61 @@ if [ -n "$STRAY_COMMENTS" ]; then
     fi
 fi
 
+# Local preflight (see the header note): returns 0 when WP-CLI runs, fixes a
+# missing Composer vendor/ when allowed, exits 1 with the exact commands when
+# not. The marker is concatenated in PHP because trellis echoes the command
+# line, which would otherwise contain the marker itself. Only the
+# "Error locating autoloader" failure is handled; any other
+# WP-CLI error is left for the real import to report.
+preflight_local() {
+    local out missing=() dir rel
+    out=$(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH" -- wp eval 'echo "wp-" . "ok";' --path="$WP_PATH" 2>&1) || true
+    case "$out" in *"wp-ok"*) return 0 ;; esac
+    case "$out" in *"Error locating autoloader"*) ;; *) return 0 ;; esac
+
+    [ -f "$SITE_DIR/composer.json" ] && [ ! -f "$SITE_DIR/vendor/autoload.php" ] && missing+=("")
+    for dir in "$SITE_DIR"/web/app/themes/*/; do
+        [ -f "${dir}composer.json" ] && [ ! -f "${dir}vendor/autoload.php" ] && missing+=("web/app/themes/$(basename "$dir")")
+    done
+
+    if [ ${#missing[@]} -eq 0 ]; then
+        print_error "WP-CLI failed with \"Error locating autoloader\", but no project is missing vendor/autoload.php on the host."
+        echo "        Check for a half-installed vendor/ (leftover tmp-*.zip) in the Bedrock root and the active theme." >&2
+        exit 1
+    fi
+
+    for rel in "${missing[@]}"; do
+        local label="${rel:-Bedrock root}"
+        print_warn "$label has no vendor/autoload.php, so WP-CLI cannot load WordPress"
+        if [ "$FIX_VENDOR" != "yes" ]; then
+            if [ -t 0 ] && [ -t 1 ]; then
+                read -p "Run composer install in the VM for $label? [y/N] " -n 1 -r
+                echo ""
+                [[ $REPLY =~ ^[Yy]$ ]] || { print_error "Cancelled. Run: (cd $TRELLIS_DIR && trellis vm shell --workdir $SERVER_PATH${rel:+/$rel} -- composer install)"; exit 1; }
+            else
+                print_error "Run: (cd $TRELLIS_DIR && trellis vm shell --workdir $SERVER_PATH${rel:+/$rel} -- composer install), or pass --fix-vendor"
+                exit 1
+            fi
+        fi
+        print_step "composer install in $label"
+        (cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH${rel:+/$rel}" -- composer install --no-interaction)
+    done
+
+    out=$(cd "$TRELLIS_DIR" && trellis vm shell --workdir "$SERVER_PATH" -- wp eval 'echo "wp-" . "ok";' --path="$WP_PATH" 2>&1) || true
+    case "$out" in
+        *"wp-ok"*) print_info "WP-CLI works again" ;;
+        *) print_error "WP-CLI still fails after composer install:"; echo "$out" | tail -5 >&2; exit 1 ;;
+    esac
+}
+
 update_local() {
     if [ -z "$TRELLIS_DIR" ] || [ -z "$SITE_DIR" ]; then
         print_error "TRELLIS_DIR and SITE_DIR must be set for a local update:"
         echo "  TRELLIS_DIR=/path/to/trellis SITE_DIR=/path/to/bedrock-site $0 ..." >&2
         exit 1
     fi
+
+    preflight_local
 
     print_step "Updating local page $PAGE_ID"
     cp "$STRIPPED_FILE" "$SITE_DIR/$TMP_NAME"
