@@ -2785,6 +2785,13 @@
         "required": false,
         "description": "Import even though the body has non-block HTML comments (stray notes)",
         "raw": "--allow-html-comments  optional  Import even though the body has non-block HTML comments (stray notes)"
+      },
+      {
+        "name": "--fix-vendor",
+        "required_raw": "optional",
+        "required": false,
+        "description": "Local only: run `composer install` in the VM if WP-CLI fails with \"Error locating autoloader\"",
+        "raw": "--fix-vendor  optional  Local only: run `composer install` in the VM if WP-CLI fails with \"Error locating autoloader\""
       }
     ],
     "examples": [

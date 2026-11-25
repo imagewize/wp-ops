@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.49.1] - 2026-11-25
+
+### Fixed
+
+- **`import-page-draft` now says why a local import fails when Composer's `vendor/` is missing, and can fix it.** A Bedrock root or Sage theme without `vendor/autoload.php` makes every `wp` call die with "Error locating autoloader", so the local import failed with a message that does not mention the cause (the Nynaeve theme's `vendor/` was gone on Nov 25 after an older rsync). The local path now runs a trivial `wp eval` first; on that exact error it finds the project (Bedrock root or theme) that has a `composer.json` but no `vendor/autoload.php` and offers `composer install` inside the VM. New `--fix-vendor` runs it without asking, and is the only route for non-interactive runs. Any other WP-CLI error is left for the import itself to report, and production is untouched. This complements #302, which stops the sync deleting `vendor/` but cannot restore one that is already missing.
+
 ## [5.49.0] - 2026-11-24
 
 ### Removed
